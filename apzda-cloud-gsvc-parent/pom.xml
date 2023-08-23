@@ -16,8 +16,6 @@
 
     <properties>
         <!-- build skip -->
-        <spring-boot.repackage.skip>true</spring-boot.repackage.skip>
-        <spring-boot.build-info.skip>true</spring-boot.build-info.skip>
         <skip.it>true</skip.it>
         <!-- libraries version -->
         <groovy.version>4.0.12</groovy.version>
@@ -114,16 +112,6 @@
                 <version>${os-maven-plugin.version}</version>
             </extension>
         </extensions>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.gmavenplus</groupId>
-                <artifactId>gmavenplus-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
         <pluginManagement>
             <plugins>
                 <!-- maven-resources-plugin -->
@@ -314,30 +302,6 @@
                     <groupId>org.codehaus.gmavenplus</groupId>
                     <artifactId>gmavenplus-plugin</artifactId>
                     <version>${gmavenplus-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <id>pre-set-properties</id>
-                            <phase>initialize</phase>
-                            <goals>
-                                <goal>execute</goal>
-                            </goals>
-                            <configuration>
-                                <scripts>
-                                    <![CDATA[
-                                    def basedir = project.basedir.toString()
-                                    def file    = new File(basedir + "/src/main/resources/bootstrap.yml")
-                                    def fileA   = new File(basedir + "/src/main/resources/application.yml")
-                                    def fileB   = new File(basedir + "/src/main/resources/bootstrap.properties")
-                                    def fileC   = new File(basedir + "/src/main/resources/application.properties")
-                                    if (fileA.exists() || fileB.exists() || fileC.exists() || file.exists()) {
-                                        project.properties['spring-boot.repackage.skip'] = 'false'
-                                        project.properties['spring-boot.build-info.skip'] = 'false'
-                                    }
-                                    ]]>
-                                </scripts>
-                            </configuration>
-                        </execution>
-                    </executions>
                     <dependencies>
                         <dependency>
                             <groupId>org.apache.groovy</groupId>
