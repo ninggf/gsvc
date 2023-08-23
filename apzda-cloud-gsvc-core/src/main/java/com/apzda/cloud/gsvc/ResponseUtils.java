@@ -36,6 +36,10 @@ public class ResponseUtils {
         OBJECT_MAPPER.registerModule(new ProtobufModule(pbConfig));
     }
 
+    public static void config() {
+        OBJECT_MAPPER.registerModule(new ProtobufModule());
+    }
+
     public static <T> T parseResponse(String responseBody, Class<T> tClass) {
         // bookmark 解析响应
         try {

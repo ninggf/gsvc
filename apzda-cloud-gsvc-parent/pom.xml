@@ -16,7 +16,7 @@
 
     <properties>
         <!-- build skip -->
-        <skip.it>true</skip.it>
+        <skipITs>true</skipITs>
         <!-- libraries version -->
         <groovy.version>4.0.12</groovy.version>
         <!-- plugins version -->
@@ -88,6 +88,81 @@
                                 </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- its -->
+        <profile>
+            <id>its</id>
+            <properties>
+                <skipITs>false</skipITs>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>reserve-tomcat-port</id>
+                                <goals>
+                                    <goal>reserve-network-port</goal>
+                                </goals>
+                                <phase>process-test-resources</phase>
+                                <configuration>
+                                    <portNames>
+                                        <portName>tomcat.http.port</portName>
+                                    </portNames>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>add-integration-test-sources</id>
+                                <phase>generate-test-sources</phase>
+                                <goals>
+                                    <goal>add-test-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/testi/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>add-integration-test-resources</id>
+                                <phase>generate-test-resources</phase>
+                                <goals>
+                                    <goal>add-test-resource</goal>
+                                </goals>
+                                <configuration>
+                                    <resources>
+                                        <resource>
+                                            <directory>src/testi/resources</directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <includes>
+                                <include>**/*ItTest.java</include>
+                            </includes>
+                            <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+                            <systemPropertyVariables>
+                                <test.server.port>${tomcat.http.port}</test.server.port>
+                            </systemPropertyVariables>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -197,7 +272,7 @@
                                 <goal>start</goal>
                             </goals>
                             <configuration>
-                                <skip>${skip.it}</skip>
+                                <skip>${skipITs}</skip>
                                 <arguments>
                                     <argument>--server.port=${tomcat.http.port}</argument>
                                 </arguments>
@@ -209,7 +284,7 @@
                                 <goal>stop</goal>
                             </goals>
                             <configuration>
-                                <skip>${skip.it}</skip>
+                                <skip>${skipITs}</skip>
                             </configuration>
                         </execution>
                     </executions>

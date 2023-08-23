@@ -2,6 +2,7 @@ package com.example.order.facade.api;
 
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.apzda.cloud.gsvc.proto.CurrentUser;
 import com.apzda.cloud.gsvc.proto.HelloReq;
 import com.apzda.cloud.gsvc.proto.InventoryService;
 import com.apzda.cloud.gsvc.proto.InventoryServiceGrpc;
@@ -33,7 +34,10 @@ public class OrderServiceImpl implements OrderService {
             StpUtil.login("12345");
             StpUtil.getSession(true).set("aaa", "666");
             val tokenInfo = StpUtil.getTokenInfo();
-            val builder = LoginRes.newBuilder().setToken(tokenInfo.tokenName + "=" + tokenInfo.tokenValue);
+            val builder = LoginRes.newBuilder()
+                                  .setToken(tokenInfo.tokenName + "=" + tokenInfo.tokenValue)
+                                  .setTokenValue(tokenInfo.tokenValue)
+                                  .setTokenName(tokenInfo.tokenName);
             sink.success(builder.build());
         });
     }
@@ -47,8 +51,8 @@ public class OrderServiceImpl implements OrderService {
         assert helloRes != null;
 
         builder.setName(helloRes.getName() + " from inventory")
-            .setErrCode(helloRes.getErrCode())
-            .setErrMsg(helloRes.getErrMsg());
+               .setErrCode(helloRes.getErrCode())
+               .setErrMsg(helloRes.getErrMsg());
 
         return builder.build();
     }
@@ -57,6 +61,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderHelloResp sayHello(OrderHelloRequest request) {
         val helloRequest = HelloReq.newBuilder();
         helloRequest.setName(request.getName());
+        helloRequest.setCurrentUser(CurrentUser.newBuilder().setUid(request.getCurrentUser().getUid()).build());
         val helloResp = inventoryService.sayHello(helloRequest.build());
         val resp = OrderHelloResp.newBuilder(OrderHelloResp.getDefaultInstance());
         resp.setName(helloResp.getName())
