@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnClass(ReactiveResilience4JCircuitBreakerFactory.class)
 @Slf4j
 @RequiredArgsConstructor
-public class ApzdaNetiAutoConfiguration implements SmartLifecycle, InitializingBean {
+public class ApzdaGsvcAutoConfiguration implements SmartLifecycle, InitializingBean {
     private final ServiceConfigurationProperties properties;
     private final ApplicationContext applicationContext;
     private volatile boolean isRunning = false;
