@@ -432,6 +432,12 @@
                             </goals>
                         </execution>
                     </executions>
+                    <configuration>
+                        <gpgArguments>
+                            <argument>--pinentry-mode</argument>
+                            <argument>loopback</argument>
+                        </gpgArguments>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
