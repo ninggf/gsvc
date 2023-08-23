@@ -1,0 +1,28 @@
+spring:
+  cloud:
+    discovery: # 有注册中心不需要这个啦
+      client:
+        simple:
+          instances:
+            inventoryService:
+              - instance-id: localhost
+                host: localhost
+                port: 12562
+    gateway:
+      httpclient:
+        compression: true
+        connect-timeout: 1000
+        response-timeout: 3s
+
+resilience4j: # 仅用于本地服务调远程服务(也不建议使用)
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+        cancel-running-future: true
+      inventoryService:
+        timeout-duration: 5s
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true

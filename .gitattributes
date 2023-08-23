@@ -1,0 +1,10 @@
+*.cmd       text ident eol=CRLF
+*.sh		text ident eol=lf
+*.java      ident
+*.proto     ident
+
+*.jpg		binary
+*.ttf       binary
+*.jks       binary
+*.p12       binary
+*.eot       binary

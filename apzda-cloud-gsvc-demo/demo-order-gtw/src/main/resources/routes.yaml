@@ -1,0 +1,36 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: haha
+          uri: svc://orderService
+          predicates:
+            - Path=/order/**
+          filters:
+            - Exporter=sayHello:sayHellox,hi:*
+        - id: invent
+          uri: svc://inventoryService
+          predicates:
+            - Path=/invent/**
+          filters:
+            - Exporter=sayHello:*
+      metrics:
+        enabled: true
+      httpclient:
+        compression: true
+      loadbalancer:
+        use404: true
+    loadbalancer:
+      zone: shanghai
+    discovery:
+      client:
+        simple:
+          instances:
+            inventoryService:
+              - instance-id: localhost
+                host: localhost
+                port: 12562
+            orderService:
+              - instance-id: localhost
+                host: localhost
+                port: 12561

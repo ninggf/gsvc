@@ -1,0 +1,3 @@
+com.apzda.cloud.gsvc.autoconfigure.ApzdaNetiAutoConfiguration
+com.apzda.cloud.gsvc.autoconfigure.GrpcServerSupportConfiguration
+com.apzda.cloud.gsvc.autoconfigure.GrpcClientSupportConfiguration

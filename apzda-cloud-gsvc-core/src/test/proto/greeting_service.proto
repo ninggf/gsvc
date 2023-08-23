@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package greeting.proto;
+
+option java_multiple_files = true;
+option java_outer_classname = "GreetingServiceProto";
+option java_package = "com.apzda.cloud.gsvc.proto";
+
+message HelloRequest {
+  string  name = 1;
+  bytes   file = 2;
+}
+
+message HelloResponse{
+  int32 err_code = 1;
+  string err_msg = 2;
+  string name = 3;
+}
+
+service InventoryService2 {
+  // unary
+  rpc sayHello(HelloRequest) returns(HelloResponse);
+  // server-streaming
+  rpc sayHei(HelloRequest) returns (stream HelloResponse);
+  // bidirectional-streaming
+  rpc sayHi(stream HelloRequest) returns (stream HelloResponse);
+}
