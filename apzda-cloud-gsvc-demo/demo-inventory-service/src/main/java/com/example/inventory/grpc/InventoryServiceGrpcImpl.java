@@ -7,12 +7,11 @@ import com.apzda.cloud.gsvc.proto.InventoryServiceGrpc;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import net.devh.boot.grpc.server.service.GrpcService;
 
 /**
  * @author ninggf
  */
-@GrpcService
+//@GrpcService
 @RequiredArgsConstructor
 public class InventoryServiceGrpcImpl extends InventoryServiceGrpc.InventoryServiceImplBase {
     private final InventoryService inventoryService;

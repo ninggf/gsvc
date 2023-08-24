@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc;
 
-import com.apzda.cloud.gsvc.core.ServiceConfigurationProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +9,6 @@ import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.springframework.util.StringUtils;
 
 /**
@@ -28,12 +26,8 @@ public class ResponseUtils {
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    public static void config(ServiceConfigurationProperties properties) {
-        val config = properties.getConfig();
-        val pbConfig = ProtobufJacksonConfig.builder().acceptLiteralFieldnames(config.isAcceptLiteralFieldNames())
-                                            .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
-                                            .serializeLongsAsString(config.isSerializeLongsAsString()).build();
-        OBJECT_MAPPER.registerModule(new ProtobufModule(pbConfig));
+    public static void config(ProtobufJacksonConfig config) {
+        OBJECT_MAPPER.registerModule(new ProtobufModule(config));
     }
 
     public static void config() {

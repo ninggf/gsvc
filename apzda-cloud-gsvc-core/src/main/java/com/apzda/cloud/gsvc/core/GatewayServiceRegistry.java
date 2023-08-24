@@ -1,7 +1,6 @@
 package com.apzda.cloud.gsvc.core;
 
 import io.grpc.MethodDescriptor;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -39,10 +38,8 @@ public class GatewayServiceRegistry {
                 val dmName = dm.getName();
                 val meta = (Object[]) metaMethod.invoke(null, dmName);
                 val methodInfo = new MethodInfo(dm, appName, serviceName, serviceIndex, meta, bean);
-                if (log.isDebugEnabled()) {
-                    if (LOCAL_IMPLS_BY_INDEX.getOrDefault(serviceIndex, false)) {
-                        log.debug("Mapping {}@{}/{} to /{}/{}/{}", serviceName, appName, dmName, appName, serviceName, dmName);
-                    } else {
+                if (bean != null && log.isDebugEnabled()) {
+                    if (!LOCAL_IMPLS_BY_INDEX.getOrDefault(serviceIndex, false)) {
                         log.debug("Will Proxy method call: {}@{}/{}", serviceName, appName, dmName);
                     }
                 }
@@ -50,9 +47,9 @@ public class GatewayServiceRegistry {
             }
             SERVICES.put(serviceId, hm);
         } catch (ClassNotFoundException e) {
-            log.warn("Grpc class {} not found for service '{}'", serviceMetaCls, serviceId);
+            log.warn("Gsvc class {} not found for service '{}'", serviceMetaCls, serviceId);
         } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
-            log.warn("Grpc class {} is invalid for service '{}': {}", serviceMetaCls, serviceId, e.getMessage());
+            log.warn("Gsvc class {} is invalid for service '{}': {}", serviceMetaCls, serviceId, e.getMessage());
         }
     }
 
@@ -64,6 +61,10 @@ public class GatewayServiceRegistry {
     public static Map<String, MethodInfo> getServiceMethods(String appName, String serviceName) {
         String serviceId = serviceName + "@" + appName;
         return SERVICES.getOrDefault(serviceId, Collections.emptyMap());
+    }
+
+    public static MethodInfo getServiceMethod(MethodInfo m) {
+        return getServiceMethod(m.appName, m.serviceName, m.dmName);
     }
 
     public static void markLocalService(String appName, String serviceName, Integer index) {
@@ -81,6 +82,26 @@ public class GatewayServiceRegistry {
         return LOCAL_IMPLS_BY_INDEX.getOrDefault(index, false);
     }
 
+    public static Map<String, MethodInfo> getServiceMethods(String app, String service, Class<?> interfaceName) {
+        val serviceMetaCls = interfaceName.getCanonicalName() + "Gsvc";
+        val hm = new HashMap<String, MethodInfo>();
+        try {
+            val metaMethod = Class.forName(serviceMetaCls).getMethod("getMetadata", String.class);
+
+            for (Method dm : interfaceName.getDeclaredMethods()) {
+                val dmName = dm.getName();
+                val meta = (Object[]) metaMethod.invoke(null, dmName);
+                val methodInfo = new MethodInfo(dm, app, service, -1, meta, null);
+                hm.put(dmName, methodInfo);
+            }
+        } catch (ClassNotFoundException e) {
+            log.warn("Gsvc class {} not found ", serviceMetaCls);
+        } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
+            log.warn("Gsvc class {} is invalid: {}", serviceMetaCls, e.getMessage());
+        }
+        return hm;
+    }
+
     @Getter
     public static class MethodInfo {
         private final Method method;
@@ -94,7 +115,6 @@ public class GatewayServiceRegistry {
         private final MethodDescriptor.MethodType type;
         private final int serviceIndex;
         private Class<?> currentUserClz;
-        private DefaultHttpHeaders httpHeaders;
 
         public MethodInfo(Method method, String appName, String serviceName, int serviceIndex, Object[] meta, Object bean) {
             this.method = method;
@@ -123,10 +143,6 @@ public class GatewayServiceRegistry {
 
         public Class<?> reqClass() {
             return requestType;
-        }
-
-        public void setHeaders(DefaultHttpHeaders httpHeaders) {
-            this.httpHeaders = httpHeaders;
         }
 
         @Override

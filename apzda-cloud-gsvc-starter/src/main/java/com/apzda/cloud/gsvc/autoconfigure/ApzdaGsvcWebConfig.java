@@ -1,16 +1,17 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
-import cn.dev33.satoken.reactor.filter.SaReactorFilter;
-import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
+import cn.dev33.satoken.filter.SaFilter;
+import cn.dev33.satoken.filter.SaServletFilter;
+import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.reactive.config.WebFluxConfigurer;
+import org.springframework.core.annotation.Order;
 
 /**
  * @author ninggf
  */
 @Configuration(proxyBeanMethods = false)
-public class WebFluxConfig implements WebFluxConfigurer {
+public class ApzdaGsvcWebConfig {
 
     @Bean
     public GsvcExceptionHandler gsvcExceptionHandler() {
@@ -18,7 +19,8 @@ public class WebFluxConfig implements WebFluxConfigurer {
     }
 
     @Bean
-    public SaReactorFilter gsvcDefaultSaReactorFilter() {
-        return new SaReactorFilter().addExclude("/**");
+    @Order
+    public SaFilter gsvcDefaultSaReactorFilter() {
+        return new SaServletFilter().addExclude("/**");
     }
 }

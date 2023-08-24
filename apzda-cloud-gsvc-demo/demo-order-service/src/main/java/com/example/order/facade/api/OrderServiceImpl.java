@@ -82,9 +82,4 @@ public class OrderServiceImpl implements OrderService {
             .setErrMsg(helloResp.getErrMsg());
         return resp.build();
     }
-
-    public void aaaa() {
-        // inventoryServiceStub.sayHi();
-        // inventoryServiceBlockingStub.sayHei();
-    }
 }

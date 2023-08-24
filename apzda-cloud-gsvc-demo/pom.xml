@@ -19,7 +19,6 @@
         <module>demo-order-service</module>
         <module>demo-allinone-app</module>
         <module>demo-order-gtw</module>
-        <module>demo-simple-webflux</module>
     </modules>
 
     <dependencyManagement>

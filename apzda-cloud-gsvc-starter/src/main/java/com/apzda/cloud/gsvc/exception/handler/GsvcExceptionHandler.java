@@ -1,4 +1,4 @@
-package com.apzda.cloud.gsvc.exception;
+package com.apzda.cloud.gsvc.exception.handler;
 
 
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,6 @@
 spring:
   cloud:
-    discovery: # 有注册中心不需要这个啦
+    discovery:
       client:
         simple:
           instances:
@@ -8,13 +8,7 @@ spring:
               - instance-id: localhost
                 host: localhost
                 port: 12562
-    gateway:
-      httpclient:
-        compression: true
-        connect-timeout: 1000
-        response-timeout: 3s
-
-resilience4j: # 仅用于本地服务调远程服务(也不建议使用)
+resilience4j:
   timelimiter:
     configs:
       default:
