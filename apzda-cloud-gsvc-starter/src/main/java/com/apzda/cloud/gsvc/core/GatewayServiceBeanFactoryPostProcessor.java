@@ -25,7 +25,7 @@ import java.util.*;
  */
 @Slf4j
 public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
-    private static Map<String, Boolean> registered = new HashMap<>();
+    private static final Map<String, Boolean> registered = new HashMap<>();
 
     @Override
     public void postProcessBeanFactory(@NonNull ConfigurableListableBeanFactory beanFactory) throws BeansException {

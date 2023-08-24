@@ -2,6 +2,7 @@ package com.example.order.facade.api;
 
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.proto.CurrentUser;
 import com.apzda.cloud.gsvc.proto.HelloReq;
 import com.apzda.cloud.gsvc.proto.InventoryService;
@@ -74,8 +75,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public HomeRes home(HomeReq request) {
         val helloRequest = HelloReq.newBuilder();
+        val request1 = GsvcContextHolder.getRequest();
         helloRequest.setName("leo");
-        StpUtil.getSession().set("aaa", "666");
+        // StpUtil.getSession().set("aaa", "666");
         val helloResp = inventoryService.sayHello(helloRequest.build());
         val resp = HomeRes.newBuilder(HomeRes.getDefaultInstance());
         resp.setErrCode(helloResp.getErrCode())

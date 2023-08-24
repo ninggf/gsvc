@@ -1,14 +1,15 @@
 package com.apzda.cloud.gsvc.filter;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import lombok.val;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.servlet.function.ServerRequest;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
@@ -124,36 +125,39 @@ public class XForwardedHeadersFilter {
      */
     private boolean prefixAppend = true;
 
-    public HttpHeaders filter(HttpHeaders input, ServerRequest request) {
+    public HttpHeaders filter(HttpHeaders input, HttpServletRequest request) {
 
         HttpHeaders updated = new HttpHeaders();
 
         for (Map.Entry<String, List<String>> entry : input.entrySet()) {
             updated.addAll(entry.getKey(), entry.getValue());
         }
-        val remoteAddress = request.remoteAddress();
+        val remoteAddress = request.getRemoteAddr();
 
-        if (isForEnabled() && remoteAddress.isPresent()) {
-            String remoteAddr = remoteAddress.get().getAddress().getHostAddress();
-            write(updated, X_FORWARDED_FOR_HEADER, remoteAddr, isForAppend());
+        if (isForEnabled() && remoteAddress != null) {
+            write(updated, X_FORWARDED_FOR_HEADER, remoteAddress, isForAppend());
         }
-
-        String proto = request.uri().getScheme();
-        if (isProtoEnabled()) {
-            write(updated, X_FORWARDED_PROTO_HEADER, proto, isProtoAppend());
-        }
-
-        if (isPortEnabled()) {
-            String port = String.valueOf(request.uri().getPort());
-            if (request.uri().getPort() < 0) {
-                port = String.valueOf(getDefaultPort(proto));
+        try {
+            val uri = new URI(request.getRequestURI());
+            String proto = uri.getScheme();
+            if (isProtoEnabled()) {
+                write(updated, X_FORWARDED_PROTO_HEADER, proto, isProtoAppend());
             }
-            write(updated, X_FORWARDED_PORT_HEADER, port, isPortAppend());
-        }
 
-        if (isHostEnabled()) {
-            String host = toHostHeader(request);
-            write(updated, X_FORWARDED_HOST_HEADER, host, isHostAppend());
+            if (isPortEnabled()) {
+                String port = String.valueOf(uri.getPort());
+                if (uri.getPort() < 0) {
+                    port = String.valueOf(getDefaultPort(proto));
+                }
+                write(updated, X_FORWARDED_PORT_HEADER, port, isPortAppend());
+            }
+
+            if (isHostEnabled()) {
+                String host = toHostHeader(uri);
+                write(updated, X_FORWARDED_HOST_HEADER, host, isHostAppend());
+            }
+        } catch (URISyntaxException e) {
+            // nothing to do
         }
 
         return updated;
@@ -194,10 +198,10 @@ public class XForwardedHeadersFilter {
         return headers.containsKey(name) && StringUtils.hasLength(headers.getFirst(name));
     }
 
-    private String toHostHeader(ServerRequest request) {
-        int port = request.uri().getPort();
-        String host = request.uri().getHost();
-        String scheme = request.uri().getScheme();
+    private String toHostHeader(URI uri) {
+        int port = uri.getPort();
+        String host = uri.getHost();
+        String scheme = uri.getScheme();
         if (port < 0 || (port == HTTP_PORT && HTTP_SCHEME.equals(scheme))
             || (port == HTTPS_PORT && HTTPS_SCHEME.equals(scheme))) {
             return host;

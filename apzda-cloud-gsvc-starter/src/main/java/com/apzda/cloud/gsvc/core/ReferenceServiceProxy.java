@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.apzda.cloud.gsvc.ResponseUtils;
 import com.apzda.cloud.gsvc.ServiceError;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
+import com.apzda.cloud.gsvc.filter.XForwardedHeadersFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.MethodDescriptor;
@@ -102,7 +103,7 @@ public class ReferenceServiceProxy implements InvocationHandler {
 
         MethodDescriptor.MethodType methodType = methodInfo.getType();
         return switch (methodType) {
-            case UNARY, SERVER_STREAMING -> doBlockCall(reqBody, methodName, uri, rClass);
+            case UNARY -> doBlockCall(reqBody, methodName, uri, rClass);
             default -> doAsyncCall(reqBody, methodName, uri, rClass);
         };
     }
@@ -179,7 +180,6 @@ public class ReferenceServiceProxy implements InvocationHandler {
 
     @SuppressWarnings("unchecked")
     private Mono<String> prepareRequestBody(WebClient.RequestBodySpec req, Object requestObj) {
-
         val headers = GsvcContextHolder.headers("x-gh-");
         if (StpUtil.isLogin()) {
             //bookmark 透传sa-token登录信息
