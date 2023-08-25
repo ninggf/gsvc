@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.core;
 
+import com.apzda.cloud.gsvc.gtw.Route;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +33,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) beanFactory;
         Environment environment = (Environment) bf.getBean("environment");
         String interfaceName;
-
+        // 注册远程服务
         for (int i = 0; i < 10000; ++i) {
             interfaceName = environment.getProperty("apzda.cloud.reference[" + i + "].interface-name");
             if (interfaceName != null) {
@@ -65,7 +66,9 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             }
         }
 
+        // 注册本地服务
         interfaceName = environment.getProperty("apzda.cloud.service.interface-name");
+
         if (StringUtils.isNotBlank(interfaceName)) {
             try {
                 val aClass = Class.forName(interfaceName);
@@ -79,6 +82,31 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 registerRouterFunction(bf, aClass, app, name, -1);
             } catch (ClassNotFoundException e) {
                 throw new BeanCreationException(interfaceName, e);
+            }
+        }
+
+        val gtwEnabled = Boolean.valueOf(environment.getProperty("apzda.cloud.gtw-enabled"));
+
+        if (gtwEnabled) {
+            createRoutes(bf, environment);
+        }
+    }
+
+    private void createRoutes(BeanDefinitionRegistry registry, Environment environment) {
+        log.trace("start to register routes");
+
+        for (int i = 0; i < 1000; i++) {
+            val route = createRoute("apzda.cloud.routes", i, environment, null);
+            if (route == null) {
+                break;
+            }
+            registerRouterFunction(registry, route);
+            for (int j = 0; j < 10000; j++) {
+                val subRoute = createRoute("apzda.cloud.routes[" + i + "].routes", j, environment, route);
+                if (subRoute == null) {
+                    break;
+                }
+                registerRouterFunction(registry, subRoute);
             }
         }
     }
@@ -112,7 +140,11 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
     }
 
-    private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> clazz, String name, String app, int index) {
+    private void registerRouterFunction(BeanDefinitionRegistry registry,
+                                        Class<?> clazz,
+                                        String name,
+                                        String app,
+                                        int index) {
         if (registered.getOrDefault(app + "@" + name, false)) {
             return;
         }
@@ -132,11 +164,33 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         beanDefinition.setPrimary(primary);
 
         BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition,
-            app + name + ".RouterFunctionFactoryBean", qualifiers);
+                                                               app + name + ".RouterFunctionFactoryBean", qualifiers);
 
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
 
         GatewayServiceRegistry.markLocalService(app, name, index);
+    }
+
+    private void registerRouterFunction(BeanDefinitionRegistry registry, Route route) {
+        //to
+    }
+
+    private Route createRoute(String prefix, int index, Environment environment, Route parent) {
+        prefix = prefix + "[" + index + "].";
+        val path = environment.getProperty(prefix + "path");
+        if (StringUtils.isBlank(path)) {
+            return null;
+        }
+        val interfaceName = environment.getProperty(prefix + "interface-name");
+        val login = environment.getProperty("login");
+        val method = environment.getProperty(prefix + "method");
+        val filters = environment.getProperty(prefix + "filters");
+        return new Route().parent(parent)
+                          .path(path)
+                          .interfaceName(interfaceName)
+                          .method(method)
+                          .login(login)
+                          .filters(filters);
     }
 
     private String getQualifier(Map<String, Object> client) {

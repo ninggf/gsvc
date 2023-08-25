@@ -9,18 +9,18 @@ import org.springframework.core.style.ToStringCreator;
  */
 @Getter
 public class GsvcException extends RuntimeException {
-    private final ServiceError errorCode;
+    private final ServiceError error;
 
-    public GsvcException(ServiceError errorCode) {
-        super(errorCode.message);
-        this.errorCode = errorCode;
+    public GsvcException(ServiceError error, Throwable e) {
+        super(error.message, e);
+        this.error = error;
     }
 
     @Override
     public String toString() {
         return new ToStringCreator(this)
-            .append("errCode", errorCode.code)
-            .append("errMsg", errorCode.message)
+            .append("errCode", error.code)
+            .append("errMsg", error.message)
             .toString();
     }
 }

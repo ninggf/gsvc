@@ -1,20 +1,17 @@
 package com.apzda.cloud.gsvc.core;
 
+import com.apzda.cloud.gsvc.gtw.GroupRoute;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.val;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.convert.DurationUnit;
-import org.springframework.http.HttpMethod;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author fengz
@@ -22,9 +19,12 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "apzda.cloud")
 @Data
 public class ServiceConfigurationProperties {
+    private boolean gtwEnabled;
     private GlobalConfig config = new GlobalConfig();
     private ServiceConfig service;
     private List<ServiceConfig> reference = Collections.emptyList();
+
+    private List<GroupRoute> routes = new ArrayList<>();
 
     public ServiceConfig get(int index) {
         if (index == -1) {

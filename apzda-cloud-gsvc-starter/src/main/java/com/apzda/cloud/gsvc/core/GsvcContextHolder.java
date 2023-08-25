@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.core;
 
+import cn.dev33.satoken.SaManager;
 import com.apzda.cloud.gsvc.filter.XForwardedHeadersFilter;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import jakarta.servlet.http.Cookie;
@@ -11,8 +12,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.*;
 
@@ -24,10 +23,11 @@ public class GsvcContextHolder {
     private static final String FILTERED_HTTP_HEADERS = "FILTERED_HTTP_HEADERS";
 
     public static Optional<HttpServletRequest> getRequest() {
-        val requestAttributes = RequestContextHolder.getRequestAttributes();
-        if (requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
-            HttpServletRequest request = servletRequestAttributes.getRequest();
-            return Optional.of(request);
+        if (SaManager.getSaTokenContext() != null && SaManager.getSaTokenContext().getRequest() != null) {
+            val requestAttributes = SaManager.getSaTokenContext().getRequest().getSource();
+            if (requestAttributes instanceof HttpServletRequest request) {
+                return Optional.of(request);
+            }
         }
         return Optional.empty();
     }
@@ -57,6 +57,15 @@ public class GsvcContextHolder {
             }
         }
         return headers;
+    }
+
+    public static String header(String name) {
+        return headers().get(name.toLowerCase());
+    }
+
+    public static String headerIgnoreCase(String name) {
+        val s = headers().keySet().stream().filter(name::equalsIgnoreCase).findFirst().orElse("-_-");
+        return headers().get(s);
     }
 
     public static Map<String, String> headers(String prefix) {
@@ -102,6 +111,20 @@ public class GsvcContextHolder {
                 headers.add(name, (String) values.nextElement());
             }
         }
+        if (!headers.containsKey("x-request-id")) {
+            val rid = request.getAttribute("X-Request-Id");
+            if (rid != null) {
+                headers.add("X-Request-Id", (String) rid);
+            }
+        }
         return headers;
+    }
+
+    public static String getRequestId() {
+        val requestId = headerIgnoreCase("x-request-id");
+        if (StringUtils.hasText(requestId)) {
+            return requestId;
+        }
+        return "";
     }
 }

@@ -16,7 +16,7 @@ public enum ServiceError {
     REMOTE_SERVICE_ERROR(-501, "Remote Service error"),
     REMOTE_SERVICE_NO_INSTANCE(-502, "No Service instance(server) found"),
     REMOTE_SERVICE_TIMEOUT(-504, "RPC timeout"),
-    JACKSON_ERROR(-999, "ObjectMapper error");
+    JACKSON_ERROR(-999, "Invalid JSON data");
     @JsonValue
     public final int code;
     public final String message;

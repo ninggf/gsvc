@@ -44,12 +44,16 @@ public class ResponseUtils {
                 //bookmark: fallback to jackson error
                 return OBJECT_MAPPER.readValue(ServiceError.JACKSON_ERROR.fallbackString, tClass);
             } catch (JsonProcessingException ex) {
+                // cannot get here!!!
                 throw new RuntimeException(ex);
             }
         }
     }
 
-    public static <T> T fallback(ServiceError error, String serviceName, Class<T> tClass) {
+    public static Object fallback(ServiceError error, String serviceName, Class<?> tClass) {
+        if (tClass == null) {
+            return error.fallbackString(serviceName);
+        }
         return parseResponse(error.fallbackString(serviceName), tClass);
     }
 }

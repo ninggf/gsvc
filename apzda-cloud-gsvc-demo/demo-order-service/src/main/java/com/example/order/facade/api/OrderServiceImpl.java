@@ -31,6 +31,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Mono<LoginRes> login(LoginReq request) {
+
         return Mono.create((sink) -> {
             StpUtil.login("12345");
             StpUtil.getSession(true).set("aaa", "666");
@@ -62,6 +63,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderHelloResp sayHello(OrderHelloRequest request) {
         val helloRequest = HelloReq.newBuilder();
         helloRequest.setName(request.getName());
+        StpUtil.checkLogin();
         helloRequest.setCurrentUser(CurrentUser.newBuilder().setUid(request.getCurrentUser().getUid()).build());
         val helloResp = inventoryService.sayHello(helloRequest.build());
         val resp = OrderHelloResp.newBuilder(OrderHelloResp.getDefaultInstance());

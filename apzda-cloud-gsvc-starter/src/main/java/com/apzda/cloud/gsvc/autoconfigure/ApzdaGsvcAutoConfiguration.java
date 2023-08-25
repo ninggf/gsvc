@@ -15,6 +15,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
+import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -26,7 +27,7 @@ import org.springframework.util.StringUtils;
 /**
  * @author fengz
  */
-@AutoConfiguration(after = WebMvcAutoConfiguration.class)
+@AutoConfiguration(before = {WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class})
 @EnableConfigurationProperties({ServiceConfigurationProperties.class, SaTokenExtendProperties.class})
 @Import({ApzdaGsvcWebConfig.class})
 @Slf4j
@@ -48,10 +49,10 @@ public class ApzdaGsvcAutoConfiguration implements SmartLifecycle, ApplicationCo
         ServiceConfigurationProperties properties = applicationContext.getBean(ServiceConfigurationProperties.class);
         val config = properties.getConfig();
         val pbConfig = ProtobufJacksonConfig.builder()
-            .acceptLiteralFieldnames(config.isAcceptLiteralFieldNames())
-            .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
-            .serializeLongsAsString(config.isSerializeLongsAsString())
-            .build();
+                                            .acceptLiteralFieldnames(config.isAcceptLiteralFieldNames())
+                                            .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
+                                            .serializeLongsAsString(config.isSerializeLongsAsString())
+                                            .build();
         ResponseUtils.config(pbConfig);
         applicationContext.getBean(ObjectMapper.class).registerModule(new ProtobufModule(pbConfig));
 

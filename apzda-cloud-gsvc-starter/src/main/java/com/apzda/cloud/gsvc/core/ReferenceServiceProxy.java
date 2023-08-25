@@ -4,7 +4,6 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.apzda.cloud.gsvc.ResponseUtils;
 import com.apzda.cloud.gsvc.ServiceError;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
-import com.apzda.cloud.gsvc.filter.XForwardedHeadersFilter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.MethodDescriptor;
@@ -48,10 +47,12 @@ public class ReferenceServiceProxy implements InvocationHandler {
     private final com.apzda.cloud.gsvc.config.GatewayServiceConfigure svcConfigure;
     private final ObjectMapper objectMapper;
     private final int serviceIndex;
+    private final WebClient webClient;
     private ReactiveCircuitBreaker circuitBreaker;
 
     public ReferenceServiceProxy(ReferenceServiceFactoryBean serviceProxyFactoryBean) {
         ApplicationContext applicationContext = serviceProxyFactoryBean.getApplicationContext();
+        webClient = applicationContext.getBean(WebClient.class);
         serviceName = serviceProxyFactoryBean.getId();
         appName = serviceProxyFactoryBean.getAppName();
         serviceIndex = serviceProxyFactoryBean.getIndex();
@@ -59,59 +60,61 @@ public class ReferenceServiceProxy implements InvocationHandler {
 
         lbFunction = applicationContext.getBean(ReactorLoadBalancerExchangeFilterFunction.class);
         svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
-
         serviceConfig = svcConfigure.getServiceConfig(serviceProxyFactoryBean.getIndex());
+
+        log.info("For Service {}@{} Will try picking an instance via load-balancing: http://{}",
+                 serviceName,
+                 appName,
+                 appName);
+
+        url = "http://" + appName;
 
         if (serviceConfig.isCircuitBreakerEnabled()) {
             val circuitBreakerFactory = applicationContext.getBean(ReactiveResilience4JCircuitBreakerFactory.class);
             circuitBreaker = circuitBreakerFactory.create(serviceName, appName);
+            log.debug("Service's circuitBreaker config, service name: {}, group: {}", serviceName, appName);
         }
-
-        log.info("For Service '{}@{}' Will try picking an instance via load-balancing: http://{}",
-            serviceName,
-            appName,
-            appName);
-
-        url = "http://" + appName;
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        String requestId = GsvcContextHolder.getRequestId();
         val methodName = method.getName();
         val serviceMethod = GatewayServiceRegistry.getServiceMethod(appName, serviceName, methodName);
         if (serviceMethod == null) {
+            if ("toString".equals(methodName)) {
+                return toString();
+            }
+            log.warn("{}@{}/{} method not found", serviceName, appName, methodName);
             throw new NoSuchMethodException(String.format("%s@%s/%s", serviceName, appName, methodName));
         }
+        // todo: support grpc
         return doHttpCall(methodName, args[0], serviceMethod);
     }
 
     private Object doHttpCall(String methodName, Object request, GatewayServiceRegistry.MethodInfo methodInfo) {
         String uri = "/" + appName + "/" + serviceName + "/" + methodName;
         Class<?> rClass = methodInfo.getReturnType();
-
-        log.debug("rpc Service: {}{}", url, uri);
-
-        var req = WebClient.builder()
-            .baseUrl(url)
-            .filter(lbFunction)
-            .build()
-            .post()
-            .uri(uri)
-            .accept(MediaType.APPLICATION_JSON);
-
+        val type = methodInfo.getType();
+        log.debug("[{}] Starting {} RPC to service: svc://{}", GsvcContextHolder.getRequestId(), type, uri);
+        var req = webClient.post().uri(url + uri).accept(MediaType.APPLICATION_JSON);
         var reqBody = prepareRequestBody(req, request);
 
-        MethodDescriptor.MethodType methodType = methodInfo.getType();
-        return switch (methodType) {
-            case UNARY -> doBlockCall(reqBody, methodName, uri, rClass);
-            default -> doAsyncCall(reqBody, methodName, uri, rClass);
-        };
+        if (type == MethodDescriptor.MethodType.UNARY) {
+            return doBlockCall(reqBody, methodName, uri, rClass);
+        } else {
+            return doAsyncCall(reqBody, methodName, uri, rClass);
+        }
     }
 
     private Mono<Object> doAsyncCall(Mono<String> reqBody, String methodName, String uri, Class<?> rClass) {
+        //bookmark: async rpc
         var reqMono = reqBody.handle((res, sink) -> {
             if (log.isDebugEnabled()) {
-                log.debug("Response from svc://{}: {}", uri, StringUtils.truncate(res, 128));
+                log.debug("[{}] Response from svc://{}: {}",
+                          GsvcContextHolder.getRequestId(),
+                          uri,
+                          StringUtils.truncate(res, 256));
             }
             sink.next(ResponseUtils.parseResponse(res, rClass));
             sink.complete();
@@ -121,75 +124,76 @@ public class ReferenceServiceProxy implements InvocationHandler {
             //bookmark: 熔断处理
             reqMono = reqMono.transform(it -> circuitBreaker.run(it, Mono::error));
         }
-        // bookmark: rpc fallback
-        return reqMono
-            .doOnError(err -> {
-                if (log.isTraceEnabled()) {
-                    log.error("(BIDI-STREAMING) rpc failed on svc://{}: ", uri, err);
-                } else {
-                    log.error("(BIDI-STREAMING) rpc failed on svc://{}: {}", uri, err.getMessage());
-                }
-            })
-            .onErrorReturn(WebClientResponseException.Unauthorized.class,
-                ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_UNAUTHORIZED, serviceName, rClass))
-            .onErrorReturn(WebClientResponseException.Forbidden.class,
-                ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_FORBIDDEN, serviceName, rClass))
-            .onErrorReturn(WebClientResponseException.NotFound.class,
-                ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_NOT_FOUND, serviceName, rClass))
-            .onErrorReturn(TimeoutException.class,
-                ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_TIMEOUT, serviceName, rClass))
-            .onErrorReturn(WebClientRequestException.class,
-                ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_NO_INSTANCE, serviceName, rClass))
-            .onErrorReturn(ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_ERROR, serviceName, rClass));
+        return handleRpcFallback(reqMono, uri, rClass);
     }
 
     private Object doBlockCall(Mono<String> reqBody, String methodName, String uri, Class<?> rClass) {
+        //bookmark: block rpc
         reqBody = reqBody.timeout(svcConfigure.getReadTimeout(serviceIndex, methodName));
 
         if (circuitBreaker != null) {
             //BOOKMARK 熔断处理
             reqBody = reqBody.transform(it -> circuitBreaker.run(it, Mono::error));
         }
-        // bookmark: fallback
-        val res = reqBody
-            .doOnError(err -> {
-                if (log.isTraceEnabled()) {
-                    log.error("(UNARY,SERVER_STREAMING) rpc failed on svc://{}: ", uri, err);
-                } else {
-                    log.error("(UNARY,SERVER_STREAMING) rpc failed on svc://{}: {}", uri, err.getMessage());
-                }
-            })
-            .onErrorReturn(WebClientResponseException.Unauthorized.class,
-                ServiceError.REMOTE_SERVICE_UNAUTHORIZED.fallbackString(serviceName))
-            .onErrorReturn(WebClientResponseException.Forbidden.class,
-                ServiceError.REMOTE_SERVICE_FORBIDDEN.fallbackString(serviceName))
-            .onErrorReturn(WebClientResponseException.NotFound.class,
-                ServiceError.REMOTE_SERVICE_NOT_FOUND.fallbackString(serviceName))
-            .onErrorReturn(TimeoutException.class, ServiceError.REMOTE_SERVICE_TIMEOUT.fallbackString(serviceName))
-            .onErrorReturn(WebClientRequestException.class,
-                ServiceError.REMOTE_SERVICE_NO_INSTANCE.fallbackString(serviceName))
-            .onErrorReturn(ServiceError.REMOTE_SERVICE_ERROR.fallbackString(serviceName))
-            .block();
-
+        val res = (String) handleRpcFallback(reqBody, uri).block();
         if (log.isDebugEnabled()) {
-            log.debug("Response from svc://{}: {}", uri, StringUtils.truncate(res, 128));
+            log.debug("[{}] Response from svc://{}: {}",
+                      GsvcContextHolder.getRequestId(),
+                      uri,
+                      StringUtils.truncate(res, 256));
         }
 
         return ResponseUtils.parseResponse(res, rClass);
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private Mono handleRpcFallback(Mono reqBody, String uri) {
+        return handleRpcFallback(reqBody, uri, null);
+    }
+
+    private Mono<Object> handleRpcFallback(Mono<Object> reqBody, String uri, Class<?> rClass) {
+        //bookmark: fallback
+        val requestId = GsvcContextHolder.getRequestId();
+        return reqBody
+            .doOnError(err -> {
+                if (log.isTraceEnabled()) {
+                    log.error("[{}] RPC failed on svc://{}: ", requestId, uri, err);
+                } else {
+                    log.error("[{}] RPC failed on svc://{}: {}", requestId, uri, err.getMessage());
+                }
+            })
+            .onErrorReturn(WebClientResponseException.Unauthorized.class,
+                           ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_UNAUTHORIZED, serviceName, rClass))
+            .onErrorReturn(WebClientResponseException.Forbidden.class,
+                           ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_FORBIDDEN, serviceName, rClass))
+            .onErrorReturn(WebClientResponseException.NotFound.class,
+                           ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_NOT_FOUND, serviceName, rClass))
+            .onErrorReturn(TimeoutException.class,
+                           ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_TIMEOUT, serviceName, rClass))
+            .onErrorReturn(WebClientRequestException.class,
+                           ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_NO_INSTANCE, serviceName, rClass))
+            .onErrorReturn(ResponseUtils.fallback(ServiceError.REMOTE_SERVICE_ERROR, serviceName, rClass));
+    }
+
     @SuppressWarnings("unchecked")
     private Mono<String> prepareRequestBody(WebClient.RequestBodySpec req, Object requestObj) {
         val headers = GsvcContextHolder.headers("x-gh-");
+
+        val requestId = GsvcContextHolder.getRequestId();
+        headers.put("X-Request-Id", requestId);
         if (StpUtil.isLogin()) {
             //bookmark 透传sa-token登录信息
             val tokenInfo = StpUtil.getTokenInfo();
-            log.trace("Set Sa-Token header: '{}: {}'", tokenInfo.tokenName, tokenInfo.tokenValue);
+            log.trace("[{}] Set Sa-Token header: '{}: {}'",
+                      requestId,
+                      tokenInfo.tokenName,
+                      tokenInfo.tokenValue);
             headers.put(tokenInfo.tokenName, tokenInfo.tokenValue);
         }
         // X-Forwarded-For
         val forwards = GsvcContextHolder.headers("X-Forwarded-");
         headers.putAll(forwards);
+
         //bookmark 透传请求头
         if (!headers.isEmpty()) {
             req = req.headers(httpHeaders -> {
@@ -213,18 +217,20 @@ public class ReferenceServiceProxy implements InvocationHandler {
         }
 
         val request = req.contentType(MediaType.APPLICATION_JSON).acceptCharset(StandardCharsets.UTF_8)
-            .body(BodyInserters.fromPublisher(((Mono<Object>) requestObj).handle(
-                    (obj, sink) -> {
-                        try {
-                            sink.next(objectMapper.writeValueAsString(obj));
-                            sink.complete();
-                        } catch (JsonProcessingException e) {
-                            log.error("请求请求体出错: {}", e.getMessage());
-                            sink.error(e);
-                        }
-                    }
-                ), String.class)
-            );
+                         .body(BodyInserters.fromPublisher(((Mono<Object>) requestObj).handle(
+                                   (obj, sink) -> {
+                                       try {
+                                           sink.next(objectMapper.writeValueAsString(obj));
+                                           sink.complete();
+                                       } catch (JsonProcessingException e) {
+                                           log.error("[{}] Bad response: {}",
+                                                     GsvcContextHolder.getRequestId(),
+                                                     e.getMessage());
+                                           sink.error(e);
+                                       }
+                                   }
+                               ), String.class)
+                         );
 
         return request.retrieve().bodyToMono(String.class);
     }
@@ -232,7 +238,7 @@ public class ReferenceServiceProxy implements InvocationHandler {
     @Override
     public String toString() {
         return new ToStringCreator(this)
-            .append("appName", appName)
+            .append("app", appName)
             .append("service", serviceName)
             .append("index", serviceIndex)
             .append("cb", circuitBreaker != null)

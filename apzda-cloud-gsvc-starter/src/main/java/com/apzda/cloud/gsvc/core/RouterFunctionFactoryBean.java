@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.core;
 
+import cn.dev33.satoken.SaManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -7,6 +8,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.lang.NonNull;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
@@ -29,7 +31,7 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
     private ApplicationContext applicationContext;
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
@@ -51,24 +53,14 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
     ) {
         val methods = GatewayServiceRegistry.getServiceMethods(app, service, clazz);
 
-        val route = RouterFunctions.route().before((serverRequest -> {
-            val header = serverRequest.headers().firstHeader("X-Request-Id");
-            if (!StringUtils.hasText(header)) {
-                return ServerRequest.from(serverRequest).header("X-Request-Id", UUID.randomUUID().toString()).build();
-            }
-            return serverRequest;
-        }));
+        val route = RouterFunctions.route();
 
         for (Map.Entry<String, GatewayServiceRegistry.MethodInfo> method : methods.entrySet()) {
-            val key = method.getKey();
-            val mInfo = method.getValue();
-            val path = "/" + service + "/" + key;
-            log.debug("Route {} to {}@{}", path, service, key);
-
-            route.GET(path, request ->
-                ServiceMethodHandler.handle(request, mInfo, applicationContext)
-            ).POST(path, request ->
-                ServiceMethodHandler.handle(request, mInfo, applicationContext));
+            val methodName = method.getKey();
+            val methodHolder = method.getValue();
+            val path = "/" + service + "/" + methodName;
+            log.trace("GroupRoute {} to {}@{}", path, service, methodName);
+            route.POST(path, request -> ServiceMethodHandler.handle(request, methodHolder, applicationContext));
         }
 
         return route.build();
