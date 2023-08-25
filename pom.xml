@@ -28,10 +28,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <resource.delimiter>@</resource.delimiter>
-        <checkstyle.rule>checkstyle/apzda_checks.xml</checkstyle.rule>
-        <pmd.ruleset>pmd/apzda_ruleset.xml</pmd.ruleset>
         <!-- pmd and code style check -->
-        <pmd.check.skip>false</pmd.check.skip>
         <cc.check.skip>false</cc.check.skip>
         <cs.check.skip>false</cs.check.skip>
         <!-- dependencies versions -->
@@ -48,6 +45,7 @@
         <net-devh-grpc.version>2.14.0.RELEASE</net-devh-grpc.version>
         <!-- plugins versions -->
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
+        <spring-javaformat.version>0.0.39</spring-javaformat.version>
     </properties>
 
     <repositories>
@@ -350,8 +348,9 @@
                     <version>3.3.0</version>
                     <executions>
                         <execution>
-                            <id>check</id>
-                            <phase>verify</phase>
+                            <id>checkstyle-validation</id>
+                            <phase>validate</phase>
+                            <inherited>true</inherited>
                             <goals>
                                 <goal>check</goal>
                             </goals>
@@ -363,7 +362,8 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <configLocation>${checkstyle.rule}</configLocation>
+                        <configLocation>io/spring/javaformat/checkstyle/checkstyle.xml</configLocation>
+                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
                         <inputEncoding>${project.build.sourceEncoding}</inputEncoding>
                         <outputEncoding>${project.build.sourceEncoding}</outputEncoding>
                         <failsOnError>false</failsOnError>
@@ -374,53 +374,30 @@
                         </excludes>
                     </configuration>
                     <dependencies>
+                        <!--
                         <dependency>
                             <groupId>org.ow2.asm</groupId>
                             <artifactId>asm</artifactId>
-                            <version>9.2</version>
+                            <version>9.3</version>
                         </dependency>
+                        -->
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>9.2</version>
+                            <version>9.3</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>io.spring.javaformat</groupId>
+                            <artifactId>spring-javaformat-checkstyle</artifactId>
+                            <version>${spring-javaformat.version}</version>
                         </dependency>
                     </dependencies>
                 </plugin>
-                <!-- maven-pmd-plugin -->
+                <!-- spring-javaformat-maven-plugin -->
                 <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-pmd-plugin</artifactId>
-                    <version>3.21.0</version>
-                    <executions>
-                        <execution>
-                            <id>check</id>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                            <phase>verify</phase>
-                            <configuration>
-                                <skip>${pmd.check.skip}</skip>
-                                <failOnViolation>true</failOnViolation>
-                            </configuration>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <linkXRef>true</linkXRef>
-                        <inputEncoding>UTF-8</inputEncoding>
-                        <outputEncoding>UTF-8</outputEncoding>
-                        <targetJdk>${maven.compiler.target}</targetJdk>
-                        <rulesets>
-                            <ruleset>${pmd.ruleset}</ruleset>
-                        </rulesets>
-                        <excludes>
-                            <exclude>**/*Bean.java</exclude>
-                            <exclude>**/generated/*.java</exclude>
-                        </excludes>
-                        <excludeRoots>
-                            <excludeRoot>target/generated-sources/stubs</excludeRoot>
-                            <excludeRoot>target/delombok</excludeRoot>
-                        </excludeRoots>
-                    </configuration>
+                    <groupId>io.spring.javaformat</groupId>
+                    <artifactId>spring-javaformat-maven-plugin</artifactId>
+                    <version>${spring-javaformat.version}</version>
                 </plugin>
                 <!-- checksum-maven-plugin -->
                 <plugin>
@@ -455,6 +432,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>io.spring.javaformat</groupId>
+                <artifactId>spring-javaformat-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
@@ -526,9 +507,9 @@
         </plugins>
     </reporting>
     <profiles>
-        <!-- ccc -->
+        <!-- cc -->
         <profile>
-            <id>ccc</id>
+            <id>cc</id>
             <build>
                 <plugins>
                     <plugin>
@@ -586,10 +567,6 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-checkstyle-plugin</artifactId>
                     </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-pmd-plugin</artifactId>
-                    </plugin>
                 </plugins>
             </build>
             <reporting>
@@ -627,26 +604,6 @@
                                 <inherited>false</inherited>
                                 <reports>
                                     <report>checkstyle-aggregate</report>
-                                </reports>
-                            </reportSet>
-                        </reportSets>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-pmd-plugin</artifactId>
-                        <reportSets>
-                            <reportSet>
-                                <reports>
-                                    <report>pmd</report>
-                                    <report>cpd</report>
-                                </reports>
-                            </reportSet>
-                            <reportSet>
-                                <id>aggregate</id>
-                                <inherited>false</inherited>
-                                <reports>
-                                    <report>aggregate-pmd</report>
-                                    <report>aggregate-cpd</report>
                                 </reports>
                             </reportSet>
                         </reportSets>
