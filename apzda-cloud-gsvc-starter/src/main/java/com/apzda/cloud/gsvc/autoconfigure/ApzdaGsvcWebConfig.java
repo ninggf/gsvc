@@ -20,7 +20,10 @@ import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalance
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.List;
 
 /**
  * @author ninggf
@@ -36,8 +39,9 @@ public class ApzdaGsvcWebConfig {
     }
 
     @Bean
-    GsvcExceptionHandler gsvcExceptionHandler(SaTokenExtendProperties properties) {
-        return new GsvcExceptionHandler(properties);
+    GsvcExceptionHandler gsvcExceptionHandler(SaTokenExtendProperties properties,
+            ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters) {
+        return new GsvcExceptionHandler(properties, httpMessageConverters);
     }
 
     @Bean
@@ -48,9 +52,9 @@ public class ApzdaGsvcWebConfig {
 
     @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
-    public BasicErrorController basicErrorController(ErrorAttributes errorAttributes,
+    public BasicErrorController basicErrorController(ErrorAttributes errorAttributes, GsvcExceptionHandler handler,
             ObjectProvider<ErrorViewResolver> errorViewResolvers) {
-        return new GsvcErrorController(errorAttributes, this.serverProperties.getError(),
+        return new GsvcErrorController(errorAttributes, this.serverProperties.getError(), handler,
                 errorViewResolvers.orderedStream().toList());
     }
 

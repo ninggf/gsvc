@@ -86,9 +86,8 @@ public class ServiceMethodHandler {
 
             return switch (type) {
                 case UNARY -> doUnaryCall(requestObj);
-                case SERVER_STREAMING, BIDI_STREAMING -> doStreamingCall(requestObj);
+                case SERVER_STREAMING -> doStreamingCall(requestObj);
                 default -> {
-                    // never get here!
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
             };
@@ -96,7 +95,7 @@ public class ServiceMethodHandler {
         catch (Exception e) {
             log.error("[{}] Start to call method: {}@{}/{}", logId, methodInfo.getServiceName(),
                     methodInfo.getAppName(), methodInfo.getDmName(), e);
-            return exceptionHandler.handle(request, e);
+            return exceptionHandler.handle(e, request);
         }
     }
 

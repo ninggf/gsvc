@@ -1,12 +1,15 @@
 package com.apzda.cloud.gsvc.error;
 
+import com.apzda.cloud.gsvc.ServiceError;
+import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
+import jakarta.servlet.ServletException;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
 import org.springframework.web.context.request.WebRequest;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -19,7 +22,19 @@ public class GsvcErrorAttributes extends DefaultErrorAttributes {
 
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
-        return super.getErrorAttributes(webRequest, options);
+        //
+        Map<String, Object> errorAttributes = new LinkedHashMap<>();
+        Throwable error = getError(webRequest);
+        Response<?> response = Response.error(ServiceError.SERVICE_ERROR);
+        if (error != null) {
+            while (error instanceof ServletException && error.getCause() != null) {
+                error = error.getCause();
+            }
+            response = handler.handle(error);
+        }
+        errorAttributes.put("errCode", response.getErrCode());
+        errorAttributes.put("errMsg", response.getErrMsg());
+        return errorAttributes;
     }
 
 }

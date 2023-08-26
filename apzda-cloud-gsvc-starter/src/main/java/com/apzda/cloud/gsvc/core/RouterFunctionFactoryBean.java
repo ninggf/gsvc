@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.core;
 
+import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -67,8 +68,8 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
             route.POST(contextPath + path,
                     request -> ServiceMethodHandler.handle(request, methodHolder, applicationContext));
         }
-
-        return route.build();
+        val errorHandler = applicationContext.getBean(GsvcExceptionHandler.class);
+        return route.onError(Exception.class,errorHandler::handle).build();
     }
 
 }

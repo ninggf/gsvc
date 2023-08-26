@@ -21,13 +21,8 @@ public class DemoConfig {
     RouterFunction<ServerResponse> myaasfa() {
 
         return RouterFunctions.route().GET("/demo/x", request -> {
-            try {
-                StpUtil.checkLogin();
-                return ServerResponse.ok().body("hello");
-            }
-            catch (Exception e) {
-                return handler.handle(request, e);
-            }
+            StpUtil.checkLogin();
+            return ServerResponse.ok().body("hello");
         }).build();
     }
 
