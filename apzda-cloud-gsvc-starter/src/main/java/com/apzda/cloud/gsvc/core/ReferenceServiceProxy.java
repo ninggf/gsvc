@@ -98,7 +98,7 @@ public class ReferenceServiceProxy implements InvocationHandler {
     }
 
     private Object doHttpCall(String methodName, Object request, GatewayServiceRegistry.MethodInfo methodInfo) {
-        String uri = "/" + serviceName + "/" + methodName;
+        String uri = "/GSVC-" + serviceName + "/" + methodName;
         Class<?> rClass = methodInfo.getReturnType();
         val type = methodInfo.getType();
         log.debug("[{}] Starting {} RPC to service: svc://{}", GsvcContextHolder.getRequestId(), type, uri);

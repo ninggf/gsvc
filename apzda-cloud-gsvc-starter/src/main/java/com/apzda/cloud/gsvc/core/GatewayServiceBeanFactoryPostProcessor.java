@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.core;
 
+import com.apzda.cloud.gsvc.gtw.GroupRoute;
 import com.apzda.cloud.gsvc.gtw.Route;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -97,11 +98,16 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val gtwEnabled = Boolean.parseBoolean(environment.getProperty("apzda.cloud.gtw-enabled"));
 
         if (gtwEnabled) {
-            createRoutes(bf, environment);
+            try {
+                createRoutes(bf, environment);
+            }
+            catch (Exception e) {
+                throw new BeanCreationException(e.getMessage(), e);
+            }
         }
     }
 
-    private void createRoutes(BeanDefinitionRegistry registry, Environment environment) {
+    private void createRoutes(BeanDefinitionRegistry registry, Environment environment) throws ClassNotFoundException {
         log.trace("start to register routes");
 
         for (int i = 0; i < 1000; i++) {
@@ -109,14 +115,17 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             if (route == null) {
                 break;
             }
-            registerRouterFunction(registry, route);
+            List<Route> subRoutes = new ArrayList<>();
             for (int j = 0; j < 10000; j++) {
                 val subRoute = createRoute("apzda.cloud.routes[" + i + "].routes", j, environment, route);
                 if (subRoute == null) {
                     break;
                 }
-                registerRouterFunction(registry, subRoute);
+                subRoutes.add(subRoute);
             }
+            val groupRoute = new GroupRoute(route);
+            groupRoute.setRoutes(subRoutes);
+            registerRouterFunction(registry, groupRoute);
         }
     }
 
@@ -178,26 +187,41 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         GatewayServiceRegistry.markLocalService(appName, serviceName, index);
     }
 
-    private void registerRouterFunction(BeanDefinitionRegistry registry, Route route) {
-        // to
-    }
-
     private Route createRoute(String prefix, int index, Environment environment, Route parent) {
-        prefix = prefix + "[" + index + "].";
-        val path = environment.getProperty(prefix + "path");
+        prefix = prefix + "[" + index + "]";
+        val path = environment.getProperty(prefix + ".path");
         if (StringUtils.isBlank(path)) {
             return null;
         }
-        val interfaceName = environment.getProperty(prefix + "interface-name");
-        val login = environment.getProperty("login");
-        val method = environment.getProperty(prefix + "method");
-        val filters = environment.getProperty(prefix + "filters");
-        return new Route().parent(parent)
-            .path(path)
-            .interfaceName(interfaceName)
-            .method(method)
-            .login(login)
-            .filters(filters);
+        val serviceIndex = environment.getProperty(prefix + ".service-index");
+        val login = environment.getProperty(prefix + ".login");
+        val method = environment.getProperty(prefix + ".method");
+        val actions = environment.getProperty(prefix + ".actions", "GET,POST");
+        val filters = environment.getProperty(prefix + ".filters");
+        try {
+            return new Route().parent(parent)
+                .path(path)
+                .serviceIndex(serviceIndex)
+                .method(method)
+                .actions(actions)
+                .login(login)
+                .filters(filters);
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Cannot parse '" + prefix + "' route", e);
+        }
+    }
+
+    private void registerRouterFunction(BeanDefinitionRegistry registry, GroupRoute route) {
+        // to
+        val serviceIndex = route.getServiceIndex();
+        val localService = GatewayServiceRegistry.isLocalService(serviceIndex);
+        if (localService) {
+            // todo register local service
+        }
+        else {
+
+        }
     }
 
     private String getQualifier(Map<String, Object> client) {

@@ -46,14 +46,14 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
         return RouterFunction.class;
     }
 
-    public static RouterFunction<ServerResponse> createRouterFunction(String app, String service, Class<?> clazz,
-            ApplicationContext applicationContext) {
-        val methods = GatewayServiceRegistry.getServiceMethods(app, service, clazz);
+    public static RouterFunction<ServerResponse> createRouterFunction(String appName, String serviceName,
+            Class<?> clazz, ApplicationContext applicationContext) {
+        val methods = GatewayServiceRegistry.getServiceMethods(appName, serviceName, clazz);
 
         val route = RouterFunctions.route();
         var contextPath = applicationContext.getEnvironment().getProperty("server.servlet.context-path");
         if (StringUtils.isBlank(contextPath)) {
-            contextPath = "/" + app;
+            contextPath = "/" + appName;
         }
         else {
             contextPath = "";
@@ -62,14 +62,14 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
         for (Map.Entry<String, GatewayServiceRegistry.MethodInfo> method : methods.entrySet()) {
             val methodName = method.getKey();
             val methodHolder = method.getValue();
-            val path = "/" + service + "/" + methodName;
+            val path = "/GSVC-" + serviceName + "/" + methodName;
 
-            log.trace("Route {} to {}@{}", path, service, methodName);
+            log.trace("Route {} to {}@{}", path, serviceName, methodName);
             route.POST(contextPath + path,
                     request -> ServiceMethodHandler.handle(request, methodHolder, applicationContext));
         }
         val errorHandler = applicationContext.getBean(GsvcExceptionHandler.class);
-        return route.onError(Exception.class,errorHandler::handle).build();
+        return route.onError(Exception.class, errorHandler::handle).build();
     }
 
 }
