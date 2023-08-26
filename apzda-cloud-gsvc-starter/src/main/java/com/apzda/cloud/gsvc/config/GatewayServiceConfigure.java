@@ -11,6 +11,7 @@ import java.time.Duration;
  */
 @RequiredArgsConstructor
 public class GatewayServiceConfigure {
+
     private final ServiceConfigurationProperties serviceConfig;
 
     public ServiceConfigurationProperties.ServiceConfig getServiceConfig(int index) {
@@ -97,4 +98,5 @@ public class GatewayServiceConfigure {
         // default
         return Duration.ofMinutes(5);
     }
+
 }

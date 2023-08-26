@@ -28,6 +28,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Slf4j
 @Configuration(proxyBeanMethods = false)
 public class ApzdaGsvcWebConfig {
+
     private final ServerProperties serverProperties;
 
     public ApzdaGsvcWebConfig(ServerProperties serverProperties) {
@@ -39,18 +40,18 @@ public class ApzdaGsvcWebConfig {
         return new GsvcExceptionHandler(properties);
     }
 
-    //@Bean
+    @Bean
     @ConditionalOnMissingBean(value = ErrorAttributes.class, search = SearchStrategy.CURRENT)
     ErrorAttributes gsvcErrorAttributes(GsvcExceptionHandler handler) {
         return new GsvcErrorAttributes(handler);
     }
 
-    //@Bean
+    @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
     public BasicErrorController basicErrorController(ErrorAttributes errorAttributes,
-                                                     ObjectProvider<ErrorViewResolver> errorViewResolvers) {
+            ObjectProvider<ErrorViewResolver> errorViewResolvers) {
         return new GsvcErrorController(errorAttributes, this.serverProperties.getError(),
-                                       errorViewResolvers.orderedStream().toList());
+                errorViewResolvers.orderedStream().toList());
     }
 
     @Bean
@@ -69,4 +70,5 @@ public class ApzdaGsvcWebConfig {
     GsvcFilter gsvcFilter() {
         return new GsvcFilter();
     }
+
 }

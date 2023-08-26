@@ -13,7 +13,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * @author ninggf
  */
@@ -156,7 +155,8 @@ public class XForwardedHeadersFilter {
                 String host = toHostHeader(uri);
                 write(updated, X_FORWARDED_HOST_HEADER, host, isHostAppend());
             }
-        } catch (URISyntaxException e) {
+        }
+        catch (URISyntaxException e) {
             // nothing to do
         }
 
@@ -184,7 +184,8 @@ public class XForwardedHeadersFilter {
             List<String> values = headers.get(name);
             String delimitedValue = StringUtils.collectionToCommaDelimitedString(values);
             headers.set(name, delimitedValue);
-        } else {
+        }
+        else {
             headers.set(name, value);
         }
     }
@@ -203,9 +204,10 @@ public class XForwardedHeadersFilter {
         String host = uri.getHost();
         String scheme = uri.getScheme();
         if (port < 0 || (port == HTTP_PORT && HTTP_SCHEME.equals(scheme))
-            || (port == HTTPS_PORT && HTTPS_SCHEME.equals(scheme))) {
+                || (port == HTTPS_PORT && HTTPS_SCHEME.equals(scheme))) {
             return host;
-        } else {
+        }
+        else {
             return host + ":" + port;
         }
     }
@@ -213,8 +215,10 @@ public class XForwardedHeadersFilter {
     private String stripTrailingSlash(URI uri) {
         if (uri.getPath().endsWith("/")) {
             return uri.getPath().substring(0, uri.getPath().length() - 1);
-        } else {
+        }
+        else {
             return uri.getPath();
         }
     }
+
 }

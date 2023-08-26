@@ -11,9 +11,10 @@ import lombok.val;
 /**
  * @author ninggf
  */
-//@GrpcService
+// @GrpcService
 @RequiredArgsConstructor
 public class InventoryServiceGrpcImpl extends InventoryServiceGrpc.InventoryServiceImplBase {
+
     private final InventoryService inventoryService;
 
     @Override
@@ -26,8 +27,7 @@ public class InventoryServiceGrpcImpl extends InventoryServiceGrpc.InventoryServ
     public void sayHei(HelloReq request, StreamObserver<HelloRes> responseObserver) {
         // server-streaming
         val helloResMono = inventoryService.sayHei(request);
-        helloResMono
-            .doFinally((t) -> responseObserver.onCompleted())
+        helloResMono.doFinally((t) -> responseObserver.onCompleted())
             .onErrorReturn(HelloRes.getDefaultInstance())
             .subscribe((s) -> {
                 val builder = HelloRes.newBuilder();
@@ -82,4 +82,5 @@ public class InventoryServiceGrpcImpl extends InventoryServiceGrpc.InventoryServ
             }
         };
     }
+
 }

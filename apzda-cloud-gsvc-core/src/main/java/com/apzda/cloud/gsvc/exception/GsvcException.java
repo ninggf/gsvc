@@ -9,6 +9,7 @@ import org.springframework.core.style.ToStringCreator;
  */
 @Getter
 public class GsvcException extends RuntimeException {
+
     private final ServiceError error;
 
     public GsvcException(ServiceError error, Throwable e) {
@@ -18,9 +19,7 @@ public class GsvcException extends RuntimeException {
 
     @Override
     public String toString() {
-        return new ToStringCreator(this)
-            .append("errCode", error.code)
-            .append("errMsg", error.message)
-            .toString();
+        return new ToStringCreator(this).append("errCode", error.code).append("errMsg", error.message).toString();
     }
+
 }

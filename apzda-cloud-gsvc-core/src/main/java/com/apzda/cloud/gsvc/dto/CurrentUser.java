@@ -9,5 +9,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class CurrentUser {
+
     private String uid;
+
 }

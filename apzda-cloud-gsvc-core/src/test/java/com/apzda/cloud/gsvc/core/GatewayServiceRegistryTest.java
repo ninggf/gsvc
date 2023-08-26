@@ -18,7 +18,7 @@ class GatewayServiceRegistryTest {
     @Test
     void should_be_a_unary_method() throws NoSuchMethodException {
         // given
-        GatewayServiceRegistry.register("test", "greetingService", 0,null, GreetingService.class);
+        GatewayServiceRegistry.register("test", "greetingService", 0, null, GreetingService.class);
 
         // when
         val methods = GatewayServiceRegistry.getServiceMethods("test", "greetingService");
@@ -30,4 +30,5 @@ class GatewayServiceRegistryTest {
         assertThat(methods).containsKey("sayHi");
         System.out.println(methods);
     }
+
 }

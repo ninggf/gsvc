@@ -19,7 +19,9 @@ import java.util.*;
  * @author ninggf
  */
 public class GsvcContextHolder {
+
     private static final XForwardedHeadersFilter xForwardedHeadersFilter = new XForwardedHeadersFilter();
+
     private static final String FILTERED_HTTP_HEADERS = "FILTERED_HTTP_HEADERS";
 
     public static Optional<HttpServletRequest> getRequest() {
@@ -103,11 +105,11 @@ public class GsvcContextHolder {
     }
 
     private static MultiValueMap<String, String> createDefaultHttpHeaders(HttpServletRequest request) {
-        MultiValueMap<String, String> headers =
-            CollectionUtils.toMultiValueMap(new LinkedCaseInsensitiveMap<>(8, Locale.ENGLISH));
-        for (Enumeration<?> names = request.getHeaderNames(); names.hasMoreElements(); ) {
+        MultiValueMap<String, String> headers = CollectionUtils
+            .toMultiValueMap(new LinkedCaseInsensitiveMap<>(8, Locale.ENGLISH));
+        for (Enumeration<?> names = request.getHeaderNames(); names.hasMoreElements();) {
             String name = (String) names.nextElement();
-            for (Enumeration<?> values = request.getHeaders(name); values.hasMoreElements(); ) {
+            for (Enumeration<?> values = request.getHeaders(name); values.hasMoreElements();) {
                 headers.add(name, (String) values.nextElement());
             }
         }
@@ -127,4 +129,5 @@ public class GsvcContextHolder {
         }
         return "";
     }
+
 }

@@ -13,5 +13,7 @@ import java.net.URI;
 @Validated
 @ConfigurationProperties("sa-token.auth")
 public class SaTokenExtendProperties {
+
     private URI loginUrl;
+
 }

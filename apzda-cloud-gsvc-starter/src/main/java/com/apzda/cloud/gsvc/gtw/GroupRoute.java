@@ -16,5 +16,7 @@ import java.util.List;
 @ToString(callSuper = true)
 @Validated
 public class GroupRoute extends Route {
+
     private List<Route> routes = Collections.emptyList();
+
 }

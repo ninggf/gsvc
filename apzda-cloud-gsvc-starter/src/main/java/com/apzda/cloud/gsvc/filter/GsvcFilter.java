@@ -15,10 +15,10 @@ import java.util.UUID;
  */
 @Order(SaTokenConsts.ASSEMBLY_ORDER + 1)
 public class GsvcFilter implements Filter {
+
     @Override
-    public void doFilter(ServletRequest servletRequest,
-                         ServletResponse servletResponse,
-                         FilterChain filterChain) throws IOException, ServletException {
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
+            throws IOException, ServletException {
 
         if (servletRequest instanceof HttpServletRequest request) {
             val header = request.getHeader("X-Request-Id");
@@ -29,4 +29,5 @@ public class GsvcFilter implements Filter {
         }
         filterChain.doFilter(servletRequest, servletResponse);
     }
+
 }

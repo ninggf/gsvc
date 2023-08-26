@@ -18,33 +18,27 @@
 package com.apzda.cloud.gsvc.proto;
 
 public final class GreetingServiceGsvc {
-    private static final java.util.Map<String,Object[]> METHOD_META_INFO = new java.util.HashMap<>();
+
+    private static final java.util.Map<String, Object[]> METHOD_META_INFO = new java.util.HashMap<>();
 
     static {
-        METHOD_META_INFO.put("sayHello",new Object[]{
-            io.grpc.MethodDescriptor.MethodType.UNARY,
-            HelloRequest.class,
-            HelloResponse.class
-        });
-        METHOD_META_INFO.put("sayHei",new Object[]{
-            io.grpc.MethodDescriptor.MethodType.UNARY,
-            HelloRequest.class,
-            HelloResponse.class
-        });
-        METHOD_META_INFO.put("sayHi",new Object[]{
-            io.grpc.MethodDescriptor.MethodType.UNARY,
-            HelloRequest.class,
-            HelloResponse.class
-        });
+        METHOD_META_INFO.put("sayHello",
+                new Object[] { io.grpc.MethodDescriptor.MethodType.UNARY, HelloRequest.class, HelloResponse.class });
+        METHOD_META_INFO.put("sayHei",
+                new Object[] { io.grpc.MethodDescriptor.MethodType.UNARY, HelloRequest.class, HelloResponse.class });
+        METHOD_META_INFO.put("sayHi",
+                new Object[] { io.grpc.MethodDescriptor.MethodType.UNARY, HelloRequest.class, HelloResponse.class });
     }
 
-    private GreetingServiceGsvc() {}
+    private GreetingServiceGsvc() {
+    }
 
     public static Object[] getMetadata(String methodName) throws NoSuchMethodException {
         Object[] objects = METHOD_META_INFO.get(methodName);
-        if(objects!=null){
+        if (objects != null) {
             return objects;
         }
         throw new NoSuchMethodException(methodName);
     }
+
 }

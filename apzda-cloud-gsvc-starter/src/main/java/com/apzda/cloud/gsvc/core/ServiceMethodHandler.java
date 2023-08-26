@@ -41,17 +41,23 @@ import java.util.*;
  */
 @Slf4j
 public class ServiceMethodHandler {
+
     private final ServerRequest request;
+
     private final GatewayServiceConfigure svcConfigure;
+
     private final GatewayServiceRegistry.MethodInfo methodInfo;
+
     private final ObjectMapper objectMapper;
+
     private final List<Tuple2<File, FilePart>> fileContents = new ArrayList<>();
+
     private final GsvcExceptionHandler exceptionHandler;
+
     private String logId;
 
-    public ServiceMethodHandler(ServerRequest request,
-                                GatewayServiceRegistry.MethodInfo methodInfo,
-                                ApplicationContext applicationContext) {
+    public ServiceMethodHandler(ServerRequest request, GatewayServiceRegistry.MethodInfo methodInfo,
+            ApplicationContext applicationContext) {
         this.request = request;
         this.methodInfo = methodInfo;
         svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
@@ -59,10 +65,8 @@ public class ServiceMethodHandler {
         objectMapper = ResponseUtils.OBJECT_MAPPER;
     }
 
-    public static ServerResponse handle(ServerRequest request,
-                                        GatewayServiceRegistry.MethodInfo methodInfo,
-                                        ApplicationContext applicationContext
-    ) {
+    public static ServerResponse handle(ServerRequest request, GatewayServiceRegistry.MethodInfo methodInfo,
+            ApplicationContext applicationContext) {
         val mInfo = GatewayServiceRegistry.getServiceMethod(methodInfo);
 
         return new ServiceMethodHandler(request, mInfo, applicationContext).run();
@@ -72,10 +76,8 @@ public class ServiceMethodHandler {
         try {
             logId = GsvcContextHolder.getRequestId();
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Start to call method: {}@{}/{}", logId,
-                          methodInfo.getServiceName(),
-                          methodInfo.getAppName(),
-                          methodInfo.getDmName());
+                log.trace("[{}] Start to call method: {}@{}/{}", logId, methodInfo.getServiceName(),
+                        methodInfo.getAppName(), methodInfo.getDmName());
             }
             // 1. 解析请求体
             Object requestObj = deserializeRequest();
@@ -90,11 +92,10 @@ public class ServiceMethodHandler {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
             };
-        } catch (Exception e) {
-            log.error("[{}] Start to call method: {}@{}/{}", logId,
-                      methodInfo.getServiceName(),
-                      methodInfo.getAppName(),
-                      methodInfo.getDmName(), e);
+        }
+        catch (Exception e) {
+            log.error("[{}] Start to call method: {}@{}/{}", logId, methodInfo.getServiceName(),
+                    methodInfo.getAppName(), methodInfo.getDmName(), e);
             return exceptionHandler.handle(request, e);
         }
     }
@@ -106,16 +107,14 @@ public class ServiceMethodHandler {
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(mono);
     }
 
-    private ServerResponse doUnaryCall(Object requestObj) throws
-        InvocationTargetException,
-        IllegalAccessException,
-        JsonProcessingException {
+    private ServerResponse doUnaryCall(Object requestObj)
+            throws InvocationTargetException, IllegalAccessException, JsonProcessingException {
         val resp = methodInfo.call(requestObj);
         val response = createResponse(resp);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private Object deserializeRequest() throws IOException, ServletException {
         val contentType = request.headers().contentType().orElse(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -132,17 +131,19 @@ public class ServiceMethodHandler {
             log.trace("[{}] Request resolved: {}", logId, requestBody);
 
             return objectMapper.readValue(requestBody, reqClass);
-        } else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA) || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
+        }
+        else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA)
+                || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
             MultiValueMap<String, String> queryParams = request.params();
             val multipartData = Mono.just(request.multipartData());
-            args = Mono.zip(Mono.just(queryParams), multipartData)
-                       .map(tuple -> {
-                           Map<String, Object> result = new HashMap<>();
-                           tuple.getT1().forEach((key, values) -> addBindValue(result, key, values));
-                           tuple.getT2().forEach((key, values) -> addBindValue(result, key, values));
-                           return result;
-                       }).block(readTimeout);
-        } else {
+            args = Mono.zip(Mono.just(queryParams), multipartData).map(tuple -> {
+                Map<String, Object> result = new HashMap<>();
+                tuple.getT1().forEach((key, values) -> addBindValue(result, key, values));
+                tuple.getT2().forEach((key, values) -> addBindValue(result, key, values));
+                return result;
+            }).block(readTimeout);
+        }
+        else {
             // 此处真的是
             args = new HashMap<String, String>();
             for (Map.Entry<String, List<String>> kv : request.params().entrySet()) {
@@ -151,7 +152,7 @@ public class ServiceMethodHandler {
         }
 
         if (args != null) {
-            //文件上传
+            // 文件上传
             if (!fileContents.isEmpty()) {
                 Duration uploadTimeout = svcConfigure.getUploadTimeout(serviceIndex, dmName);
                 val stopWatch = new StopWatch("处理上传文件");
@@ -179,42 +180,40 @@ public class ServiceMethodHandler {
 
     private void addBindValue(Map<String, Object> params, String key, List<?> values) {
         if (!CollectionUtils.isEmpty(values)) {
-            values = values.stream()
-                           .map(value -> {
-                               if (value instanceof FilePart filePart) {
-                                   val headers = filePart.headers();
-                                   File tmpFile = null;
-                                   try {
-                                       tmpFile = File.createTempFile("UP_LD_", ".part");
-                                   } catch (IOException e) {
-                                       //bookmark: 服务异常处理
-                                       throw new RuntimeException(e);
-                                   }
+            values = values.stream().map(value -> {
+                if (value instanceof FilePart filePart) {
+                    val headers = filePart.headers();
+                    File tmpFile = null;
+                    try {
+                        tmpFile = File.createTempFile("UP_LD_", ".part");
+                    }
+                    catch (IOException e) {
+                        // bookmark: 服务异常处理
+                        throw new RuntimeException(e);
+                    }
 
-                                   var file = UploadFile.builder()
-                                                        .file(tmpFile.getAbsolutePath())
-                                                        .name(filePart.name())
-                                                        .ext(FileUtil.extName(filePart.filename()))
-                                                        .filename(filePart.filename())
-                                                        .contentType(Optional.ofNullable(headers.getContentType())
-                                                                             .orElse(MediaType.TEXT_PLAIN)
-                                                                             .toString());
+                    var file = UploadFile.builder()
+                        .file(tmpFile.getAbsolutePath())
+                        .name(filePart.name())
+                        .ext(FileUtil.extName(filePart.filename()))
+                        .filename(filePart.filename())
+                        .contentType(
+                                Optional.ofNullable(headers.getContentType()).orElse(MediaType.TEXT_PLAIN).toString());
 
-                                   val finalTmpFile = tmpFile;
-                                   if (log.isTraceEnabled()) {
-                                       log.trace("[{}] 文件'{}'将上传到: {}",
-                                                 logId,
-                                                 filePart.filename(),
-                                                 tmpFile.getAbsoluteFile());
-                                   }
-                                   fileContents.add(Tuples.of(finalTmpFile, filePart));
-                                   return file.build();
-                               } else if (value instanceof FormFieldPart formFieldPart) {
-                                   return formFieldPart.value();
-                               } else {
-                                   return value;
-                               }
-                           }).toList();
+                    val finalTmpFile = tmpFile;
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}] 文件'{}'将上传到: {}", logId, filePart.filename(), tmpFile.getAbsoluteFile());
+                    }
+                    fileContents.add(Tuples.of(finalTmpFile, filePart));
+                    return file.build();
+                }
+                else if (value instanceof FormFieldPart formFieldPart) {
+                    return formFieldPart.value();
+                }
+                else {
+                    return value;
+                }
+            }).toList();
 
             params.put(key, values.size() == 1 ? values.get(0) : values);
         }
@@ -223,11 +222,8 @@ public class ServiceMethodHandler {
     private String createResponse(Object resp) throws JsonProcessingException {
         val respStr = objectMapper.writeValueAsString(resp);
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Response of {}@{}/{} is: {}", logId,
-                      methodInfo.getServiceName(),
-                      methodInfo.getAppName(),
-                      methodInfo.getDmName(),
-                      StringUtils.truncate(respStr, 256));
+            log.trace("[{}] Response of {}@{}/{} is: {}", logId, methodInfo.getServiceName(), methodInfo.getAppName(),
+                    methodInfo.getDmName(), StringUtils.truncate(respStr, 256));
         }
         return respStr;
     }
@@ -243,9 +239,11 @@ public class ServiceMethodHandler {
                 line = reader.readLine();
             }
             return stringBuilder.toString();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             log.error("[{}] Retrieve request body failed: {}", logId, e.getMessage());
             return null;
         }
     }
+
 }

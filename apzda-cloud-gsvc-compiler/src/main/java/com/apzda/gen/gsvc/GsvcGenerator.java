@@ -9,10 +9,12 @@ import org.apache.dubbo.gen.AbstractGenerator;
  * @author fengz
  */
 public class GsvcGenerator extends AbstractGenerator {
+
     public static void main(String[] args) {
         if (args.length == 0) {
             ProtocPlugin.generate(new GsvcGenerator());
-        } else {
+        }
+        else {
             ProtocPlugin.debug(new GsvcGenerator(), args[0]);
         }
     }
@@ -46,4 +48,5 @@ public class GsvcGenerator extends AbstractGenerator {
     protected boolean enableMultipleTemplateFiles() {
         return true;
     }
+
 }

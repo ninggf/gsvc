@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.exception.handler;
 
-
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import com.apzda.cloud.gsvc.ServiceError;
@@ -26,6 +25,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GsvcExceptionHandler {
+
     private final SaTokenExtendProperties properties;
 
     public ServerResponse handle(ServerRequest request, Throwable e) {
@@ -56,18 +56,21 @@ public class GsvcExceptionHandler {
             response.setErrCode(errCode);
             response.setErrMsg(notLoginException.getMessage());
             return response;
-        } else if (e instanceof NotPermissionException) {
+        }
+        else if (e instanceof NotPermissionException) {
             val response = new Response();
             response.setErrCode(ServiceError.REMOTE_SERVICE_FORBIDDEN.code);
             response.setErrMsg(ServiceError.REMOTE_SERVICE_FORBIDDEN.message);
             return response;
-        } else if (e instanceof GsvcException gsvcException) {
+        }
+        else if (e instanceof GsvcException gsvcException) {
             val response = new Response();
             val error = gsvcException.getError();
             response.setErrMsg(error.message);
             response.setErrCode(error.code);
             return response;
-        } else {
+        }
+        else {
             val response = new Response();
             val error = ServiceError.SERVICE_ERROR;
             response.setErrMsg(error.message);
@@ -75,4 +78,5 @@ public class GsvcExceptionHandler {
             return response;
         }
     }
+
 }

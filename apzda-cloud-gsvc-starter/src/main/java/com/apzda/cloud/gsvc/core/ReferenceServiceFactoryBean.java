@@ -16,29 +16,40 @@ import java.lang.reflect.Proxy;
 @Slf4j
 @RequiredArgsConstructor
 @Data
-public class ReferenceServiceFactoryBean implements FactoryBean<Object>, ApplicationContextAware, MessageSourceAware, ResourceLoaderAware {
-    private final String id;
+public class ReferenceServiceFactoryBean
+        implements FactoryBean<Object>, ApplicationContextAware, MessageSourceAware, ResourceLoaderAware {
+
+    private final String serviceName;
+
     private final String appName;
+
+    private final String contextPath;
+
     private final String interfaceName;
-    private final int index;
+
+    private final int serviceIndex;
+
     private ApplicationContext applicationContext;
+
     private MessageSource messageSource;
+
     private ResourceLoader resourceLoader;
 
     @Override
     public Object getObject() throws Exception {
         val proxy = new ReferenceServiceProxy(this);
-        return Proxy.newProxyInstance(ReferenceServiceProxy.class.getClassLoader(),
-            new Class[]{getObjectType()},
-            proxy);
+        return Proxy.newProxyInstance(ReferenceServiceProxy.class.getClassLoader(), new Class[] { getObjectType() },
+                proxy);
     }
 
     @Override
     public Class<?> getObjectType() {
         try {
             return Class.forName(interfaceName);
-        } catch (ClassNotFoundException e) {
+        }
+        catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
+
 }

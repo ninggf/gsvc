@@ -18,9 +18,11 @@
 package com.apzda.cloud.gsvc.proto;
 
 public interface GreetingService {
+
     HelloResponse sayHello(HelloRequest request);
 
     void sayHei(HelloRequest request, io.grpc.stub.StreamObserver<HelloResponse> responseObserver);
 
     io.grpc.stub.StreamObserver<HelloRequest> sayHi(io.grpc.stub.StreamObserver<HelloResponse> responseObserver);
+
 }

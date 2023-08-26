@@ -17,9 +17,12 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Response implements Serializable {
+
     @Serial
     private static final long serialVersionUID = 2865776613817344868L;
+
     private int errCode;
+
     private String errMsg;
 
     public static Response error(int code, String errMsg) {
@@ -32,4 +35,5 @@ public class Response implements Serializable {
     public static Response error(int code) {
         return error(code, null);
     }
+
 }

@@ -17,12 +17,16 @@ import java.util.Map;
  */
 @Slf4j
 public class GatewayServiceRegistry {
+
     private static final Map<String, Map<String, MethodInfo>> SERVICES = new HashMap<>();
+
     private static final Map<String, Boolean> LOCAL_IMPLS = new HashMap<>();
+
     private static final Map<Integer, Boolean> LOCAL_IMPLS_BY_INDEX = new HashMap<>();
 
     @SuppressWarnings(("unchecked"))
-    public static void register(String appName, String serviceName, int serviceIndex, Object bean, Class<?> interfaceName) {
+    public static void register(String appName, String serviceName, int serviceIndex, Object bean,
+            Class<?> interfaceName) {
 
         String serviceId = serviceName + "@" + appName;
         if (SERVICES.containsKey(serviceId)) {
@@ -46,9 +50,11 @@ public class GatewayServiceRegistry {
                 hm.put(dmName, methodInfo);
             }
             SERVICES.put(serviceId, hm);
-        } catch (ClassNotFoundException e) {
+        }
+        catch (ClassNotFoundException e) {
             log.warn("Gsvc class {} not found for service '{}'", serviceMetaCls, serviceId);
-        } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
+        }
+        catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
             log.warn("Gsvc class {} is invalid for service '{}': {}", serviceMetaCls, serviceId, e.getMessage());
         }
     }
@@ -94,9 +100,11 @@ public class GatewayServiceRegistry {
                 val methodInfo = new MethodInfo(dm, app, service, -1, meta, null);
                 hm.put(dmName, methodInfo);
             }
-        } catch (ClassNotFoundException e) {
+        }
+        catch (ClassNotFoundException e) {
             log.warn("Gsvc class {} not found ", serviceMetaCls);
-        } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
+        }
+        catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
             log.warn("Gsvc class {} is invalid: {}", serviceMetaCls, e.getMessage());
         }
         return hm;
@@ -104,19 +112,31 @@ public class GatewayServiceRegistry {
 
     @Getter
     public static class MethodInfo {
+
         private final Method method;
+
         private final String appName;
+
         private final String serviceName;
+
         private final String dmName;
+
         private final Object bean;
+
         private final Object[] meta;
+
         private final Class<?> returnType;
+
         private final Class<?> requestType;
+
         private final MethodDescriptor.MethodType type;
+
         private final int serviceIndex;
+
         private Class<?> currentUserClz;
 
-        public MethodInfo(Method method, String appName, String serviceName, int serviceIndex, Object[] meta, Object bean) {
+        public MethodInfo(Method method, String appName, String serviceName, int serviceIndex, Object[] meta,
+                Object bean) {
             this.method = method;
             this.appName = appName;
             this.serviceName = serviceName;
@@ -132,7 +152,8 @@ public class GatewayServiceRegistry {
                 if (log.isTraceEnabled()) {
                     log.trace("{} need CurrentUser instance", this);
                 }
-            } catch (NoSuchMethodException e) {
+            }
+            catch (NoSuchMethodException e) {
                 currentUserClz = null;
             }
         }
@@ -147,11 +168,12 @@ public class GatewayServiceRegistry {
 
         @Override
         public String toString() {
-            return new ToStringCreator(this)
-                .append("appName", appName)
+            return new ToStringCreator(this).append("appName", appName)
                 .append("serviceName", serviceName)
                 .append("method", dmName)
                 .toString();
         }
+
     }
+
 }

@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 public class DemoController {
+
     @GetMapping("/demo/h")
     public String hello() {
         StpUtil.checkLogin();
         return "hello";
     }
+
 }

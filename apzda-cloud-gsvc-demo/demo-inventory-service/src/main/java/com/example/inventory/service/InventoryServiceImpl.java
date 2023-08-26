@@ -1,6 +1,5 @@
 package com.example.inventory.service;
 
-
 import cn.dev33.satoken.stp.StpUtil;
 import com.apzda.cloud.gsvc.proto.HelloReq;
 import com.apzda.cloud.gsvc.proto.HelloRes;
@@ -18,13 +17,12 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class InventoryServiceImpl implements InventoryService {
+
     @Override
     public HelloRes sayHello(HelloReq request) {
         // unary
         val helloResp = HelloRes.newBuilder();
-        val s = StpUtil.getSession().get("aaa", "aaa");
-        helloResp.setName("你好, " + request.getName() + " session data:  " + s + ", uid:" + request.getCurrentUser()
-            .getUid());
+        helloResp.setName("你好, " + request.getName() + ", uid:" + request.getCurrentUser().getUid());
         return helloResp.build();
     }
 
@@ -55,11 +53,13 @@ public class InventoryServiceImpl implements InventoryService {
                 TimeUnit.SECONDS.sleep(10);
                 sink.next(builder.build());
                 sink.complete();
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e) {
                 sink.error(e);
             }
         });
 
         return Mono.error(new NullPointerException());
     }
+
 }

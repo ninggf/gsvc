@@ -10,10 +10,10 @@ import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 
-
 @ControllerAdvice
 @Configuration
 public class DemoConfig {
+
     @Autowired
     GsvcExceptionHandler handler;
 
@@ -24,9 +24,11 @@ public class DemoConfig {
             try {
                 StpUtil.checkLogin();
                 return ServerResponse.ok().body("hello");
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 return handler.handle(request, e);
             }
         }).build();
     }
+
 }

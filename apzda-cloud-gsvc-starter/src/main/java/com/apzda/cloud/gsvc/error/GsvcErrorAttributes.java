@@ -14,10 +14,12 @@ import java.util.Map;
  */
 @RequiredArgsConstructor
 public class GsvcErrorAttributes extends DefaultErrorAttributes {
+
     private final GsvcExceptionHandler handler;
 
     @Override
     public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
         return super.getErrorAttributes(webRequest, options);
     }
+
 }

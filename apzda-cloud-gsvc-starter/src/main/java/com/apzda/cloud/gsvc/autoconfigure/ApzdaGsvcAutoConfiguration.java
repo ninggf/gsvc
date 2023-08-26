@@ -27,12 +27,14 @@ import org.springframework.util.StringUtils;
 /**
  * @author fengz
  */
-@AutoConfiguration(before = {WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class})
-@EnableConfigurationProperties({ServiceConfigurationProperties.class, SaTokenExtendProperties.class})
-@Import({ApzdaGsvcWebConfig.class})
+@AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class })
+@EnableConfigurationProperties({ ServiceConfigurationProperties.class, SaTokenExtendProperties.class })
+@Import({ ApzdaGsvcWebConfig.class })
 @Slf4j
 public class ApzdaGsvcAutoConfiguration implements SmartLifecycle, ApplicationContextAware {
+
     private ApplicationContext applicationContext;
+
     private volatile boolean isRunning = false;
 
     @Override
@@ -49,10 +51,10 @@ public class ApzdaGsvcAutoConfiguration implements SmartLifecycle, ApplicationCo
         ServiceConfigurationProperties properties = applicationContext.getBean(ServiceConfigurationProperties.class);
         val config = properties.getConfig();
         val pbConfig = ProtobufJacksonConfig.builder()
-                                            .acceptLiteralFieldnames(config.isAcceptLiteralFieldNames())
-                                            .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
-                                            .serializeLongsAsString(config.isSerializeLongsAsString())
-                                            .build();
+            .acceptLiteralFieldnames(config.isAcceptLiteralFieldNames())
+            .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
+            .serializeLongsAsString(config.isSerializeLongsAsString())
+            .build();
         ResponseUtils.config(pbConfig);
         applicationContext.getBean(ObjectMapper.class).registerModule(new ProtobufModule(pbConfig));
 
@@ -73,7 +75,8 @@ public class ApzdaGsvcAutoConfiguration implements SmartLifecycle, ApplicationCo
             val bean = applicationContext.getBean(interfaceName);
             if (GatewayServiceRegistry.isLocalService(i)) {
                 GatewayServiceRegistry.register(appName, name, i, bean, interfaceName);
-            } else {
+            }
+            else {
                 GatewayServiceRegistry.register(rc.getApp(), name, i, bean, interfaceName);
             }
         }
@@ -106,4 +109,5 @@ public class ApzdaGsvcAutoConfiguration implements SmartLifecycle, ApplicationCo
     BeanFactoryPostProcessor gsvcBeanFactoryPostProcessor() {
         return new GatewayServiceBeanFactoryPostProcessor();
     }
+
 }

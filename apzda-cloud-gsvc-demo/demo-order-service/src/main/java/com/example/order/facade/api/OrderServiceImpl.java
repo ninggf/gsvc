@@ -1,6 +1,5 @@
 package com.example.order.facade.api;
 
-
 import cn.dev33.satoken.stp.StpUtil;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.proto.CurrentUser;
@@ -20,6 +19,7 @@ import reactor.core.scheduler.Schedulers;
  */
 @Service
 public class OrderServiceImpl implements OrderService {
+
     @Resource(type = InventoryService.class)
     private InventoryService inventoryService;
 
@@ -37,9 +37,9 @@ public class OrderServiceImpl implements OrderService {
             StpUtil.getSession(true).set("aaa", "666");
             val tokenInfo = StpUtil.getTokenInfo();
             val builder = LoginRes.newBuilder()
-                                  .setToken(tokenInfo.tokenName + "=" + tokenInfo.tokenValue)
-                                  .setTokenValue(tokenInfo.tokenValue)
-                                  .setTokenName(tokenInfo.tokenName);
+                .setToken(tokenInfo.tokenName + "=" + tokenInfo.tokenValue)
+                .setTokenValue(tokenInfo.tokenValue)
+                .setTokenName(tokenInfo.tokenName);
             sink.success(builder.build());
         });
     }
@@ -53,8 +53,8 @@ public class OrderServiceImpl implements OrderService {
         assert helloRes != null;
 
         builder.setName(helloRes.getName() + " from inventory")
-               .setErrCode(helloRes.getErrCode())
-               .setErrMsg(helloRes.getErrMsg());
+            .setErrCode(helloRes.getErrCode())
+            .setErrMsg(helloRes.getErrMsg());
 
         return builder.build();
     }
@@ -63,8 +63,6 @@ public class OrderServiceImpl implements OrderService {
     public OrderHelloResp sayHello(OrderHelloRequest request) {
         val helloRequest = HelloReq.newBuilder();
         helloRequest.setName(request.getName());
-        StpUtil.checkLogin();
-        helloRequest.setCurrentUser(CurrentUser.newBuilder().setUid(request.getCurrentUser().getUid()).build());
         val helloResp = inventoryService.sayHello(helloRequest.build());
         val resp = OrderHelloResp.newBuilder(OrderHelloResp.getDefaultInstance());
         resp.setName(helloResp.getName())
@@ -77,13 +75,11 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public HomeRes home(HomeReq request) {
         val helloRequest = HelloReq.newBuilder();
-        val request1 = GsvcContextHolder.getRequest();
         helloRequest.setName("leo");
-        // StpUtil.getSession().set("aaa", "666");
         val helloResp = inventoryService.sayHello(helloRequest.build());
         val resp = HomeRes.newBuilder(HomeRes.getDefaultInstance());
-        resp.setErrCode(helloResp.getErrCode())
-            .setErrMsg(helloResp.getErrMsg());
+        resp.setErrCode(helloResp.getErrCode()).setErrMsg(helloResp.getErrMsg());
         return resp.build();
     }
+
 }

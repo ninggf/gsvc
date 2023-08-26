@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
  **/
 @Service
 public class GreetingServiceImpl implements GreetingService {
+
     // unary
     @Override
     public HelloResponse sayHello(HelloRequest request) {
@@ -44,4 +45,5 @@ public class GreetingServiceImpl implements GreetingService {
     public Mono<HelloResponse> sayHi(Mono<HelloRequest> request) {
         return Mono.error(new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE));
     }
+
 }

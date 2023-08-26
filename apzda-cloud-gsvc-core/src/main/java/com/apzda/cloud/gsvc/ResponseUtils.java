@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
  */
 @Slf4j
 public class ResponseUtils {
+
     public static final ObjectMapper OBJECT_MAPPER;
 
     static {
@@ -38,12 +39,14 @@ public class ResponseUtils {
         // bookmark 解析响应
         try {
             return OBJECT_MAPPER.readValue(responseBody, tClass);
-        } catch (JsonProcessingException e) {
+        }
+        catch (JsonProcessingException e) {
             log.error("Cannot convert 【{}】 to class: {}", StringUtils.truncate(responseBody, 256), tClass);
             try {
-                //bookmark: fallback to jackson error
+                // bookmark: fallback to jackson error
                 return OBJECT_MAPPER.readValue(ServiceError.JACKSON_ERROR.fallbackString, tClass);
-            } catch (JsonProcessingException ex) {
+            }
+            catch (JsonProcessingException ex) {
                 // cannot get here!!!
                 throw new RuntimeException(ex);
             }
@@ -56,4 +59,5 @@ public class ResponseUtils {
         }
         return parseResponse(error.fallbackString(serviceName), tClass);
     }
+
 }

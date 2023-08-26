@@ -17,12 +17,17 @@ import java.util.List;
 @Data
 @Validated
 public class Route {
+
     @NotBlank
     @NotNull
     private String path;
+
     private Boolean login;
+
     private Class<?> interfaceName;
+
     private String method;
+
     private List<String> filters = new ArrayList<>();
 
     @Getter(AccessLevel.PRIVATE)
@@ -53,4 +58,5 @@ public class Route {
     public Route filters(String filters) {
         return this;
     }
+
 }

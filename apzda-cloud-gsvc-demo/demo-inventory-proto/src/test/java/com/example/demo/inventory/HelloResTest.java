@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class HelloResTest {
+
     @Test
     void the_default_value_is_ok() {
         HelloRes defaultInstance = HelloRes.newBuilder().build();
@@ -13,4 +14,5 @@ public class HelloResTest {
         assertThat(defaultInstance.getErrCode()).isEqualTo(0);
         assertThat(defaultInstance.getErrMsg()).isEmpty();
     }
+
 }
