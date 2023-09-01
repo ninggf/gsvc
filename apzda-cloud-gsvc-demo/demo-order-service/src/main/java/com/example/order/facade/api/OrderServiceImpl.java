@@ -1,15 +1,11 @@
 package com.example.order.facade.api;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
-import com.apzda.cloud.gsvc.proto.CurrentUser;
 import com.apzda.cloud.gsvc.proto.HelloReq;
 import com.apzda.cloud.gsvc.proto.InventoryService;
-import com.apzda.cloud.gsvc.proto.InventoryServiceGrpc;
 import com.example.order.proto.*;
 import jakarta.annotation.Resource;
 import lombok.val;
-import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -22,12 +18,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Resource(type = InventoryService.class)
     private InventoryService inventoryService;
-
-    @GrpcClient("inventoryService")
-    private InventoryServiceGrpc.InventoryServiceStub inventoryServiceStub;
-
-    @GrpcClient("inventoryService")
-    private InventoryServiceGrpc.InventoryServiceBlockingStub inventoryServiceBlockingStub;
 
     @Override
     public Mono<LoginRes> login(LoginReq request) {
@@ -74,11 +64,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public HomeRes home(HomeReq request) {
-        val helloRequest = HelloReq.newBuilder();
-        helloRequest.setName("leo");
-        val helloResp = inventoryService.sayHello(helloRequest.build());
         val resp = HomeRes.newBuilder(HomeRes.getDefaultInstance());
-        resp.setErrCode(helloResp.getErrCode()).setErrMsg(helloResp.getErrMsg());
         return resp.build();
     }
 

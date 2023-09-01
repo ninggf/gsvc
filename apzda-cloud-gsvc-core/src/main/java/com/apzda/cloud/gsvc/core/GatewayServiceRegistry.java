@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.core;
 
 import io.grpc.MethodDescriptor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -18,11 +19,11 @@ import java.util.Map;
 @Slf4j
 public class GatewayServiceRegistry {
 
-    private static final Map<String, Map<String, MethodInfo>> SERVICES = new HashMap<>();
+    private static final Map<String, Map<String, ServiceMethod>> SERVICES = new HashMap<>();
 
-    private static final Map<String, Boolean> LOCAL_IMPLS = new HashMap<>();
+    private static final Map<String, Map<String, ServiceMethod>> DECLARED = new HashMap<>();
 
-    private static final Map<Integer, Boolean> LOCAL_IMPLS_BY_INDEX = new HashMap<>();
+    private static final Map<Integer, ServiceInfo> SERVICE_INFO = new HashMap<>();
 
     @SuppressWarnings(("unchecked"))
     public static void register(String appName, String serviceName, int serviceIndex, Object bean,
@@ -36,14 +37,14 @@ public class GatewayServiceRegistry {
 
         try {
             val metaMethod = Class.forName(serviceMetaCls).getMethod("getMetadata", String.class);
-            val hm = new HashMap<String, MethodInfo>();
+            val hm = new HashMap<String, ServiceMethod>();
 
             for (Method dm : interfaceName.getDeclaredMethods()) {
                 val dmName = dm.getName();
                 val meta = (Object[]) metaMethod.invoke(null, dmName);
-                val methodInfo = new MethodInfo(dm, appName, serviceName, serviceIndex, meta, bean);
+                val methodInfo = new ServiceMethod(dm, appName, serviceName, serviceIndex, meta, bean);
                 if (bean != null && log.isDebugEnabled()) {
-                    if (!LOCAL_IMPLS_BY_INDEX.getOrDefault(serviceIndex, false)) {
+                    if (serviceIndex != -1 && !SERVICE_INFO.getOrDefault(serviceIndex, ServiceInfo.DEFAULT).local) {
                         log.debug("Will Proxy method call: {}@{}/{}", serviceName, appName, dmName);
                     }
                 }
@@ -59,45 +60,53 @@ public class GatewayServiceRegistry {
         }
     }
 
-    public static MethodInfo getServiceMethod(String appName, String serviceName, String methodName) {
+    public static ServiceMethod getServiceMethod(String appName, String serviceName, String methodName) {
         String serviceId = serviceName + "@" + appName;
         return SERVICES.getOrDefault(serviceId, Collections.emptyMap()).get(methodName);
     }
 
-    public static Map<String, MethodInfo> getServiceMethods(String appName, String serviceName) {
+    public static Map<String, ServiceMethod> getServiceMethods(String appName, String serviceName) {
         String serviceId = serviceName + "@" + appName;
         return SERVICES.getOrDefault(serviceId, Collections.emptyMap());
     }
 
-    public static MethodInfo getServiceMethod(MethodInfo m) {
+    public static ServiceMethod fromDeclaredMethod(ServiceMethod m) {
         return getServiceMethod(m.appName, m.serviceName, m.dmName);
     }
 
-    public static void markLocalService(String appName, String serviceName, Integer index) {
-        String serviceId = serviceName + "@" + appName;
-        LOCAL_IMPLS.put(serviceId, true);
-        LOCAL_IMPLS_BY_INDEX.put(index, true);
+    public static void registerServiceInfo(ServiceInfo serviceInfo) {
+        SERVICE_INFO.put(serviceInfo.index, serviceInfo);
+        val methods = genDeclaredServiceMethods(serviceInfo.appName, serviceInfo.serviceName, serviceInfo.clazz);
+        DECLARED.put(serviceInfo.appName + "@" + serviceInfo.serviceName, methods);
     }
 
-    public static boolean isLocalService(String appName, String serviceName) {
-        String serviceId = serviceName + "@" + appName;
-        return LOCAL_IMPLS.getOrDefault(serviceId, false);
+    public static ServiceInfo getServiceInfo(Integer serviceIndex) {
+        return SERVICE_INFO.get(serviceIndex);
     }
 
     public static boolean isLocalService(int index) {
-        return LOCAL_IMPLS_BY_INDEX.getOrDefault(index, false);
+        return SERVICE_INFO.getOrDefault(index, ServiceInfo.DEFAULT).local;
     }
 
-    public static Map<String, MethodInfo> getServiceMethods(String app, String service, Class<?> interfaceName) {
+    public static Map<String, ServiceMethod> getDeclaredServiceMethods(ServiceInfo serviceInfo) {
+        return getDeclaredServiceMethods(serviceInfo.appName, serviceInfo.serviceName);
+    }
+
+    public static Map<String, ServiceMethod> getDeclaredServiceMethods(String app, String service) {
+        return DECLARED.getOrDefault(app + "@" + service, Collections.emptyMap());
+    }
+
+    private static Map<String, ServiceMethod> genDeclaredServiceMethods(String app, String service,
+            Class<?> interfaceName) {
         val serviceMetaCls = interfaceName.getCanonicalName() + "Gsvc";
-        val hm = new HashMap<String, MethodInfo>();
+        val hm = new HashMap<String, ServiceMethod>();
         try {
             val metaMethod = Class.forName(serviceMetaCls).getMethod("getMetadata", String.class);
 
             for (Method dm : interfaceName.getDeclaredMethods()) {
                 val dmName = dm.getName();
                 val meta = (Object[]) metaMethod.invoke(null, dmName);
-                val methodInfo = new MethodInfo(dm, app, service, -1, meta, null);
+                val methodInfo = new ServiceMethod(dm, app, service, -1, meta, null);
                 hm.put(dmName, methodInfo);
             }
         }
@@ -111,7 +120,7 @@ public class GatewayServiceRegistry {
     }
 
     @Getter
-    public static class MethodInfo {
+    public static class ServiceMethod {
 
         private final Method method;
 
@@ -135,7 +144,7 @@ public class GatewayServiceRegistry {
 
         private Class<?> currentUserClz;
 
-        public MethodInfo(Method method, String appName, String serviceName, int serviceIndex, Object[] meta,
+        public ServiceMethod(Method method, String appName, String serviceName, int serviceIndex, Object[] meta,
                 Object bean) {
             this.method = method;
             this.appName = appName;
@@ -173,6 +182,26 @@ public class GatewayServiceRegistry {
                 .append("method", dmName)
                 .toString();
         }
+
+    }
+
+    @Getter
+    @Builder
+    public static class ServiceInfo {
+
+        private int index;
+
+        private String appName;
+
+        private String serviceName;
+
+        private String contextPath;
+
+        private Class<?> clazz;
+
+        private boolean local;
+
+        public static final ServiceInfo DEFAULT = ServiceInfo.builder().build();
 
     }
 

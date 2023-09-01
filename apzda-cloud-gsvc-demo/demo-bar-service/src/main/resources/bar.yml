@@ -1,0 +1,11 @@
+apzda:
+  cloud:
+    service:
+      interface-name: com.apzda.cloud.demo.bar.proto.BarService
+    routes:
+      - path: /bar
+        login: true
+        routes:
+          - path: /hi
+            login: false
+            method: hello

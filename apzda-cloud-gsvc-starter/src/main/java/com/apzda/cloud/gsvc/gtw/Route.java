@@ -13,7 +13,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author fengz
@@ -34,14 +36,31 @@ public class Route {
 
     private List<HttpMethod> actions = Collections.emptyList();
 
-    private List<String> filters = Collections.emptyList();
+    private Set<String> filters = new HashSet<>();
 
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     private Route parent;
 
+    @Getter(AccessLevel.PRIVATE)
+    @Setter(AccessLevel.PRIVATE)
+    private int index;
+
+    public Route parent() {
+        return this.parent;
+    }
+
+    public int index() {
+        return this.index;
+    }
+
     public Route parent(Route parent) {
         this.parent = parent;
+        return this;
+    }
+
+    public Route index(int index) {
+        this.index = index;
         return this;
     }
 
@@ -49,12 +68,7 @@ public class Route {
         if (StringUtils.isBlank(path)) {
             throw new NullPointerException("pat is null");
         }
-        if (this.parent != null) {
-            this.path = this.parent.path + path;
-        }
-        else {
-            this.path = path;
-        }
+        this.path = path;
         return this;
     }
 
@@ -88,9 +102,10 @@ public class Route {
         if (StringUtils.isNotBlank(method)) {
             this.method = method;
         }
-        else if (parent != null) {
+        else if (this.parent != null) {
             // 子路由method不能为空
-            throw new NullPointerException("method is null for " + this.path);
+            throw new IllegalArgumentException(
+                    String.format("method of apzda.cloud.routes[%d].routes[%d] is blank", this.parent.index, index));
         }
         return this;
     }
@@ -119,9 +134,22 @@ public class Route {
 
     public Route filters(String filters) {
         if (StringUtils.isNotBlank(filters)) {
-            this.filters = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(filters);
+            this.filters = new HashSet<>(Splitter.on(",").omitEmptyStrings().trimResults().splitToList(filters));
         }
         return this;
+    }
+
+    @Override
+    public String toString() {
+        if (parent != null) {
+            return String.format(
+                    "apzda.cloud.routes[%d].routes[%d]={path:%s, serviceIndex:%d, method:%s, login:%s, actions:%s}",
+                    parent.index, index, path, serviceIndex, method, login, actions);
+        }
+        else {
+            return String.format("apzda.cloud.routes[%d]={path:%s, serviceIndex:%d, method:%s, login:%s, actions:%s}",
+                    index, path, serviceIndex, method, login, actions);
+        }
     }
 
 }

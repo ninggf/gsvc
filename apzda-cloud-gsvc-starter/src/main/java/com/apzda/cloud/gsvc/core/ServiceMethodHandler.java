@@ -46,7 +46,7 @@ public class ServiceMethodHandler {
 
     private final GatewayServiceConfigure svcConfigure;
 
-    private final GatewayServiceRegistry.MethodInfo methodInfo;
+    private final GatewayServiceRegistry.ServiceMethod serviceMethod;
 
     private final ObjectMapper objectMapper;
 
@@ -56,18 +56,18 @@ public class ServiceMethodHandler {
 
     private String logId;
 
-    public ServiceMethodHandler(ServerRequest request, GatewayServiceRegistry.MethodInfo methodInfo,
+    public ServiceMethodHandler(ServerRequest request, GatewayServiceRegistry.ServiceMethod serviceMethod,
             ApplicationContext applicationContext) {
         this.request = request;
-        this.methodInfo = methodInfo;
+        this.serviceMethod = serviceMethod;
         svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
         exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
         objectMapper = ResponseUtils.OBJECT_MAPPER;
     }
 
-    public static ServerResponse handle(ServerRequest request, GatewayServiceRegistry.MethodInfo methodInfo,
+    public static ServerResponse handle(ServerRequest request, GatewayServiceRegistry.ServiceMethod serviceMethod,
             ApplicationContext applicationContext) {
-        val mInfo = GatewayServiceRegistry.getServiceMethod(methodInfo);
+        val mInfo = GatewayServiceRegistry.fromDeclaredMethod(serviceMethod);
 
         return new ServiceMethodHandler(request, mInfo, applicationContext).run();
     }
@@ -76,13 +76,13 @@ public class ServiceMethodHandler {
         try {
             logId = GsvcContextHolder.getRequestId();
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Start to call method: {}@{}/{}", logId, methodInfo.getServiceName(),
-                        methodInfo.getAppName(), methodInfo.getDmName());
+                log.trace("[{}] Start to call method: {}@{}/{}", logId, serviceMethod.getServiceName(),
+                        serviceMethod.getAppName(), serviceMethod.getDmName());
             }
             // 1. 解析请求体
             Object requestObj = deserializeRequest();
             // 2. 调用方法
-            val type = methodInfo.getType();
+            val type = serviceMethod.getType();
 
             return switch (type) {
                 case UNARY -> doUnaryCall(requestObj);
@@ -93,8 +93,8 @@ public class ServiceMethodHandler {
             };
         }
         catch (Exception e) {
-            log.error("[{}] Start to call method: {}@{}/{}", logId, methodInfo.getServiceName(),
-                    methodInfo.getAppName(), methodInfo.getDmName(), e);
+            log.error("[{}] Start to call method: {}@{}/{}", logId, serviceMethod.getServiceName(),
+                    serviceMethod.getAppName(), serviceMethod.getDmName(), e);
             return exceptionHandler.handle(e, request);
         }
     }
@@ -102,13 +102,13 @@ public class ServiceMethodHandler {
     @SuppressWarnings("unchecked")
     private ServerResponse doStreamingCall(Object requestObj) throws InvocationTargetException, IllegalAccessException {
         // 仅支持Mono
-        val mono = (Mono<Object>) methodInfo.call(requestObj);
+        val mono = (Mono<Object>) serviceMethod.call(requestObj);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(mono);
     }
 
     private ServerResponse doUnaryCall(Object requestObj)
             throws InvocationTargetException, IllegalAccessException, JsonProcessingException {
-        val resp = methodInfo.call(requestObj);
+        val resp = serviceMethod.call(requestObj);
         val response = createResponse(resp);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }
@@ -120,9 +120,9 @@ public class ServiceMethodHandler {
         Object requestObj = null;
         Map args = null;
 
-        val serviceIndex = methodInfo.getServiceIndex();
-        val reqClass = methodInfo.reqClass();
-        val dmName = methodInfo.getDmName();
+        val serviceIndex = serviceMethod.getServiceIndex();
+        val reqClass = serviceMethod.reqClass();
+        val dmName = serviceMethod.getDmName();
         val readTimeout = svcConfigure.getTimeout(serviceIndex, dmName);
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
@@ -221,8 +221,8 @@ public class ServiceMethodHandler {
     private String createResponse(Object resp) throws JsonProcessingException {
         val respStr = objectMapper.writeValueAsString(resp);
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Response of {}@{}/{} is: {}", logId, methodInfo.getServiceName(), methodInfo.getAppName(),
-                    methodInfo.getDmName(), StringUtils.truncate(respStr, 256));
+            log.trace("[{}] Response of {}@{}/{} is: {}", logId, serviceMethod.getServiceName(), serviceMethod.getAppName(),
+                    serviceMethod.getDmName(), StringUtils.truncate(respStr, 256));
         }
         return respStr;
     }

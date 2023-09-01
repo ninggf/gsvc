@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option java_package = "com.apzda.cloud.demo.bar.proto";
+option java_multiple_files = true;
+option java_outer_classname = "BarProto";
+
+
+message BarReq {
+  optional string name = 1;
+  optional uint32 age = 2;
+}
+
+message BarRes {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  optional string name = 3;
+  optional uint32 age = 4;
+}
+
+service BarService {
+  rpc greeting(BarReq) returns (BarRes);
+  rpc hello(BarReq) returns (stream BarRes);
+  rpc hi(stream BarReq) returns(stream BarRes);
+}

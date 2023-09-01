@@ -97,10 +97,10 @@ public class ReferenceServiceProxy implements InvocationHandler {
         return doHttpCall(methodName, args[0], serviceMethod);
     }
 
-    private Object doHttpCall(String methodName, Object request, GatewayServiceRegistry.MethodInfo methodInfo) {
+    private Object doHttpCall(String methodName, Object request, GatewayServiceRegistry.ServiceMethod serviceMethod) {
         String uri = "/GSVC-" + serviceName + "/" + methodName;
-        Class<?> rClass = methodInfo.getReturnType();
-        val type = methodInfo.getType();
+        Class<?> rClass = serviceMethod.getReturnType();
+        val type = serviceMethod.getType();
         log.debug("[{}] Starting {} RPC to service: svc://{}", GsvcContextHolder.getRequestId(), type, uri);
         var req = webClient.post().uri(url + uri).accept(MediaType.APPLICATION_JSON);
         var reqBody = prepareRequestBody(req, request);

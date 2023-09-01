@@ -35,6 +35,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) beanFactory;
         Environment environment = (Environment) bf.getBean("environment");
         String interfaceName;
+
         // 注册远程服务
         for (int i = 0; i < 10000; ++i) {
             interfaceName = environment.getProperty("apzda.cloud.reference[" + i + "].interface-name");
@@ -46,7 +47,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     if (bf.getBeanNamesForType(aClass).length > 0) {
                         // 服务在本地时定义服务访问路由, app使用spring.application.name值
                         val app = environment.getProperty("spring.application.name");
-                        registerRouterFunction(bf, aClass, serviceName, app, i);
+                        val contextPath = environment.getProperty("server.servlet.context-path");
+                        registerRouterFunction(bf, aClass, serviceName, app, contextPath, i);
                         log.info("Registered Reference Service: {}@{} - {}", app, serviceName, aClass);
                     }
                     else if (aClass.isInterface()) {
@@ -84,17 +86,19 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 if (bf.getBeanNamesForType(aClass).length == 0) {
                     throw new BeanDefinitionValidationException("No bean of '" + aClass + "' Found");
                 }
-                // 忽略 apzda.cloud.service.app使用spring.application.name
-                val app = environment.getProperty("spring.application.name");
-                val name = getServiceName(environment.getProperty("apzda.cloud.service.name"), aClass);
-                log.info("Registered Default Service: {}@{} - {}", app, name, aClass);
-                registerRouterFunction(bf, aClass, name, app, -1);
+                // 忽略 apzda.cloud.service.app使用spring.application.serviceName
+                val appName = environment.getProperty("spring.application.name");
+                val contextPath = environment.getProperty("server.servlet.context-path");
+                val serviceName = getServiceName(environment.getProperty("apzda.cloud.service.serviceName"), aClass);
+                log.info("Registered Default Service: {}@{} - {}", appName, serviceName, aClass);
+                registerRouterFunction(bf, aClass, serviceName, appName, contextPath, -1);
             }
             catch (ClassNotFoundException e) {
                 throw new BeanCreationException(interfaceName, e);
             }
         }
 
+        // 注册路由
         val gtwEnabled = Boolean.parseBoolean(environment.getProperty("apzda.cloud.gtw-enabled"));
 
         if (gtwEnabled) {
@@ -108,19 +112,21 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
     }
 
     private void createRoutes(BeanDefinitionRegistry registry, Environment environment) throws ClassNotFoundException {
-        log.trace("start to register routes");
+        log.trace("Start to register routes");
 
         for (int i = 0; i < 1000; i++) {
             val route = createRoute("apzda.cloud.routes", i, environment, null);
             if (route == null) {
                 break;
             }
+            log.debug("Found Route: {}[{}]", "apzda.cloud.routes", i);
             List<Route> subRoutes = new ArrayList<>();
             for (int j = 0; j < 10000; j++) {
                 val subRoute = createRoute("apzda.cloud.routes[" + i + "].routes", j, environment, route);
                 if (subRoute == null) {
                     break;
                 }
+                log.debug("Found Route: {}[{}].routes[{}]", "apzda.cloud.routes", i, j);
                 subRoutes.add(subRoute);
             }
             val groupRoute = new GroupRoute(route);
@@ -131,18 +137,18 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
     private void registerServiceProxy(BeanDefinitionRegistry registry, String className,
             Map<String, Object> attributes) {
-        String name = (String) attributes.get("name");
-        String app = (String) attributes.get("app");
-        if (registered.getOrDefault(app + ":" + name, false)) {
+        String serviceName = (String) attributes.get("serviceName");
+        String appName = (String) attributes.get("appName");
+        if (registered.getOrDefault(appName + ":" + serviceName, false)) {
             return;
         }
-        registered.put(app + ":" + name, true);
+        registered.put(appName + ":" + serviceName, true);
 
         BeanDefinitionBuilder definition = BeanDefinitionBuilder
             .genericBeanDefinition(ReferenceServiceFactoryBean.class);
 
-        definition.addConstructorArgValue(name);
-        definition.addConstructorArgValue(app);
+        definition.addConstructorArgValue(serviceName);
+        definition.addConstructorArgValue(appName);
         definition.addConstructorArgValue(attributes.get("contextPath"));
         definition.addConstructorArgValue(className);
         definition.addConstructorArgValue(attributes.get("index"));
@@ -155,12 +161,23 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         // has a default, won't be null
         boolean primary = (Boolean) attributes.get("primary");
         beanDefinition.setPrimary(primary);
-        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, app + name + "Impl", qualifiers);
+        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, appName + serviceName + "Impl",
+                qualifiers);
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
+
+        val serviceInfo = GatewayServiceRegistry.ServiceInfo.builder()
+            .appName(appName)
+            .serviceName(serviceName)
+            .contextPath((String) attributes.get("contextPath"))
+            .clazz((Class<?>) attributes.get("interfaceClass"))
+            .index((int) attributes.get("index"))
+            .build();
+
+        GatewayServiceRegistry.registerServiceInfo(serviceInfo);
     }
 
     private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> clazz, String serviceName,
-            String appName, int index) {
+            String appName, String contextPath, int index) {
         if (registered.getOrDefault(appName + "@" + serviceName, false)) {
             return;
         }
@@ -170,21 +187,20 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
         definition.addConstructorArgValue(appName);
         definition.addConstructorArgValue(serviceName);
-        definition.addConstructorArgValue(clazz);
         definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
-        String[] qualifiers = new String[] { appName + "_" + serviceName };
-        AbstractBeanDefinition beanDefinition = definition.getBeanDefinition();
-        beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, RouterFunction.class.getName());
-        boolean primary = true;
-        beanDefinition.setPrimary(primary);
-
-        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition,
-                appName + serviceName + ".RouterFunctionFactoryBean", qualifiers);
+        BeanDefinitionHolder holder = getBeanDefinitionHolder(appName, serviceName, definition);
 
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
-
-        GatewayServiceRegistry.markLocalService(appName, serviceName, index);
+        val serviceInfo = GatewayServiceRegistry.ServiceInfo.builder()
+            .appName(appName)
+            .serviceName(serviceName)
+            .contextPath(contextPath)
+            .clazz(clazz)
+            .index(index)
+            .local(true)
+            .build();
+        GatewayServiceRegistry.registerServiceInfo(serviceInfo);
     }
 
     private Route createRoute(String prefix, int index, Environment environment, Route parent) {
@@ -200,6 +216,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val filters = environment.getProperty(prefix + ".filters");
         try {
             return new Route().parent(parent)
+                .index(index)
                 .path(path)
                 .serviceIndex(serviceIndex)
                 .method(method)
@@ -215,13 +232,40 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
     private void registerRouterFunction(BeanDefinitionRegistry registry, GroupRoute route) {
         // to
         val serviceIndex = route.getServiceIndex();
-        val localService = GatewayServiceRegistry.isLocalService(serviceIndex);
+        val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceIndex);
+        if (serviceIndex == null) {
+            log.debug("Service not found for route: {} ", route);
+            return;
+        }
+        val localService = serviceInfo.isLocal();
         if (localService) {
-            // todo register local service
+            val appName = serviceInfo.getAppName();
+            val serviceName = serviceInfo.getServiceName();
+            BeanDefinitionBuilder definition = BeanDefinitionBuilder
+                .genericBeanDefinition(GroupRoterFunctionFactoryBean.class);
+
+            definition.addConstructorArgValue(route);
+            definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+            BeanDefinitionHolder holder = getBeanDefinitionHolder(appName, serviceName + ".route." + route.index(),
+                    definition);
+
+            BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
         }
         else {
 
         }
+    }
+
+    private BeanDefinitionHolder getBeanDefinitionHolder(String appName, String serviceName,
+            BeanDefinitionBuilder definition) {
+        String[] qualifiers = new String[] { appName + "_" + serviceName };
+        AbstractBeanDefinition beanDefinition = definition.getBeanDefinition();
+        beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, RouterFunction.class.getName());
+        boolean primary = true;
+        beanDefinition.setPrimary(primary);
+
+        return new BeanDefinitionHolder(beanDefinition, appName + "." + serviceName + ".RouterFunctionFactoryBean",
+                qualifiers);
     }
 
     private String getQualifier(Map<String, Object> client) {

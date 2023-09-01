@@ -2,7 +2,6 @@ package com.apzda.cloud.gsvc.gtw;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Collections;
@@ -13,7 +12,6 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
 @Validated
 public class GroupRoute extends Route {
 
@@ -22,6 +20,7 @@ public class GroupRoute extends Route {
 
     public GroupRoute(Route route) {
         this.setPath(route.getPath());
+        this.index(route.index());
         this.setServiceIndex(route.getServiceIndex());
         this.setLogin(route.getLogin());
         this.method(route.getMethod());
@@ -30,5 +29,10 @@ public class GroupRoute extends Route {
     }
 
     private List<Route> routes = Collections.emptyList();
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 
 }

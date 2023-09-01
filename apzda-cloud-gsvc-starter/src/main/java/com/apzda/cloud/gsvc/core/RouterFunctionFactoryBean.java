@@ -27,8 +27,6 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
 
     private final String serviceName;
 
-    private final Class<?> clazz;
-
     private ApplicationContext applicationContext;
 
     @Override
@@ -38,7 +36,7 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
 
     @Override
     public RouterFunction<ServerResponse> getObject() {
-        return createRouterFunction(appName, serviceName, clazz, applicationContext);
+        return createRouterFunction(appName, serviceName, applicationContext);
     }
 
     @Override
@@ -47,8 +45,8 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
     }
 
     public static RouterFunction<ServerResponse> createRouterFunction(String appName, String serviceName,
-            Class<?> clazz, ApplicationContext applicationContext) {
-        val methods = GatewayServiceRegistry.getServiceMethods(appName, serviceName, clazz);
+            ApplicationContext applicationContext) {
+        val methods = GatewayServiceRegistry.getDeclaredServiceMethods(appName, serviceName);
 
         val route = RouterFunctions.route();
         var contextPath = applicationContext.getEnvironment().getProperty("server.servlet.context-path");
@@ -59,12 +57,12 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
             contextPath = "";
         }
 
-        for (Map.Entry<String, GatewayServiceRegistry.MethodInfo> method : methods.entrySet()) {
+        for (Map.Entry<String, GatewayServiceRegistry.ServiceMethod> method : methods.entrySet()) {
             val methodName = method.getKey();
             val methodHolder = method.getValue();
             val path = "/GSVC-" + serviceName + "/" + methodName;
 
-            log.trace("Route {} to {}@{}", path, serviceName, methodName);
+            log.trace("Route {} to {}@{}/{}", path, appName, serviceName, methodName);
             route.POST(contextPath + path,
                     request -> ServiceMethodHandler.handle(request, methodHolder, applicationContext));
         }

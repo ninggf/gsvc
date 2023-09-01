@@ -38,6 +38,7 @@ public class ReferenceServiceFactoryBean
     @Override
     public Object getObject() throws Exception {
         val proxy = new ReferenceServiceProxy(this);
+        //todo: 优化，使用GsvcStub替代Proxy.
         return Proxy.newProxyInstance(ReferenceServiceProxy.class.getClassLoader(), new Class[] { getObjectType() },
                 proxy);
     }

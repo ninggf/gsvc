@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option java_package = "com.apzda.cloud.demo.demo.proto";
+option java_multiple_files = true;
+option java_outer_classname = "DemoProto";
+
+
+message DemoReq {
+  optional string name = 1;
+  optional uint32 age = 2;
+}
+
+message DemoRes {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  optional string name = 3;
+  optional uint32 age = 4;
+}
+
+service DemoService {
+  rpc greeting(DemoReq) returns (DemoRes);
+  rpc hello(DemoReq) returns (stream DemoRes);
+  rpc hi(stream DemoReq) returns(stream DemoRes);
+}

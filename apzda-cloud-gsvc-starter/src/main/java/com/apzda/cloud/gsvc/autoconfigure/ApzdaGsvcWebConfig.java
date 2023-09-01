@@ -7,6 +7,7 @@ import com.apzda.cloud.gsvc.error.GsvcErrorAttributes;
 import com.apzda.cloud.gsvc.error.GsvcErrorController;
 import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.filter.GsvcFilter;
+import com.apzda.cloud.gsvc.gtw.filter.LoginFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -22,6 +23,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.servlet.function.HandlerFilterFunction;
+import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.List;
 
@@ -36,6 +39,12 @@ public class ApzdaGsvcWebConfig {
 
     public ApzdaGsvcWebConfig(ServerProperties serverProperties) {
         this.serverProperties = serverProperties;
+    }
+
+    @Bean("login")
+    @ConditionalOnMissingBean(name = "login")
+    HandlerFilterFunction<ServerResponse, ServerResponse> login() {
+        return new LoginFilter();
     }
 
     @Bean

@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.dto;
 
-import com.apzda.cloud.gsvc.ServiceError;
+import com.apzda.cloud.gsvc.IServiceError;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,8 +30,8 @@ public class Response<T> implements Serializable {
 
     private T data;
 
-    public static Response<Void> error(ServiceError error) {
-        return error(error.code, error.message);
+    public static Response<Void> error(IServiceError error) {
+        return error(error.code(), error.message());
     }
 
     public static Response<Void> error(int code, String errMsg) {

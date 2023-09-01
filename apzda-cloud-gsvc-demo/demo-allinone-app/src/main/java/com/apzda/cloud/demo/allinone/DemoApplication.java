@@ -1,13 +1,12 @@
-package com.example.allinone.app;
+package com.apzda.cloud.demo.allinone;
 
 import com.apzda.cloud.gsvc.autoconfigure.AllInOneApplication;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * @author fengz
  */
-@AllInOneApplication(appPackages = { "com.example.inventory", "com.example.order" })
+@AllInOneApplication(appPackages = { "com.apzda.cloud.demo.bar"})
 public class DemoApplication {
 
     public static void main(String[] args) {

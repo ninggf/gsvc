@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.exception;
 
-import com.apzda.cloud.gsvc.ServiceError;
+import com.apzda.cloud.gsvc.IServiceError;
 import lombok.Getter;
 import org.springframework.core.style.ToStringCreator;
 
@@ -10,16 +10,21 @@ import org.springframework.core.style.ToStringCreator;
 @Getter
 public class GsvcException extends RuntimeException {
 
-    private final ServiceError error;
+    private final IServiceError error;
 
-    public GsvcException(ServiceError error, Throwable e) {
-        super(error.message, e);
+    public GsvcException(IServiceError error, Throwable e) {
+        super(error.message(), e);
+        this.error = error;
+    }
+
+    public GsvcException(IServiceError error) {
+        super(error.message());
         this.error = error;
     }
 
     @Override
     public String toString() {
-        return new ToStringCreator(this).append("errCode", error.code).append("errMsg", error.message).toString();
+        return new ToStringCreator(this).append("errCode", error.code()).append("errMsg", error.message()).toString();
     }
 
 }
