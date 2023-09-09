@@ -19,11 +19,20 @@
 package {{packageName}};
 {{/packageName}}
 
+import com.apzda.cloud.gsvc.client.IServiceCaller;
+import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import reactor.core.publisher.Mono;
+
 {{#deprecated}}
 @java.lang.Deprecated
 {{/deprecated}}
-public final class {{className}} {
-    private static final java.util.Map<String,Object[]> METHOD_META_INFO = new java.util.HashMap<>();
+@Configuration(proxyBeanMethods = false)
+public class {{className}} {
+
+    private static final java.util.Map<String, Object[]> METHOD_META_INFO = new java.util.HashMap<>();
 
     static {
     {{#unaryMethods}}
@@ -47,15 +56,31 @@ public final class {{className}} {
             {{outputType}}.class
         });
     {{/biStreamingMethods}}
+        GatewayServiceRegistry.register({{interfaceClassName}}.class, METHOD_META_INFO);
     }
 
-    private {{className}}() {}
-
-    public static Object[] getMetadata(String methodName) throws NoSuchMethodException {
-        Object[] objects = METHOD_META_INFO.get(methodName);
-        if(objects!=null){
-            return objects;
-        }
-        throw new NoSuchMethodException(methodName);
+    @Bean
+    @ConditionalOnMissingBean({{interfaceClassName}}.class)
+    {{interfaceClassName}} g{{interfaceClassName}}(IServiceCaller serviceCaller) {
+        return new {{interfaceClassName}}() {
+        {{#unaryMethods}}
+            @Override
+            public {{outputType}} greeting({{inputType}} request) {
+                return serviceCaller.unaryCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
+            }
+        {{/unaryMethods}}
+        {{#serverStreamingMethods}}
+            @Override
+            public Mono<{{outputType}}> hello({{inputType}} request) {
+                return serviceCaller.serverStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
+            }
+        {{/serverStreamingMethods}}
+        {{#biStreamingMethods}}
+            @Override
+            public Mono<{{outputType}}> hi(Mono<{{inputType}}> request) {
+                return serviceCaller.bidiStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
+            }
+        {{/biStreamingMethods}}
+        };
     }
 }

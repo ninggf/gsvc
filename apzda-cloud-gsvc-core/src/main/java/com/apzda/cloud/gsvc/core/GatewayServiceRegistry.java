@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.core;
 
+import com.google.common.base.Splitter;
 import io.grpc.MethodDescriptor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,43 +22,49 @@ public class GatewayServiceRegistry {
 
     private static final Map<String, Map<String, ServiceMethod>> SERVICES = new HashMap<>();
 
-    private static final Map<String, Map<String, ServiceMethod>> DECLARED = new HashMap<>();
+    private static final Map<String, Map<String, ServiceMethod>> SERVICE_METHODS = new HashMap<>();
 
-    private static final Map<Integer, ServiceInfo> SERVICE_INFO = new HashMap<>();
+    public static final Map<Class<?>, ServiceInfo> DECLARED_SERVICES = new HashMap<>();
 
-    @SuppressWarnings(("unchecked"))
-    public static void register(String appName, String serviceName, int serviceIndex, Object bean,
-            Class<?> interfaceName) {
+    public static void register(Class<?> interfaceName) {
+        DECLARED_SERVICES.computeIfAbsent(interfaceName, key -> {
+            val svcName = svcName(interfaceName);
+            val appName = shortSvcName(interfaceName);
+            return ServiceInfo.builder()
+                .clazz(interfaceName)
+                .serviceName(svcName)
+                .shortName(appName)
+                .appName(appName)
+                .build();
+        });
+    }
 
-        String serviceId = serviceName + "@" + appName;
-        if (SERVICES.containsKey(serviceId)) {
-            return;
-        }
-        val serviceMetaCls = interfaceName.getCanonicalName() + "Gsvc";
+    public static void register(Class<?> interfaceName, Map<String, Object[]> methodMeta) {
+        val app = shortSvcName(interfaceName);
+        val svcName = svcName(interfaceName);
+        genDeclaredServiceMethods(app, svcName, interfaceName, methodMeta);
+    }
 
-        try {
-            val metaMethod = Class.forName(serviceMetaCls).getMethod("getMetadata", String.class);
+    public static void register(Class<?> interfaceName, Object bean) {
+        val appName = shortSvcName(interfaceName);
+        val serviceName = svcName(interfaceName);
+        SERVICES.computeIfAbsent(serviceName + "@" + appName, (key) -> {
             val hm = new HashMap<String, ServiceMethod>();
-
             for (Method dm : interfaceName.getDeclaredMethods()) {
                 val dmName = dm.getName();
-                val meta = (Object[]) metaMethod.invoke(null, dmName);
-                val methodInfo = new ServiceMethod(dm, appName, serviceName, serviceIndex, meta, bean);
-                if (bean != null && log.isDebugEnabled()) {
-                    if (serviceIndex != -1 && !SERVICE_INFO.getOrDefault(serviceIndex, ServiceInfo.DEFAULT).local) {
-                        log.debug("Will Proxy method call: {}@{}/{}", serviceName, appName, dmName);
-                    }
+                val serviceMethod = SERVICE_METHODS.getOrDefault(appName + "@" + serviceName, Collections.emptyMap())
+                    .get(dmName);
+                if (serviceMethod != null) {
+                    serviceMethod.setBean(bean);
+                    hm.put(dmName, serviceMethod);
+                    log.debug("Inject Bean for Service method: {}.{} - {}", serviceName, dmName, serviceMethod);
                 }
-                hm.put(dmName, methodInfo);
+                else {
+                    log.warn("Service method not found: {}.{}", serviceName, dmName);
+                }
             }
-            SERVICES.put(serviceId, hm);
-        }
-        catch (ClassNotFoundException e) {
-            log.warn("Gsvc class {} not found for service '{}'", serviceMetaCls, serviceId);
-        }
-        catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
-            log.warn("Gsvc class {} is invalid for service '{}': {}", serviceMetaCls, serviceId, e.getMessage());
-        }
+            return hm;
+        });
     }
 
     public static ServiceMethod getServiceMethod(String appName, String serviceName, String methodName) {
@@ -70,22 +77,8 @@ public class GatewayServiceRegistry {
         return SERVICES.getOrDefault(serviceId, Collections.emptyMap());
     }
 
-    public static ServiceMethod fromDeclaredMethod(ServiceMethod m) {
-        return getServiceMethod(m.appName, m.serviceName, m.dmName);
-    }
-
-    public static void registerServiceInfo(ServiceInfo serviceInfo) {
-        SERVICE_INFO.put(serviceInfo.index, serviceInfo);
-        val methods = genDeclaredServiceMethods(serviceInfo.appName, serviceInfo.serviceName, serviceInfo.clazz);
-        DECLARED.put(serviceInfo.appName + "@" + serviceInfo.serviceName, methods);
-    }
-
-    public static ServiceInfo getServiceInfo(Integer serviceIndex) {
-        return SERVICE_INFO.get(serviceIndex);
-    }
-
-    public static boolean isLocalService(int index) {
-        return SERVICE_INFO.getOrDefault(index, ServiceInfo.DEFAULT).local;
+    public static ServiceInfo getServiceInfo(Class<?> clazz) {
+        return DECLARED_SERVICES.get(clazz);
     }
 
     public static Map<String, ServiceMethod> getDeclaredServiceMethods(ServiceInfo serviceInfo) {
@@ -93,30 +86,43 @@ public class GatewayServiceRegistry {
     }
 
     public static Map<String, ServiceMethod> getDeclaredServiceMethods(String app, String service) {
-        return DECLARED.getOrDefault(app + "@" + service, Collections.emptyMap());
+        return SERVICE_METHODS.getOrDefault(app + "@" + service, Collections.emptyMap());
     }
 
-    private static Map<String, ServiceMethod> genDeclaredServiceMethods(String app, String service,
-            Class<?> interfaceName) {
-        val serviceMetaCls = interfaceName.getCanonicalName() + "Gsvc";
-        val hm = new HashMap<String, ServiceMethod>();
-        try {
-            val metaMethod = Class.forName(serviceMetaCls).getMethod("getMetadata", String.class);
+    public static String shortSvcName(Class<?> clazz) {
+        val svcName = svcName(clazz);
 
+        return svcName.replaceFirst("Gsvc", "").replace("Service", "").replaceAll("([A-Z])", "-$1").toLowerCase();
+    }
+
+    public static String shortSvcName(String name) {
+
+        val names = Splitter.on(".").trimResults().omitEmptyStrings().splitToList(name);
+        var svcName = names.get(names.size() - 1);
+        svcName = Character.toLowerCase(svcName.charAt(0)) + svcName.substring(1);
+        return svcName.replaceFirst("Gsvc", "").replaceFirst("Service", "").replaceAll("([A-Z])", "-$1").toLowerCase();
+    }
+
+    public static String svcName(Class<?> clazz) {
+        val simpleName = clazz.getSimpleName();
+        return Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
+    }
+
+    static void genDeclaredServiceMethods(String app, String service, Class<?> interfaceName,
+            Map<String, Object[]> methodsMeta) {
+        SERVICE_METHODS.computeIfAbsent(app + "@" + service, key -> {
+            val hm = new HashMap<String, ServiceMethod>();
             for (Method dm : interfaceName.getDeclaredMethods()) {
                 val dmName = dm.getName();
-                val meta = (Object[]) metaMethod.invoke(null, dmName);
-                val methodInfo = new ServiceMethod(dm, app, service, -1, meta, null);
+                val meta = methodsMeta.get(dmName);
+                if (meta == null) {
+                    continue;
+                }
+                val methodInfo = new ServiceMethod(dm, app, service, meta, null);
                 hm.put(dmName, methodInfo);
             }
-        }
-        catch (ClassNotFoundException e) {
-            log.warn("Gsvc class {} not found ", serviceMetaCls);
-        }
-        catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
-            log.warn("Gsvc class {} is invalid: {}", serviceMetaCls, e.getMessage());
-        }
-        return hm;
+            return hm;
+        });
     }
 
     @Getter
@@ -130,7 +136,7 @@ public class GatewayServiceRegistry {
 
         private final String dmName;
 
-        private final Object bean;
+        private Object bean;
 
         private final Object[] meta;
 
@@ -140,16 +146,12 @@ public class GatewayServiceRegistry {
 
         private final MethodDescriptor.MethodType type;
 
-        private final int serviceIndex;
-
         private Class<?> currentUserClz;
 
-        public ServiceMethod(Method method, String appName, String serviceName, int serviceIndex, Object[] meta,
-                Object bean) {
+        public ServiceMethod(Method method, String appName, String serviceName, Object[] meta, Object bean) {
             this.method = method;
             this.appName = appName;
             this.serviceName = serviceName;
-            this.serviceIndex = serviceIndex;
             this.meta = meta;
             this.bean = bean;
             this.dmName = method.getName();
@@ -167,6 +169,10 @@ public class GatewayServiceRegistry {
             }
         }
 
+        void setBean(Object bean) {
+            this.bean = bean;
+        }
+
         public Object call(Object request) throws InvocationTargetException, IllegalAccessException {
             return method.invoke(bean, request);
         }
@@ -180,6 +186,7 @@ public class GatewayServiceRegistry {
             return new ToStringCreator(this).append("appName", appName)
                 .append("serviceName", serviceName)
                 .append("method", dmName)
+                .append("bean", bean)
                 .toString();
         }
 
@@ -196,6 +203,8 @@ public class GatewayServiceRegistry {
         private String serviceName;
 
         private String contextPath;
+
+        private String shortName;
 
         private Class<?> clazz;
 

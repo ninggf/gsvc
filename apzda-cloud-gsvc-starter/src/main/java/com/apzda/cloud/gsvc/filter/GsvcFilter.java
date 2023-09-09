@@ -1,10 +1,8 @@
 package com.apzda.cloud.gsvc.filter;
 
-import cn.dev33.satoken.util.SaTokenConsts;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.val;
-import org.springframework.core.annotation.Order;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -13,7 +11,7 @@ import java.util.UUID;
 /**
  * @author fengz
  */
-@Order(SaTokenConsts.ASSEMBLY_ORDER + 1)
+// @Order(SaTokenConsts.ASSEMBLY_ORDER + 1)
 public class GsvcFilter implements Filter {
 
     @Override

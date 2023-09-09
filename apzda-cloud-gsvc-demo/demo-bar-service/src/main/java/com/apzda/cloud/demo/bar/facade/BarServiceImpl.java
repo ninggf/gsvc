@@ -6,6 +6,9 @@ import com.apzda.cloud.demo.bar.proto.BarService;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+/**
+ * @author fengz
+ */
 @Service
 public class BarServiceImpl implements BarService {
 

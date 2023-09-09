@@ -21,7 +21,8 @@ public class GroupRoute extends Route {
     public GroupRoute(Route route) {
         this.setPath(route.getPath());
         this.index(route.index());
-        this.setServiceIndex(route.getServiceIndex());
+        this.app(route.app());
+        this.setInterfaceName(route.getInterfaceName());
         this.setLogin(route.getLogin());
         this.method(route.getMethod());
         this.setActions(route.getActions());

@@ -1,10 +1,10 @@
 package com.apzda.cloud.gsvc.core;
 
-import cn.dev33.satoken.SaManager;
 import com.apzda.cloud.gsvc.filter.XForwardedHeadersFilter;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.val;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +12,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.*;
 
@@ -20,16 +22,22 @@ import java.util.*;
  */
 public class GsvcContextHolder {
 
-    private static final XForwardedHeadersFilter xForwardedHeadersFilter = new XForwardedHeadersFilter();
+    private static final XForwardedHeadersFilter X_FORWARDED_HEADERS_FILTER = new XForwardedHeadersFilter();
 
     private static final String FILTERED_HTTP_HEADERS = "FILTERED_HTTP_HEADERS";
 
     public static Optional<HttpServletRequest> getRequest() {
-        if (SaManager.getSaTokenContext() != null && SaManager.getSaTokenContext().getRequest() != null) {
-            val requestAttributes = SaManager.getSaTokenContext().getRequest().getSource();
-            if (requestAttributes instanceof HttpServletRequest request) {
-                return Optional.of(request);
-            }
+        val requestAttributes = RequestContextHolder.getRequestAttributes();
+        if (requestAttributes instanceof ServletRequestAttributes request) {
+            return Optional.of(request.getRequest());
+        }
+        return Optional.empty();
+    }
+
+    public static Optional<HttpServletResponse> getResponse() {
+        val requestAttributes = RequestContextHolder.getRequestAttributes();
+        if (requestAttributes instanceof ServletRequestAttributes request) {
+            return Optional.ofNullable(request.getResponse());
         }
         return Optional.empty();
     }
@@ -44,7 +52,7 @@ public class GsvcContextHolder {
                     filtered = httpServletRequest.getAttribute(FILTERED_HTTP_HEADERS);
                     if (filtered == null) {
                         val httpHeaders = HttpHeaders.readOnlyHttpHeaders(createDefaultHttpHeaders(httpServletRequest));
-                        HttpHeaders filtered1 = xForwardedHeadersFilter.filter(httpHeaders, httpServletRequest);
+                        HttpHeaders filtered1 = X_FORWARDED_HEADERS_FILTER.filter(httpHeaders, httpServletRequest);
                         val defaultHttpHeaders = new DefaultHttpHeaders();
                         filtered1.forEach(defaultHttpHeaders::set);
                         httpServletRequest.setAttribute(FILTERED_HTTP_HEADERS, defaultHttpHeaders);

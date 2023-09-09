@@ -1,7 +1,0 @@
-eureka:
-  instance:
-    hostname: localhost
-    # instance-id:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:18080/eureka/

@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.core;
 
+import com.apzda.cloud.gsvc.proto.FooBarService;
 import com.apzda.cloud.gsvc.proto.GreetingService;
 import lombok.val;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ class GatewayServiceRegistryTest {
     @Test
     void should_be_a_unary_method() throws NoSuchMethodException {
         // given
-        GatewayServiceRegistry.register("test", "greetingService", 0, null, GreetingService.class);
+        GatewayServiceRegistry.register(GreetingService.class, null);
 
         // when
         val methods = GatewayServiceRegistry.getServiceMethods("test", "greetingService");
@@ -29,6 +30,28 @@ class GatewayServiceRegistryTest {
         assertThat(methods).containsKey("sayHei");
         assertThat(methods).containsKey("sayHi");
         System.out.println(methods);
+    }
+
+    @org.junit.jupiter.api.Test
+    void shortSvcName() {
+        // given
+        Class<?> clazz = FooBarService.class;
+
+        // when
+        val svcName = GatewayServiceRegistry.shortSvcName(clazz);
+        // then
+        assertThat(svcName).isEqualTo("foo-bar");
+    }
+
+    @org.junit.jupiter.api.Test
+    void svcName() {
+        // given
+        Class<?> clazz = GreetingService.class;
+
+        // when
+        val svcName = GatewayServiceRegistry.svcName(clazz);
+        // then
+        assertThat(svcName).isEqualTo("greetingService");
     }
 
 }

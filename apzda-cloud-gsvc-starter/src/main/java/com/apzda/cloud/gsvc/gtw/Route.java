@@ -1,14 +1,13 @@
 package com.apzda.cloud.gsvc.gtw;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.google.common.base.Splitter;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.style.ToStringCreator;
 import org.springframework.http.HttpMethod;
 import org.springframework.validation.annotation.Validated;
 
@@ -30,7 +29,7 @@ public class Route {
 
     private Boolean login;
 
-    private Integer serviceIndex;
+    private Class<?> interfaceName;
 
     private String method;
 
@@ -45,6 +44,19 @@ public class Route {
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
     private int index;
+
+    @Getter(AccessLevel.PRIVATE)
+    @Setter(AccessLevel.PRIVATE)
+    private String app;
+
+    public Route app(String app) {
+        this.app = app;
+        return this;
+    }
+
+    public String app() {
+        return this.app;
+    }
 
     public Route parent() {
         return this.parent;
@@ -66,7 +78,7 @@ public class Route {
 
     public Route path(String path) {
         if (StringUtils.isBlank(path)) {
-            throw new NullPointerException("pat is null");
+            throw new IllegalArgumentException("path is blank!");
         }
         this.path = path;
         return this;
@@ -85,15 +97,18 @@ public class Route {
         return this;
     }
 
-    public Route serviceIndex(String serviceIndex) {
-        if (serviceIndex != null) {
-            this.serviceIndex = Integer.valueOf(serviceIndex);
+    public Route interfaceName(Class<?> clazz) {
+        if (clazz != null) {
+            this.interfaceName = clazz;
         }
-        else if (this.parent != null && this.parent.serviceIndex != null) {
-            this.serviceIndex = this.parent.serviceIndex;
+        else if (this.parent != null && this.parent.interfaceName != null) {
+            this.interfaceName = this.parent.interfaceName;
         }
-        else {
-            this.serviceIndex = -1;
+        else if (this.parent != null) {
+            // 子路由method不能为空
+            throw new IllegalArgumentException(
+                    String.format("Interface Name of apzda.cloud.gateway.%s.routes[%d].routes[%d] is blank", this.app,
+                            this.parent.index, index));
         }
         return this;
     }
@@ -105,7 +120,8 @@ public class Route {
         else if (this.parent != null) {
             // 子路由method不能为空
             throw new IllegalArgumentException(
-                    String.format("method of apzda.cloud.routes[%d].routes[%d] is blank", this.parent.index, index));
+                    String.format("Method of apzda.cloud.gateway.%s.routes[%d].routes[%d] is blank", this.app,
+                            this.parent.index, index));
         }
         return this;
     }
@@ -141,15 +157,21 @@ public class Route {
 
     @Override
     public String toString() {
+        val str = new ToStringCreator(this);
+        val svcName = GatewayServiceRegistry.svcName(interfaceName);
         if (parent != null) {
-            return String.format(
-                    "apzda.cloud.routes[%d].routes[%d]={path:%s, serviceIndex:%d, method:%s, login:%s, actions:%s}",
-                    parent.index, index, path, serviceIndex, method, login, actions);
+            str.append("path", parent.path + path);
         }
         else {
-            return String.format("apzda.cloud.routes[%d]={path:%s, serviceIndex:%d, method:%s, login:%s, actions:%s}",
-                    index, path, serviceIndex, method, login, actions);
+            str.append("path", path);
         }
+        str.append("svc", svcName)
+            .append("method", method)
+            .append("index", index)
+            .append("login", login)
+            .append("actions", actions)
+            .append("filters", filters);
+        return str.toString();
     }
 
 }

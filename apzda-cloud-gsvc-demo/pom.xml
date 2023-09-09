@@ -13,12 +13,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>demo-inventory-service</module>
-        <module>demo-inventory-proto</module>
-        <module>demo-order-proto</module>
-        <module>demo-order-service</module>
         <module>demo-allinone-app</module>
-        <module>demo-order-gtw</module>
         <module>demo-protos</module>
         <module>demo-foo-service</module>
         <module>demo-demo-service</module>
@@ -55,26 +50,6 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>demo-bar-service</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.apzda.cloud</groupId>
-                <artifactId>demo-inventory-proto</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.apzda.cloud</groupId>
-                <artifactId>demo-inventory-service</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.apzda.cloud</groupId>
-                <artifactId>demo-order-proto</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.apzda.cloud</groupId>
-                <artifactId>demo-order-service</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
         </dependencies>

@@ -3,11 +3,9 @@ package com.apzda.cloud.gsvc.core;
 import com.apzda.cloud.gsvc.gtw.GroupRoute;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.val;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.convert.DurationUnit;
-import org.springframework.util.StringUtils;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.core.style.ToStringCreator;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -16,38 +14,52 @@ import java.util.*;
 /**
  * @author fengz
  */
-@ConfigurationProperties(prefix = "apzda.cloud")
-@Data
+@ConfigurationProperties("apzda.cloud")
 public class ServiceConfigurationProperties {
 
-    private boolean gtwEnabled;
+    private final GlobalConfig config = new GlobalConfig();
 
-    private GlobalConfig config = new GlobalConfig();
+    private final Map<String, ServiceConfig> service = new LinkedHashMap<>();
 
-    private ServiceConfig service;
+    private final Map<String, ServiceConfig> reference = new LinkedHashMap<>();
 
-    private List<ServiceConfig> reference = Collections.emptyList();
+    public GlobalConfig getConfig() {
+        return config;
+    }
 
-    private List<GroupRoute> routes = new ArrayList<>();
+    public Map<String, ServiceConfig> getService() {
+        return service;
+    }
 
-    public ServiceConfig get(int index) {
-        if (index == -1) {
-            return service;
-        }
-        return reference.get(index);
+    public Map<String, ServiceConfig> getReference() {
+        return reference;
+    }
+
+    public ServiceConfig svcConfig(String name) {
+        // todo 解决配置读取不到问题.
+        return service.getOrDefault(name, new ServiceConfig());
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringCreator(this).append("config", config)
+            .append("service", service)
+            .append("reference", reference)
+            .toString();
     }
 
     @Data
-    @Validated
     public static class ServiceConfig {
 
         public static final MethodConfig DEFAULT_MC = new MethodConfig();
 
-        private String app;
+        @NotNull
+        private Class<?> interfaceName;
 
-        private String name;
-
-        private String contextPath = "/";
+        /**
+         * 南北流量路由。
+         */
+        private List<GroupRoute> routes = Collections.emptyList();
 
         /**
          * 服务在本地时，方法执行超时时间，单位Millis. 0或负值表示永不超时.
@@ -73,36 +85,13 @@ public class ServiceConfigurationProperties {
         @DurationUnit(ChronoUnit.MILLIS)
         private Duration connectTimeout = Duration.ZERO;
 
-        /**
-         * 是否启动熔断器
-         */
-        private boolean circuitBreakerEnabled;
-
-        @NotNull
-        private Class<?> interfaceName;
-
         private Map<String, MethodConfig> methods = new HashMap<>();
 
-        public String getApp() {
-            // only works on remote mode
-            if (!StringUtils.hasText(app)) {
-                return getName();
-            }
-            return app;
-        }
-
-        public String getName() {
-            if (!StringUtils.hasText(name)) {
-                val simpleName = interfaceName.getSimpleName();
-                name = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
-            }
-            return name;
-        }
+        private Set<String> filters = new HashSet<>();
 
     }
 
     @Data
-    @Validated
     public static class MethodConfig {
 
         @DurationUnit(ChronoUnit.MILLIS)
@@ -117,10 +106,11 @@ public class ServiceConfigurationProperties {
         @DurationUnit(ChronoUnit.MILLIS)
         private Duration uploadTimeout = Duration.ZERO;
 
+        private Set<String> filters = new HashSet<>();
+
     }
 
     @Data
-    @Validated
     public static class GlobalConfig {
 
         /**

@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.error;
 
-import cn.dev33.satoken.exception.NotLoginException;
 import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -57,10 +56,11 @@ public class GsvcErrorController extends BasicErrorController {
 
             if (loginUrl != null) {
                 val redirectView = new ModelAndView(new RedirectView(loginUrl.toString()));
-                if (error instanceof NotLoginException) {
-                    return redirectView;
-                }
-                else if (error instanceof HttpStatusCodeException codeException
+                // if (error instanceof NotLoginException) {
+                // return redirectView;
+                // }
+                // else
+                if (error instanceof HttpStatusCodeException codeException
                         && codeException.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                     return redirectView;
                 }

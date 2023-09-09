@@ -28,105 +28,65 @@ import java.util.*;
 @Slf4j
 public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
-    private static final Map<String, Boolean> registered = new HashMap<>();
+    private static final Map<String, Boolean> REGISTERED = new HashMap<>();
 
     @Override
     public void postProcessBeanFactory(@NonNull ConfigurableListableBeanFactory beanFactory) throws BeansException {
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) beanFactory;
         Environment environment = (Environment) bf.getBean("environment");
-        String interfaceName;
 
-        // 注册远程服务
-        for (int i = 0; i < 10000; ++i) {
-            interfaceName = environment.getProperty("apzda.cloud.reference[" + i + "].interface-name");
-            if (interfaceName != null) {
+        val services = Arrays.stream(beanFactory.getBeanDefinitionNames())
+            .filter(n -> StringUtils.endsWith(n, "Gsvc"))
+            .map(GatewayServiceRegistry::shortSvcName)
+            .toList();
+
+        // 注册本地服务
+        for (String appName : services) {
+            val interfaceName = environment.getProperty("apzda.cloud.service." + appName + ".interface-name");
+            log.debug("Found Gsvc Service: {} - {}", appName, interfaceName);
+
+            if (StringUtils.isNotBlank(interfaceName)) {
                 try {
                     val aClass = Class.forName(interfaceName);
-                    val serviceName = getServiceName(environment.getProperty("apzda.cloud.reference[" + i + "].name"),
-                            aClass);
-                    if (bf.getBeanNamesForType(aClass).length > 0) {
-                        // 服务在本地时定义服务访问路由, app使用spring.application.name值
-                        val app = environment.getProperty("spring.application.name");
-                        val contextPath = environment.getProperty("server.servlet.context-path");
-                        registerRouterFunction(bf, aClass, serviceName, app, contextPath, i);
-                        log.info("Registered Reference Service: {}@{} - {}", app, serviceName, aClass);
+                    if (bf.getBeanNamesForType(aClass).length == 0) {
+                        throw new BeanDefinitionValidationException("No bean of '" + aClass + "' Found");
                     }
-                    else if (aClass.isInterface()) {
-                        val app = StringUtils.defaultIfBlank(
-                                environment.getProperty("apzda.cloud.reference[" + i + "].app"), serviceName);
-                        val attributes = new HashMap<String, Object>();
-                        val contextPath = environment.getProperty("apzda.cloud.reference[" + i + "].context-path");
-                        attributes.put("interfaceClass", aClass);
-                        attributes.put("className", interfaceName);
-                        attributes.put("app", app);
-                        attributes.put("name", serviceName);
-                        attributes.put("contextPath", contextPath);
-                        attributes.put("primary", true);
-                        attributes.put("qualifiers", new String[] { app + "@" + serviceName + "Impl" });
-                        attributes.put("index", i);
-                        registerServiceProxy(bf, interfaceName, attributes);
-                        log.info("Registered Reference Service: {}@{} - {}", app, serviceName, aClass);
-                    }
+
+                    val serviceName = GatewayServiceRegistry.svcName(aClass);
+                    log.info("Register Gsvc Service: {} - {}", serviceName, aClass);
+                    // 注册服务
+                    GatewayServiceRegistry.register(aClass);
+                    // 注册东西路由
+                    registerRouterFunction(bf, aClass);
+                    // 注册南北路由
+                    createRoutes(appName, aClass, bf, environment);
                 }
                 catch (ClassNotFoundException e) {
                     throw new BeanCreationException(interfaceName, e);
                 }
             }
-            else {
-                break;
-            }
-        }
-
-        // 注册本地服务
-        interfaceName = environment.getProperty("apzda.cloud.service.interface-name");
-
-        if (StringUtils.isNotBlank(interfaceName)) {
-            try {
-                val aClass = Class.forName(interfaceName);
-                if (bf.getBeanNamesForType(aClass).length == 0) {
-                    throw new BeanDefinitionValidationException("No bean of '" + aClass + "' Found");
-                }
-                // 忽略 apzda.cloud.service.app使用spring.application.serviceName
-                val appName = environment.getProperty("spring.application.name");
-                val contextPath = environment.getProperty("server.servlet.context-path");
-                val serviceName = getServiceName(environment.getProperty("apzda.cloud.service.serviceName"), aClass);
-                log.info("Registered Default Service: {}@{} - {}", appName, serviceName, aClass);
-                registerRouterFunction(bf, aClass, serviceName, appName, contextPath, -1);
-            }
-            catch (ClassNotFoundException e) {
-                throw new BeanCreationException(interfaceName, e);
-            }
-        }
-
-        // 注册路由
-        val gtwEnabled = Boolean.parseBoolean(environment.getProperty("apzda.cloud.gtw-enabled"));
-
-        if (gtwEnabled) {
-            try {
-                createRoutes(bf, environment);
-            }
-            catch (Exception e) {
-                throw new BeanCreationException(e.getMessage(), e);
-            }
         }
     }
 
-    private void createRoutes(BeanDefinitionRegistry registry, Environment environment) throws ClassNotFoundException {
-        log.trace("Start to register routes");
-
-        for (int i = 0; i < 1000; i++) {
-            val route = createRoute("apzda.cloud.routes", i, environment, null);
+    private void createRoutes(String app, Class<?> interfaceName, BeanDefinitionRegistry registry,
+            Environment environment) throws ClassNotFoundException {
+        if (log.isDebugEnabled()) {
+            log.debug("Register Routes: {} - {}", GatewayServiceRegistry.svcName(interfaceName), interfaceName);
+        }
+        for (int i = 0; i < 10000; i++) {
+            val route = createRoute(app, interfaceName, "apzda.cloud.service." + app + ".routes", i, environment, null);
             if (route == null) {
                 break;
             }
-            log.debug("Found Route: {}[{}]", "apzda.cloud.routes", i);
+            log.debug("Found Route: apzda.cloud.service.{}.routes[{}] -> {}", app, i, route);
             List<Route> subRoutes = new ArrayList<>();
             for (int j = 0; j < 10000; j++) {
-                val subRoute = createRoute("apzda.cloud.routes[" + i + "].routes", j, environment, route);
+                val subRoute = createRoute(app, interfaceName,
+                        "apzda.cloud.service." + app + ".routes[" + i + "].routes", j, environment, route);
                 if (subRoute == null) {
                     break;
                 }
-                log.debug("Found Route: {}[{}].routes[{}]", "apzda.cloud.routes", i, j);
+                log.debug("Found Route: apzda.cloud.service.{}.routes[{}].routes[{}] -> {}", app, i, j, subRoute);
                 subRoutes.add(subRoute);
             }
             val groupRoute = new GroupRoute(route);
@@ -135,125 +95,69 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         }
     }
 
-    private void registerServiceProxy(BeanDefinitionRegistry registry, String className,
-            Map<String, Object> attributes) {
-        String serviceName = (String) attributes.get("serviceName");
-        String appName = (String) attributes.get("appName");
-        if (registered.getOrDefault(appName + ":" + serviceName, false)) {
+    private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> clazz) {
+        val serviceName = GatewayServiceRegistry.svcName(clazz);
+        val svcName = GatewayServiceRegistry.shortSvcName(clazz);
+        if (REGISTERED.getOrDefault(serviceName, false)) {
             return;
         }
-        registered.put(appName + ":" + serviceName, true);
-
-        BeanDefinitionBuilder definition = BeanDefinitionBuilder
-            .genericBeanDefinition(ReferenceServiceFactoryBean.class);
-
-        definition.addConstructorArgValue(serviceName);
-        definition.addConstructorArgValue(appName);
-        definition.addConstructorArgValue(attributes.get("contextPath"));
-        definition.addConstructorArgValue(className);
-        definition.addConstructorArgValue(attributes.get("index"));
-        definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
-        String[] qualifiers = getQualifiers(attributes);
-        // This is done so that there's a way to retrieve qualifiers while generating AOT
-        // code
-        AbstractBeanDefinition beanDefinition = definition.getBeanDefinition();
-        beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, className);
-        // has a default, won't be null
-        boolean primary = (Boolean) attributes.get("primary");
-        beanDefinition.setPrimary(primary);
-        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, appName + serviceName + "Impl",
-                qualifiers);
-        BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
-
-        val serviceInfo = GatewayServiceRegistry.ServiceInfo.builder()
-            .appName(appName)
-            .serviceName(serviceName)
-            .contextPath((String) attributes.get("contextPath"))
-            .clazz((Class<?>) attributes.get("interfaceClass"))
-            .index((int) attributes.get("index"))
-            .build();
-
-        GatewayServiceRegistry.registerServiceInfo(serviceInfo);
-    }
-
-    private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> clazz, String serviceName,
-            String appName, String contextPath, int index) {
-        if (registered.getOrDefault(appName + "@" + serviceName, false)) {
-            return;
-        }
-        registered.put(appName + "@" + serviceName, true);
+        REGISTERED.put(serviceName, true);
 
         BeanDefinitionBuilder definition = BeanDefinitionBuilder.genericBeanDefinition(RouterFunctionFactoryBean.class);
 
-        definition.addConstructorArgValue(appName);
+        definition.addConstructorArgValue(svcName);
         definition.addConstructorArgValue(serviceName);
         definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
-        BeanDefinitionHolder holder = getBeanDefinitionHolder(appName, serviceName, definition);
+        BeanDefinitionHolder holder = getBeanDefinitionHolder(svcName, serviceName, definition);
 
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
-        val serviceInfo = GatewayServiceRegistry.ServiceInfo.builder()
-            .appName(appName)
-            .serviceName(serviceName)
-            .contextPath(contextPath)
-            .clazz(clazz)
-            .index(index)
-            .local(true)
-            .build();
-        GatewayServiceRegistry.registerServiceInfo(serviceInfo);
     }
 
-    private Route createRoute(String prefix, int index, Environment environment, Route parent) {
+    private Route createRoute(String app, Class<?> interfaceName, String prefix, int index, Environment environment,
+            Route parent) {
         prefix = prefix + "[" + index + "]";
         val path = environment.getProperty(prefix + ".path");
         if (StringUtils.isBlank(path)) {
             return null;
         }
-        val serviceIndex = environment.getProperty(prefix + ".service-index");
         val login = environment.getProperty(prefix + ".login");
         val method = environment.getProperty(prefix + ".method");
-        val actions = environment.getProperty(prefix + ".actions", "GET,POST");
+        val actions = environment.getProperty(prefix + ".actions", "POST");
         val filters = environment.getProperty(prefix + ".filters");
-        try {
-            return new Route().parent(parent)
-                .index(index)
-                .path(path)
-                .serviceIndex(serviceIndex)
-                .method(method)
-                .actions(actions)
-                .login(login)
-                .filters(filters);
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Cannot parse '" + prefix + "' route", e);
-        }
+
+        return new Route().app(app)
+            .parent(parent)
+            .index(index)
+            .path(path)
+            .interfaceName(interfaceName)
+            .method(method)
+            .actions(actions)
+            .login(login)
+            .filters(filters);
     }
 
     private void registerRouterFunction(BeanDefinitionRegistry registry, GroupRoute route) {
         // to
-        val serviceIndex = route.getServiceIndex();
-        val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceIndex);
-        if (serviceIndex == null) {
-            log.debug("Service not found for route: {} ", route);
+        val interfaceName = route.getInterfaceName();
+        val serviceInfo = GatewayServiceRegistry.getServiceInfo(interfaceName);
+        if (serviceInfo == null) {
+            log.warn("Service not found for route: {} ", route);
             return;
         }
-        val localService = serviceInfo.isLocal();
-        if (localService) {
-            val appName = serviceInfo.getAppName();
-            val serviceName = serviceInfo.getServiceName();
-            BeanDefinitionBuilder definition = BeanDefinitionBuilder
-                .genericBeanDefinition(GroupRoterFunctionFactoryBean.class);
 
-            definition.addConstructorArgValue(route);
-            definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
-            BeanDefinitionHolder holder = getBeanDefinitionHolder(appName, serviceName + ".route." + route.index(),
-                    definition);
+        val appName = serviceInfo.getAppName();
+        val serviceName = serviceInfo.getServiceName();
+        BeanDefinitionBuilder definition = BeanDefinitionBuilder
+            .genericBeanDefinition(GroupRouterFunctionFactoryBean.class);
 
-            BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
-        }
-        else {
+        definition.addConstructorArgValue(route);
+        definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+        BeanDefinitionHolder holder = getBeanDefinitionHolder(appName, serviceName + ".route." + route.index(),
+                definition);
 
-        }
+        BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
+
     }
 
     private BeanDefinitionHolder getBeanDefinitionHolder(String appName, String serviceName,

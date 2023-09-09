@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.error;
 
-import com.apzda.cloud.gsvc.ServiceError;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
 import jakarta.servlet.ServletException;

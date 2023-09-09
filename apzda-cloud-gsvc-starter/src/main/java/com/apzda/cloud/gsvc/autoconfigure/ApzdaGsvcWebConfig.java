@@ -1,8 +1,7 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
-import cn.dev33.satoken.filter.SaFilter;
-import cn.dev33.satoken.filter.SaServletFilter;
 import com.apzda.cloud.gsvc.core.SaTokenExtendProperties;
+import com.apzda.cloud.gsvc.core.ServiceConfigurationProperties;
 import com.apzda.cloud.gsvc.error.GsvcErrorAttributes;
 import com.apzda.cloud.gsvc.error.GsvcErrorController;
 import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
@@ -15,12 +14,12 @@ import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolver;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.HandlerFilterFunction;
@@ -33,6 +32,7 @@ import java.util.List;
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties({ ServiceConfigurationProperties.class, SaTokenExtendProperties.class })
 public class ApzdaGsvcWebConfig {
 
     private final ServerProperties serverProperties;
@@ -71,12 +71,6 @@ public class ApzdaGsvcWebConfig {
     @ConditionalOnMissingBean
     WebClient webClient(ReactorLoadBalancerExchangeFilterFunction lbFunction) {
         return WebClient.builder().filter(lbFunction).build();
-    }
-
-    @Bean
-    @Order
-    SaFilter gsvcDefaultSaReactorFilter() {
-        return new SaServletFilter().addExclude("/**");
     }
 
     @Bean

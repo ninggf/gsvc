@@ -4,7 +4,6 @@ import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationContext;
@@ -49,22 +48,15 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
         val methods = GatewayServiceRegistry.getDeclaredServiceMethods(appName, serviceName);
 
         val route = RouterFunctions.route();
-        var contextPath = applicationContext.getEnvironment().getProperty("server.servlet.context-path");
-        if (StringUtils.isBlank(contextPath)) {
-            contextPath = "/" + appName;
-        }
-        else {
-            contextPath = "";
-        }
-
+        // todo 添加过滤器
+        // route.path(, );
         for (Map.Entry<String, GatewayServiceRegistry.ServiceMethod> method : methods.entrySet()) {
             val methodName = method.getKey();
             val methodHolder = method.getValue();
-            val path = "/GSVC-" + serviceName + "/" + methodName;
+            val path = "/" + serviceName + "/" + methodName;
 
-            log.trace("Route {} to {}@{}/{}", path, appName, serviceName, methodName);
-            route.POST(contextPath + path,
-                    request -> ServiceMethodHandler.handle(request, methodHolder, applicationContext));
+            log.debug("EW Route {} to {}@{}/{}", path, appName, serviceName, methodName);
+            route.POST(path, request -> ServiceMethodHandler.handle(request, null, methodHolder, applicationContext));
         }
         val errorHandler = applicationContext.getBean(GsvcExceptionHandler.class);
         return route.onError(Exception.class, errorHandler::handle).build();

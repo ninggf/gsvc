@@ -14,12 +14,13 @@ public class GatewayServiceConfigure {
 
     private final ServiceConfigurationProperties serviceConfig;
 
-    public ServiceConfigurationProperties.ServiceConfig getServiceConfig(int index) {
-        return serviceConfig.get(index);
+    public ServiceConfigurationProperties.ServiceConfig getServiceConfig(String serviceName) {
+        // todo 解决配置读取不到问题.
+        return serviceConfig.svcConfig(serviceName);
     }
 
-    public Duration getReadTimeout(int index, String methodName) {
-        val config = serviceConfig.get(index);
+    public Duration getReadTimeout(String serviceName, String methodName) {
+        val config = serviceConfig.svcConfig(serviceName);
         // 方法级
         val methodConfig = config.getMethods().get(methodName);
         if (methodConfig != null) {
@@ -37,8 +38,8 @@ public class GatewayServiceConfigure {
         return Duration.ofSeconds(3600);
     }
 
-    public Duration getConnectTimeout(int index, String methodName) {
-        val config = serviceConfig.get(index);
+    public Duration getConnectTimeout(String serviceName, String methodName) {
+        val config = serviceConfig.svcConfig(serviceName);
         // method
         val methodConfig = config.getMethods().get(methodName);
         if (methodConfig != null) {
@@ -56,8 +57,8 @@ public class GatewayServiceConfigure {
         return Duration.ofSeconds(5);
     }
 
-    public Duration getTimeout(int index, String methodName) {
-        val config = serviceConfig.get(index);
+    public Duration getTimeout(String serviceName, String methodName) {
+        val config = serviceConfig.svcConfig(serviceName);
         // method
         val methodConfig = config.getMethods().get(methodName);
         if (methodConfig != null) {
@@ -75,8 +76,8 @@ public class GatewayServiceConfigure {
         return Duration.ofSeconds(3610);
     }
 
-    public Duration getUploadTimeout(int index, String methodName) {
-        val config = serviceConfig.get(index);
+    public Duration getUploadTimeout(String serviceName, String methodName) {
+        val config = serviceConfig.svcConfig(serviceName);
         // method
         val methodConfig = config.getMethods().get(methodName);
         if (methodConfig != null) {

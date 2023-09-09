@@ -1,10 +1,10 @@
 package com.apzda.cloud.gsvc.core;
 
 import cn.hutool.core.io.FileUtil;
-import com.apzda.cloud.gsvc.ResponseUtils;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.dto.UploadFile;
 import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -65,15 +65,21 @@ public class ServiceMethodHandler {
         objectMapper = ResponseUtils.OBJECT_MAPPER;
     }
 
-    public static ServerResponse handle(ServerRequest request, GatewayServiceRegistry.ServiceMethod serviceMethod,
-            ApplicationContext applicationContext) {
-        val mInfo = GatewayServiceRegistry.fromDeclaredMethod(serviceMethod);
+    public static ServerResponse handle(ServerRequest request, String caller,
+            GatewayServiceRegistry.ServiceMethod serviceMethod, ApplicationContext applicationContext) {
 
-        return new ServiceMethodHandler(request, mInfo, applicationContext).run();
+        if (caller == null) {
+            caller = request.headers().firstHeader("X-Gsvc-Caller");
+        }
+
+        return new ServiceMethodHandler(request, serviceMethod, applicationContext).run(caller);
     }
 
-    private ServerResponse run() {
+    private ServerResponse run(String caller) {
         try {
+            if (!StringUtils.hasText(caller)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            }
             logId = GsvcContextHolder.getRequestId();
             if (log.isTraceEnabled()) {
                 log.trace("[{}] Start to call method: {}@{}/{}", logId, serviceMethod.getServiceName(),
@@ -93,8 +99,15 @@ public class ServiceMethodHandler {
             };
         }
         catch (Exception e) {
-            log.error("[{}] Start to call method: {}@{}/{}", logId, serviceMethod.getServiceName(),
-                    serviceMethod.getAppName(), serviceMethod.getDmName(), e);
+            if (e instanceof ResponseStatusException) {
+                log.warn("[{}] Call method failed: {}@{}/{}", logId, serviceMethod.getServiceName(),
+                        serviceMethod.getAppName(), serviceMethod.getDmName());
+            }
+            else {
+                log.error("[{}] Call method failed: {}@{}/{}", logId, serviceMethod.getServiceName(),
+                        serviceMethod.getAppName(), serviceMethod.getDmName(), e);
+            }
+
             return exceptionHandler.handle(e, request);
         }
     }
@@ -120,10 +133,10 @@ public class ServiceMethodHandler {
         Object requestObj = null;
         Map args = null;
 
-        val serviceIndex = serviceMethod.getServiceIndex();
+        val serviceName = serviceMethod.getServiceName();
         val reqClass = serviceMethod.reqClass();
         val dmName = serviceMethod.getDmName();
-        val readTimeout = svcConfigure.getTimeout(serviceIndex, dmName);
+        val readTimeout = svcConfigure.getTimeout(serviceName, dmName);
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
             val requestBody = retrieveRequestBody(request.servletRequest());
@@ -153,7 +166,7 @@ public class ServiceMethodHandler {
         if (args != null) {
             // 文件上传
             if (!fileContents.isEmpty()) {
-                Duration uploadTimeout = svcConfigure.getUploadTimeout(serviceIndex, dmName);
+                Duration uploadTimeout = svcConfigure.getUploadTimeout(serviceName, dmName);
                 val stopWatch = new StopWatch("处理上传文件");
                 stopWatch.start();
                 Flux.fromIterable(fileContents)
@@ -221,8 +234,8 @@ public class ServiceMethodHandler {
     private String createResponse(Object resp) throws JsonProcessingException {
         val respStr = objectMapper.writeValueAsString(resp);
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Response of {}@{}/{} is: {}", logId, serviceMethod.getServiceName(), serviceMethod.getAppName(),
-                    serviceMethod.getDmName(), StringUtils.truncate(respStr, 256));
+            log.trace("[{}] Response of {}@{}/{} is: {}", logId, serviceMethod.getServiceName(),
+                    serviceMethod.getAppName(), serviceMethod.getDmName(), StringUtils.truncate(respStr, 256));
         }
         return respStr;
     }
