@@ -1,13 +1,19 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
-import com.apzda.cloud.gsvc.core.SaTokenExtendProperties;
-import com.apzda.cloud.gsvc.core.ServiceConfigurationProperties;
+import com.apzda.cloud.gsvc.config.SaTokenExtendProperties;
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.error.GsvcErrorAttributes;
 import com.apzda.cloud.gsvc.error.GsvcErrorController;
 import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.filter.GsvcFilter;
 import com.apzda.cloud.gsvc.gtw.filter.LoginFilter;
+import com.apzda.cloud.gsvc.utils.ResponseUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
+import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
@@ -17,11 +23,10 @@ import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolve
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorController;
-import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.HandlerFilterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
@@ -32,13 +37,32 @@ import java.util.List;
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties({ ServiceConfigurationProperties.class, SaTokenExtendProperties.class })
-public class ApzdaGsvcWebConfig {
+@EnableConfigurationProperties({ ServiceConfigProperties.class, SaTokenExtendProperties.class })
+public class ApzdaGsvcWebConfig implements InitializingBean {
 
-    private final ServerProperties serverProperties;
+    private final ApplicationContext applicationContext;
 
-    public ApzdaGsvcWebConfig(ServerProperties serverProperties) {
-        this.serverProperties = serverProperties;
+    private final ServiceConfigProperties serviceConfigProperties;
+
+    private final ObjectMapper objectMapper;
+
+    public ApzdaGsvcWebConfig(ApplicationContext applicationContext, ServiceConfigProperties serviceConfigProperties,
+            ObjectMapper objectMapper) {
+        this.applicationContext = applicationContext;
+        this.serviceConfigProperties = serviceConfigProperties;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        val config = serviceConfigProperties.getConfig();
+        val pbConfig = ProtobufJacksonConfig.builder()
+            .acceptLiteralFieldnames(config.isAcceptLiteralFieldNames())
+            .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
+            .serializeLongsAsString(config.isSerializeLongsAsString())
+            .build();
+        ResponseUtils.config(pbConfig);
+        objectMapper.registerModule(new ProtobufModule(pbConfig));
     }
 
     @Bean("login")
@@ -62,15 +86,9 @@ public class ApzdaGsvcWebConfig {
     @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
     public BasicErrorController basicErrorController(ErrorAttributes errorAttributes, GsvcExceptionHandler handler,
-            ObjectProvider<ErrorViewResolver> errorViewResolvers) {
-        return new GsvcErrorController(errorAttributes, this.serverProperties.getError(), handler,
+            ObjectProvider<ErrorViewResolver> errorViewResolvers, ServerProperties serverProperties) {
+        return new GsvcErrorController(errorAttributes, serverProperties.getError(), handler,
                 errorViewResolvers.orderedStream().toList());
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    WebClient webClient(ReactorLoadBalancerExchangeFilterFunction lbFunction) {
-        return WebClient.builder().filter(lbFunction).build();
     }
 
     @Bean

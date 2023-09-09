@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.config;
 
-import com.apzda.cloud.gsvc.core.ServiceConfigurationProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
@@ -12,12 +11,7 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class GatewayServiceConfigure {
 
-    private final ServiceConfigurationProperties serviceConfig;
-
-    public ServiceConfigurationProperties.ServiceConfig getServiceConfig(String serviceName) {
-        // todo 解决配置读取不到问题.
-        return serviceConfig.svcConfig(serviceName);
-    }
+    private final ServiceConfigProperties serviceConfig;
 
     public Duration getReadTimeout(String serviceName, String methodName) {
         val config = serviceConfig.svcConfig(serviceName);

@@ -2,28 +2,25 @@ package com.apzda.cloud.gsvc.autoconfigure;
 
 import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
+import com.apzda.cloud.gsvc.config.ServiceConfig;
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.core.DefaultServiceCaller;
 import com.apzda.cloud.gsvc.core.GatewayServiceBeanFactoryPostProcessor;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
-import com.apzda.cloud.gsvc.core.ServiceConfigurationProperties;
-import com.apzda.cloud.gsvc.utils.ResponseUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
-import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
+import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Map;
@@ -34,62 +31,17 @@ import java.util.Map;
 @AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class })
 @Import({ ApzdaGsvcWebConfig.class })
 @Slf4j
-public class ApzdaGsvcAutoConfiguration implements SmartLifecycle, ApplicationContextAware {
+public class ApzdaGsvcAutoConfiguration {
 
-    private ApplicationContext applicationContext;
-
-    private volatile boolean isRunning = false;
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        String appName = applicationContext.getEnvironment().getProperty("spring.application.name");
-        if (!StringUtils.hasText(appName)) {
-            throw new IllegalStateException("'spring.application.name' must be not empty!");
-        }
-        this.applicationContext = applicationContext;
-        ServiceConfigurationProperties properties = applicationContext.getBean(ServiceConfigurationProperties.class);
-        val config = properties.getConfig();
-        val pbConfig = ProtobufJacksonConfig.builder()
-            .acceptLiteralFieldnames(config.isAcceptLiteralFieldNames())
-            .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
-            .serializeLongsAsString(config.isSerializeLongsAsString())
-            .build();
-        ResponseUtils.config(pbConfig);
-        applicationContext.getBean(ObjectMapper.class).registerModule(new ProtobufModule(pbConfig));
-    }
-
-    @Override
-    public void start() {
-        for (Map.Entry<Class<?>, GatewayServiceRegistry.ServiceInfo> svc : GatewayServiceRegistry.DECLARED_SERVICES
-            .entrySet()) {
-            val service = svc.getValue();
-            val interfaceName = svc.getKey();
-            val name = service.getServiceName();
-            val bean = applicationContext.getBean(interfaceName);
-            GatewayServiceRegistry.register(interfaceName, bean);
-        }
-        isRunning = true;
-        log.debug("Gsvc is ready!");
-    }
-
-    @Override
-    public void stop() {
-
-    }
-
-    @Override
-    public boolean isRunning() {
-        return isRunning;
-    }
-
-    @Override
-    public int getPhase() {
-        return 100;
+    @Bean
+    GatewayServiceConfigure gatewayServiceConfigure(ServiceConfigProperties properties) {
+        return new GatewayServiceConfigure(properties);
     }
 
     @Bean
-    GatewayServiceConfigure gatewayServiceConfigure(ServiceConfigurationProperties properties) {
-        return new GatewayServiceConfigure(properties);
+    @ConditionalOnMissingBean
+    WebClient webClient(ReactorLoadBalancerExchangeFilterFunction lbFunction) {
+        return WebClient.builder().filter(lbFunction).build();
     }
 
     @Bean
@@ -102,6 +54,40 @@ public class ApzdaGsvcAutoConfiguration implements SmartLifecycle, ApplicationCo
     @Bean
     BeanFactoryPostProcessor gsvcBeanFactoryPostProcessor() {
         return new GatewayServiceBeanFactoryPostProcessor();
+    }
+
+    @Configuration
+    @RequiredArgsConstructor
+    public static class GsvcServer implements SmartLifecycle {
+
+        private final ApplicationContext applicationContext;
+
+        private final ServiceConfigProperties serviceConfigProperties;
+
+        private volatile boolean running = false;
+
+        @Override
+        public void start() {
+            val services = serviceConfigProperties.getService();
+            for (Map.Entry<String, ServiceConfig> svc : services.entrySet()) {
+                val service = svc.getValue();
+                val interfaceName = service.getInterfaceName();
+                val bean = applicationContext.getBean(interfaceName);
+                GatewayServiceRegistry.setBean(interfaceName, bean);
+            }
+            running = true;
+        }
+
+        @Override
+        public void stop() {
+            // nothing to do
+        }
+
+        @Override
+        public boolean isRunning() {
+            return running;
+        }
+
     }
 
 }

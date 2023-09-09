@@ -45,31 +45,27 @@ public class GatewayServiceRegistry {
         genDeclaredServiceMethods(app, svcName, interfaceName, methodMeta);
     }
 
-    public static void register(Class<?> interfaceName, Object bean) {
+    public static void setBean(Class<?> interfaceName, Object bean) {
         val appName = shortSvcName(interfaceName);
         val serviceName = svcName(interfaceName);
         SERVICES.computeIfAbsent(serviceName + "@" + appName, (key) -> {
             val hm = new HashMap<String, ServiceMethod>();
+            log.debug("Inject Bean into Service: {} - {}", serviceName, interfaceName);
             for (Method dm : interfaceName.getDeclaredMethods()) {
                 val dmName = dm.getName();
                 val serviceMethod = SERVICE_METHODS.getOrDefault(appName + "@" + serviceName, Collections.emptyMap())
                     .get(dmName);
-                if (serviceMethod != null) {
-                    serviceMethod.setBean(bean);
-                    hm.put(dmName, serviceMethod);
-                    log.debug("Inject Bean for Service method: {}.{} - {}", serviceName, dmName, serviceMethod);
-                }
-                else {
+
+                if (serviceMethod == null) {
                     log.warn("Service method not found: {}.{}", serviceName, dmName);
+                    continue;
                 }
+
+                serviceMethod.setBean(bean);
+                hm.put(dmName, serviceMethod);
             }
             return hm;
         });
-    }
-
-    public static ServiceMethod getServiceMethod(String appName, String serviceName, String methodName) {
-        String serviceId = serviceName + "@" + appName;
-        return SERVICES.getOrDefault(serviceId, Collections.emptyMap()).get(methodName);
     }
 
     public static Map<String, ServiceMethod> getServiceMethods(String appName, String serviceName) {
@@ -104,6 +100,9 @@ public class GatewayServiceRegistry {
     }
 
     public static String svcName(Class<?> clazz) {
+        if (clazz == null) {
+            return null;
+        }
         val simpleName = clazz.getSimpleName();
         return Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
     }

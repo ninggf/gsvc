@@ -143,7 +143,7 @@ public class Route {
             this.actions = this.parent.actions;
         }
         else {
-            this.actions = List.of(HttpMethod.GET, HttpMethod.POST);
+            this.actions = List.of(HttpMethod.POST);
         }
         return this;
     }
@@ -158,13 +158,13 @@ public class Route {
     @Override
     public String toString() {
         val str = new ToStringCreator(this);
-        val svcName = GatewayServiceRegistry.svcName(interfaceName);
         if (parent != null) {
             str.append("path", parent.path + path);
         }
         else {
             str.append("path", path);
         }
+        val svcName = GatewayServiceRegistry.svcName(interfaceName);
         str.append("svc", svcName)
             .append("method", method)
             .append("index", index)

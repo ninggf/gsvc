@@ -1,4 +1,4 @@
-package com.apzda.cloud.gsvc.core;
+package com.apzda.cloud.gsvc.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

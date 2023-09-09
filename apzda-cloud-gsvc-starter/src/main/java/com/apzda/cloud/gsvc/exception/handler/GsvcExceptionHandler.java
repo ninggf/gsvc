@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.exception.handler;
 
-import com.apzda.cloud.gsvc.core.SaTokenExtendProperties;
+import com.apzda.cloud.gsvc.config.SaTokenExtendProperties;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcException;

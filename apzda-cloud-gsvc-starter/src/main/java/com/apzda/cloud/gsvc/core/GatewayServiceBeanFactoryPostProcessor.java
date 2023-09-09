@@ -39,7 +39,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .filter(n -> StringUtils.endsWith(n, "Gsvc"))
             .map(GatewayServiceRegistry::shortSvcName)
             .toList();
-
+        environment.getProperty("abc.abc.f","f");
         // 注册本地服务
         for (String appName : services) {
             val interfaceName = environment.getProperty("apzda.cloud.service." + appName + ".interface-name");
@@ -89,7 +89,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 log.debug("Found Route: apzda.cloud.service.{}.routes[{}].routes[{}] -> {}", app, i, j, subRoute);
                 subRoutes.add(subRoute);
             }
-            val groupRoute = new GroupRoute(route);
+            val groupRoute = GroupRoute.valueOf(route);
             groupRoute.setRoutes(subRoutes);
             registerRouterFunction(registry, groupRoute);
         }
@@ -123,7 +123,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         }
         val login = environment.getProperty(prefix + ".login");
         val method = environment.getProperty(prefix + ".method");
-        val actions = environment.getProperty(prefix + ".actions", "POST");
+        val actions = environment.getProperty(prefix + ".actions");
         val filters = environment.getProperty(prefix + ".filters");
 
         return new Route().app(app)
