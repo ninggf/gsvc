@@ -2,14 +2,9 @@ package com.apzda.cloud.gsvc.autoconfigure;
 
 import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
-import com.apzda.cloud.gsvc.config.ServiceConfig;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
-import com.apzda.cloud.gsvc.core.DefaultServiceCaller;
-import com.apzda.cloud.gsvc.core.GatewayServiceBeanFactoryPostProcessor;
-import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
-import com.apzda.cloud.gsvc.core.ServiceMethod;
+import com.apzda.cloud.gsvc.core.*;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
-import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -73,11 +68,11 @@ public class ApzdaGsvcAutoConfiguration {
 
         @Override
         public void start() {
-            val services = serviceConfigProperties.getService();
-            for (Map.Entry<String, ServiceConfig> svc : services.entrySet()) {
-                val svcName = svc.getKey();
+            val services = GatewayServiceRegistry.DECLARED_SERVICES;
+            for (Map.Entry<Class<?>, ServiceInfo> svc : services.entrySet()) {
                 val service = svc.getValue();
-                val interfaceName = service.getInterfaceName();
+                val svcName = service.getAppName();
+                val interfaceName = service.getClazz();
                 val bean = applicationContext.getBean(interfaceName);
                 GatewayServiceRegistry.setBean(interfaceName, bean);
 

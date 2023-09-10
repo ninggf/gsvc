@@ -1,12 +1,17 @@
 package com.apzda.cloud.demo.demo;
 
+import com.apzda.cloud.demo.bar.proto.BarServiceGsvc;
+import com.apzda.cloud.demo.foo.proto.FooServiceGrpc;
+import com.apzda.cloud.demo.foo.proto.FooServiceGsvc;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author fengz
  */
 @SpringBootApplication
+@Import({ FooServiceGsvc.class, BarServiceGsvc.class })
 public class DemoApplication {
 
     public static void main(String[] args) {

@@ -22,6 +22,14 @@
             <artifactId>apzda-cloud-gsvc-starter</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>demo-bar-proto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>demo-foo-proto</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>

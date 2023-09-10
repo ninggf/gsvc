@@ -1,0 +1,14 @@
+spring:
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            barService:
+              - instanceId: '0'
+                host: localhost
+                port: 12562
+            fooService:
+              - instanceId: '0'
+                host: localhost
+                port: 12561
