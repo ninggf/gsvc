@@ -7,8 +7,8 @@ import org.springframework.boot.convert.DurationUnit;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -27,6 +27,6 @@ public class MethodConfig {
     @DurationUnit(ChronoUnit.MILLIS)
     private Duration uploadTimeout = Duration.ZERO;
 
-    private final Set<String> filters = new HashSet<>();
+    private final List<String> plugins = new ArrayList<>();
 
 }

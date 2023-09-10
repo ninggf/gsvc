@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.utils;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -10,7 +11,11 @@ import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
+import lombok.val;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author fengz
@@ -42,7 +47,8 @@ public class ResponseUtils {
             return OBJECT_MAPPER.readValue(responseBody, tClass);
         }
         catch (JsonProcessingException e) {
-            log.error("Cannot convert 【{}】 to class: {}", StringUtils.truncate(responseBody, 256), tClass);
+            val requestId = GsvcContextHolder.getRequestId();
+            log.error("[{}] Cannot convert 【{}】 to class: {}", requestId, responseBody, tClass);
             try {
                 // bookmark: fallback to jackson error
                 return OBJECT_MAPPER.readValue(ServiceError.JACKSON_ERROR.fallbackString, tClass);
@@ -54,7 +60,27 @@ public class ResponseUtils {
         }
     }
 
+    public static <R> R fallback(Throwable e, String serviceName, Class<R> rClass) {
+        if (e instanceof WebClientResponseException.Unauthorized) {
+            return fallback(ServiceError.REMOTE_SERVICE_UNAUTHORIZED, serviceName, rClass);
+        }
+        else if (e instanceof WebClientResponseException.Forbidden) {
+            return fallback(ServiceError.REMOTE_SERVICE_FORBIDDEN, serviceName, rClass);
+        }
+        else if (e instanceof WebClientResponseException.NotFound) {
+            return fallback(ServiceError.REMOTE_SERVICE_NOT_FOUND, serviceName, rClass);
+        }
+        else if (e instanceof TimeoutException) {
+            return fallback(ServiceError.REMOTE_SERVICE_TIMEOUT, serviceName, rClass);
+        }
+        else if (e instanceof WebClientRequestException) {
+            return fallback(ServiceError.REMOTE_SERVICE_NO_INSTANCE, serviceName, rClass);
+        }
+        return fallback(ServiceError.REMOTE_SERVICE_ERROR, serviceName, rClass);
+    }
+
     public static <R> R fallback(ServiceError error, String serviceName, Class<R> tClass) {
+        log.error("fallback for {} - {} - {}", serviceName, tClass, error);
         if (String.class.isAssignableFrom(tClass)) {
             return tClass.cast(error.fallbackString(serviceName));
         }

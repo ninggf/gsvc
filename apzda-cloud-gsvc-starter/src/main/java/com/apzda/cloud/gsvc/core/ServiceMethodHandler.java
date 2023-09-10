@@ -7,6 +7,7 @@ import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.grpc.MethodDescriptor;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -14,27 +15,26 @@ import lombok.val;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.FormFieldPart;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.util.ContentCachingRequestWrapper;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.time.Duration;
 import java.util.*;
+
+import static io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING;
 
 /**
  * @author ninggf
@@ -46,27 +46,28 @@ public class ServiceMethodHandler {
 
     private final GatewayServiceConfigure svcConfigure;
 
-    private final GatewayServiceRegistry.ServiceMethod serviceMethod;
+    private final ServiceMethod serviceMethod;
 
     private final ObjectMapper objectMapper;
 
-    private final List<Tuple2<File, FilePart>> fileContents = new ArrayList<>();
+    private final List<Tuple2<File, MultipartFile>> fileContents = new ArrayList<>();
 
     private final GsvcExceptionHandler exceptionHandler;
 
     private String logId;
 
-    public ServiceMethodHandler(ServerRequest request, GatewayServiceRegistry.ServiceMethod serviceMethod,
+    public ServiceMethodHandler(ServerRequest request, ServiceMethod serviceMethod,
             ApplicationContext applicationContext) {
         this.request = request;
         this.serviceMethod = serviceMethod;
-        svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
-        exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
-        objectMapper = ResponseUtils.OBJECT_MAPPER;
+        this.svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
+        this.exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
+        this.objectMapper = ResponseUtils.OBJECT_MAPPER;
+
     }
 
-    public static ServerResponse handle(ServerRequest request, String caller,
-            GatewayServiceRegistry.ServiceMethod serviceMethod, ApplicationContext applicationContext) {
+    public static ServerResponse handle(ServerRequest request, String caller, ServiceMethod serviceMethod,
+            ApplicationContext applicationContext) {
 
         if (caller == null) {
             caller = request.headers().firstHeader("X-Gsvc-Caller");
@@ -81,27 +82,25 @@ public class ServiceMethodHandler {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND);
             }
             logId = GsvcContextHolder.getRequestId();
+            val type = serviceMethod.getType();
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Start to call method: {}@{}/{}", logId, serviceMethod.getServiceName(),
+                log.trace("[{}] Start to call method[{}]: {}@{}/{}", logId, type, serviceMethod.getServiceName(),
                         serviceMethod.getAppName(), serviceMethod.getDmName());
             }
             // 1. 解析请求体
-            Object requestObj = deserializeRequest();
-            // 2. 调用方法
-            val type = serviceMethod.getType();
+            Object requestObj = deserializeRequest(type);
 
+            // 2. 调用方法
             return switch (type) {
                 case UNARY -> doUnaryCall(requestObj);
-                case SERVER_STREAMING -> doStreamingCall(requestObj);
-                default -> {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-                }
+                case SERVER_STREAMING, BIDI_STREAMING -> doStreamingCall(requestObj);
+                default -> exceptionHandler.handle(new ResponseStatusException(HttpStatus.BAD_REQUEST), request);
             };
         }
         catch (Exception e) {
-            if (e instanceof ResponseStatusException) {
-                log.warn("[{}] Call method failed: {}@{}/{}", logId, serviceMethod.getServiceName(),
-                        serviceMethod.getAppName(), serviceMethod.getDmName());
+            if (e instanceof ResponseStatusException || e instanceof HttpStatusCodeException) {
+                log.warn("[{}] Call method failed: {}@{}/{} - {}", logId, serviceMethod.getServiceName(),
+                        serviceMethod.getAppName(), serviceMethod.getDmName(), e.getMessage());
             }
             else {
                 log.error("[{}] Call method failed: {}@{}/{}", logId, serviceMethod.getServiceName(),
@@ -126,98 +125,125 @@ public class ServiceMethodHandler {
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private Object deserializeRequest() throws IOException, ServletException {
+    protected Object deserializeRequest(MethodDescriptor.MethodType type) throws IOException, ServletException {
         val contentType = request.headers().contentType().orElse(MediaType.APPLICATION_FORM_URLENCODED);
 
-        Object requestObj = null;
-        Map args = null;
+        Object requestObj;
+        Mono<Object> args;
 
-        val serviceName = serviceMethod.getServiceName();
+        val svcName = serviceMethod.getAppName();
         val reqClass = serviceMethod.reqClass();
         val dmName = serviceMethod.getDmName();
-        val readTimeout = svcConfigure.getTimeout(serviceName, dmName);
+        val readTimeout = svcConfigure.getReadTimeout(svcName, dmName);
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
-            val requestBody = retrieveRequestBody(request.servletRequest());
-            log.trace("[{}] Request resolved: {}", logId, requestBody);
+            if (type == BIDI_STREAMING) {
+                return Mono.create(sink -> {
+                    try {
+                        val requestBody = retrieveRequestBody(request.servletRequest());
+                        log.trace("[{}] Request({}) resolved: {}", logId, contentType, requestBody);
+                        sink.success(objectMapper.readValue(requestBody, reqClass));
+                    }
+                    catch (JsonProcessingException e) {
+                        sink.error(e);
+                    }
+                });
+            }
+            else {
+                val requestBody = retrieveRequestBody(request.servletRequest());
+                log.trace("[{}] Request({}) resolved: {}", logId, contentType, requestBody);
 
-            return objectMapper.readValue(requestBody, reqClass);
+                return objectMapper.readValue(requestBody, reqClass);
+            }
         }
         else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA)
                 || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
-            MultiValueMap<String, String> queryParams = request.params();
-            val multipartData = Mono.just(request.multipartData());
-            args = Mono.zip(Mono.just(queryParams), multipartData).map(tuple -> {
-                Map<String, Object> result = new HashMap<>();
-                tuple.getT1().forEach((key, values) -> addBindValue(result, key, values));
-                tuple.getT2().forEach((key, values) -> addBindValue(result, key, values));
-                return result;
-            }).block(readTimeout);
+            val queryParams = request.params();
+            val servletRequest = request.servletRequest();
+
+            if (servletRequest instanceof StandardMultipartHttpServletRequest standardMultipartHttpServletRequest) {
+                val multiFileMap = standardMultipartHttpServletRequest.getMultiFileMap();
+                val multipartData = Mono.just(multiFileMap);
+                args = Mono.zip(Mono.just(queryParams), multipartData).map(tuple -> {
+                    Map<String, Object> result = new HashMap<>();
+                    tuple.getT1().forEach((key, values) -> addBindValue(result, key, values));
+                    tuple.getT2().forEach((key, values) -> addBindValue(result, key, values));
+                    return result;
+                });
+            }
+            else {
+                args = Mono.error(new ResponseStatusException(HttpStatus.NO_CONTENT));
+            }
         }
         else {
-            // 此处真的是
-            args = new HashMap<String, String>();
-            for (Map.Entry<String, List<String>> kv : request.params().entrySet()) {
-                args.put(kv.getKey(), kv.getValue().get(0));
-            }
-        }
-
-        if (args != null) {
-            // 文件上传
-            if (!fileContents.isEmpty()) {
-                Duration uploadTimeout = svcConfigure.getUploadTimeout(serviceName, dmName);
-                val stopWatch = new StopWatch("处理上传文件");
-                stopWatch.start();
-                Flux.fromIterable(fileContents)
-                    .parallel()
-                    .map((tuple) -> tuple.getT2().transferTo(tuple.getT1()))
-                    .doOnError((err) -> log.error("[{}] 上传文件失败: {}", logId, err.getMessage()))
-                    .runOn(Schedulers.boundedElastic())
-                    .then()
-                    .block(uploadTimeout);
-                stopWatch.stop();
-                if (log.isTraceEnabled()) {
-                    log.trace("[{}] {}", logId, stopWatch.shortSummary());
+            MultiValueMap<String, String> queryParams = request.params();
+            args = Mono.just(queryParams).map(params -> {
+                Map<String, Object> result = new HashMap<>();
+                for (Map.Entry<String, List<String>> kv : params.entrySet()) {
+                    addBindValue(result, kv.getKey(), kv.getValue());
                 }
+                return result;
+            });
+        }
+        if (type == BIDI_STREAMING) {
+            return args.handle((arg, sink) -> {
+                try {
+                    val reqObj = objectMapper.readValue(objectMapper.writeValueAsBytes(arg), reqClass);
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}] Request({}) resolved: {}", logId, contentType,
+                                objectMapper.writeValueAsString(arg));
+                    }
+                    sink.next(reqObj);
+                    sink.complete();
+                }
+                catch (IOException e) {
+                    log.error("[{}] Request({}) resolved failed: {}", logId, contentType, e.getMessage());
+                    sink.error(e);
+                }
+            }).timeout(readTimeout);
+        }
+        else {
+            val reqObj = args.blockOptional(readTimeout);
+
+            requestObj = objectMapper.readValue(objectMapper.writeValueAsBytes(reqObj.orElseThrow()), reqClass);
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] {} resolved: {}", logId, contentType, objectMapper.writeValueAsString(requestObj));
             }
-            requestObj = objectMapper.readValue(objectMapper.writeValueAsBytes(args), reqClass);
         }
 
-        if (requestObj != null && log.isTraceEnabled()) {
-            log.trace("[{}] Request resolved: {}", logId, objectMapper.writeValueAsString(requestObj));
-        }
         return requestObj;
     }
 
     private void addBindValue(Map<String, Object> params, String key, List<?> values) {
+        if (params.containsKey(key)) {
+            return;
+        }
+
         if (!CollectionUtils.isEmpty(values)) {
-            values = values.stream().map(value -> {
-                if (value instanceof FilePart filePart) {
-                    val headers = filePart.headers();
-                    File tmpFile = null;
+            List<?> args = values.stream().map(value -> {
+                if (value instanceof MultipartFile filePart) {
+                    val file = UploadFile.builder()
+                        .name(filePart.getName())
+                        .ext(FileUtil.extName(filePart.getOriginalFilename()))
+                        .filename(filePart.getOriginalFilename())
+                        .contentType(Optional.ofNullable(filePart.getContentType()).orElse(MediaType.TEXT_PLAIN_VALUE));
                     try {
-                        tmpFile = File.createTempFile("UP_LD_", ".part");
+                        val tmpFile = File.createTempFile("UP_LD_", ".part");
+                        file.file(tmpFile.getAbsolutePath()).size(filePart.getSize());
+                        filePart.transferTo(tmpFile);
+
+                        if (log.isTraceEnabled()) {
+                            log.trace("[{}] 文件'{}'已上传到: {}", logId, filePart.getOriginalFilename(),
+                                    tmpFile.getAbsoluteFile());
+                        }
+
+                        return file.build();
                     }
                     catch (IOException e) {
-                        // bookmark: 服务异常处理
-                        throw new RuntimeException(e);
+                        log.error("[{}] Upload file '{}' error: {}", logId, filePart.getOriginalFilename(),
+                                e.getMessage());
+                        return file.size(-1).error(e.getMessage()).build();
                     }
-
-                    var file = UploadFile.builder()
-                        .file(tmpFile.getAbsolutePath())
-                        .name(filePart.name())
-                        .ext(FileUtil.extName(filePart.filename()))
-                        .filename(filePart.filename())
-                        .contentType(
-                                Optional.ofNullable(headers.getContentType()).orElse(MediaType.TEXT_PLAIN).toString());
-
-                    val finalTmpFile = tmpFile;
-                    if (log.isTraceEnabled()) {
-                        log.trace("[{}] 文件'{}'将上传到: {}", logId, filePart.filename(), tmpFile.getAbsoluteFile());
-                    }
-                    fileContents.add(Tuples.of(finalTmpFile, filePart));
-                    return file.build();
                 }
                 else if (value instanceof FormFieldPart formFieldPart) {
                     return formFieldPart.value();
@@ -227,7 +253,7 @@ public class ServiceMethodHandler {
                 }
             }).toList();
 
-            params.put(key, values.size() == 1 ? values.get(0) : values);
+            params.put(key, args.size() == 1 ? args.get(0) : args);
         }
     }
 

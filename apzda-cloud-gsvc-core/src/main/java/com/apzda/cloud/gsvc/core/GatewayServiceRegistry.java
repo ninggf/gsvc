@@ -1,14 +1,9 @@
 package com.apzda.cloud.gsvc.core;
 
 import com.google.common.base.Splitter;
-import io.grpc.MethodDescriptor;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.core.style.ToStringCreator;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,9 +35,9 @@ public class GatewayServiceRegistry {
     }
 
     public static void register(Class<?> interfaceName, Map<String, Object[]> methodMeta) {
-        val app = shortSvcName(interfaceName);
-        val svcName = svcName(interfaceName);
-        genDeclaredServiceMethods(app, svcName, interfaceName, methodMeta);
+        register(interfaceName);
+
+        genDeclaredServiceMethods(interfaceName, methodMeta);
     }
 
     public static void setBean(Class<?> interfaceName, Object bean) {
@@ -81,6 +76,18 @@ public class GatewayServiceRegistry {
         return getDeclaredServiceMethods(serviceInfo.appName, serviceInfo.serviceName);
     }
 
+    public static Map<String, ServiceMethod> getDeclaredServiceMethods(Class<?> clazz) {
+        val serviceInfo = getServiceInfo(clazz);
+        return getDeclaredServiceMethods(serviceInfo.appName, serviceInfo.serviceName);
+    }
+
+    public static ServiceMethod getServiceMethod(Class<?> clazz, String method) {
+        val serviceInfo = getServiceInfo(clazz);
+        val app = serviceInfo.appName;
+        val service = serviceInfo.serviceName;
+        return SERVICE_METHODS.getOrDefault(app + "@" + service, Collections.emptyMap()).get(method);
+    }
+
     public static Map<String, ServiceMethod> getDeclaredServiceMethods(String app, String service) {
         return SERVICE_METHODS.getOrDefault(app + "@" + service, Collections.emptyMap());
     }
@@ -107,8 +114,9 @@ public class GatewayServiceRegistry {
         return Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
     }
 
-    static void genDeclaredServiceMethods(String app, String service, Class<?> interfaceName,
-            Map<String, Object[]> methodsMeta) {
+    static void genDeclaredServiceMethods(Class<?> interfaceName, Map<String, Object[]> methodsMeta) {
+        val app = shortSvcName(interfaceName);
+        val service = svcName(interfaceName);
         SERVICE_METHODS.computeIfAbsent(app + "@" + service, key -> {
             val hm = new HashMap<String, ServiceMethod>();
             for (Method dm : interfaceName.getDeclaredMethods()) {
@@ -122,95 +130,6 @@ public class GatewayServiceRegistry {
             }
             return hm;
         });
-    }
-
-    @Getter
-    public static class ServiceMethod {
-
-        private final Method method;
-
-        private final String appName;
-
-        private final String serviceName;
-
-        private final String dmName;
-
-        private Object bean;
-
-        private final Object[] meta;
-
-        private final Class<?> returnType;
-
-        private final Class<?> requestType;
-
-        private final MethodDescriptor.MethodType type;
-
-        private Class<?> currentUserClz;
-
-        public ServiceMethod(Method method, String appName, String serviceName, Object[] meta, Object bean) {
-            this.method = method;
-            this.appName = appName;
-            this.serviceName = serviceName;
-            this.meta = meta;
-            this.bean = bean;
-            this.dmName = method.getName();
-            this.returnType = (Class<?>) meta[2];
-            this.requestType = (Class<?>) meta[1];
-            this.type = (MethodDescriptor.MethodType) meta[0];
-            try {
-                currentUserClz = this.requestType.getMethod("getCurrentUser").getReturnType();
-                if (log.isTraceEnabled()) {
-                    log.trace("{} need CurrentUser instance", this);
-                }
-            }
-            catch (NoSuchMethodException e) {
-                currentUserClz = null;
-            }
-        }
-
-        void setBean(Object bean) {
-            this.bean = bean;
-        }
-
-        public Object call(Object request) throws InvocationTargetException, IllegalAccessException {
-            return method.invoke(bean, request);
-        }
-
-        public Class<?> reqClass() {
-            return requestType;
-        }
-
-        @Override
-        public String toString() {
-            return new ToStringCreator(this).append("appName", appName)
-                .append("serviceName", serviceName)
-                .append("method", dmName)
-                .append("bean", bean)
-                .toString();
-        }
-
-    }
-
-    @Getter
-    @Builder
-    public static class ServiceInfo {
-
-        private int index;
-
-        private String appName;
-
-        private String serviceName;
-
-        private String contextPath;
-
-        private String shortName;
-
-        private Class<?> clazz;
-
-        private boolean local;
-
-        public static final ServiceInfo DEFAULT = ServiceInfo.builder().build();
-
     }
 
 }

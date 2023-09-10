@@ -20,7 +20,7 @@ import org.springframework.web.servlet.function.*;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class GroupRouterFunctionFactoryBean
+public class GtwRouterFunctionFactoryBean
         implements FactoryBean<RouterFunction<ServerResponse>>, ApplicationContextAware {
 
     private final GroupRoute groupRoute;
@@ -34,21 +34,18 @@ public class GroupRouterFunctionFactoryBean
 
     @Override
     public RouterFunction<ServerResponse> getObject() throws Exception {
-        val route = RouterFunctions.route();
+        val routeBuilder = RouterFunctions.route();
         val interfaceName = groupRoute.getInterfaceName();
         val serviceInfo = GatewayServiceRegistry.getServiceInfo(interfaceName);
         val routes = groupRoute.getRoutes();
 
-        if (CollectionUtils.isEmpty(routes)) {
-            setupGroupRoute(route, groupRoute, serviceInfo);
+        val gMethod = groupRoute.getMethod();
+        if (gMethod != null) {
+            setupGroupRoute(routeBuilder, groupRoute, serviceInfo);
         }
-        else {
-            val gMethod = groupRoute.getMethod();
-            if (gMethod != null) {
-                setupGroupRoute(route, groupRoute, serviceInfo);
-            }
 
-            route.path(groupRoute.getPath(), builder -> {
+        if (!CollectionUtils.isEmpty(routes)) {
+            routeBuilder.path(groupRoute.getPath(), builder -> {
                 for (Route subRoute : routes) {
                     val actions = subRoute.getActions();
                     val serviceMethod = getServiceMethod(subRoute, serviceInfo);
@@ -62,6 +59,7 @@ public class GroupRouterFunctionFactoryBean
 
                         HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw",
                                 serviceMethod, applicationContext);
+
                         for (HttpMethod action : actions) {
                             if (action == HttpMethod.GET) {
                                 subBuilder.GET(func);
@@ -79,19 +77,19 @@ public class GroupRouterFunctionFactoryBean
                                 subBuilder.PATCH(func);
                             }
                         }
+
                         setupFilter(subRoute, subBuilder);
                     });
                 }
             });
         }
 
-        setupFilter(groupRoute, route);
+        setupFilter(groupRoute, routeBuilder);
         val exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
-        return route.onError(Exception.class, exceptionHandler::handle).build();
+        return routeBuilder.onError(Exception.class, exceptionHandler::handle).build();
     }
 
-    private void setupGroupRoute(RouterFunctions.Builder builder, GroupRoute route,
-            GatewayServiceRegistry.ServiceInfo serviceInfo) {
+    private void setupGroupRoute(RouterFunctions.Builder builder, GroupRoute route, ServiceInfo serviceInfo) {
         val actions = route.getActions();
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.getPath();
@@ -120,8 +118,7 @@ public class GroupRouterFunctionFactoryBean
         }
     }
 
-    private GatewayServiceRegistry.ServiceMethod getServiceMethod(Route route,
-            GatewayServiceRegistry.ServiceInfo serviceInfo) {
+    private ServiceMethod getServiceMethod(Route route, ServiceInfo serviceInfo) {
         val method = route.getMethod();
         val methods = GatewayServiceRegistry.getDeclaredServiceMethods(serviceInfo);
         val serviceMethod = methods.get(method);
@@ -135,20 +132,10 @@ public class GroupRouterFunctionFactoryBean
     private void setupFilter(Route route, RouterFunctions.Builder builder) {
         var filters = route.getFilters();
 
-        if (route.parent() != null) {
-            // 添加通用过滤器
-        }
-
-        if (route.getLogin()) {
-            filters.add("login");
-        }
-        else {
-            filters.remove("login");
-        }
-
         val filtersBean = filters.stream()
             .map(filter -> applicationContext.getBean(filter, HandlerFilterFunction.class))
             .toList();
+
         if (!CollectionUtils.isEmpty(filtersBean)) {
             for (HandlerFilterFunction<ServerResponse, ServerResponse> filter : filtersBean) {
                 builder.filter(filter);

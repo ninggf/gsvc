@@ -4,10 +4,20 @@ option java_package = "com.apzda.cloud.demo.bar.proto";
 option java_multiple_files = true;
 option java_outer_classname = "BarProto";
 
+message UploadFile {
+  int64 size = 1;
+  string file = 2;
+  string filename = 3;
+  string content_type = 4;
+  string ext = 5;
+  string name = 6;
+  string error = 7;
+}
 
 message BarReq {
   optional string name = 1;
   optional uint32 age = 2;
+  repeated UploadFile files = 10;
 }
 
 message BarRes {
@@ -15,6 +25,7 @@ message BarRes {
   optional string err_msg = 2;
   optional string name = 3;
   optional uint32 age = 4;
+  uint32 file_count = 10;
 }
 
 service BarService {

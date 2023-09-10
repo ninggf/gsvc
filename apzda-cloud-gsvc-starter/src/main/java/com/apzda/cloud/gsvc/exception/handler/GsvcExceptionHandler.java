@@ -82,7 +82,9 @@ public class GsvcExceptionHandler {
             return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(handle(error));
         }
         else if (error instanceof ResponseStatusException responseStatusException) {
-            return ResponseEntity.status(responseStatusException.getStatusCode()).body(handle(error));
+            return ResponseEntity.status(responseStatusException.getStatusCode())
+                .headers(responseStatusException.getHeaders())
+                .body(handle(error));
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
     }

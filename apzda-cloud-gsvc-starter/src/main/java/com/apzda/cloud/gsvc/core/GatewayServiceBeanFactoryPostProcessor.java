@@ -149,7 +149,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val appName = serviceInfo.getAppName();
         val serviceName = serviceInfo.getServiceName();
         BeanDefinitionBuilder definition = BeanDefinitionBuilder
-            .genericBeanDefinition(GroupRouterFunctionFactoryBean.class);
+            .genericBeanDefinition(GtwRouterFunctionFactoryBean.class);
 
         definition.addConstructorArgValue(route);
         definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);

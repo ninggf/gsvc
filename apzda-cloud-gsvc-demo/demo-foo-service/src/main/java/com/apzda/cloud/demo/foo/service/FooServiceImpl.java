@@ -33,7 +33,12 @@ public class FooServiceImpl implements FooService {
     public Mono<FooRes> hello(FooReq request) {
         val req = BarReq.newBuilder().setName(request.getName() + ".foo2").setAge(request.getAge() + 2).build();
         return barService.hello(req)
-            .map(res -> FooRes.newBuilder().setErrCode(0).setName(res.getName()).setAge(res.getAge()).build());
+            .map(res -> FooRes.newBuilder()
+                .setErrCode(res.getErrCode())
+                .setErrMsg(res.getErrMsg())
+                .setName(res.getName())
+                .setAge(res.getAge())
+                .build());
     }
 
     @Override

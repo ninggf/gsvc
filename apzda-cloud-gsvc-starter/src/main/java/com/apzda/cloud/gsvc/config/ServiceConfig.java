@@ -9,7 +9,10 @@ import org.springframework.boot.convert.DurationUnit;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -25,10 +28,12 @@ public class ServiceConfig {
 
     private final Map<String, MethodConfig> methods = new LinkedHashMap<>();
 
-    private final Set<String> filters = new HashSet<>();
+    private final List<String> plugins = new ArrayList<>();
 
     @NotNull
     private Class<?> interfaceName;
+
+    private Class<?> fallbackClazz;
 
     /**
      * 服务在本地时，方法执行超时时间，单位Millis. 0或负值表示永不超时.

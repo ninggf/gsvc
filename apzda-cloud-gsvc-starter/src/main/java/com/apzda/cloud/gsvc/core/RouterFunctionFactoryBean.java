@@ -50,7 +50,7 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
         val route = RouterFunctions.route();
         // todo 添加过滤器
         // route.path(, );
-        for (Map.Entry<String, GatewayServiceRegistry.ServiceMethod> method : methods.entrySet()) {
+        for (Map.Entry<String, ServiceMethod> method : methods.entrySet()) {
             val methodName = method.getKey();
             val methodHolder = method.getValue();
             val path = "/" + serviceName + "/" + methodName;

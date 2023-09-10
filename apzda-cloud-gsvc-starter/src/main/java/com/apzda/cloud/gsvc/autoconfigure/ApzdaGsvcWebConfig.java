@@ -26,10 +26,12 @@ import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.servlet.function.HandlerFilterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -40,15 +42,12 @@ import java.util.List;
 @EnableConfigurationProperties({ ServiceConfigProperties.class, SaTokenExtendProperties.class })
 public class ApzdaGsvcWebConfig implements InitializingBean {
 
-    private final ApplicationContext applicationContext;
-
     private final ServiceConfigProperties serviceConfigProperties;
 
     private final ObjectMapper objectMapper;
 
     public ApzdaGsvcWebConfig(ApplicationContext applicationContext, ServiceConfigProperties serviceConfigProperties,
             ObjectMapper objectMapper) {
-        this.applicationContext = applicationContext;
         this.serviceConfigProperties = serviceConfigProperties;
         this.objectMapper = objectMapper;
     }

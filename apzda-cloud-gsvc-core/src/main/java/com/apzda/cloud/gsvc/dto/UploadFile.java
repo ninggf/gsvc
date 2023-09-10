@@ -22,4 +22,8 @@ public class UploadFile {
 
     private String name; // 表单中的名称
 
+    private long size; // 文件大小
+
+    private String error;// 错误信息
+
 }

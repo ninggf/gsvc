@@ -9,13 +9,13 @@ X-Gsvc-Caller: gtw
 }
 
 > {%
-client.test("Request executed successfully", function() {
-  client.assert(response.status === 200, "Response status is not 200");
-  const type = response.contentType.mimeType;
-  client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-  client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.bar@greeting","响应不等于'gsvc.bar@greeting'")
-});
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
+    });
 %}
 
 ### BooService Hello
@@ -29,13 +29,13 @@ X-Gsvc-Caller: gtw
 }
 
 > {%
-client.test("Request executed successfully", function() {
-  client.assert(response.status === 200, "Response status is not 200");
-  const type = response.contentType.mimeType;
-  client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-  client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.bar@hello","响应不等于'gsvc.bar@hello'")
-});
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+    });
 %}
 
 ### BooService Hi
@@ -49,12 +49,13 @@ X-Gsvc-Caller: gtw
 }
 
 > {%
-client.test("Request executed successfully", function() {
-  client.assert(response.status === 400, "Response status is not 400");
-  const type = response.contentType.mimeType;
-  client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-  client.assert(response.body.errCode === -500, "出错啦: "+ response.body.errMsg);
-});
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 400");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.name === "gsvc.bar@hi", "响应不等于'gsvc.bar@hi'")
+    });
 %}
 
 ### Route - BooService bar/hi
@@ -67,13 +68,35 @@ Content-Type: application/json
 }
 
 > {%
-client.test("Request executed successfully", function() {
-  client.assert(response.status === 400, "Response status is not 200");
-  const type = response.contentType.mimeType;
-  client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-  client.assert(response.body.errCode === -500, "出错啦: "+ response.body.errMsg);
-});
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.name === "gsvc.bar@hi", "响应不等于'gsvc.bar@hi'")
+    });
 %}
+
+
+### Route - BooService bar/hello
+POST http://{{barService}}/bar/hello
+Content-Type: application/json
+
+{
+    "name": "gsvc",
+    "age": 18
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+    });
+%}
+
 
 ### Route - BooService Greeting
 POST http://{{barService}}/greeting
@@ -85,13 +108,13 @@ Content-Type: application/json
 }
 
 > {%
-client.test("Request executed successfully", function() {
-  client.assert(response.status === 200, "Response status is not 200");
-  const type = response.contentType.mimeType;
-  client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-  client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.bar@greeting","响应不等于'gsvc.bar@greeting'")
-});
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
+    });
 %}
 
 ### Route - BooService Greeting Hello
@@ -104,13 +127,13 @@ Content-Type: application/json
 }
 
 > {%
-client.test("Request executed successfully", function() {
-  client.assert(response.status === 200, "Response status is not 200");
-  const type = response.contentType.mimeType;
-  client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-  client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.bar@hello","响应不等于'gsvc.bar@hello'")
-});
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+    });
 %}
 
 ### Route - BooService Greet
@@ -123,11 +146,11 @@ Content-Type: application/json
 }
 
 > {%
-client.test("Request executed successfully", function() {
-  client.assert(response.status === 200, "Response status is not 200");
-  const type = response.contentType.mimeType;
-  client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-  client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.bar@greeting","响应不等于'gsvc.bar@greeting'")
-});
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
+    });
 %}

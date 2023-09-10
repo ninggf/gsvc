@@ -7,6 +7,9 @@ import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.core.DefaultServiceCaller;
 import com.apzda.cloud.gsvc.core.GatewayServiceBeanFactoryPostProcessor;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
+import com.apzda.cloud.gsvc.core.ServiceMethod;
+import com.apzda.cloud.gsvc.plugin.IPlugin;
+import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -46,9 +49,9 @@ public class ApzdaGsvcAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    IServiceCaller serviceCaller(WebClient webClient, ApplicationContext applicationContext,
+    IServiceCaller serviceCaller(ApplicationContext applicationContext, WebClient webClient,
             GatewayServiceConfigure serviceConfigure) {
-        return new DefaultServiceCaller(webClient, applicationContext, serviceConfigure);
+        return new DefaultServiceCaller(applicationContext, webClient, serviceConfigure);
     }
 
     @Bean
@@ -64,16 +67,29 @@ public class ApzdaGsvcAutoConfiguration {
 
         private final ServiceConfigProperties serviceConfigProperties;
 
+        private final GatewayServiceConfigure gatewayServiceConfigure;
+
         private volatile boolean running = false;
 
         @Override
         public void start() {
             val services = serviceConfigProperties.getService();
             for (Map.Entry<String, ServiceConfig> svc : services.entrySet()) {
+                val svcName = svc.getKey();
                 val service = svc.getValue();
                 val interfaceName = service.getInterfaceName();
                 val bean = applicationContext.getBean(interfaceName);
                 GatewayServiceRegistry.setBean(interfaceName, bean);
+
+                // 插件
+                val methods = GatewayServiceRegistry.getDeclaredServiceMethods(interfaceName);
+                for (Map.Entry<String, ServiceMethod> mv : methods.entrySet()) {
+                    val method = mv.getValue();
+                    val plugins = gatewayServiceConfigure.getPlugins(svcName, method.getDmName());
+                    for (String plugin : plugins) {
+                        method.registerPlugin(applicationContext.getBean(plugin, IPlugin.class));
+                    }
+                }
             }
             running = true;
         }

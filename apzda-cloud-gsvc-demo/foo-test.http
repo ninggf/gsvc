@@ -50,11 +50,30 @@ X-Gsvc-Caller: gtw
 
 > {%
 client.test("Request executed successfully", function() {
-  client.assert(response.status === 400, "Response status is not 400");
+  client.assert(response.status === 200, "Response status is not 400");
   const type = response.contentType.mimeType;
   client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-  client.assert(response.body.errCode === -500, "出错啦: "+ response.body.errMsg);
+  client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
+  client.assert(response.body.name === "gsvc.foo3.bar@hi","响应不等于'gsvc.foo3.bar@hi'")
 });
+%}
+
+### FooService Hi - POST - URLENCODE
+POST http://{{fooService}}/fooService/hi
+Content-Type: application/x-www-form-urlencoded
+X-Gsvc-Caller: gtw
+
+name=gsvc&age=18
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 400");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
+        client.assert(response.body.name === "gsvc.foo3.bar@hi","name != 'gsvc.foo3.bar@hi'")
+        client.assert(response.body.age === 24,"age != 24")
+    });
 %}
 
 ### Route - FooService Greeting
@@ -93,4 +112,19 @@ client.test("Request executed successfully", function() {
   client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
   client.assert(response.body.name === "gsvc.foo2.bar@hello","响应不等于'gsvc.foo2.bar@hello'")
 });
+%}
+
+### Route - FooService hey - GET
+GET http://{{fooService}}/foo/hey?name=gsvc&age=18
+X-Gsvc-Caller: gtw
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 400");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
+        client.assert(response.body.name === "gsvc.foo3.bar@hi","name != 'gsvc.foo3.bar@hi'")
+        client.assert(response.body.age === 24,"age != 24")
+    });
 %}
