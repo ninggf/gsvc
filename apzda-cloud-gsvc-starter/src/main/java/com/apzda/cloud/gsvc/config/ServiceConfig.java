@@ -1,7 +1,6 @@
 package com.apzda.cloud.gsvc.config;
 
 import com.apzda.cloud.gsvc.gtw.GroupRoute;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,6 +13,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author unizwa
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,7 +32,6 @@ public class ServiceConfig {
 
     private final List<String> plugins = new ArrayList<>();
 
-    @NotNull
     private Class<?> interfaceName;
 
     private Class<?> fallbackClazz;

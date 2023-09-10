@@ -50,8 +50,6 @@ public class ServiceMethodHandler {
 
     private final ObjectMapper objectMapper;
 
-    private final List<Tuple2<File, MultipartFile>> fileContents = new ArrayList<>();
-
     private final GsvcExceptionHandler exceptionHandler;
 
     private String logId;
@@ -125,7 +123,7 @@ public class ServiceMethodHandler {
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }
 
-    protected Object deserializeRequest(MethodDescriptor.MethodType type) throws IOException, ServletException {
+    protected Object deserializeRequest(MethodDescriptor.MethodType type) throws IOException {
         val contentType = request.headers().contentType().orElse(MediaType.APPLICATION_FORM_URLENCODED);
 
         Object requestObj;
@@ -134,7 +132,7 @@ public class ServiceMethodHandler {
         val svcName = serviceMethod.getAppName();
         val reqClass = serviceMethod.reqClass();
         val dmName = serviceMethod.getDmName();
-        val readTimeout = svcConfigure.getReadTimeout(svcName, dmName);
+        val readTimeout = svcConfigure.getReadTimeout(svcName, dmName, false);
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
             if (type == BIDI_STREAMING) {
@@ -147,7 +145,7 @@ public class ServiceMethodHandler {
                     catch (JsonProcessingException e) {
                         sink.error(e);
                     }
-                });
+                }).timeout(readTimeout);
             }
             else {
                 val requestBody = retrieveRequestBody(request.servletRequest());

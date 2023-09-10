@@ -39,8 +39,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .filter(n -> StringUtils.endsWith(n, "Gsvc"))
             .map(GatewayServiceRegistry::shortSvcName)
             .toList();
-        environment.getProperty("abc.abc.f","f");
-        // 注册本地服务
+
         for (String appName : services) {
             val interfaceName = environment.getProperty("apzda.cloud.service." + appName + ".interface-name");
             log.debug("Found Gsvc Service: {} - {}", appName, interfaceName);
@@ -56,43 +55,41 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     log.info("Register Gsvc Service: {} - {}", serviceName, aClass);
                     // 注册服务
                     GatewayServiceRegistry.register(aClass);
-                    // 注册东西路由
+                    // 注册服务路由
                     registerRouterFunction(bf, aClass);
-                    // 注册南北路由
-                    createRoutes(appName, aClass, bf, environment);
+                    // 注册网关路由
+                    val prefix = "apzda.cloud.service." + appName + ".routes";
+                    val routes = createRoutes(prefix, aClass, environment);
+                    for (GroupRoute route : routes) {
+                        registerRouterFunction(bf, route);
+                    }
                 }
                 catch (ClassNotFoundException e) {
-                    throw new BeanCreationException(interfaceName, e);
+                    throw new BeanCreationException(e.getMessage(), e);
                 }
             }
+        }
+
+        try {
+            // 注册网关路由
+            createGatewayRoute(bf, environment);
+        }
+        catch (ClassNotFoundException e) {
+            throw new BeanCreationException(e.getMessage(), e);
         }
     }
 
-    private void createRoutes(String app, Class<?> interfaceName, BeanDefinitionRegistry registry,
-            Environment environment) throws ClassNotFoundException {
-        if (log.isDebugEnabled()) {
-            log.debug("Register Routes: {} - {}", GatewayServiceRegistry.svcName(interfaceName), interfaceName);
+    private void createGatewayRoute(BeanDefinitionRegistry registry, Environment environment)
+            throws ClassNotFoundException {
+        var prefix = "apzda.cloud.routes";
+        val routes = createRoutes(prefix, null, environment);
+        for (GroupRoute route : routes) {
+            registerGatewayRouterFunction(registry, route);
         }
-        for (int i = 0; i < 10000; i++) {
-            val route = createRoute(app, interfaceName, "apzda.cloud.service." + app + ".routes", i, environment, null);
-            if (route == null) {
-                break;
-            }
-            log.debug("Found Route: apzda.cloud.service.{}.routes[{}] -> {}", app, i, route);
-            List<Route> subRoutes = new ArrayList<>();
-            for (int j = 0; j < 10000; j++) {
-                val subRoute = createRoute(app, interfaceName,
-                        "apzda.cloud.service." + app + ".routes[" + i + "].routes", j, environment, route);
-                if (subRoute == null) {
-                    break;
-                }
-                log.debug("Found Route: apzda.cloud.service.{}.routes[{}].routes[{}] -> {}", app, i, j, subRoute);
-                subRoutes.add(subRoute);
-            }
-            val groupRoute = GroupRoute.valueOf(route);
-            groupRoute.setRoutes(subRoutes);
-            registerRouterFunction(registry, groupRoute);
-        }
+    }
+
+    private void registerGatewayRouterFunction(BeanDefinitionRegistry registry, GroupRoute route) {
+        // todo: 注册网关路由
     }
 
     private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> clazz) {
@@ -114,8 +111,43 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
     }
 
-    private Route createRoute(String app, Class<?> interfaceName, String prefix, int index, Environment environment,
-            Route parent) {
+    private List<GroupRoute> createRoutes(String prefix, Class<?> interfaceName, Environment environment)
+            throws ClassNotFoundException {
+
+        val groupRoutes = new ArrayList<GroupRoute>();
+
+        for (int i = 0; i < 10000; i++) {
+            if (interfaceName == null) {
+                val clazz = environment.getProperty(prefix + "[" + i + "].interface-name");
+                if (StringUtils.isBlank(clazz)) {
+                    return groupRoutes;
+                }
+                interfaceName = Class.forName(clazz);
+            }
+            val route = createRoute(prefix, interfaceName, i, environment, null);
+            if (route == null) {
+                break;
+            }
+
+            log.debug("Found Route: {}[{}] -> {}", prefix, i, route);
+            List<Route> subRoutes = new ArrayList<>();
+            for (int j = 0; j < 10000; j++) {
+                val subPrefix = prefix + "[" + i + "].routes";
+                val subRoute = createRoute(subPrefix, interfaceName, j, environment, route);
+                if (subRoute == null) {
+                    break;
+                }
+                log.debug("Found Route: {}[{}] -> {}", subPrefix, j, subRoute);
+                subRoutes.add(subRoute);
+            }
+            val groupRoute = GroupRoute.valueOf(route);
+            groupRoute.setRoutes(subRoutes);
+            groupRoutes.add(groupRoute);
+        }
+        return groupRoutes;
+    }
+
+    private Route createRoute(String prefix, Class<?> interfaceName, int index, Environment environment, Route parent) {
         prefix = prefix + "[" + index + "]";
         val path = environment.getProperty(prefix + ".path");
         if (StringUtils.isBlank(path)) {
@@ -126,7 +158,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val actions = environment.getProperty(prefix + ".actions");
         val filters = environment.getProperty(prefix + ".filters");
 
-        return new Route().app(app)
+        return new Route().prefix(prefix)
             .parent(parent)
             .index(index)
             .path(path)
@@ -193,14 +225,6 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             qualifierList = Collections.singletonList(getQualifier(client));
         }
         return !qualifierList.isEmpty() ? qualifierList.toArray(new String[0]) : null;
-    }
-
-    private String getServiceName(String name, Class<?> interfaceName) {
-        if (StringUtils.isNotBlank(name)) {
-            return name;
-        }
-        val canonicalName = interfaceName.getSimpleName();
-        return canonicalName.substring(0, 1).toLowerCase() + canonicalName.substring(1);
     }
 
 }

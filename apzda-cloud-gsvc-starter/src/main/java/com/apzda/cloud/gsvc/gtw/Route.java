@@ -43,27 +43,19 @@ public class Route {
 
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
-    private int index;
+    int index;
 
     @Getter(AccessLevel.PRIVATE)
     @Setter(AccessLevel.PRIVATE)
-    private String app;
-
-    public Route app(String app) {
-        this.app = app;
-        return this;
-    }
-
-    public String app() {
-        return this.app;
-    }
-
-    public Route parent() {
-        return this.parent;
-    }
+    String prefix;
 
     public int index() {
         return this.index;
+    }
+
+    public Route prefix(String prefix) {
+        this.prefix = prefix;
+        return this;
     }
 
     public Route parent(Route parent) {
@@ -104,12 +96,12 @@ public class Route {
         else if (this.parent != null && this.parent.interfaceName != null) {
             this.interfaceName = this.parent.interfaceName;
         }
-        else if (this.parent != null) {
-            // 子路由method不能为空
+        else if (this.parent == null) {
+            // 一级路由interfaceName不能为空
             throw new IllegalArgumentException(
-                    String.format("Interface Name of apzda.cloud.gateway.%s.routes[%d].routes[%d] is blank", this.app,
-                            this.parent.index, index));
+                    String.format("interface-name of %s.routes[%d] is blank", prefix, index));
         }
+
         return this;
     }
 
@@ -119,9 +111,8 @@ public class Route {
         }
         else if (this.parent != null) {
             // 子路由method不能为空
-            throw new IllegalArgumentException(
-                    String.format("Method of apzda.cloud.gateway.%s.routes[%d].routes[%d] is blank", this.app,
-                            this.parent.index, index));
+            throw new IllegalArgumentException(String.format("Method of %s.routes[%d].routes[%d] is blank", this.prefix,
+                    this.parent.index, index));
         }
         return this;
     }

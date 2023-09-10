@@ -66,10 +66,10 @@ public class DefaultServiceCaller implements IServiceCaller {
     private <R> R doBlockCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
         val svcName = serviceMethod.getAppName();
         val methodName = serviceMethod.getDmName();
+        val readTimeout = svcConfigure.getReadTimeout(svcName, methodName, true);
         // bookmark: block rpc
-        reqBody = reqBody.timeout(svcConfigure.getReadTimeout(svcName, methodName));
-        val timeout = svcConfigure.getTimeout(svcName, methodName);
-        val res = handleRpcFallback(reqBody, serviceMethod, String.class).block(timeout);
+        reqBody = reqBody.timeout(readTimeout);
+        val res = handleRpcFallback(reqBody, serviceMethod, String.class).block();
 
         if (log.isDebugEnabled()) {
             log.debug("[{}] Response from {}: {}", GsvcContextHolder.getRequestId(), uri, res);
@@ -83,6 +83,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         val methodName = serviceMethod.getDmName();
         // bookmark: async rpc
         val requestId = GsvcContextHolder.getRequestId();
+        val readTimeout = svcConfigure.getReadTimeout(svcName, methodName, true);
         var reqMono = reqBody.<R>handle((res, sink) -> {
             if (log.isDebugEnabled()) {
                 log.debug("[{}] Response from {}: {}", requestId, uri, res);
@@ -90,7 +91,7 @@ public class DefaultServiceCaller implements IServiceCaller {
             // 这里使用到了GsvcContextHolder, 不知道使用contextCapture()是否有用!
             sink.next(ResponseUtils.parseResponse(res, rClass));
             sink.complete();
-        }).timeout(svcConfigure.getReadTimeout(svcName, methodName)).contextCapture();
+        }).timeout(readTimeout).contextCapture();
 
         return handleRpcFallback(reqMono, serviceMethod, rClass);
     }
