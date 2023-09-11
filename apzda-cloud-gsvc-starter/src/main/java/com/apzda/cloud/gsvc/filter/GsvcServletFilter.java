@@ -12,7 +12,7 @@ import java.util.UUID;
  * @author fengz
  */
 // @Order(SaTokenConsts.ASSEMBLY_ORDER + 1)
-public class GsvcFilter implements Filter {
+public class GsvcServletFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)

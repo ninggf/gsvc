@@ -4,15 +4,13 @@
 package com.apzda.cloud.gsvc.plugin;
 
 import com.apzda.cloud.gsvc.core.ServiceMethod;
-import org.springframework.context.ApplicationContext;
 import reactor.core.publisher.Mono;
-
 
 /**
  * @author fengz
  */
-public interface IPostPlugin extends IPlugin {
+public interface IPostCall extends IPlugin {
 
-    <R> Mono<R> postCall(Mono<R> response, ServiceMethod method, ApplicationContext context);
+    <R> Mono<R> postCall(Mono<R> response, ServiceMethod method);
 
 }

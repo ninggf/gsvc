@@ -3,7 +3,6 @@ package com.apzda.cloud.gsvc.gtw;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.val;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Validated
 public class GroupRoute extends Route {
 
     public static GroupRoute valueOf(Route route) {

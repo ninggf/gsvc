@@ -3,8 +3,8 @@ package com.apzda.cloud.gsvc.core;
 import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
-import com.apzda.cloud.gsvc.plugin.IPostPlugin;
-import com.apzda.cloud.gsvc.plugin.IPrePlugin;
+import com.apzda.cloud.gsvc.plugin.IPostCall;
+import com.apzda.cloud.gsvc.plugin.IPreCall;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,9 +64,9 @@ public class DefaultServiceCaller implements IServiceCaller {
     }
 
     private <R> R doBlockCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
-        val svcName = serviceMethod.getAppName();
+        val cfgName = serviceMethod.getCfgName();
         val methodName = serviceMethod.getDmName();
-        val readTimeout = svcConfigure.getReadTimeout(svcName, methodName, true);
+        val readTimeout = svcConfigure.getReadTimeout(cfgName, methodName, true);
         // bookmark: block rpc
         reqBody = reqBody.timeout(readTimeout);
         val res = handleRpcFallback(reqBody, serviceMethod, String.class).block();
@@ -79,11 +79,11 @@ public class DefaultServiceCaller implements IServiceCaller {
     }
 
     private <R> Mono<R> doAsyncCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
-        val svcName = serviceMethod.getAppName();
+        val cfgName = serviceMethod.getCfgName();
         val methodName = serviceMethod.getDmName();
         // bookmark: async rpc
         val requestId = GsvcContextHolder.getRequestId();
-        val readTimeout = svcConfigure.getReadTimeout(svcName, methodName, true);
+        val readTimeout = svcConfigure.getReadTimeout(cfgName, methodName, true);
         var reqMono = reqBody.<R>handle((res, sink) -> {
             if (log.isDebugEnabled()) {
                 log.debug("[{}] Response from {}: {}", requestId, uri, res);
@@ -98,16 +98,16 @@ public class DefaultServiceCaller implements IServiceCaller {
 
     private <R> Mono<R> handleRpcFallback(Mono<R> reqBody, ServiceMethod method, Class<R> rClass) {
         // bookmark: fallback
-        String serviceName = method.getServiceName();
-        String uri = method.getRpcAddr();
+        val serviceName = method.getServiceName();
+        val uri = method.getRpcAddr();
         val requestId = GsvcContextHolder.getRequestId();
         val plugins = method.getPlugins();
         var size = plugins.size();
 
         while (--size >= 0) {
             val plugin = plugins.get(size);
-            if (plugin instanceof IPostPlugin postPlugin) {
-                reqBody = postPlugin.postCall(reqBody, method, this.applicationContext);
+            if (plugin instanceof IPostCall postPlugin) {
+                reqBody = postPlugin.postCall(reqBody, method);
             }
         }
 
@@ -133,8 +133,8 @@ public class DefaultServiceCaller implements IServiceCaller {
         }
 
         for (IPlugin plugin : plugins) {
-            if (plugin instanceof IPrePlugin prePlugin) {
-                req = prePlugin.preCall(req, (Mono<Object>) requestObj, method, this.applicationContext);
+            if (plugin instanceof IPreCall prePlugin) {
+                req = prePlugin.preCall(req, (Mono<Object>) requestObj, method);
             }
         }
 

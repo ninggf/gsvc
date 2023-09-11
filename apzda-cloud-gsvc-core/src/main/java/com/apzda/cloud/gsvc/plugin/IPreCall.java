@@ -4,16 +4,14 @@
 package com.apzda.cloud.gsvc.plugin;
 
 import com.apzda.cloud.gsvc.core.ServiceMethod;
-import org.springframework.context.ApplicationContext;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 /**
  * @author fengz
  */
-public interface IPrePlugin extends IPlugin {
+public interface IPreCall extends IPlugin {
 
-    WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data, ServiceMethod method,
-            ApplicationContext context);
+    WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data, ServiceMethod method);
 
 }

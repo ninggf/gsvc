@@ -4,6 +4,11 @@ option java_package = "com.apzda.cloud.demo.bar.proto";
 option java_multiple_files = true;
 option java_outer_classname = "BarProto";
 
+message CurrentUser {
+  string uid = 1;
+  string name = 2;
+}
+
 message UploadFile {
   int64 size = 1;
   string file = 2;
@@ -32,4 +37,33 @@ service BarService {
   rpc greeting(BarReq) returns (BarRes);
   rpc hello(BarReq) returns (stream BarRes);
   rpc hi(stream BarReq) returns(stream BarRes);
+}
+
+message LoginReq {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginRes {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+}
+
+message SaReq {
+  CurrentUser current_user = 1;
+  string name = 2;
+}
+
+message SaRes {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  string uid = 3;
+  string user_name = 4;
+}
+
+service SaService {
+  rpc login(LoginReq) returns (LoginRes);
+  rpc info(SaReq) returns (SaRes);
 }

@@ -70,12 +70,13 @@ public class ResponseUtils {
         else if (e instanceof WebClientResponseException.NotFound) {
             return fallback(ServiceError.REMOTE_SERVICE_NOT_FOUND, serviceName, rClass);
         }
-        else if (e instanceof TimeoutException) {
-            return fallback(ServiceError.REMOTE_SERVICE_TIMEOUT, serviceName, rClass);
-        }
-        else if (e instanceof WebClientRequestException) {
+        else if (e instanceof WebClientResponseException.ServiceUnavailable || e instanceof WebClientRequestException) {
             return fallback(ServiceError.REMOTE_SERVICE_NO_INSTANCE, serviceName, rClass);
         }
+        else if (e instanceof WebClientResponseException.GatewayTimeout || e instanceof TimeoutException) {
+            return fallback(ServiceError.REMOTE_SERVICE_TIMEOUT, serviceName, rClass);
+        }
+
         return fallback(ServiceError.REMOTE_SERVICE_ERROR, serviceName, rClass);
     }
 

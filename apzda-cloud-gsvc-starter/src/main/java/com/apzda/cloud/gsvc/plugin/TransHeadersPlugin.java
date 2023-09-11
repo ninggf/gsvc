@@ -5,6 +5,7 @@ package com.apzda.cloud.gsvc.plugin;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
@@ -19,13 +20,19 @@ import java.util.Map;
  * @author fengz
  */
 @Slf4j
-public class TransHeadersPlugin implements IPrePlugin {
+@RequiredArgsConstructor
+public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
 
-    public static final TransHeadersPlugin TRANS_HEADERS_PLUGIN = new TransHeadersPlugin();
+    private final ApplicationContext context;
 
     @Override
-    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data, ServiceMethod method,
-            ApplicationContext context) {
+    public int getOrder() {
+        return -1;
+    }
+
+    @Override
+    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data,
+            ServiceMethod method) {
         val appName = context.getEnvironment().getProperty("spring.application.name");
         val headers = GsvcContextHolder.headers("x-gh-");
         headers.put("X-Gsvc-Caller", appName);

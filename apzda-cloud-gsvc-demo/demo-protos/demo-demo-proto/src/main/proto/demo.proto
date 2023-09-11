@@ -19,6 +19,4 @@ message DemoRes {
 
 service DemoService {
   rpc greeting(DemoReq) returns (DemoRes);
-  rpc hello(DemoReq) returns (stream DemoRes);
-  rpc hi(stream DemoReq) returns(stream DemoRes);
 }

@@ -1,7 +1,9 @@
 package com.apzda.cloud.gsvc.core;
 
-import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
+import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.gtw.GroupRoute;
+import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.gtw.Route;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.function.*;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author fengz
@@ -38,6 +43,8 @@ public class GtwRouterFunctionFactoryBean
         val interfaceName = groupRoute.getInterfaceName();
         val serviceInfo = GatewayServiceRegistry.getServiceInfo(interfaceName);
         val routes = groupRoute.getRoutes();
+        val svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
+        val globalFilters = svcConfigure.getGlobalFilters();
 
         val gMethod = groupRoute.getMethod();
         if (gMethod != null) {
@@ -52,9 +59,8 @@ public class GtwRouterFunctionFactoryBean
                     builder.path(subRoute.getPath(), subBuilder -> {
 
                         if (log.isDebugEnabled()) {
-                            log.debug("SN Route {}{} to {}@{}/{}", groupRoute.getPath(), subRoute.getPath(),
-                                    serviceMethod.getAppName(), serviceMethod.getServiceName(),
-                                    serviceMethod.getDmName());
+                            log.debug("SN Route {}{} to {}.{}", groupRoute.getPath(), subRoute.getPath(),
+                                    serviceMethod.getServiceName(), serviceMethod.getDmName());
                         }
 
                         HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw",
@@ -78,13 +84,13 @@ public class GtwRouterFunctionFactoryBean
                             }
                         }
 
-                        setupFilter(subRoute, subBuilder);
+                        setupFilter(subRoute, subBuilder, Collections.emptyList());
                     });
                 }
             });
         }
 
-        setupFilter(groupRoute, routeBuilder);
+        setupFilter(groupRoute, routeBuilder, globalFilters);
         val exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
         return routeBuilder.onError(Exception.class, exceptionHandler::handle).build();
     }
@@ -93,8 +99,7 @@ public class GtwRouterFunctionFactoryBean
         val actions = route.getActions();
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.getPath();
-        log.debug("SN Route {} to {}@{}/{}", route.getPath(), serviceMethod.getAppName(),
-                serviceMethod.getServiceName(), serviceMethod.getDmName());
+        log.debug("SN Route {} to {}.{}", route.getPath(), serviceMethod.getServiceName(), serviceMethod.getDmName());
 
         HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw", serviceMethod,
                 applicationContext);
@@ -129,8 +134,18 @@ public class GtwRouterFunctionFactoryBean
     }
 
     @SuppressWarnings("unchecked")
-    private void setupFilter(Route route, RouterFunctions.Builder builder) {
+    private void setupFilter(Route route, RouterFunctions.Builder builder,
+            List<IGtwGlobalFilter<ServerResponse, ServerResponse>> globalFilters) {
+        for (HandlerFilterFunction<ServerResponse, ServerResponse> filter : globalFilters) {
+            builder.filter(filter);
+        }
         var filters = route.getFilters();
+
+        if (filters.isEmpty()) {
+            return;
+        }
+
+        log.debug("Setup filters for {}", route);
 
         val filtersBean = filters.stream()
             .map(filter -> applicationContext.getBean(filter, HandlerFilterFunction.class))

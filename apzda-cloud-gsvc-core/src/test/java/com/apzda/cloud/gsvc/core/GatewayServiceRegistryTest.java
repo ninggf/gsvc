@@ -38,9 +38,9 @@ class GatewayServiceRegistryTest {
         Class<?> clazz = FooBarService.class;
 
         // when
-        val svcName = GatewayServiceRegistry.shortSvcName(clazz);
+        val cfgName = GatewayServiceRegistry.cfgName(clazz);
         // then
-        assertThat(svcName).isEqualTo("foo-bar");
+        assertThat(cfgName).isEqualTo("FooBarService");
     }
 
     @org.junit.jupiter.api.Test

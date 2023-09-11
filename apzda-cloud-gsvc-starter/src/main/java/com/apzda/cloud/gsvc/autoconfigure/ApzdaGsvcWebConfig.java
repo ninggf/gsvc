@@ -4,9 +4,8 @@ import com.apzda.cloud.gsvc.config.SaTokenExtendProperties;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.error.GsvcErrorAttributes;
 import com.apzda.cloud.gsvc.error.GsvcErrorController;
-import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
-import com.apzda.cloud.gsvc.filter.GsvcFilter;
-import com.apzda.cloud.gsvc.gtw.filter.LoginFilter;
+import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.filter.GsvcServletFilter;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
@@ -26,12 +25,8 @@ import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.web.servlet.function.HandlerFilterFunction;
-import org.springframework.web.servlet.function.ServerResponse;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -64,12 +59,6 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
         objectMapper.registerModule(new ProtobufModule(pbConfig));
     }
 
-    @Bean("login")
-    @ConditionalOnMissingBean(name = "login")
-    HandlerFilterFunction<ServerResponse, ServerResponse> login() {
-        return new LoginFilter();
-    }
-
     @Bean
     GsvcExceptionHandler gsvcExceptionHandler(SaTokenExtendProperties properties,
             ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters) {
@@ -91,8 +80,8 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
     }
 
     @Bean
-    GsvcFilter gsvcFilter() {
-        return new GsvcFilter();
+    GsvcServletFilter gsvcServletFilter() {
+        return new GsvcServletFilter();
     }
 
 }

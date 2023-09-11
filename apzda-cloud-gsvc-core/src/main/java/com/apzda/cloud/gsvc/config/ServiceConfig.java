@@ -1,9 +1,7 @@
 package com.apzda.cloud.gsvc.config;
 
-import com.apzda.cloud.gsvc.gtw.GroupRoute;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 import org.springframework.boot.convert.DurationUnit;
 
 import java.time.Duration;
@@ -17,22 +15,24 @@ import java.util.Map;
  * @author unizwa
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Accessors(chain = true)
 public class ServiceConfig {
 
     public static final MethodConfig DEFAULT_MC = new MethodConfig();
 
     /**
-     * 南北流量路由。
+     * 微服务名称，"apzda.cloud.service.xxx"中无效.
      */
-    private final List<GroupRoute> routes = new ArrayList<>();
+    private String svcName;
+
+    /**
+     * 微服务接口, "apzda.cloud.reference.xxx"中无效.
+     */
+    private Class<?> interfaceName;
 
     private final Map<String, MethodConfig> methods = new LinkedHashMap<>();
 
     private final List<String> plugins = new ArrayList<>();
-
-    private Class<?> interfaceName;
 
     private Class<?> fallbackClazz;
 

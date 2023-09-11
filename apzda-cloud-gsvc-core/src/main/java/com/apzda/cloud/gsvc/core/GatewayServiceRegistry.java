@@ -22,16 +22,22 @@ public class GatewayServiceRegistry {
     public static final Map<Class<?>, ServiceInfo> DECLARED_SERVICES = new HashMap<>();
 
     public static void register(Class<?> interfaceName) {
+        if (!interfaceName.isInterface()) {
+            throw new IllegalArgumentException(String.format("%s is not interface", interfaceName));
+        }
         DECLARED_SERVICES.computeIfAbsent(interfaceName, key -> {
             val svcName = svcName(interfaceName);
-            val appName = shortSvcName(interfaceName);
-            return ServiceInfo.builder()
-                .clazz(interfaceName)
-                .serviceName(svcName)
-                .shortName(appName)
-                .appName(appName)
-                .build();
+            val cfgName = cfgName(interfaceName);
+            return ServiceInfo.builder().clazz(interfaceName).serviceName(svcName).cfgName(cfgName).local(true).build();
         });
+    }
+
+    public static void registerProxy(Class<?> interfaceName) {
+        if (!interfaceName.isInterface()) {
+            throw new IllegalArgumentException(String.format("%s is not interface", interfaceName));
+        }
+        register(interfaceName);
+        DECLARED_SERVICES.get(interfaceName).local = false;
     }
 
     public static void register(Class<?> interfaceName, Map<String, Object[]> methodMeta) {
@@ -40,15 +46,15 @@ public class GatewayServiceRegistry {
         genDeclaredServiceMethods(interfaceName, methodMeta);
     }
 
-    public static void setBean(Class<?> interfaceName, Object bean) {
-        val appName = shortSvcName(interfaceName);
+    public static void setBean(Class<?> interfaceName, Object bean, boolean local) {
+        val cfgName = cfgName(interfaceName);
         val serviceName = svcName(interfaceName);
-        SERVICES.computeIfAbsent(serviceName + "@" + appName, (key) -> {
+        SERVICES.computeIfAbsent(serviceName + "@" + cfgName, (key) -> {
             val hm = new HashMap<String, ServiceMethod>();
-            log.debug("Inject Bean into Service: {} - {}", serviceName, interfaceName);
+            log.debug("Inject {} Bean into Service: {} - {}", local ? "Impl" : "Stub", serviceName, bean);
             for (Method dm : interfaceName.getDeclaredMethods()) {
                 val dmName = dm.getName();
-                val serviceMethod = SERVICE_METHODS.getOrDefault(appName + "@" + serviceName, Collections.emptyMap())
+                val serviceMethod = SERVICE_METHODS.getOrDefault(cfgName + "@" + serviceName, Collections.emptyMap())
                     .get(dmName);
 
                 if (serviceMethod == null) {
@@ -63,8 +69,8 @@ public class GatewayServiceRegistry {
         });
     }
 
-    public static Map<String, ServiceMethod> getServiceMethods(String appName, String serviceName) {
-        String serviceId = serviceName + "@" + appName;
+    public static Map<String, ServiceMethod> getServiceMethods(String cfgName, String serviceName) {
+        String serviceId = serviceName + "@" + cfgName;
         return SERVICES.getOrDefault(serviceId, Collections.emptyMap());
     }
 
@@ -73,37 +79,34 @@ public class GatewayServiceRegistry {
     }
 
     public static Map<String, ServiceMethod> getDeclaredServiceMethods(ServiceInfo serviceInfo) {
-        return getDeclaredServiceMethods(serviceInfo.appName, serviceInfo.serviceName);
+        return getDeclaredServiceMethods(serviceInfo.cfgName, serviceInfo.serviceName);
     }
 
     public static Map<String, ServiceMethod> getDeclaredServiceMethods(Class<?> clazz) {
         val serviceInfo = getServiceInfo(clazz);
-        return getDeclaredServiceMethods(serviceInfo.appName, serviceInfo.serviceName);
+        return getDeclaredServiceMethods(serviceInfo.cfgName, serviceInfo.serviceName);
     }
 
     public static ServiceMethod getServiceMethod(Class<?> clazz, String method) {
         val serviceInfo = getServiceInfo(clazz);
-        val app = serviceInfo.appName;
+        val cfg = serviceInfo.cfgName;
         val service = serviceInfo.serviceName;
-        return SERVICE_METHODS.getOrDefault(app + "@" + service, Collections.emptyMap()).get(method);
+        return SERVICE_METHODS.getOrDefault(cfg + "@" + service, Collections.emptyMap()).get(method);
     }
 
-    public static Map<String, ServiceMethod> getDeclaredServiceMethods(String app, String service) {
-        return SERVICE_METHODS.getOrDefault(app + "@" + service, Collections.emptyMap());
+    public static Map<String, ServiceMethod> getDeclaredServiceMethods(String cfgName, String serviceName) {
+        return SERVICE_METHODS.getOrDefault(cfgName + "@" + serviceName, Collections.emptyMap());
     }
 
-    public static String shortSvcName(Class<?> clazz) {
-        val svcName = svcName(clazz);
-
-        return svcName.replaceFirst("Gsvc", "").replace("Service", "").replaceAll("([A-Z])", "-$1").toLowerCase();
+    public static String cfgName(Class<?> clazz) {
+        return cfgName(clazz.getSimpleName());
     }
 
-    public static String shortSvcName(String name) {
-
-        val names = Splitter.on(".").trimResults().omitEmptyStrings().splitToList(name);
-        var svcName = names.get(names.size() - 1);
-        svcName = Character.toLowerCase(svcName.charAt(0)) + svcName.substring(1);
-        return svcName.replaceFirst("Gsvc", "").replaceFirst("Service", "").replaceAll("([A-Z])", "-$1").toLowerCase();
+    public static String cfgName(String serviceName) {
+        val names = Splitter.on(".").trimResults().omitEmptyStrings().splitToList(serviceName);
+        var cfgName = names.get(names.size() - 1);
+        cfgName = Character.toUpperCase(cfgName.charAt(0)) + cfgName.substring(1);
+        return cfgName.replaceFirst("Gsvc", "");
     }
 
     public static String svcName(Class<?> clazz) {
@@ -115,9 +118,9 @@ public class GatewayServiceRegistry {
     }
 
     static void genDeclaredServiceMethods(Class<?> interfaceName, Map<String, Object[]> methodsMeta) {
-        val app = shortSvcName(interfaceName);
+        val cfgName = cfgName(interfaceName);
         val service = svcName(interfaceName);
-        SERVICE_METHODS.computeIfAbsent(app + "@" + service, key -> {
+        SERVICE_METHODS.computeIfAbsent(cfgName + "@" + service, key -> {
             val hm = new HashMap<String, ServiceMethod>();
             for (Method dm : interfaceName.getDeclaredMethods()) {
                 val dmName = dm.getName();
@@ -125,7 +128,7 @@ public class GatewayServiceRegistry {
                 if (meta == null) {
                     continue;
                 }
-                val methodInfo = new ServiceMethod(dm, app, service, meta, null);
+                val methodInfo = new ServiceMethod(dm, cfgName, service, meta, null);
                 hm.put(dmName, methodInfo);
             }
             return hm;

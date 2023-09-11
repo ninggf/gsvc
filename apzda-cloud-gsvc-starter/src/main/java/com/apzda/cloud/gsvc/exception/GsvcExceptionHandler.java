@@ -1,4 +1,4 @@
-package com.apzda.cloud.gsvc.exception.handler;
+package com.apzda.cloud.gsvc.exception;
 
 import com.apzda.cloud.gsvc.config.SaTokenExtendProperties;
 import com.apzda.cloud.gsvc.dto.Response;

@@ -1,20 +1,3 @@
-/*
-* Licensed to the Apache Software Foundation (ASF) under one or more
-* contributor license agreements.  See the NOTICE file distributed with
-* this work for additional information regarding copyright ownership.
-* The ASF licenses this file to You under the Apache License, Version 2.0
-* (the "License"); you may not use this file except in compliance with
-* the License.  You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
 {{#packageName}}
 package {{packageName}};
 {{/packageName}}
@@ -24,12 +7,14 @@ import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import reactor.core.publisher.Mono;
 
 {{#deprecated}}
 @java.lang.Deprecated
 {{/deprecated}}
 @Configuration(proxyBeanMethods = false)
+@PropertySource(value = "classpath:{{interfaceClassName}}.gateway.properties", ignoreResourceNotFound = true)
 public class {{className}} {
 
     private static final java.util.Map<String, Object[]> METHOD_META_INFO = new java.util.HashMap<>();
@@ -61,23 +46,24 @@ public class {{className}} {
 
     @Bean
     @ConditionalOnMissingBean({{interfaceClassName}}.class)
-    {{interfaceClassName}} g{{interfaceClassName}}(IServiceCaller serviceCaller) {
+    {{interfaceClassName}} gsvc{{interfaceClassName}}Stub(IServiceCaller serviceCaller) {
+        GatewayServiceRegistry.registerProxy({{interfaceClassName}}.class);
         return new {{interfaceClassName}}() {
         {{#unaryMethods}}
             @Override
-            public {{outputType}} greeting({{inputType}} request) {
+            public {{outputType}} {{methodName}}({{inputType}} request) {
                 return serviceCaller.unaryCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
         {{/unaryMethods}}
         {{#serverStreamingMethods}}
             @Override
-            public Mono<{{outputType}}> hello({{inputType}} request) {
+            public Mono<{{outputType}}> {{methodName}}({{inputType}} request) {
                 return serviceCaller.serverStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
         {{/serverStreamingMethods}}
         {{#biStreamingMethods}}
             @Override
-            public Mono<{{outputType}}> hi(Mono<{{inputType}}> request) {
+            public Mono<{{outputType}}> {{methodName}}(Mono<{{inputType}}> request) {
                 return serviceCaller.bidiStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
         {{/biStreamingMethods}}

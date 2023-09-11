@@ -1,15 +1,12 @@
 package com.apzda.cloud.gsvc.gtw;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.google.common.base.Splitter;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.http.HttpMethod;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,11 +17,8 @@ import java.util.Set;
  * @author fengz
  */
 @Data
-@Validated
 public class Route {
 
-    @NotBlank
-    @NotNull
     private String path;
 
     private Boolean login;
@@ -126,7 +120,7 @@ public class Route {
                 .stream()
                 .map(action -> HttpMethod.valueOf(action.toUpperCase()))
                 .toList();
-            if (CollectionUtil.isEmpty(this.actions)) {
+            if (CollectionUtils.isEmpty(this.actions)) {
                 this.actions = List.of(HttpMethod.GET, HttpMethod.POST);
             }
         }

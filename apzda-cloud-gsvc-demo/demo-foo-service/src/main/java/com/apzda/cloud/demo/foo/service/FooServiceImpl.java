@@ -2,6 +2,8 @@ package com.apzda.cloud.demo.foo.service;
 
 import com.apzda.cloud.demo.bar.proto.BarReq;
 import com.apzda.cloud.demo.bar.proto.BarService;
+import com.apzda.cloud.demo.bar.proto.SaReq;
+import com.apzda.cloud.demo.bar.proto.SaService;
 import com.apzda.cloud.demo.foo.proto.FooReq;
 import com.apzda.cloud.demo.foo.proto.FooRes;
 import com.apzda.cloud.demo.foo.proto.FooService;
@@ -18,6 +20,9 @@ public class FooServiceImpl implements FooService {
 
     @Autowired
     private BarService barService;
+
+    @Autowired
+    private SaService saService;
 
     @Override
     public FooRes greeting(FooReq request) {
@@ -47,6 +52,18 @@ public class FooServiceImpl implements FooService {
             .map(fooReq -> BarReq.newBuilder().setName(fooReq.getName() + ".foo3").setAge(fooReq.getAge() + 3).build())
             .transform(barService::hi)
             .map(res -> FooRes.newBuilder().setErrCode(0).setName(res.getName()).setAge(res.getAge()).build());
+    }
+
+    @Override
+    public FooRes saInfo(FooReq request) {
+        val saReq = SaReq.newBuilder().setName(request.getName()).buildPartial();
+        val info = saService.info(saReq);
+
+        return FooRes.newBuilder()
+            .setErrMsg(info.getErrMsg())
+            .setErrCode(info.getErrCode())
+            .setName(info.getUserName())
+            .buildPartial();
     }
 
 }

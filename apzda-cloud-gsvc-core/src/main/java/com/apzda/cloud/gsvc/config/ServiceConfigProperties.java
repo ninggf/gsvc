@@ -1,13 +1,10 @@
 package com.apzda.cloud.gsvc.config;
 
-import com.apzda.cloud.gsvc.gtw.GroupRoute;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,20 +15,24 @@ import java.util.Map;
 @ConfigurationProperties("apzda.cloud")
 public class ServiceConfigProperties {
 
+    private final static ServiceConfig SERVICE_DEFAULT = new ServiceConfig();
+
+    private final static ServiceConfig REFERENCE_DEFAULT = new ServiceConfig();
+
     private final GlobalConfig config = new GlobalConfig();
 
     private final Map<String, ServiceConfig> service = new LinkedHashMap<>();
 
     private final Map<String, ServiceConfig> reference = new LinkedHashMap<>();
 
-    private final List<GroupRoute> routes = new ArrayList<>();
+    private final Map<String, GatewayRouteConfig> gateway = new LinkedHashMap<>();
 
     public ServiceConfig svcConfig(String name) {
-        return service.getOrDefault(name, new ServiceConfig());
+        return service.getOrDefault(name, service.getOrDefault("default", SERVICE_DEFAULT));
     }
 
     public ServiceConfig refConfig(String name) {
-        return reference.getOrDefault(name, new ServiceConfig());
+        return reference.getOrDefault(name, reference.getOrDefault("default", REFERENCE_DEFAULT));
     }
 
 }

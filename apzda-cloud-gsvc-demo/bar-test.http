@@ -1,5 +1,5 @@
 ### BarService Greeting
-POST http://{{barService}}/barService/greeting
+POST http://{{barService}}/~barService/greeting
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 
@@ -19,7 +19,7 @@ X-Gsvc-Caller: gtw
 %}
 
 ### BooService Hello
-POST http://{{barService}}/barService/hello
+POST http://{{barService}}/~barService/hello
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 
@@ -39,7 +39,7 @@ X-Gsvc-Caller: gtw
 %}
 
 ### BooService Hi
-POST http://{{barService}}/barService/hi
+POST http://{{barService}}/~barService/hi
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 
@@ -152,5 +152,42 @@ Content-Type: application/json
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
         client.assert(response.body.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
+    });
+%}
+
+### Route - SaService - /sa/login
+POST http://{{barService}}/sa/login
+Content-Type: application/json
+
+{
+    "username": "gsvc",
+    "password": "123456"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.accessToken === "access token for gsvc", "响应不等于\"access token for gsvc\"")
+    });
+%}
+
+### Route - SaService - /sa/info
+POST http://{{barService}}/sa/info
+Content-Type: application/json
+
+{
+    "username": "gsvc",
+    "password": "123456"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
     });
 %}

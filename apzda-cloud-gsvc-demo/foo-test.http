@@ -1,5 +1,5 @@
 ### FooService Greeting
-POST http://{{fooService}}/fooService/greeting
+POST http://{{fooService}}/~fooService/greeting
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 
@@ -19,7 +19,7 @@ client.test("Request executed successfully", function() {
 %}
 
 ### FooService Hello
-POST http://{{fooService}}/fooService/hello
+POST http://{{fooService}}/~fooService/hello
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 
@@ -39,7 +39,7 @@ client.test("Request executed successfully", function() {
 %}
 
 ### FooService Hi
-POST http://{{fooService}}/fooService/hi
+POST http://{{fooService}}/~fooService/hi
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 
@@ -59,7 +59,7 @@ client.test("Request executed successfully", function() {
 %}
 
 ### FooService Hi - POST - URLENCODE
-POST http://{{fooService}}/fooService/hi
+POST http://{{fooService}}/~fooService/hi
 Content-Type: application/x-www-form-urlencoded
 X-Gsvc-Caller: gtw
 
@@ -73,6 +73,23 @@ name=gsvc&age=18
         client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
         client.assert(response.body.name === "gsvc.foo3.bar@hi","name != 'gsvc.foo3.bar@hi'")
         client.assert(response.body.age === 24,"age != 24")
+    });
+%}
+
+### FooService SaInfo - POST - URLENCODE
+POST http://{{fooService}}/~fooService/saInfo
+Content-Type: application/x-www-form-urlencoded
+X-Gsvc-Caller: gtw
+
+name=gsvc&age=18
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 400");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
+        client.assert(response.body.name === "gsvc.sa","name != 'gsvc.sa'")
     });
 %}
 

@@ -23,6 +23,10 @@
         </dependency>
         <dependency>
             <groupId>com.apzda.cloud</groupId>
+            <artifactId>demo-demo-proto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.apzda.cloud</groupId>
             <artifactId>demo-bar-proto</artifactId>
         </dependency>
         <dependency>

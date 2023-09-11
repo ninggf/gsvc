@@ -1,7 +1,7 @@
 package com.apzda.cloud.gsvc.error;
 
 import com.apzda.cloud.gsvc.dto.Response;
-import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import jakarta.servlet.ServletException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.error.ErrorAttributeOptions;

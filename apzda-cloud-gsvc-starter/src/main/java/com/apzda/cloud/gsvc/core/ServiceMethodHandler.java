@@ -3,12 +3,14 @@ package com.apzda.cloud.gsvc.core;
 import cn.hutool.core.io.FileUtil;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.dto.UploadFile;
-import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.plugin.IPlugin;
+import com.apzda.cloud.gsvc.plugin.IPostInvoke;
+import com.apzda.cloud.gsvc.plugin.IPreInvoke;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.MethodDescriptor;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -27,12 +29,14 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING;
 
@@ -83,7 +87,7 @@ public class ServiceMethodHandler {
             val type = serviceMethod.getType();
             if (log.isTraceEnabled()) {
                 log.trace("[{}] Start to call method[{}]: {}@{}/{}", logId, type, serviceMethod.getServiceName(),
-                        serviceMethod.getAppName(), serviceMethod.getDmName());
+                        serviceMethod.getCfgName(), serviceMethod.getDmName());
             }
             // 1. 解析请求体
             Object requestObj = deserializeRequest(type);
@@ -98,11 +102,11 @@ public class ServiceMethodHandler {
         catch (Exception e) {
             if (e instanceof ResponseStatusException || e instanceof HttpStatusCodeException) {
                 log.warn("[{}] Call method failed: {}@{}/{} - {}", logId, serviceMethod.getServiceName(),
-                        serviceMethod.getAppName(), serviceMethod.getDmName(), e.getMessage());
+                        serviceMethod.getCfgName(), serviceMethod.getDmName(), e.getMessage());
             }
             else {
                 log.error("[{}] Call method failed: {}@{}/{}", logId, serviceMethod.getServiceName(),
-                        serviceMethod.getAppName(), serviceMethod.getDmName(), e);
+                        serviceMethod.getCfgName(), serviceMethod.getDmName(), e);
             }
 
             return exceptionHandler.handle(e, request);
@@ -112,13 +116,39 @@ public class ServiceMethodHandler {
     @SuppressWarnings("unchecked")
     private ServerResponse doStreamingCall(Object requestObj) throws InvocationTargetException, IllegalAccessException {
         // 仅支持Mono
-        val mono = (Mono<Object>) serviceMethod.call(requestObj);
+        val plugins = serviceMethod.getPlugins();
+        var size = plugins.size();
+        for (IPlugin plugin : plugins) {
+            if (plugin instanceof IPreInvoke preInvoke) {
+                requestObj = preInvoke.preInvoke(request, requestObj, serviceMethod);
+            }
+        }
+        Mono<Object> mono = (Mono<Object>) serviceMethod.call(requestObj);
+        while (--size >= 0) {
+            var plugin = plugins.get(size);
+            if (plugin instanceof IPostInvoke preInvoke) {
+                mono = (Mono<Object>) preInvoke.postInvoke(request, requestObj, mono, serviceMethod);
+            }
+        }
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(mono);
     }
 
     private ServerResponse doUnaryCall(Object requestObj)
             throws InvocationTargetException, IllegalAccessException, JsonProcessingException {
-        val resp = serviceMethod.call(requestObj);
+        val plugins = serviceMethod.getPlugins();
+        var size = plugins.size();
+        for (IPlugin plugin : plugins) {
+            if (plugin instanceof IPreInvoke preInvoke) {
+                requestObj = preInvoke.preInvoke(request, requestObj, serviceMethod);
+            }
+        }
+        Object resp = serviceMethod.call(requestObj);
+        while (--size >= 0) {
+            var plugin = plugins.get(size);
+            if (plugin instanceof IPostInvoke preInvoke) {
+                resp = preInvoke.postInvoke(request, requestObj, resp, serviceMethod);
+            }
+        }
         val response = createResponse(resp);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }
@@ -129,10 +159,10 @@ public class ServiceMethodHandler {
         Object requestObj;
         Mono<Object> args;
 
-        val svcName = serviceMethod.getAppName();
+        val cfgName = serviceMethod.getCfgName();
         val reqClass = serviceMethod.reqClass();
         val dmName = serviceMethod.getDmName();
-        val readTimeout = svcConfigure.getReadTimeout(svcName, dmName, false);
+        val readTimeout = svcConfigure.getReadTimeout(cfgName, dmName, false);
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
             if (type == BIDI_STREAMING) {
@@ -259,7 +289,7 @@ public class ServiceMethodHandler {
         val respStr = objectMapper.writeValueAsString(resp);
         if (log.isTraceEnabled()) {
             log.trace("[{}] Response of {}@{}/{} is: {}", logId, serviceMethod.getServiceName(),
-                    serviceMethod.getAppName(), serviceMethod.getDmName(), StringUtils.truncate(respStr, 256));
+                    serviceMethod.getCfgName(), serviceMethod.getDmName(), StringUtils.truncate(respStr, 256));
         }
         return respStr;
     }

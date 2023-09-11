@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.core;
 
-import com.apzda.cloud.gsvc.exception.handler.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -22,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<ServerResponse>>, ApplicationContextAware {
 
-    private final String appName;
+    private final String cfgName;
 
     private final String serviceName;
 
@@ -35,7 +35,7 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
 
     @Override
     public RouterFunction<ServerResponse> getObject() {
-        return createRouterFunction(appName, serviceName, applicationContext);
+        return createRouterFunction(cfgName, serviceName, applicationContext);
     }
 
     @Override
@@ -43,19 +43,17 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
         return RouterFunction.class;
     }
 
-    public static RouterFunction<ServerResponse> createRouterFunction(String appName, String serviceName,
+    public static RouterFunction<ServerResponse> createRouterFunction(String cfgName, String serviceName,
             ApplicationContext applicationContext) {
-        val methods = GatewayServiceRegistry.getDeclaredServiceMethods(appName, serviceName);
+        val methods = GatewayServiceRegistry.getDeclaredServiceMethods(cfgName, serviceName);
 
         val route = RouterFunctions.route();
-        // todo 添加过滤器
-        // route.path(, );
         for (Map.Entry<String, ServiceMethod> method : methods.entrySet()) {
             val methodName = method.getKey();
             val methodHolder = method.getValue();
-            val path = "/" + serviceName + "/" + methodName;
+            val path = "/~" + serviceName + "/" + methodName;
 
-            log.debug("EW Route {} to {}@{}/{}", path, appName, serviceName, methodName);
+            log.debug("EW Route {} to {}.{}", path, serviceName, methodName);
             route.POST(path, request -> ServiceMethodHandler.handle(request, null, methodHolder, applicationContext));
         }
         val errorHandler = applicationContext.getBean(GsvcExceptionHandler.class);

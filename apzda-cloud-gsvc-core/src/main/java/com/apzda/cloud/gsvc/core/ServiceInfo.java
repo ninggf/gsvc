@@ -12,21 +12,19 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ServiceInfo {
-
-    int index;
-
-    String appName;
+    /**
+     *
+     */
+    String cfgName;
 
     String serviceName;
 
-    String contextPath;
-
-    String shortName;
+    String appName;
 
     Class<?> clazz;
 
     boolean local;
 
-    static final ServiceInfo DEFAULT = ServiceInfo.builder().build();
+    static final ServiceInfo DEFAULT = ServiceInfo.builder().local(true).build();
 
 }

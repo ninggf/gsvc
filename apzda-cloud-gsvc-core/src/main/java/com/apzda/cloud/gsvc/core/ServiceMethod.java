@@ -4,7 +4,6 @@
 package com.apzda.cloud.gsvc.core;
 
 import com.apzda.cloud.gsvc.plugin.IPlugin;
-import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
 import io.grpc.MethodDescriptor;
 import lombok.Getter;
 import org.springframework.core.style.ToStringCreator;
@@ -22,13 +21,11 @@ public class ServiceMethod {
 
     private final Method method;
 
-    private final String appName;
+    private final String cfgName;
 
     private final String serviceName;
 
     private final String dmName;
-
-    private final String rpcAddr;
 
     private final Class<?> interfaceName;
 
@@ -46,15 +43,18 @@ public class ServiceMethod {
 
     private Class<?> currentUserClz;
 
-    public ServiceMethod(Method method, String appName, String serviceName, Object[] meta, Object bean) {
+    private String svcLbName;
+
+    private String rpcAddr;
+
+    public ServiceMethod(Method method, String cfgName, String serviceName, Object[] meta, Object bean) {
         this.interfaceName = method.getDeclaringClass();
         this.method = method;
-        this.appName = appName;
+        this.cfgName = cfgName;
         this.serviceName = serviceName;
         this.meta = meta;
         this.bean = bean;
         this.dmName = method.getName();
-        this.rpcAddr = String.format("http://%s/%s/%s", serviceName, serviceName, dmName);
         this.returnType = (Class<?>) meta[2];
         this.requestType = (Class<?>) meta[1];
         this.type = (MethodDescriptor.MethodType) meta[0];
@@ -64,7 +64,6 @@ public class ServiceMethod {
         catch (NoSuchMethodException e) {
             currentUserClz = null;
         }
-        plugins.add(TransHeadersPlugin.TRANS_HEADERS_PLUGIN);
     }
 
     void setBean(Object bean) {
@@ -83,9 +82,15 @@ public class ServiceMethod {
         return requestType;
     }
 
+    public void setSvcLbName(String svcLbName) {
+        this.svcLbName = svcLbName;
+        this.rpcAddr = String.format("http://%s/~%s/%s", svcLbName, serviceName, dmName);
+    }
+
     @Override
     public String toString() {
-        return new ToStringCreator(this).append("appName", appName)
+        return new ToStringCreator(this).append("cfgName", cfgName)
+            .append("svcLbName", svcLbName)
             .append("serviceName", serviceName)
             .append("method", dmName)
             .append("bean", bean)
