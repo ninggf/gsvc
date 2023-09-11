@@ -11,6 +11,6 @@ import reactor.core.publisher.Mono;
  */
 public interface IPostCall extends IPlugin {
 
-    <R> Mono<R> postCall(Mono<R> response, ServiceMethod method);
+    <R> Mono<R> postCall(Mono<R> response, ServiceMethod method, Class<R> rClass);
 
 }

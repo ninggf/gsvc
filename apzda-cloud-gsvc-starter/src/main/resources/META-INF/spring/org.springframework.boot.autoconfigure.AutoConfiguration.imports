@@ -1,3 +1,4 @@
+com.apzda.cloud.gsvc.autoconfigure.SentinelAutoConfiguration
 com.apzda.cloud.gsvc.autoconfigure.ApzdaGsvcAutoConfiguration
 com.apzda.cloud.gsvc.autoconfigure.GrpcServerSupportConfiguration
 com.apzda.cloud.gsvc.autoconfigure.GrpcClientSupportConfiguration

@@ -70,6 +70,9 @@ public class ResponseUtils {
         else if (e instanceof WebClientResponseException.NotFound) {
             return fallback(ServiceError.REMOTE_SERVICE_NOT_FOUND, serviceName, rClass);
         }
+        else if (e instanceof WebClientResponseException.TooManyRequests) {
+            return fallback(ServiceError.TOO_MANY_REQUESTS, serviceName, rClass);
+        }
         else if (e instanceof WebClientResponseException.ServiceUnavailable || e instanceof WebClientRequestException) {
             return fallback(ServiceError.REMOTE_SERVICE_NO_INSTANCE, serviceName, rClass);
         }
@@ -81,7 +84,6 @@ public class ResponseUtils {
     }
 
     public static <R> R fallback(ServiceError error, String serviceName, Class<R> tClass) {
-        log.error("fallback for {} - {} - {}", serviceName, tClass, error);
         if (String.class.isAssignableFrom(tClass)) {
             return tClass.cast(error.fallbackString(serviceName));
         }

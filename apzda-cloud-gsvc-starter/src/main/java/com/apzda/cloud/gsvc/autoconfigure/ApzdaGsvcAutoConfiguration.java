@@ -33,7 +33,7 @@ import java.util.Map;
  * @author fengz
  */
 @AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class })
-@Import({ ApzdaGsvcWebConfig.class })
+@Import({ ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class })
 @Slf4j
 public class ApzdaGsvcAutoConfiguration {
 

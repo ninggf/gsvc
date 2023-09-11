@@ -91,7 +91,7 @@ public class DefaultServiceCaller implements IServiceCaller {
             // 这里使用到了GsvcContextHolder, 不知道使用contextCapture()是否有用!
             sink.next(ResponseUtils.parseResponse(res, rClass));
             sink.complete();
-        }).timeout(readTimeout).contextCapture();
+        }).timeout(readTimeout);
 
         return handleRpcFallback(reqMono, serviceMethod, rClass);
     }
@@ -107,7 +107,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         while (--size >= 0) {
             val plugin = plugins.get(size);
             if (plugin instanceof IPostCall postPlugin) {
-                reqBody = postPlugin.postCall(reqBody, method);
+                reqBody = postPlugin.postCall(reqBody, method, rClass);
             }
         }
 

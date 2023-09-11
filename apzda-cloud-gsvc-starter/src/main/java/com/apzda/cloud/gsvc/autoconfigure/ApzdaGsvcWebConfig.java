@@ -10,6 +10,7 @@ import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
+import jakarta.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
@@ -20,6 +21,7 @@ import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolver;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.context.ApplicationContext;
@@ -80,8 +82,14 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
     }
 
     @Bean
-    GsvcServletFilter gsvcServletFilter() {
-        return new GsvcServletFilter();
+    FilterRegistrationBean<Filter> gsvcFilterRegistration() {
+        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new GsvcServletFilter());
+        registration.addUrlPatterns("/*");
+        registration.setName("gsvcServletFilter");
+        registration.setOrder(1);
+
+        return registration;
     }
 
 }

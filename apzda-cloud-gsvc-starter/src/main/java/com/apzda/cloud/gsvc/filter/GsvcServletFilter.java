@@ -2,8 +2,9 @@ package com.apzda.cloud.gsvc.filter;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.val;
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -11,7 +12,6 @@ import java.util.UUID;
 /**
  * @author fengz
  */
-// @Order(SaTokenConsts.ASSEMBLY_ORDER + 1)
 public class GsvcServletFilter implements Filter {
 
     @Override
@@ -19,11 +19,9 @@ public class GsvcServletFilter implements Filter {
             throws IOException, ServletException {
 
         if (servletRequest instanceof HttpServletRequest request) {
-            val header = request.getHeader("X-Request-Id");
-            if (!StringUtils.hasText(header)) {
-                val rid = UUID.randomUUID().toString();
-                request.setAttribute("X-Request-Id", rid);
-            }
+            val requestId = StringUtils.defaultIfBlank(request.getHeader("X-Request-Id"), UUID.randomUUID().toString());
+            request.setAttribute("X-Request-Id", requestId);
+            ((HttpServletResponse) servletResponse).setHeader("X-Request-Id", requestId);
         }
         filterChain.doFilter(servletRequest, servletResponse);
     }
