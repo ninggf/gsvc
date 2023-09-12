@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -44,7 +43,7 @@ public class GsvcExceptionHandler {
     public ServerResponse handle(Throwable e, ServerRequest request) {
         // bookmark: RouterFunction Exception Handler
         if (e instanceof HttpStatusCodeException codeException) {
-            return checkLoginRedirect(request, codeException.getStatusCode(), e, ServerResponse.class);
+            return checkLoginRedirect(request, codeException, ServerResponse.class);
         }
         else if (e instanceof GsvcException) {
             return ServerResponse.status(HttpStatus.SERVICE_UNAVAILABLE).body(handle(e));
@@ -65,7 +64,7 @@ public class GsvcExceptionHandler {
 
         val serverRequest = ServerRequest.create(request, httpMessageConverters.getIfAvailable(Collections::emptyList));
         if (error instanceof HttpStatusCodeException codeException) {
-            return checkLoginRedirect(serverRequest, codeException.getStatusCode(), error, ResponseEntity.class);
+            return checkLoginRedirect(serverRequest, codeException, ResponseEntity.class);
         }
         else if (error instanceof GsvcException) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(handle(error));
@@ -99,6 +98,15 @@ public class GsvcExceptionHandler {
             }
             return Response.error(ServiceError.REMOTE_SERVICE_ERROR);
         }
+        else if (e instanceof HttpStatusCodeException codeException) {
+            val statusCode = codeException.getStatusCode();
+            if (statusCode == HttpStatus.UNAUTHORIZED) {
+                return Response.error(ServiceError.REMOTE_SERVICE_UNAUTHORIZED);
+            }
+            else if (statusCode == HttpStatus.FORBIDDEN) {
+                return Response.error(ServiceError.REMOTE_SERVICE_FORBIDDEN);
+            }
+        }
         else if (e instanceof DegradedException) {
             return Response.error(ServiceError.DEGRADE);
         }
@@ -107,10 +115,10 @@ public class GsvcExceptionHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private <R> R checkLoginRedirect(ServerRequest request, HttpStatusCode status, Throwable e, Class<R> rClass) {
+    private <R> R checkLoginRedirect(ServerRequest request, HttpStatusCodeException e, Class<R> rClass) {
         // bookmark: Gateway Redirect to Login Page
 
-        if (status == HttpStatus.UNAUTHORIZED) {
+        if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
             val loginUrl = getLoginUrl(request.headers().accept());
             if (loginUrl != null) {
                 if (rClass.isAssignableFrom(ServerResponse.class)) {
@@ -123,10 +131,10 @@ public class GsvcExceptionHandler {
         }
 
         if (rClass.isAssignableFrom(ServerResponse.class)) {
-            return (R) ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(e));
+            return (R) ServerResponse.status(e.getStatusCode()).body(handle(e));
         }
         else {
-            return (R) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(e));
+            return (R) ResponseEntity.status(e.getStatusCode()).body(handle(e));
         }
     }
 
