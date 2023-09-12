@@ -1,15 +1,20 @@
 package com.apzda.cloud.gsvc.dto;
 
 import lombok.Data;
-import lombok.experimental.Accessors;
+
+import java.io.Serial;
+import java.io.Serializable;
 
 /**
  * @author fengz
  */
 @Data
-@Accessors(chain = true)
-public class CurrentUser {
+public class CurrentUser implements Serializable {
+    @Serial
+    private static final long serialVersionUID = -2525630989963990423L;
 
     private String uid;
+
+    private String username;
 
 }

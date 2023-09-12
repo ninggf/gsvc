@@ -34,8 +34,6 @@ public class ServiceConfig {
 
     private final List<String> plugins = new ArrayList<>();
 
-    private Class<?> fallbackClazz;
-
     /**
      * 服务在本地时，方法执行超时时间，单位Millis. 0或负值表示永不超时.
      */

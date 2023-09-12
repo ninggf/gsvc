@@ -4,13 +4,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 /**
  * @author fengz
  */
 @Data
 @Builder
 @Accessors(chain = true)
-public class UploadFile {
+public class UploadFile implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 7646559420677099169L;
 
     private String file;// 上传后的文件保存在临时目录下，此值为临时文件的全路径名
 

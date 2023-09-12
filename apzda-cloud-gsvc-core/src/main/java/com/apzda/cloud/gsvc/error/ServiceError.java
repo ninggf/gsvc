@@ -19,8 +19,8 @@ public enum ServiceError implements IServiceError {
     SERVICE_ERROR(-500, HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase()),
     REMOTE_SERVICE_ERROR(-501, "Remote Service error"),
     REMOTE_SERVICE_NO_INSTANCE(-502, "No Service instance(server) found"),
-    REMOTE_SERVICE_TIMEOUT(-504, "RPC timeout"),
-    DEGRADE(-998, "Service Degrade"),
+    SERVICE_UNAVAILABLE(-503, HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase()),
+    REMOTE_SERVICE_TIMEOUT(-504, "RPC timeout"), DEGRADE(-998, "Service Degrade"),
     JACKSON_ERROR(-999, "Invalid JSON data");
 
     @JsonValue

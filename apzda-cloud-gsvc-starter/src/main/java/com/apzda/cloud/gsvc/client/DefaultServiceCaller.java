@@ -1,7 +1,9 @@
-package com.apzda.cloud.gsvc.core;
+package com.apzda.cloud.gsvc.client;
 
-import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
+import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.IPostCall;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
@@ -27,13 +29,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DefaultServiceCaller implements IServiceCaller {
 
-    private final ApplicationContext applicationContext;
+    protected final ApplicationContext applicationContext;
 
-    private final WebClient webClient;
+    protected final WebClient webClient;
 
-    private final ObjectMapper objectMapper = ResponseUtils.OBJECT_MAPPER;
+    protected final ObjectMapper objectMapper = ResponseUtils.OBJECT_MAPPER;
 
-    private final GatewayServiceConfigure svcConfigure;
+    protected final GatewayServiceConfigure svcConfigure;
 
     @Override
     public <T, R> R unaryCall(Class<?> clazz, String method, T request, Class<T> reqClazz, Class<R> resClazz) {
@@ -63,7 +65,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         return doAsyncCall(reqBody, serviceMethod, url, resClazz);
     }
 
-    private <R> R doBlockCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
+    protected <R> R doBlockCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
         val cfgName = serviceMethod.getCfgName();
         val methodName = serviceMethod.getDmName();
         val readTimeout = svcConfigure.getReadTimeout(cfgName, methodName, true);
@@ -78,12 +80,12 @@ public class DefaultServiceCaller implements IServiceCaller {
         return ResponseUtils.parseResponse(res, rClass);
     }
 
-    private <R> Mono<R> doAsyncCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
+    protected <R> Mono<R> doAsyncCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
         val cfgName = serviceMethod.getCfgName();
         val methodName = serviceMethod.getDmName();
-        // bookmark: async rpc
         val requestId = GsvcContextHolder.getRequestId();
         val readTimeout = svcConfigure.getReadTimeout(cfgName, methodName, true);
+        // bookmark: async rpc
         var reqMono = reqBody.<R>handle((res, sink) -> {
             if (log.isDebugEnabled()) {
                 log.debug("[{}] Response from {}: {}", requestId, uri, res);
@@ -96,7 +98,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         return handleRpcFallback(reqMono, serviceMethod, rClass);
     }
 
-    private <R> Mono<R> handleRpcFallback(Mono<R> reqBody, ServiceMethod method, Class<R> rClass) {
+    protected <R> Mono<R> handleRpcFallback(Mono<R> reqBody, ServiceMethod method, Class<R> rClass) {
         // bookmark: fallback
         val serviceName = method.getServiceName();
         val uri = method.getRpcAddr();
@@ -104,25 +106,28 @@ public class DefaultServiceCaller implements IServiceCaller {
         val plugins = method.getPlugins();
         var size = plugins.size();
 
+        reqBody = reqBody.doOnError(err -> {
+            if (log.isDebugEnabled()) {
+                log.error("[{}] RPC({}) failed: ", requestId, uri, err);
+            }
+            else {
+                log.error("[{}] RPC({}) failed: {}", requestId, uri, err.getMessage());
+            }
+        });
+
         while (--size >= 0) {
             val plugin = plugins.get(size);
             if (plugin instanceof IPostCall postPlugin) {
                 reqBody = postPlugin.postCall(reqBody, method, rClass);
             }
         }
-
-        return reqBody.doOnError(err -> {
-            if (log.isDebugEnabled()) {
-                log.error("[{}] RPC failed on {}: ", requestId, uri, err);
-            }
-            else {
-                log.error("[{}] RPC failed on {}: {}", requestId, uri, err.getMessage());
-            }
-        }).onErrorResume(e -> Mono.just(ResponseUtils.fallback(e, serviceName, rClass)));
+        // tbd: fallback or throw exception?
+        // onErrorResume(e -> Mono.just(ResponseUtils.fallback(e,serviceName,rClass)));
+        return reqBody;
     }
 
     @SuppressWarnings("unchecked")
-    private Mono<String> prepareRequestBody(Object requestObj, ServiceMethod method) {
+    protected Mono<String> prepareRequestBody(Object requestObj, ServiceMethod method) {
         val requestId = GsvcContextHolder.getRequestId();
         var url = method.getRpcAddr();
         WebClient.RequestBodySpec req = webClient.post().uri(url).accept(MediaType.APPLICATION_JSON);
@@ -146,7 +151,7 @@ public class DefaultServiceCaller implements IServiceCaller {
                     sink.complete();
                 }
                 catch (JsonProcessingException e) {
-                    log.error("[{}] Bad Request for {}: {} - {}", requestId, url, obj, e.getMessage());
+                    log.error("[{}] Bad Request for {}: {} - {}", requestId, url, e.getMessage(), obj);
                     sink.error(e);
                 }
             }), String.class));

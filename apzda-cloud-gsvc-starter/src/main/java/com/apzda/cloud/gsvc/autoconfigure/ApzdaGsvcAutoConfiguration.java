@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
+import com.apzda.cloud.gsvc.client.DefaultServiceCaller;
 import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;

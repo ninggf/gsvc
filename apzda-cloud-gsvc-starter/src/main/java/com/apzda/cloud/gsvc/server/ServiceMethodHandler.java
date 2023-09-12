@@ -1,7 +1,9 @@
-package com.apzda.cloud.gsvc.core;
+package com.apzda.cloud.gsvc.server;
 
 import cn.hutool.core.io.FileUtil;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.dto.UploadFile;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
@@ -21,7 +23,6 @@ import org.springframework.http.codec.multipart.FormFieldPart;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest;
 import org.springframework.web.server.ResponseStatusException;
@@ -86,8 +87,8 @@ public class ServiceMethodHandler {
             logId = GsvcContextHolder.getRequestId();
             val type = serviceMethod.getType();
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Start to call method[{}]: {}@{}/{}", logId, type, serviceMethod.getServiceName(),
-                        serviceMethod.getCfgName(), serviceMethod.getDmName());
+                log.trace("[{}] Start to call method[{}]: {}.{}", logId, type, serviceMethod.getServiceName(),
+                        serviceMethod.getDmName());
             }
             // 1. 解析请求体
             Object requestObj = deserializeRequest(type);
@@ -99,15 +100,15 @@ public class ServiceMethodHandler {
                 default -> exceptionHandler.handle(new ResponseStatusException(HttpStatus.BAD_REQUEST), request);
             };
         }
-        catch (Exception e) {
-            if (e instanceof ResponseStatusException || e instanceof HttpStatusCodeException) {
-                log.warn("[{}] Call method failed: {}@{}/{} - {}", logId, serviceMethod.getServiceName(),
-                        serviceMethod.getCfgName(), serviceMethod.getDmName(), e.getMessage());
+        catch (Throwable throwable) {
+            Throwable e = throwable;
+
+            if (throwable instanceof InvocationTargetException) {
+                e = ((InvocationTargetException) throwable).getTargetException();
             }
-            else {
-                log.error("[{}] Call method failed: {}@{}/{}", logId, serviceMethod.getServiceName(),
-                        serviceMethod.getCfgName(), serviceMethod.getDmName(), e);
-            }
+
+            log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
+                    serviceMethod.getDmName(), e);
 
             return exceptionHandler.handle(e, request);
         }
@@ -115,7 +116,6 @@ public class ServiceMethodHandler {
 
     @SuppressWarnings("unchecked")
     private ServerResponse doStreamingCall(Object requestObj) throws InvocationTargetException, IllegalAccessException {
-        // 仅支持Mono
         val plugins = serviceMethod.getPlugins();
         var size = plugins.size();
         for (IPlugin plugin : plugins) {
@@ -235,7 +235,8 @@ public class ServiceMethodHandler {
 
             requestObj = objectMapper.readValue(objectMapper.writeValueAsBytes(reqObj.orElseThrow()), reqClass);
             if (log.isTraceEnabled()) {
-                log.trace("[{}] {} resolved: {}", logId, contentType, objectMapper.writeValueAsString(requestObj));
+                log.trace("[{}] Request({}) resolved: {}", logId, contentType,
+                        objectMapper.writeValueAsString(requestObj));
             }
         }
 
@@ -261,14 +262,14 @@ public class ServiceMethodHandler {
                         filePart.transferTo(tmpFile);
 
                         if (log.isTraceEnabled()) {
-                            log.trace("[{}] 文件'{}'已上传到: {}", logId, filePart.getOriginalFilename(),
+                            log.trace("[{}] File '{}' uploaded to '{}'", logId, filePart.getOriginalFilename(),
                                     tmpFile.getAbsoluteFile());
                         }
 
                         return file.build();
                     }
                     catch (IOException e) {
-                        log.error("[{}] Upload file '{}' error: {}", logId, filePart.getOriginalFilename(),
+                        log.error("[{}] Upload file '{}' failed: {}", logId, filePart.getOriginalFilename(),
                                 e.getMessage());
                         return file.size(-1).error(e.getMessage()).build();
                     }
@@ -288,8 +289,8 @@ public class ServiceMethodHandler {
     private String createResponse(Object resp) throws JsonProcessingException {
         val respStr = objectMapper.writeValueAsString(resp);
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Response of {}@{}/{} is: {}", logId, serviceMethod.getServiceName(),
-                    serviceMethod.getCfgName(), serviceMethod.getDmName(), StringUtils.truncate(respStr, 256));
+            log.trace("[{}] Response of {}.{}: {}", logId, serviceMethod.getServiceName(), serviceMethod.getDmName(),
+                    respStr);
         }
         return respStr;
     }
@@ -307,7 +308,7 @@ public class ServiceMethodHandler {
             return stringBuilder.toString();
         }
         catch (IOException e) {
-            log.error("[{}] Retrieve request body failed: {}", logId, e.getMessage());
+            log.error("[{}] Read Request body failed: {}", logId, e.getMessage());
             return null;
         }
     }
