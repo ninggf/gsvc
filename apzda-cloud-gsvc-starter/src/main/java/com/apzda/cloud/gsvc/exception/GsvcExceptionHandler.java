@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.exception;
 
-import com.apzda.cloud.gsvc.config.SaTokenExtendProperties;
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,7 +37,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GsvcExceptionHandler {
 
-    private final SaTokenExtendProperties properties;
+    private final ServiceConfigProperties properties;
 
     private final ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters;
 
@@ -131,7 +131,7 @@ public class GsvcExceptionHandler {
     }
 
     public URI getLoginUrl(List<MediaType> contentTypes) {
-        val loginUrl = properties.getLoginUrl();
+        val loginUrl = properties.getConfig().getLoginPage();
         val textType = MediaType.parseMediaType("text/*");
 
         if (loginUrl != null && isCompatibleWith(textType, contentTypes)) {

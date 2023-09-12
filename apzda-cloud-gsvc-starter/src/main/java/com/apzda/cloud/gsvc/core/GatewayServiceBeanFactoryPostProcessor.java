@@ -135,7 +135,19 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val login = environment.getProperty(prefix + ".login");
         val method = environment.getProperty(prefix + ".method");
         val actions = environment.getProperty(prefix + ".actions");
-        val filters = environment.getProperty(prefix + ".filters");
+        var filters = environment.getProperty(prefix + ".filters");
+
+        if (parent == null) {
+            val defaultFilters = environment.getProperty("apzda.cloud.gateway.default.filters");
+            if (StringUtils.isNotBlank(defaultFilters)) {
+                if (StringUtils.isBlank(filters)) {
+                    filters = defaultFilters;
+                }
+                else {
+                    filters = defaultFilters + "," + filters;
+                }
+            }
+        }
 
         return new Route().prefix(prefix)
             .parent(parent)

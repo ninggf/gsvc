@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.net.URI;
+
 /**
  * @author fengz
  */
@@ -12,10 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GlobalConfig {
 
-    /**
-     * 临时文件路径
-     */
-    private String tmpPath;
+    private URI loginPage;
 
     private boolean acceptLiteralFieldNames;
 

@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
-import com.apzda.cloud.gsvc.config.SaTokenExtendProperties;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.error.GsvcErrorAttributes;
 import com.apzda.cloud.gsvc.error.GsvcErrorController;
@@ -36,7 +35,7 @@ import java.util.List;
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties({ ServiceConfigProperties.class, SaTokenExtendProperties.class })
+@EnableConfigurationProperties(ServiceConfigProperties.class)
 public class ApzdaGsvcWebConfig implements InitializingBean {
 
     private final ServiceConfigProperties serviceConfigProperties;
@@ -62,7 +61,7 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
     }
 
     @Bean
-    GsvcExceptionHandler gsvcExceptionHandler(SaTokenExtendProperties properties,
+    GsvcExceptionHandler gsvcExceptionHandler(ServiceConfigProperties properties,
             ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters) {
         return new GsvcExceptionHandler(properties, httpMessageConverters);
     }
