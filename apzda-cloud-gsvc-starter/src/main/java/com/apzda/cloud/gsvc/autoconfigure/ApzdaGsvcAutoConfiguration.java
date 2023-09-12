@@ -4,7 +4,10 @@ import com.apzda.cloud.gsvc.client.DefaultServiceCaller;
 import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
-import com.apzda.cloud.gsvc.core.*;
+import com.apzda.cloud.gsvc.core.GatewayServiceBeanFactoryPostProcessor;
+import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
+import com.apzda.cloud.gsvc.core.ServiceInfo;
+import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
@@ -24,6 +27,7 @@ import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Scope;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerResponse;
 
@@ -46,9 +50,10 @@ public class ApzdaGsvcAutoConfiguration {
     }
 
     @Bean
+    @Scope("prototype")
     @ConditionalOnMissingBean
-    WebClient webClient(ReactorLoadBalancerExchangeFilterFunction lbFunction) {
-        return WebClient.builder().filter(lbFunction).build();
+    WebClient webClient(WebClient.Builder builder, ReactorLoadBalancerExchangeFilterFunction lbFunction) {
+        return builder.filter(lbFunction).build();
     }
 
     @Bean

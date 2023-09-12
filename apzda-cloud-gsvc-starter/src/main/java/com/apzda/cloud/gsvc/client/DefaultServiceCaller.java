@@ -100,7 +100,6 @@ public class DefaultServiceCaller implements IServiceCaller {
 
     protected <R> Mono<R> handleRpcFallback(Mono<R> reqBody, ServiceMethod method, Class<R> rClass) {
         // bookmark: fallback
-        val serviceName = method.getServiceName();
         val uri = method.getRpcAddr();
         val requestId = GsvcContextHolder.getRequestId();
         val plugins = method.getPlugins();

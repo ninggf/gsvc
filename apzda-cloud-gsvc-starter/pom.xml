@@ -11,24 +11,24 @@
 
     <artifactId>apzda-cloud-gsvc-starter</artifactId>
 
+    <properties>
+        <micrometer.context-propagation.version>1.0.4</micrometer.context-propagation.version>
+    </properties>
+
     <dependencies>
         <!-- modules -->
         <dependency>
             <groupId>com.apzda.cloud</groupId>
             <artifactId>apzda-cloud-gsvc-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
+        </dependency>
         <!-- spring boot & cloud -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -42,6 +42,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
         <!-- third-party library -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -51,31 +59,6 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <!-- protobuf-java & grpc -->
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-protobuf</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.grpc</groupId>
-            <artifactId>grpc-stub</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java-util</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.salesforce.servicelibs</groupId>
-            <artifactId>jprotoc</artifactId>
         </dependency>
         <dependency>
             <groupId>com.hubspot.jackson</groupId>
@@ -94,10 +77,6 @@
         </dependency>
         <!-- sentinel -->
         <dependency>
-            <groupId>com.apzda.cloud</groupId>
-            <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.alibaba.csp</groupId>
             <artifactId>sentinel-reactor-adapter</artifactId>
         </dependency>
@@ -106,6 +85,14 @@
             <artifactId>sentinel-transport-simple-http</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- micrometer -->
+        <!--
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>context-propagation</artifactId>
+            <version>${micrometer.context-propagation.version}</version>
+        </dependency>
+        -->
     </dependencies>
 
     <build>

@@ -123,6 +123,7 @@ public class ServiceMethodHandler {
                 requestObj = preInvoke.preInvoke(request, requestObj, serviceMethod);
             }
         }
+
         Mono<Object> mono = (Mono<Object>) serviceMethod.call(requestObj);
         while (--size >= 0) {
             var plugin = plugins.get(size);
