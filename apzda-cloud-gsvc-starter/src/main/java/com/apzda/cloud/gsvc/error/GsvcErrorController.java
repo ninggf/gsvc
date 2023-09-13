@@ -1,7 +1,7 @@
 package com.apzda.cloud.gsvc.error;
 
-import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
-import jakarta.servlet.ServletException;
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
+import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.val;
@@ -31,14 +31,14 @@ import java.util.Map;
 @RequestMapping("${server.error.path:${error.path:/error}}")
 public class GsvcErrorController extends BasicErrorController {
 
-    private final GsvcExceptionHandler handler;
+    private final ServiceConfigProperties properties;
 
     private final ErrorAttributes errorAttributes;
 
     public GsvcErrorController(ErrorAttributes errorAttributes, ErrorProperties errorProperties,
-            GsvcExceptionHandler handler, List<ErrorViewResolver> errorViewResolvers) {
+            ServiceConfigProperties properties, List<ErrorViewResolver> errorViewResolvers) {
         super(errorAttributes, errorProperties, errorViewResolvers);
-        this.handler = handler;
+        this.properties = properties;
         this.errorAttributes = errorAttributes;
     }
 
@@ -49,17 +49,13 @@ public class GsvcErrorController extends BasicErrorController {
 
         Throwable error = errorAttributes.getError(webRequest);
         if (error != null) {
-            while (error instanceof ServletException && error.getCause() != null) {
+            while (error.getCause() != null) {
                 error = error.getCause();
             }
-            val loginUrl = handler.getLoginUrl(List.of(MediaType.TEXT_HTML));
+            val loginUrl = ResponseUtils.getLoginUrl(ResponseUtils.mediaTypes(request), properties);
 
             if (loginUrl != null) {
                 val redirectView = new ModelAndView(new RedirectView(loginUrl.toString()));
-                // if (error instanceof NotLoginException) {
-                // return redirectView;
-                // }
-                // else
                 if (error instanceof HttpStatusCodeException codeException
                         && codeException.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                     return redirectView;

@@ -17,6 +17,6 @@ public class CurrentUser implements IUser, Serializable {
 
     private String uid;
 
-    private String username;
+    private String name;
 
 }

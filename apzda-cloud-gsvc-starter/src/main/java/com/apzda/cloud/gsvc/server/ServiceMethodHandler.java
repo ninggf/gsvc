@@ -173,7 +173,7 @@ public class ServiceMethodHandler {
                         log.trace("[{}] Request({}) resolved: {}", logId, contentType, requestBody);
                         sink.success(objectMapper.readValue(requestBody, reqClass));
                     }
-                    catch (JsonProcessingException e) {
+                    catch (IOException e) {
                         sink.error(e);
                     }
                 }).timeout(readTimeout);
@@ -214,6 +214,7 @@ public class ServiceMethodHandler {
                 return result;
             });
         }
+
         if (type == BIDI_STREAMING) {
             return args.handle((arg, sink) -> {
                 try {
@@ -296,10 +297,9 @@ public class ServiceMethodHandler {
         return respStr;
     }
 
-    private String retrieveRequestBody(HttpServletRequest request) {
+    private String retrieveRequestBody(HttpServletRequest request) throws IOException {
         val req = new ContentCachingRequestWrapper(request);
-        try {
-            val reader = req.getReader();
+        try (val reader = req.getReader()) {
             val stringBuilder = new StringBuilder();
             String line = reader.readLine();
             while (line != null) {
@@ -310,7 +310,7 @@ public class ServiceMethodHandler {
         }
         catch (IOException e) {
             log.error("[{}] Read Request body failed: {}", logId, e.getMessage());
-            return null;
+            throw e;
         }
     }
 

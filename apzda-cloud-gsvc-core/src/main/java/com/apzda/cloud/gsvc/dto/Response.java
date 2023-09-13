@@ -28,7 +28,14 @@ public class Response<T> implements Serializable {
 
     private String message;
 
+    private MessageType type;
+
     private T data;
+
+    public Response<?> type(MessageType type) {
+        this.type = type;
+        return this;
+    }
 
     public static Response<Void> error(IServiceError error) {
         return error(error.code(), error.message());

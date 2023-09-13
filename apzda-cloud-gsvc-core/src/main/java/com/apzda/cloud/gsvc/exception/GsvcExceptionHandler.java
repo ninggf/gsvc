@@ -3,16 +3,15 @@ package com.apzda.cloud.gsvc.exception;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
+import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
-import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
@@ -119,7 +117,7 @@ public class GsvcExceptionHandler {
         // bookmark: Gateway Redirect to Login Page
 
         if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-            val loginUrl = getLoginUrl(request.headers().accept());
+            val loginUrl = ResponseUtils.getLoginUrl(request.headers().accept(), properties);
             if (loginUrl != null) {
                 if (rClass.isAssignableFrom(ServerResponse.class)) {
                     return (R) ServerResponse.status(HttpStatus.FOUND).location(loginUrl).build();
@@ -136,28 +134,6 @@ public class GsvcExceptionHandler {
         else {
             return (R) ResponseEntity.status(e.getStatusCode()).body(handle(e));
         }
-    }
-
-    public URI getLoginUrl(List<MediaType> contentTypes) {
-        val loginUrl = properties.getConfig().getLoginPage();
-        val textType = MediaType.parseMediaType("text/*");
-
-        if (loginUrl != null && isCompatibleWith(textType, contentTypes)) {
-            return loginUrl;
-        }
-
-        return null;
-    }
-
-    public static boolean isCompatibleWith(MediaType mediaType, List<MediaType> mediaTypes) {
-        if (mediaType != null && !CollectionUtils.isEmpty(mediaTypes)) {
-            for (MediaType contentType : mediaTypes) {
-                if (contentType.isCompatibleWith(mediaType)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
 }

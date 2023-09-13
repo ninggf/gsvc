@@ -72,9 +72,10 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
 
     @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
-    public BasicErrorController basicErrorController(ErrorAttributes errorAttributes, GsvcExceptionHandler handler,
-            ObjectProvider<ErrorViewResolver> errorViewResolvers, ServerProperties serverProperties) {
-        return new GsvcErrorController(errorAttributes, serverProperties.getError(), handler,
+    public BasicErrorController basicErrorController(ErrorAttributes errorAttributes,
+            ServiceConfigProperties properties, ObjectProvider<ErrorViewResolver> errorViewResolvers,
+            ServerProperties serverProperties) {
+        return new GsvcErrorController(errorAttributes, serverProperties.getError(), properties,
                 errorViewResolvers.orderedStream().toList());
     }
 

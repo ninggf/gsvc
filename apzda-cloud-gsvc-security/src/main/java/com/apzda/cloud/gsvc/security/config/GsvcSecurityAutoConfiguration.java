@@ -1,10 +1,13 @@
 package com.apzda.cloud.gsvc.security.config;
 
-import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
+import cn.hutool.jwt.signers.JWTSigner;
+import cn.hutool.jwt.signers.JWTSignerUtil;
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.security.AuthorizeCustomizer;
 import com.apzda.cloud.gsvc.security.filter.AuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
+import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
 import com.apzda.cloud.gsvc.security.repository.InMemoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +18,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +38,7 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.session.SessionManagementFilter;
+import org.springframework.util.Assert;
 
 import java.util.Comparator;
 import java.util.List;
@@ -48,8 +53,11 @@ public class GsvcSecurityAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @EnableWebSecurity
+    @EnableConfigurationProperties(SecurityConfigProperties.class)
     @RequiredArgsConstructor
     static class SecurityConfig {
+
+        private final SecurityConfigProperties properties;
 
         private final ApplicationEventPublisher eventPublisher;
 
@@ -71,8 +79,9 @@ public class GsvcSecurityAutoConfiguration {
             http.sessionManagement((session) -> {
                 // 不应开启http-session
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-                // 认证策略
+                // 登录会话策略
                 session.sessionAuthenticationStrategy(authenticationHandler);
+                session.invalidSessionStrategy(authenticationHandler);
             });
 
             http.securityContext((context) -> {
@@ -109,8 +118,12 @@ public class GsvcSecurityAutoConfiguration {
             });
 
             // 禁用自定义特征
-            http.csrf(AbstractHttpConfigurer::disable);
-            http.cors(AbstractHttpConfigurer::disable);
+            if (!properties.isCsrfEnabled()) {
+                http.csrf(AbstractHttpConfigurer::disable);
+            }
+            if (!properties.isCorsEnabled()) {
+                http.cors(AbstractHttpConfigurer::disable);
+            }
             http.anonymous(AbstractHttpConfigurer::disable);
             http.rememberMe(AbstractHttpConfigurer::disable);
             http.formLogin(AbstractHttpConfigurer::disable);
@@ -160,9 +173,10 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        AuthenticationHandler authenticationHandler(GsvcExceptionHandler gsvcExceptionHandler) {
+        AuthenticationHandler authenticationHandler(JWTSigner jwtSigner,
+                ServiceConfigProperties serviceConfigProperties) {
             // 认证处理器
-            return new DefaultAuthenticationHandler(gsvcExceptionHandler);
+            return new DefaultAuthenticationHandler(serviceConfigProperties.getConfig(), properties, jwtSigner);
         }
 
         @Bean
@@ -170,6 +184,19 @@ public class GsvcSecurityAutoConfiguration {
         SecurityContextRepository securityContextRepository() {
             // bookmark: 自义存储 Context 仓储
             return new InMemoryRepository();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        JWTSigner gsvcJwtSigner() {
+            val jwtKey = properties.getJwtKey();
+            Assert.hasText(jwtKey, "apzda.cloud.security.jwt-key is not set");
+            return JWTSignerUtil.hs256(jwtKey.getBytes());
+        }
+
+        @Bean
+        InjectCurrentUserPlugin injectCurrentUserPlugin() {
+            return new InjectCurrentUserPlugin();
         }
 
     }

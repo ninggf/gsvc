@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.security.handler;
 
+import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,6 +11,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.session.InvalidSessionStrategy;
 
 import java.io.IOException;
 
@@ -17,7 +19,7 @@ import java.io.IOException;
  * @author fengz
  */
 public interface AuthenticationHandler extends AuthenticationFailureHandler, AuthenticationSuccessHandler,
-        AccessDeniedHandler, AuthenticationEntryPoint, SessionAuthenticationStrategy {
+        AccessDeniedHandler, AuthenticationEntryPoint, SessionAuthenticationStrategy, InvalidSessionStrategy {
 
     @Override
     default void handle(HttpServletRequest request, HttpServletResponse response,
@@ -29,6 +31,12 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
     default void commence(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
         onUnauthorized(request, response, authException);
+    }
+
+    @Override
+    default void onInvalidSessionDetected(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        onUnauthorized(request, response, new InvalidSessionException("Invalid Session"));
     }
 
     void onAccessDenied(HttpServletRequest request, HttpServletResponse response,

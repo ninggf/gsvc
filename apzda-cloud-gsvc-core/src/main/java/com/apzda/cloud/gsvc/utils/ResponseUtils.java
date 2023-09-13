@@ -1,6 +1,8 @@
 package com.apzda.cloud.gsvc.utils;
 
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -10,11 +12,19 @@ import com.fasterxml.jackson.databind.cfg.JsonNodeFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -22,6 +32,8 @@ import java.util.concurrent.TimeoutException;
  */
 @Slf4j
 public class ResponseUtils {
+
+    public static final MediaType TEXT_MASK = MediaType.parseMediaType("text/*");
 
     public static final ObjectMapper OBJECT_MAPPER;
 
@@ -88,6 +100,55 @@ public class ResponseUtils {
             return tClass.cast(error.fallbackString(serviceName));
         }
         return parseResponse(error.fallbackString(serviceName), tClass);
+    }
+
+    public static void respond(HttpServletRequest request, HttpServletResponse response, Response<?> data)
+            throws IOException {
+        val errCode = data.getErrCode();
+        if (errCode != 0) {
+            response.setStatus(500);
+        }
+        val serverHttpRequest = new ServletServerHttpRequest(request);
+        val mediaTypes = serverHttpRequest.getHeaders().getAccept();
+        val jsonStr = OBJECT_MAPPER.writeValueAsString(data);
+
+        if (isCompatibleWith(MediaType.APPLICATION_JSON, mediaTypes)) {
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        }
+        else if (isCompatibleWith(TEXT_MASK, mediaTypes)) {
+            response.setContentType(MediaType.TEXT_PLAIN_VALUE);
+        }
+        response.setContentLength(jsonStr.length());
+
+        try (val writer = response.getWriter()) {
+            writer.write(jsonStr);
+        }
+    }
+
+    public static boolean isCompatibleWith(MediaType mediaType, List<MediaType> mediaTypes) {
+        if (mediaType != null && !CollectionUtils.isEmpty(mediaTypes)) {
+            for (MediaType contentType : mediaTypes) {
+                if (contentType.isCompatibleWith(mediaType)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static List<MediaType> mediaTypes(HttpServletRequest request) {
+        val serverHttpRequest = new ServletServerHttpRequest(request);
+        return serverHttpRequest.getHeaders().getAccept();
+    }
+
+    public static URI getLoginUrl(List<MediaType> contentTypes, ServiceConfigProperties properties) {
+        val loginUrl = properties.getConfig().getLoginPage();
+
+        if (loginUrl != null && ResponseUtils.isCompatibleWith(TEXT_MASK, contentTypes)) {
+            return loginUrl;
+        }
+
+        return null;
     }
 
 }

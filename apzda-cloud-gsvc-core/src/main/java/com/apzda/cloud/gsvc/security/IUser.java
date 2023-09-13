@@ -7,6 +7,4 @@ public interface IUser {
 
     String getUid();
 
-    String getUsername();
-
 }
