@@ -46,8 +46,9 @@ public class GsvcContextHolder {
 
     public static Map<String, String> headers() {
         val headers = new HashMap<String, String>();
-        if (getRequest().isPresent()) {
-            HttpServletRequest httpServletRequest = getRequest().get();
+        val request = getRequest();
+        if (request.isPresent()) {
+            HttpServletRequest httpServletRequest = request.get();
             Object filtered = httpServletRequest.getAttribute(FILTERED_HTTP_HEADERS);
             if (filtered == null) {
                 synchronized (FILTERED_HTTP_HEADERS) {
@@ -127,6 +128,10 @@ public class GsvcContextHolder {
             val rid = request.getAttribute("X-Request-Id");
             if (rid != null) {
                 headers.add("X-Request-Id", (String) rid);
+            }
+            else {
+                headers.add("X-Request-Id", UUID.randomUUID().toString());
+                request.setAttribute("X-Request-Id", headers.getFirst("X-Request-Id"));
             }
         }
         return headers;

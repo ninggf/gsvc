@@ -10,7 +10,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
-    <description>Adapt to Sentinel 1.8.6</description>
+    <description>
+        Adapt to Sentinel 1.8.6. This artifact should be deprecated after sentinel-web-servlet supports jakarta.
+    </description>
 
     <dependencies>
         <dependency>
@@ -27,4 +29,13 @@
             <artifactId>sentinel-core</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 </project>

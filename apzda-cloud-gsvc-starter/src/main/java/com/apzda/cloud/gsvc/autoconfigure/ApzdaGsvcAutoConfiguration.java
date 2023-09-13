@@ -12,6 +12,7 @@ import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
+import com.apzda.cloud.gsvc.security.config.GsvcSecurityAutoConfiguration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -37,7 +38,8 @@ import java.util.Map;
 /**
  * @author fengz
  */
-@AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class })
+@AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
+        GsvcSecurityAutoConfiguration.class })
 @Import({ ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class })
 @Slf4j
 public class ApzdaGsvcAutoConfiguration {
@@ -78,8 +80,6 @@ public class ApzdaGsvcAutoConfiguration {
     public static class GsvcServer implements SmartLifecycle {
 
         private final ApplicationContext applicationContext;
-
-        private final ServiceConfigProperties serviceConfigProperties;
 
         private final GatewayServiceConfigure gatewayServiceConfigure;
 

@@ -57,15 +57,21 @@ public class GtwRouterFunctionFactoryBean
                 for (Route subRoute : routes) {
                     val actions = subRoute.getActions();
                     val serviceMethod = getServiceMethod(subRoute, serviceInfo);
-                    builder.path(subRoute.getPath(), subBuilder -> {
+                    val path = subRoute.getPath();
+
+                    if (subRoute.getLogin()) {
+                        GatewayServiceRegistry.registerAuthedRoute(groupRoute.getPath() + path);
+                    }
+
+                    builder.path(path, subBuilder -> {
 
                         if (log.isDebugEnabled()) {
-                            log.debug("SN Route {}{} to {}.{}", groupRoute.getPath(), subRoute.getPath(),
+                            log.debug("SN Route {}{} to {}.{}", groupRoute.getPath(), path,
                                     serviceMethod.getServiceName(), serviceMethod.getDmName());
                         }
 
                         HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw",
-                                                                                                      serviceMethod, applicationContext);
+                                serviceMethod, applicationContext);
 
                         for (HttpMethod action : actions) {
                             if (action == HttpMethod.GET) {
@@ -101,6 +107,10 @@ public class GtwRouterFunctionFactoryBean
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.getPath();
         log.debug("SN Route {} to {}.{}", route.getPath(), serviceMethod.getServiceName(), serviceMethod.getDmName());
+
+        if (route.getLogin()) {
+            GatewayServiceRegistry.registerAuthedRoute(path);
+        }
 
         HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw", serviceMethod,
                 applicationContext);

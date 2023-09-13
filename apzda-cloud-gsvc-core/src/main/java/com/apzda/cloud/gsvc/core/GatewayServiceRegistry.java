@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author fengz
@@ -20,6 +18,8 @@ public class GatewayServiceRegistry {
     private static final Map<String, Map<String, ServiceMethod>> SERVICE_METHODS = new HashMap<>();
 
     public static final Map<Class<?>, ServiceInfo> DECLARED_SERVICES = new HashMap<>();
+
+    public static final Set<String> AUTHED_ROUTES = new HashSet<>();
 
     public static void register(Class<?> interfaceName) {
         if (!interfaceName.isInterface()) {
@@ -107,6 +107,10 @@ public class GatewayServiceRegistry {
         var cfgName = names.get(names.size() - 1);
         cfgName = Character.toUpperCase(cfgName.charAt(0)) + cfgName.substring(1);
         return cfgName.replaceFirst("Gsvc", "");
+    }
+
+    public static void registerAuthedRoute(String url) {
+        AUTHED_ROUTES.add(url);
     }
 
     public static String svcName(Class<?> clazz) {

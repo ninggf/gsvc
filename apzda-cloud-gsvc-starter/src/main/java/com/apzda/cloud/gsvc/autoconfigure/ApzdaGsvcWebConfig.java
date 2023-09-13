@@ -23,7 +23,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorController;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -42,8 +41,7 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
 
     private final ObjectMapper objectMapper;
 
-    public ApzdaGsvcWebConfig(ApplicationContext applicationContext, ServiceConfigProperties serviceConfigProperties,
-            ObjectMapper objectMapper) {
+    public ApzdaGsvcWebConfig(ServiceConfigProperties serviceConfigProperties, ObjectMapper objectMapper) {
         this.serviceConfigProperties = serviceConfigProperties;
         this.objectMapper = objectMapper;
     }
