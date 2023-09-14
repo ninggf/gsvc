@@ -1,7 +1,12 @@
 package com.apzda.cloud.gsvc.core;
 
+import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.apzda.cloud.gsvc.gtw.GroupRoute;
 import com.apzda.cloud.gsvc.gtw.Route;
+import com.google.protobuf.Descriptors;
+import io.grpc.MethodDescriptor;
+import io.grpc.ServiceDescriptor;
+import io.grpc.protobuf.ProtoMethodDescriptorSupplier;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -37,7 +42,21 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
         val services = Arrays.stream(beanFactory.getBeanDefinitionNames())
             .filter(n -> StringUtils.endsWith(n, "Gsvc"))
-            .map(GatewayServiceRegistry::cfgName)
+            .map(n -> {
+                try {
+                    val beanDefinition = beanFactory.getBeanDefinition(n);
+                    val beanClassName = Objects.requireNonNull(beanDefinition.getBeanClassName()).replace("Gsvc", "");
+                    val aClass = Class.forName(beanClassName);
+                    val grpcClazz = Class.forName(beanClassName + "Grpc");
+                    val method = grpcClazz.getMethod("getServiceDescriptor");
+                    GatewayServiceRegistry.register(aClass, (ServiceDescriptor) method.invoke(null));
+                }
+                catch (Exception e) {
+                    throw new BeanCreationException(e.getMessage(), e);
+                }
+
+                return GatewayServiceRegistry.cfgName(n);
+            })
             .toList();
 
         for (String appName : services) {
@@ -62,6 +81,24 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     val routes = createRoutes(prefix, aClass, environment);
                     for (GroupRoute route : routes) {
                         registerRouterFunction(bf, route);
+                    }
+                    val descriptor = GatewayServiceRegistry.SERVCIE_DESCRIPTOR.get(aClass);
+
+                    if (descriptor != null) {
+                        val defaultFilters = environment.getProperty("apzda.cloud.gateway.default.filters");
+                        List<GroupRoute> routes1 = new ArrayList<>();
+                        for (MethodDescriptor<?, ?> method : descriptor.getMethods()) {
+                            if (method.getSchemaDescriptor() instanceof ProtoMethodDescriptorSupplier ms) {
+                                val route = createRoute(aClass, ms.getMethodDescriptor(), defaultFilters);
+                                if (route != null) {
+                                    routes1.add(route);
+                                }
+                            }
+                        }
+
+                        for (GroupRoute route : routes1) {
+                            registerRouterFunction(bf, route);
+                        }
                     }
                 }
                 catch (ClassNotFoundException e) {
@@ -135,6 +172,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val login = environment.getProperty(prefix + ".login");
         val method = environment.getProperty(prefix + ".method");
         val actions = environment.getProperty(prefix + ".actions");
+        val access = environment.getProperty(prefix + ".access");
         var filters = environment.getProperty(prefix + ".filters");
 
         if (parent == null) {
@@ -157,7 +195,44 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .method(method)
             .actions(actions)
             .login(login)
+            .access(access)
             .filters(filters);
+    }
+
+    private GroupRoute createRoute(Class<?> aClass, Descriptors.MethodDescriptor methodDescriptor,
+            String defaultFilters) {
+        val options = methodDescriptor.getOptions();
+        var path = options.getExtension(GsvcExt.path).trim();
+        if (StringUtils.isBlank(path)) {
+            return null;
+        }
+        var index = methodDescriptor.getIndex() + 10001;
+        path = "/" + StringUtils.strip(path, "/");
+        val login = options.getExtension(GsvcExt.login);
+        val access = options.getExtension(GsvcExt.access).trim();
+        val methods = options.getExtension(GsvcExt.methods).trim();
+        var filters = options.getExtension(GsvcExt.filters).trim();
+
+        if (StringUtils.isNotBlank(defaultFilters)) {
+            if (StringUtils.isBlank(filters)) {
+                filters = defaultFilters;
+            }
+            else {
+                filters = defaultFilters + "," + filters;
+            }
+        }
+
+        val route = new Route();
+        route.setPath(path);
+        route.index(index);
+        route.setInterfaceName(aClass);
+        route.setMethod(methodDescriptor.getName());
+        route.filters(filters);
+        route.actions(StringUtils.defaultIfBlank(methods, "post"));
+        route.setLogin(login);
+        route.access(access);
+
+        return GroupRoute.valueOf(route);
     }
 
     private void registerRouterFunction(BeanDefinitionRegistry registry, GroupRoute route) {

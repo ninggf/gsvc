@@ -23,7 +23,7 @@ class GatewayAuthorizeCustomizer implements AuthorizeCustomizer {
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
 
         if (!GatewayServiceRegistry.AUTHED_ROUTES.isEmpty()) {
-            log.info("Found Authed Pages: {}", GatewayServiceRegistry.AUTHED_ROUTES);
+            log.debug("Found Authed Pages: {}", GatewayServiceRegistry.AUTHED_ROUTES);
             for (Map.Entry<String, RouteMeta> kv : GatewayServiceRegistry.AUTHED_ROUTES.entrySet()) {
                 val path = kv.getKey();
                 val meta = kv.getValue();

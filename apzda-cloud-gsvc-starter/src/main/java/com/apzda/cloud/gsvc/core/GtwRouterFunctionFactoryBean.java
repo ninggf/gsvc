@@ -59,7 +59,7 @@ public class GtwRouterFunctionFactoryBean
                     val serviceMethod = getServiceMethod(subRoute, serviceInfo);
                     val path = subRoute.getPath();
                     val meta = subRoute.meta();
-                    if (meta != null) {
+                    if (meta.isLogin()) {
                         GatewayServiceRegistry.registerRouteMeta(groupRoute.getPath() + path, meta);
                     }
 
@@ -107,9 +107,11 @@ public class GtwRouterFunctionFactoryBean
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.getPath();
         val meta = route.meta();
-        log.debug("SN Route {} to {}.{}", route.getPath(), serviceMethod.getServiceName(), serviceMethod.getDmName());
 
-        if (meta != null) {
+        log.debug("SN Route {} to {}.{}({})", route.getPath(), serviceMethod.getServiceName(),
+                serviceMethod.getDmName(), meta);
+
+        if (meta.isLogin()) {
             GatewayServiceRegistry.registerRouteMeta(path, meta);
         }
 

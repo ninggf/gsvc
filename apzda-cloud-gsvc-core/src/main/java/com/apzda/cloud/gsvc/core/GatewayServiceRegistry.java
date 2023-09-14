@@ -24,7 +24,7 @@ public class GatewayServiceRegistry {
 
     public static final Map<Class<?>, ServiceInfo> DECLARED_SERVICES = new HashMap<>();
 
-    public static final Map<Class<?>, ServiceDescriptor> DESCRIPTOR_SUPPLIER = new HashMap<>();
+    public static final Map<Class<?>, ServiceDescriptor> SERVCIE_DESCRIPTOR = new HashMap<>();
 
     public static final Map<String, RouteMeta> AUTHED_ROUTES = new HashMap<>();
 
@@ -47,11 +47,13 @@ public class GatewayServiceRegistry {
         DECLARED_SERVICES.get(interfaceName).local = false;
     }
 
-    public static void register(Class<?> interfaceName, Map<String, Object[]> methodMeta,
-            ServiceDescriptor descriptor) {
+    public static void register(Class<?> interfaceName, Map<String, Object[]> methodMeta) {
         register(interfaceName);
-        DESCRIPTOR_SUPPLIER.put(interfaceName, descriptor);
         genDeclaredServiceMethods(interfaceName, methodMeta);
+    }
+
+    public static void register(Class<?> interfaceName, ServiceDescriptor descriptor) {
+        SERVCIE_DESCRIPTOR.putIfAbsent(interfaceName, descriptor);
     }
 
     public static void setBean(Class<?> interfaceName, Object bean, boolean local) {

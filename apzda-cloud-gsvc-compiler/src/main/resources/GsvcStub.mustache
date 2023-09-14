@@ -41,7 +41,7 @@ public class {{className}} {
             {{outputType}}.class
         });
     {{/biStreamingMethods}}
-        GatewayServiceRegistry.register({{interfaceClassName}}.class, METHOD_META_INFO, {{interfaceClassName}}Grpc.getServiceDescriptor());
+        GatewayServiceRegistry.register({{interfaceClassName}}.class, METHOD_META_INFO);
     }
 
     @Bean

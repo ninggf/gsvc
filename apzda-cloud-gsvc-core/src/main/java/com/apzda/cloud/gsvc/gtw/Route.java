@@ -156,10 +156,7 @@ public class Route {
     }
 
     public RouteMeta meta() {
-        if (login) {
-            return new RouteMeta().setLogin(login).setAccess(this.access);
-        }
-        return null;
+        return new RouteMeta().setLogin(login).setAccess(this.access);
     }
 
     @Override

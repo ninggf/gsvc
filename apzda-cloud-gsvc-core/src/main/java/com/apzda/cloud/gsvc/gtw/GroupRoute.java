@@ -21,6 +21,7 @@ public class GroupRoute extends Route {
         gr.index(route.index);
         gr.setInterfaceName(route.getInterfaceName());
         gr.setLogin(route.getLogin());
+        gr.setAccess(route.getAccess());
         gr.method(route.getMethod());
         gr.setActions(route.getActions());
         gr.setFilters(route.getFilters());
