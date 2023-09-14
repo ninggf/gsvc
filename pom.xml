@@ -19,6 +19,7 @@
         <module>apzda-cloud-gsvc-compiler</module>
         <module>apzda-cloud-gsvc-sentinel</module>
         <module>apzda-cloud-gsvc-security</module>
+        <module>apzda-cloud-gsvc-proto</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -40,15 +41,20 @@
         <hutool.version>5.8.21</hutool.version>
         <guava.version>31.1-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
-        <protobuf.java.version>3.22.3</protobuf.java.version>
-        <grpc-java.version>1.57.2</grpc-java.version>
-        <jprotoc.version>1.2.1</jprotoc.version>
+        <protoc.version>3.24.3</protoc.version>
+        <protobuf.java.version>3.24.3</protobuf.java.version>
+        <grpc-java.version>1.58.0</grpc-java.version>
+        <jprotoc.version>1.2.2</jprotoc.version>
         <jackson-protobuf.version>0.9.14</jackson-protobuf.version>
         <net-devh-grpc.version>2.14.0.RELEASE</net-devh-grpc.version>
         <sentinel.version>1.8.6</sentinel.version>
         <!-- plugins versions -->
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
         <spring-javaformat.version>0.0.39</spring-javaformat.version>
+        <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
+        <maven-assembly-plugin.version>3.4.2</maven-assembly-plugin.version>
+        <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
+        <gsvc.compiler.version>${project.version}</gsvc.compiler.version>
     </properties>
 
     <repositories>
@@ -129,6 +135,11 @@
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
+                <artifactId>apzda-cloud-gsvc-proto</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-security</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
@@ -175,18 +186,6 @@
             </dependency>
             <!-- third-party library -->
             <dependency>
-                <groupId>cn.dev33</groupId>
-                <artifactId>sa-token-bom</artifactId>
-                <version>${sa-token.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>cn.dev33</groupId>
-                <artifactId>sa-token-reactor-spring-boot3-starter</artifactId>
-                <version>${sa-token.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>cn.hutool</groupId>
                 <artifactId>hutool-bom</artifactId>
                 <version>${hutool.version}</version>
@@ -222,11 +221,6 @@
             <dependency>
                 <groupId>com.alibaba.csp</groupId>
                 <artifactId>sentinel-core</artifactId>
-                <version>${sentinel.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba.csp</groupId>
-                <artifactId>sentinel-web-servlet</artifactId>
                 <version>${sentinel.version}</version>
             </dependency>
             <dependency>

@@ -23,4 +23,9 @@ public class SaServiceImpl implements SaService {
         return SaRes.newBuilder().setUserName(request.getName() + ".sa").setErrCode(0).buildPartial();
     }
 
+    @Override
+    public SaRes hi(SaReq request) {
+        return SaRes.newBuilder().setUserName("hi " + request.getName()).setErrCode(0).buildPartial();
+    }
+
 }

@@ -19,7 +19,7 @@ class GatewayServiceRegistryTest {
     @Test
     void should_be_a_unary_method() throws NoSuchMethodException {
         // given
-        GatewayServiceRegistry.register(GreetingService.class, null);
+        GatewayServiceRegistry.register(GreetingService.class, null, null);
 
         // when
         val methods = GatewayServiceRegistry.getServiceMethods("test", "greetingService");

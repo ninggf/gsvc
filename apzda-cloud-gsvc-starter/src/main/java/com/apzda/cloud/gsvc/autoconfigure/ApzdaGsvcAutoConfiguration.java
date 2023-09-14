@@ -13,6 +13,7 @@ import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
 import com.apzda.cloud.gsvc.security.config.GsvcSecurityAutoConfiguration;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -22,6 +23,8 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
@@ -34,6 +37,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author fengz
@@ -77,7 +81,7 @@ public class ApzdaGsvcAutoConfiguration {
 
     @Configuration
     @RequiredArgsConstructor
-    public static class GsvcServer implements SmartLifecycle {
+    static class GsvcServer implements SmartLifecycle {
 
         private final ApplicationContext applicationContext;
 
@@ -122,6 +126,28 @@ public class ApzdaGsvcAutoConfiguration {
         @Override
         public boolean isRunning() {
             return running;
+        }
+
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @Slf4j
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    static class CacheConfig {
+
+        @Bean
+        @ConditionalOnMissingBean
+        public Caffeine caffeineConfig() {
+            log.debug("Creating Caffeine cache backend");
+            return Caffeine.newBuilder().expireAfterWrite(60, TimeUnit.MINUTES);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        public CacheManager cacheManager(Caffeine caffeine) {
+            CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
+            caffeineCacheManager.setCaffeine(caffeine);
+            return caffeineCacheManager;
         }
 
     }

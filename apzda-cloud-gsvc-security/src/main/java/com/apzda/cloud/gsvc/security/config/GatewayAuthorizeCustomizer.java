@@ -1,10 +1,16 @@
 package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
+import com.apzda.cloud.gsvc.gtw.RouteMeta;
 import com.apzda.cloud.gsvc.security.AuthorizeCustomizer;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
+
+import java.util.Map;
 
 /**
  * @author fengz
@@ -18,10 +24,19 @@ class GatewayAuthorizeCustomizer implements AuthorizeCustomizer {
 
         if (!GatewayServiceRegistry.AUTHED_ROUTES.isEmpty()) {
             log.info("Found Authed Pages: {}", GatewayServiceRegistry.AUTHED_ROUTES);
-            for (String path : GatewayServiceRegistry.AUTHED_ROUTES) {
-                authorize.requestMatchers(path).authenticated();
+            for (Map.Entry<String, RouteMeta> kv : GatewayServiceRegistry.AUTHED_ROUTES.entrySet()) {
+                val path = kv.getKey();
+                val meta = kv.getValue();
+                val access = meta.getAccess();
+                if (StringUtils.isNotBlank(access)) {
+                    authorize.requestMatchers(path).access(new WebExpressionAuthorizationManager(access));
+                }
+                else {
+                    authorize.requestMatchers(path).authenticated();
+                }
             }
         }
+
     }
 
 }

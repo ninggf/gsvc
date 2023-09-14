@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package gsvc;
+
+import "google/protobuf/descriptor.proto";
+
+option java_package = "com.apzda.cloud.gsvc.ext";
+option java_outer_classname = "GsvcExt";
+
+extend google.protobuf.ServiceOptions {string serviceName = 50001;}
+extend google.protobuf.MethodOptions {bool login = 50002;}
+extend google.protobuf.MethodOptions {string access = 50003;}
+extend google.protobuf.MethodOptions {string path = 50004;}
+extend google.protobuf.MethodOptions {string methods = 50005;}
+extend google.protobuf.MethodOptions {string filters = 50006;}
+
+message Valid {
+  bool  required = 1; // not empty string
+  string match = 2; // regex or special value: int,long,double,email,date,timestamp
+  string values = 3; // enums
+  string length = 4; // n or min,max or min,- or -,max
+  string nrange = 5; // n or min,max or min,- or -,max compare by number
+  string srange = 6; // like nrange but compare by string
+  string arrlen = 7; // length for repeated field
+
+  string empty_or_match = 8;
+  string empty_or_values = 9;
+  string empty_or_length = 10;
+  string empty_or_nrange = 11;
+  string empty_or_srange = 12;
+  string empty_or_arrlen = 13;
+
+  int32 err_code = 14;
+  optional string err_msg = 15;
+}
+
+extend google.protobuf.FieldOptions {Valid valid = 50007;}

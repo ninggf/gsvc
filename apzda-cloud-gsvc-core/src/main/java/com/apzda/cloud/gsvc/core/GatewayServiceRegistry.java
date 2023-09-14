@@ -1,11 +1,16 @@
 package com.apzda.cloud.gsvc.core;
 
+import com.apzda.cloud.gsvc.gtw.RouteMeta;
 import com.google.common.base.Splitter;
+import io.grpc.ServiceDescriptor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.util.Assert;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author fengz
@@ -19,7 +24,9 @@ public class GatewayServiceRegistry {
 
     public static final Map<Class<?>, ServiceInfo> DECLARED_SERVICES = new HashMap<>();
 
-    public static final Set<String> AUTHED_ROUTES = new HashSet<>();
+    public static final Map<Class<?>, ServiceDescriptor> DESCRIPTOR_SUPPLIER = new HashMap<>();
+
+    public static final Map<String, RouteMeta> AUTHED_ROUTES = new HashMap<>();
 
     public static void register(Class<?> interfaceName) {
         if (!interfaceName.isInterface()) {
@@ -40,9 +47,10 @@ public class GatewayServiceRegistry {
         DECLARED_SERVICES.get(interfaceName).local = false;
     }
 
-    public static void register(Class<?> interfaceName, Map<String, Object[]> methodMeta) {
+    public static void register(Class<?> interfaceName, Map<String, Object[]> methodMeta,
+            ServiceDescriptor descriptor) {
         register(interfaceName);
-
+        DESCRIPTOR_SUPPLIER.put(interfaceName, descriptor);
         genDeclaredServiceMethods(interfaceName, methodMeta);
     }
 
@@ -109,8 +117,9 @@ public class GatewayServiceRegistry {
         return cfgName.replaceFirst("Gsvc", "");
     }
 
-    public static void registerAuthedRoute(String url) {
-        AUTHED_ROUTES.add(url);
+    public static void registerRouteMeta(String url, RouteMeta meta) {
+        Assert.notNull(meta, "meta cannot be null for path: " + url);
+        AUTHED_ROUTES.put(url, meta);
     }
 
     public static String svcName(Class<?> clazz) {

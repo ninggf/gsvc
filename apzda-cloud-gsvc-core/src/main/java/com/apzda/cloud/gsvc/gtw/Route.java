@@ -23,6 +23,8 @@ public class Route {
 
     private Boolean login;
 
+    private String access;
+
     private Class<?> interfaceName;
 
     private String method;
@@ -79,6 +81,19 @@ public class Route {
         }
         else {
             this.login = false;
+        }
+        return this;
+    }
+
+    public Route access(String access) {
+        if (access != null) {
+            this.access = access;
+        }
+        else if (this.parent != null && this.parent.access != null) {
+            this.access = this.parent.access;
+        }
+        if (StringUtils.isNotBlank(this.access)) {
+            this.login = true;
         }
         return this;
     }
@@ -140,6 +155,13 @@ public class Route {
         return this;
     }
 
+    public RouteMeta meta() {
+        if (login) {
+            return new RouteMeta().setLogin(login).setAccess(this.access);
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         val str = new ToStringCreator(this);
@@ -154,6 +176,7 @@ public class Route {
             .append("method", method)
             .append("index", index)
             .append("login", login)
+            .append("access", access)
             .append("actions", actions)
             .append("filters", filters);
         return str.toString();

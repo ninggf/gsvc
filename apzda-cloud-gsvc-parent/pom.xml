@@ -21,11 +21,6 @@
         <groovy.version>4.0.12</groovy.version>
         <!-- plugins version -->
         <gmavenplus-plugin.version>3.0.0</gmavenplus-plugin.version>
-        <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
-        <maven-assembly-plugin.version>3.4.2</maven-assembly-plugin.version>
-        <protoc.version>3.22.3</protoc.version>
-        <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
-        <gsvc.compiler.version>${project.version}</gsvc.compiler.version>
     </properties>
 
     <dependencies>
@@ -319,6 +314,11 @@
                         <protocArtifact>
                             com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}
                         </protocArtifact>
+                        <attachProtoSources>true</attachProtoSources>
+                        <useArgumentFile>true</useArgumentFile>
+                        <writeDescriptorSet>false</writeDescriptorSet>
+                        <attachDescriptorSet>false</attachDescriptorSet>
+                        <includeDependenciesInDescriptorSet>false</includeDependenciesInDescriptorSet>
                         <checkStaleness>true</checkStaleness>
                         <pluginId>grpc-java</pluginId>
                         <pluginArtifact>
