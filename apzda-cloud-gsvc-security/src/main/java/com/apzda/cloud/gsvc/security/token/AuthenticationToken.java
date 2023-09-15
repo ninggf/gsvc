@@ -3,7 +3,6 @@
  */
 package com.apzda.cloud.gsvc.security.token;
 
-import com.apzda.cloud.gsvc.security.IUser;
 import com.apzda.cloud.gsvc.security.JwtToken;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,7 +12,7 @@ import java.util.Collection;
 /**
  * @author fengz windywany@gmail.com
  **/
-public abstract class AuthenticationToken extends AbstractAuthenticationToken implements IUser {
+public abstract class AuthenticationToken extends AbstractAuthenticationToken {
 
     protected JwtToken jwtToken;
 

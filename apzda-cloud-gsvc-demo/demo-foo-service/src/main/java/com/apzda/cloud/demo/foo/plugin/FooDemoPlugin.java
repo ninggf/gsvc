@@ -5,6 +5,7 @@ import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
 import com.apzda.cloud.gsvc.plugin.IPreInvoke;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -26,7 +27,7 @@ public class FooDemoPlugin implements IGlobalPlugin, IPreCall, IPreInvoke {
     }
 
     @Override
-    public Object preInvoke(ServerRequest request, Object data, ServiceMethod method) {
+    public Mono<JsonNode> preInvoke(ServerRequest request, Mono<JsonNode> data, ServiceMethod method) {
         log.info("[{}] FooDemoPlugin#preInvoke is working", GsvcContextHolder.getRequestId());
         return data;
     }

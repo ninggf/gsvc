@@ -7,11 +7,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.web.context.HttpRequestResponseHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
+
+import java.util.Collections;
 
 /**
  * @author fengz
@@ -56,7 +59,7 @@ public class InMemoryRepository implements SecurityContextRepository {
     private SecurityContext getContext(HttpServletRequest request) {
         val authToken = request.getHeader("AUTHORIZATION");
         log.debug("[{}] InMemoryRepository getContext: Token = {}", GsvcContextHolder.getRequestId(), authToken);
-
+        UsernamePasswordAuthenticationToken.authenticated("leo", "hahah", Collections.emptyList());
         if (StringUtils.isBlank(authToken)) {
             return null;
         }

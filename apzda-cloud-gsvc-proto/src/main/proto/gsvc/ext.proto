@@ -29,9 +29,32 @@ message Valid {
   string empty_or_nrange = 11;
   string empty_or_srange = 12;
   string empty_or_arrlen = 13;
-
-  int32 err_code = 14;
-  optional string err_msg = 15;
 }
 
 extend google.protobuf.FieldOptions {Valid valid = 50007;}
+
+message Route {
+  string path = 1;
+  bool login = 2;
+  string access = 3;
+  repeated string methods = 4;
+  repeated string  filters = 5;
+}
+
+extend google.protobuf.MethodOptions {Route route = 50008;}
+
+message CurrentUser {
+  string uid = 1;
+  string name = 2;
+}
+
+message UploadFile {
+  int64 size = 1;
+  string file = 2;
+  string filename = 3;
+  string content_type = 4;
+  string ext = 5;
+  string name = 6;
+  string error = 7;
+}
+

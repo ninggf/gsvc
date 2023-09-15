@@ -3,7 +3,7 @@ package com.apzda.cloud.demo.bar.facade;
 import com.apzda.cloud.demo.bar.proto.BarReq;
 import com.apzda.cloud.demo.bar.proto.BarRes;
 import com.apzda.cloud.demo.bar.proto.BarService;
-import com.apzda.cloud.demo.bar.proto.UploadFile;
+import com.apzda.cloud.gsvc.ext.GsvcExt;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -25,7 +25,7 @@ public class BarServiceImpl implements BarService {
     @Override
     public Mono<BarRes> hello(BarReq request) {
 
-        for (UploadFile uploadFile : request.getFilesList()) {
+        for (GsvcExt.UploadFile uploadFile : request.getFilesList()) {
             if (uploadFile.getSize() > 0) {
                 log.info("删除 File: {}", uploadFile.getFilename());
                 new File(uploadFile.getFile()).delete();
@@ -45,7 +45,7 @@ public class BarServiceImpl implements BarService {
     @Override
     public Mono<BarRes> hi(Mono<BarReq> request) {
         return request.map(barReq -> {
-            for (UploadFile uploadFile : barReq.getFilesList()) {
+            for (GsvcExt.UploadFile uploadFile : barReq.getFilesList()) {
                 if (uploadFile.getSize() > 0) {
                     log.info("删除 File: {}", uploadFile.getFilename());
                     new File(uploadFile.getFile()).delete();

@@ -6,6 +6,7 @@ import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
 import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.security.IUser;
 import com.apzda.cloud.gsvc.security.JwtToken;
 import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
@@ -68,7 +69,11 @@ public class DefaultTokenManager implements TokenManager {
     @Override
     public JwtToken createJwtToken(AuthenticationToken authentication) {
         val token = JWT.create();
-        token.setPayload("uid", authentication.getUid());
+        var uid = "0";
+        if (authentication.getPrincipal() instanceof IUser user) {
+            uid = user.getUid();
+            token.setPayload("uid", uid);
+        }
         token.setSubject(authentication.getName());
         token.setSigner(jwtSigner);
         val accessExpireAt = DateUtil.date()
@@ -81,7 +86,7 @@ public class DefaultTokenManager implements TokenManager {
         return JwtToken.builder()
             .refreshToken(refreshToken)
             .accessToken(accessToken)
-            .uid(authentication.getUid())
+            .uid(uid)
             .name(authentication.getName())
             .build();
     }

@@ -11,6 +11,7 @@ import com.apzda.cloud.gsvc.plugin.IPostInvoke;
 import com.apzda.cloud.gsvc.plugin.IPreInvoke;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.MethodDescriptor;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,8 +39,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING;
 
 /**
  * @author ninggf
@@ -91,7 +90,7 @@ public class ServiceMethodHandler {
                         serviceMethod.getDmName());
             }
             // 1. 解析请求体
-            Object requestObj = deserializeRequest(type);
+            Mono<JsonNode> requestObj = deserializeRequest(type);
 
             // 2. 调用方法
             return switch (type) {
@@ -115,26 +114,47 @@ public class ServiceMethodHandler {
     }
 
     @SuppressWarnings("unchecked")
-    private ServerResponse doStreamingCall(Object requestObj) throws InvocationTargetException, IllegalAccessException {
+    private ServerResponse doStreamingCall(Mono<JsonNode> requestObj)
+            throws InvocationTargetException, IllegalAccessException {
         val plugins = serviceMethod.getPlugins();
         var size = plugins.size();
+
         for (IPlugin plugin : plugins) {
             if (plugin instanceof IPreInvoke preInvoke) {
                 requestObj = preInvoke.preInvoke(request, requestObj, serviceMethod);
             }
         }
 
-        Mono<Object> mono = (Mono<Object>) serviceMethod.call(requestObj);
+        Mono<Object> realReqObj = requestObj.handle((req, sink) -> {
+            try {
+                sink.next(objectMapper.readValue(req.toString(), serviceMethod.getRequestType()));
+                sink.complete();
+            }
+            catch (JsonProcessingException e) {
+                sink.error(e);
+            }
+        });
+
+        Mono<Object> mono;
+        if (serviceMethod.getType() == MethodDescriptor.MethodType.SERVER_STREAMING) {
+            mono = (Mono<Object>) serviceMethod.call(realReqObj.block());
+        }
+        else {
+            mono = (Mono<Object>) serviceMethod.call(realReqObj);
+        }
+
         while (--size >= 0) {
             var plugin = plugins.get(size);
             if (plugin instanceof IPostInvoke preInvoke) {
                 mono = (Mono<Object>) preInvoke.postInvoke(request, requestObj, mono, serviceMethod);
             }
         }
+
         val timeout = svcConfigure.getTimeout(serviceMethod.getCfgName(), serviceMethod.getDmName());
         if (!timeout.isZero()) {
             mono = mono.timeout(timeout);
         }
+
         // reactive is so hard!!!
         return ServerResponse
             .async(mono.map(rtn -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(rtn))
@@ -145,7 +165,7 @@ public class ServiceMethodHandler {
                 }));
     }
 
-    private ServerResponse doUnaryCall(Object requestObj)
+    private ServerResponse doUnaryCall(Mono<JsonNode> requestObj)
             throws InvocationTargetException, IllegalAccessException, JsonProcessingException {
         val plugins = serviceMethod.getPlugins();
         var size = plugins.size();
@@ -154,21 +174,33 @@ public class ServiceMethodHandler {
                 requestObj = preInvoke.preInvoke(request, requestObj, serviceMethod);
             }
         }
-        Object resp = serviceMethod.call(requestObj);
+        //
+        Object realReqObj = requestObj.handle((req, sink) -> {
+            try {
+                sink.next(objectMapper.readValue(req.toString(), serviceMethod.getRequestType()));
+                sink.complete();
+            }
+            catch (JsonProcessingException e) {
+                sink.error(e);
+            }
+        }).block();
+
+        Object resp = serviceMethod.call(realReqObj);
+
         while (--size >= 0) {
             var plugin = plugins.get(size);
             if (plugin instanceof IPostInvoke preInvoke) {
                 resp = preInvoke.postInvoke(request, requestObj, resp, serviceMethod);
             }
         }
+
         val response = createResponse(resp);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }
 
-    protected Object deserializeRequest(MethodDescriptor.MethodType type) throws IOException {
+    protected Mono<JsonNode> deserializeRequest(MethodDescriptor.MethodType type) throws IOException {
         val contentType = request.headers().contentType().orElse(MediaType.APPLICATION_FORM_URLENCODED);
 
-        Object requestObj;
         Mono<Object> args;
 
         val cfgName = serviceMethod.getCfgName();
@@ -177,24 +209,20 @@ public class ServiceMethodHandler {
         val readTimeout = svcConfigure.getReadTimeout(cfgName, false);
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
-            if (type == BIDI_STREAMING) {
-                return Mono.create(sink -> {
-                    try {
-                        val requestBody = retrieveRequestBody(request.servletRequest());
+            return Mono.<JsonNode>create(sink -> {
+                try {
+                    val requestBody = objectMapper.readTree(request.servletRequest().getReader());
+                    // val requestBody =
+                    // retrieveRequestBody(request.servletRequest());
+                    if (log.isTraceEnabled()) {
                         log.trace("[{}] Request({}) resolved: {}", logId, contentType, requestBody);
-                        sink.success(objectMapper.readValue(requestBody, reqClass));
                     }
-                    catch (IOException e) {
-                        sink.error(e);
-                    }
-                }).timeout(readTimeout);
-            }
-            else {
-                val requestBody = retrieveRequestBody(request.servletRequest());
-                log.trace("[{}] Request({}) resolved: {}", logId, contentType, requestBody);
-
-                return objectMapper.readValue(requestBody, reqClass);
-            }
+                    sink.success(requestBody);
+                }
+                catch (IOException e) {
+                    sink.error(e);
+                }
+            }).timeout(readTimeout);
         }
         else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA)
                 || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
@@ -226,34 +254,21 @@ public class ServiceMethodHandler {
             });
         }
 
-        if (type == BIDI_STREAMING) {
-            return args.handle((arg, sink) -> {
-                try {
-                    val reqObj = objectMapper.readValue(objectMapper.writeValueAsBytes(arg), reqClass);
-                    if (log.isTraceEnabled()) {
-                        log.trace("[{}] Request({}) resolved: {}", logId, contentType,
-                                objectMapper.writeValueAsString(arg));
-                    }
-                    sink.next(reqObj);
-                    sink.complete();
+        return args.<JsonNode>handle((arg, sink) -> {
+            try {
+                val reqObj = objectMapper.convertValue(arg, JsonNode.class);
+                if (log.isTraceEnabled()) {
+                    log.trace("[{}] Request({}) resolved: {}", logId, contentType,
+                            objectMapper.writeValueAsString(arg));
                 }
-                catch (IOException e) {
-                    log.error("[{}] Request({}) resolved failed: {}", logId, contentType, e.getMessage());
-                    sink.error(e);
-                }
-            }).timeout(readTimeout);
-        }
-        else {
-            val reqObj = args.blockOptional(readTimeout);
-
-            requestObj = objectMapper.readValue(objectMapper.writeValueAsBytes(reqObj.orElseThrow()), reqClass);
-            if (log.isTraceEnabled()) {
-                log.trace("[{}] Request({}) resolved: {}", logId, contentType,
-                        objectMapper.writeValueAsString(requestObj));
+                sink.next(reqObj);
+                sink.complete();
             }
-        }
-
-        return requestObj;
+            catch (IOException e) {
+                log.error("[{}] Request({}) resolved failed: {}", logId, contentType, e.getMessage());
+                sink.error(e);
+            }
+        }).timeout(readTimeout);
     }
 
     private void addBindValue(Map<String, Object> params, String key, List<?> values) {
