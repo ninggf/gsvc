@@ -26,35 +26,71 @@ public class GatewayServiceConfigure {
     private final ObjectProvider<List<IGlobalPlugin>> globalPlugins;
 
     public Duration getReadTimeout(String svcName, boolean isRef) {
-        val config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
-        // service global
-        val readTimeout = config.getReadTimeout();
+        var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
+        // service
+        var readTimeout = config.getReadTimeout();
         if (!readTimeout.isZero()) {
             return readTimeout;
         }
         // default
-        return Duration.ofSeconds(60);
+        config = isRef ? serviceConfig.refConfig("default") : serviceConfig.svcConfig("default");
+        readTimeout = config.getReadTimeout();
+        if (!readTimeout.isZero()) {
+            return readTimeout;
+        }
+
+        return Duration.ofSeconds(30);
+    }
+
+    public Duration getWriteTimeout(String svcName, boolean isRef) {
+        var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
+        var writeTimeout = config.getWriteTimeout();
+        if (!writeTimeout.isZero()) {
+            return writeTimeout;
+        }
+        config = isRef ? serviceConfig.refConfig("default") : serviceConfig.svcConfig("default");
+        writeTimeout = config.getWriteTimeout();
+        if (!writeTimeout.isZero()) {
+            return writeTimeout;
+        }
+        // service global
+        return Duration.ZERO;
     }
 
     public Duration getConnectTimeout(String svcName) {
-        val config = serviceConfig.refConfig(svcName);
+        var config = serviceConfig.refConfig(svcName);
         // service global
-        val readTimeout = config.getConnectTimeout();
+        var readTimeout = config.getConnectTimeout();
+        if (!readTimeout.isZero()) {
+            return readTimeout;
+        }
+        config = serviceConfig.refConfig("default");
+        readTimeout = config.getConnectTimeout();
         if (!readTimeout.isZero()) {
             return readTimeout;
         }
         // default
-        return Duration.ofSeconds(3);
+        return Duration.ofSeconds(1);
     }
 
-    public Duration getTimeout(String svcName) {
-        val config = serviceConfig.svcConfig(svcName);
-        val readTimeout = config.getTimeout();
-        if (!readTimeout.isZero()) {
-            return readTimeout;
+    public Duration getTimeout(String svcName, String method) {
+        var config = serviceConfig.svcConfig(svcName);
+        val methodConfig = config.getMethods().get(method);
+        if (methodConfig != null && !methodConfig.getTimeout().isZero()) {
+            return methodConfig.getTimeout();
+        }
+
+        var timeout = config.getTimeout();
+        if (!timeout.isZero()) {
+            return timeout;
+        }
+        config = serviceConfig.svcConfig("default");
+        timeout = config.getTimeout();
+        if (!timeout.isZero()) {
+            return timeout;
         }
         // default
-        return Duration.ofSeconds(0);
+        return Duration.ZERO;
     }
 
     public String svcLbName(String cfgName) {
@@ -65,9 +101,20 @@ public class GatewayServiceConfigure {
     }
 
     public List<String> getPlugins(String svcName, String methodName, boolean isRef) {
-        val config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
+        // global
+        var config = isRef ? serviceConfig.refConfig("default") : serviceConfig.svcConfig("default");
         val plugins = config.getPlugins();
-        // 方法级
+        // service
+        config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
+        for (String plugin : config.getPlugins()) {
+            if (StringUtils.startsWith(plugin, "-")) {
+                plugins.remove(plugin.substring(1));
+            }
+            else {
+                plugins.add(plugin);
+            }
+        }
+        // method
         val methodConfig = config.getMethods().get(methodName);
         if (methodConfig != null) {
             for (String plugin : methodConfig.getPlugins()) {

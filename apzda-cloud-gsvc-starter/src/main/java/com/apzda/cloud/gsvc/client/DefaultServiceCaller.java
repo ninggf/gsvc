@@ -69,9 +69,7 @@ public class DefaultServiceCaller implements IServiceCaller {
     protected <R> R doBlockCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
         val cfgName = serviceMethod.getCfgName();
         val methodName = serviceMethod.getDmName();
-        val readTimeout = svcConfigure.getReadTimeout(cfgName, true);
         // bookmark: block rpc
-        reqBody = reqBody.timeout(readTimeout);
         val res = handleRpcFallback(reqBody, serviceMethod, String.class).block();
 
         if (log.isDebugEnabled()) {
@@ -84,18 +82,16 @@ public class DefaultServiceCaller implements IServiceCaller {
     protected <R> Mono<R> doAsyncCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
         val cfgName = serviceMethod.getCfgName();
         val methodName = serviceMethod.getDmName();
-        val requestId = GsvcContextHolder.getRequestId();
-        val readTimeout = svcConfigure.getReadTimeout(cfgName, true);
         // bookmark: async rpc
         var reqMono = reqBody.<R>handle((res, sink) -> {
             if (log.isDebugEnabled()) {
-                val requestId1 = GsvcContextHolder.getRequestId();
-                log.debug("+[{}] Response from {}: {}", requestId1, uri, res);
+                val requestId = GsvcContextHolder.getRequestId();
+                log.debug("[{}] Response from {}: {}", requestId, uri, res);
             }
             // 这里使用到了GsvcContextHolder, 不知道使用contextCapture()是否有用!
             sink.next(ResponseUtils.parseResponse(res, rClass));
             sink.complete();
-        }).timeout(readTimeout);
+        });
 
         return handleRpcFallback(reqMono, serviceMethod, rClass);
     }
@@ -108,12 +104,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         var size = plugins.size();
 
         reqBody = reqBody.doOnError(err -> {
-            if (log.isDebugEnabled()) {
-                log.error("[{}] RPC({}) failed: ", requestId, uri, err);
-            }
-            else {
-                log.error("[{}] RPC({}) failed: {}", requestId, uri, err.getMessage());
-            }
+            log.error("[{}] RPC({}) failed: {}", requestId, uri, err.getMessage());
         });
 
         while (--size >= 0) {

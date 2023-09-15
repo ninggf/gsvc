@@ -16,6 +16,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -23,6 +24,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Global Exception handler.
@@ -38,22 +40,28 @@ public class GsvcExceptionHandler {
 
     private final ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters;
 
-    public ServerResponse handle(Throwable e, ServerRequest request) {
+    public ServerResponse handle(Throwable error, ServerRequest request) {
         // bookmark: RouterFunction Exception Handler
-        if (e instanceof HttpStatusCodeException codeException) {
+        if (error instanceof HttpStatusCodeException codeException) {
             return checkLoginRedirect(request, codeException, ServerResponse.class);
         }
-        else if (e instanceof GsvcException) {
-            return ServerResponse.status(HttpStatus.SERVICE_UNAVAILABLE).body(handle(e));
+        else if (error instanceof TimeoutException || error instanceof io.netty.handler.timeout.TimeoutException) {
+            return ServerResponse.status(HttpStatus.GATEWAY_TIMEOUT).body(handle(error));
         }
-        else if (e instanceof WebClientResponseException responseException) {
-            return ServerResponse.status(responseException.getStatusCode()).body(handle(e));
+        else if (error instanceof GsvcException) {
+            return ServerResponse.status(HttpStatus.SERVICE_UNAVAILABLE).body(handle(error));
         }
-        else if (e instanceof ResponseStatusException responseException) {
-            return ServerResponse.status(responseException.getStatusCode()).body(handle(e));
+        else if (error instanceof WebClientRequestException) {
+            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
+        }
+        else if (error instanceof WebClientResponseException responseException) {
+            return ServerResponse.status(responseException.getStatusCode()).body(handle(error));
+        }
+        else if (error instanceof ResponseStatusException responseException) {
+            return ServerResponse.status(responseException.getStatusCode()).body(handle(error));
         }
 
-        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(e));
+        return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
     }
 
     @ExceptionHandler(Exception.class)
@@ -66,6 +74,9 @@ public class GsvcExceptionHandler {
         }
         else if (error instanceof GsvcException) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(handle(error));
+        }
+        else if (error instanceof WebClientRequestException) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
         }
         else if (error instanceof WebClientResponseException responseException) {
             // RPC Call
@@ -90,6 +101,9 @@ public class GsvcExceptionHandler {
         else if (e instanceof HttpRequestMethodNotSupportedException) {
             return Response.error(ServiceError.METHOD_NOT_ALLOWED);
         }
+        else if (e instanceof WebClientRequestException) {
+            return Response.error(ServiceError.REMOTE_SERVICE_NO_INSTANCE);
+        }
         else if (e instanceof WebClientResponseException) {
             if (e instanceof WebClientResponseException.TooManyRequests) {
                 return Response.error(ServiceError.TOO_MANY_REQUESTS);
@@ -104,6 +118,9 @@ public class GsvcExceptionHandler {
             else if (statusCode == HttpStatus.FORBIDDEN) {
                 return Response.error(ServiceError.FORBIDDEN);
             }
+        }
+        else if (e instanceof TimeoutException || e instanceof io.netty.handler.timeout.TimeoutException) {
+            return Response.error(ServiceError.SERVICE_TIMEOUT);
         }
         else if (e instanceof DegradedException) {
             return Response.error(ServiceError.DEGRADE);

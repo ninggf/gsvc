@@ -1,5 +1,6 @@
 package com.apzda.cloud.demo.foo.plugin;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
@@ -20,13 +21,13 @@ public class FooDemoPlugin implements IGlobalPlugin, IPreCall, IPreInvoke {
     @Override
     public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data,
             ServiceMethod method) {
-        log.info("FooDemoPlugin#preCall is working");
+        log.info("[{}] FooDemoPlugin#preCall is working", GsvcContextHolder.getRequestId());
         return request;
     }
 
     @Override
     public Object preInvoke(ServerRequest request, Object data, ServiceMethod method) {
-        log.info("FooDemoPlugin#preInvoke is working");
+        log.info("[{}] FooDemoPlugin#preInvoke is working", GsvcContextHolder.getRequestId());
         return data;
     }
 

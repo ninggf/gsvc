@@ -53,6 +53,12 @@ public class ServiceConfig {
     private Duration readTimeout = Duration.ZERO;
 
     /**
+     * 服务在远程时，响应超时时间，单位Millis
+     */
+    @DurationUnit(ChronoUnit.MILLIS)
+    private Duration writeTimeout = Duration.ZERO;
+
+    /**
      * 服务在远程时，连接超时时间，单位Millis
      */
     @DurationUnit(ChronoUnit.MILLIS)

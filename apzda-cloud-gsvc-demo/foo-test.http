@@ -59,7 +59,7 @@ client.test("Request executed successfully", function() {
 %}
 
 ### FooService Hi - POST - URLENCODE
-POST http://{{fooService}}/~fooService/hi
+POST http://{{fooService}}/~fooService/hi?a=1
 Content-Type: application/x-www-form-urlencoded
 X-Gsvc-Caller: gtw
 

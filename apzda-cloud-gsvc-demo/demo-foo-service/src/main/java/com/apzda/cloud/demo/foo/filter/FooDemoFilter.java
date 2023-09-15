@@ -1,5 +1,6 @@
 package com.apzda.cloud.demo.foo.filter;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -16,7 +17,7 @@ public class FooDemoFilter implements IGtwGlobalFilter<ServerResponse, ServerRes
 
     @Override
     public ServerResponse filter(ServerRequest request, HandlerFunction<ServerResponse> next) throws Exception {
-        log.info("FooDemoFilter is working");
+        log.info("[{}] FooDemoFilter is working", GsvcContextHolder.getRequestId());
         return next.handle(request);
     }
 

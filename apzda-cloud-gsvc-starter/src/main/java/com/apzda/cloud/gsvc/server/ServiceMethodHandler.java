@@ -131,7 +131,18 @@ public class ServiceMethodHandler {
                 mono = (Mono<Object>) preInvoke.postInvoke(request, requestObj, mono, serviceMethod);
             }
         }
-        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(mono);
+        val timeout = svcConfigure.getTimeout(serviceMethod.getCfgName(), serviceMethod.getDmName());
+        if (!timeout.isZero()) {
+            mono = mono.timeout(timeout);
+        }
+        // reactive is so hard!!!
+        return ServerResponse
+            .async(mono.map(rtn -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(rtn))
+                .onErrorResume((e) -> {
+                    log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
+                            serviceMethod.getDmName(), e);
+                    return Mono.just(exceptionHandler.handle(e, this.request));
+                }));
     }
 
     private ServerResponse doUnaryCall(Object requestObj)

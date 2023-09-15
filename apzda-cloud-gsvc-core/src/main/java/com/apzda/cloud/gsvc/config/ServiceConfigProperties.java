@@ -28,11 +28,11 @@ public class ServiceConfigProperties {
     private final Map<String, GatewayRouteConfig> gateway = new LinkedHashMap<>();
 
     public ServiceConfig svcConfig(String name) {
-        return service.getOrDefault(name, service.getOrDefault("default", SERVICE_DEFAULT));
+        return service.getOrDefault(name, SERVICE_DEFAULT);
     }
 
     public ServiceConfig refConfig(String name) {
-        return reference.getOrDefault(name, reference.getOrDefault("default", REFERENCE_DEFAULT));
+        return reference.getOrDefault(name, REFERENCE_DEFAULT);
     }
 
 }
