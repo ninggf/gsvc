@@ -27,6 +27,8 @@ public class ServiceMethod {
 
     private final String dmName;
 
+    private final String clientBeanName;
+
     private final Class<?> interfaceName;
 
     private final Object[] meta;
@@ -41,8 +43,6 @@ public class ServiceMethod {
 
     private Object bean;
 
-    private Class<?> currentUserClz;
-
     private String svcLbName;
 
     private String rpcAddr;
@@ -51,6 +51,7 @@ public class ServiceMethod {
         this.interfaceName = method.getDeclaringClass();
         this.method = method;
         this.cfgName = cfgName;
+        this.clientBeanName = cfgName + "WebClient";
         this.serviceName = serviceName;
         this.meta = meta;
         this.bean = bean;
@@ -58,12 +59,6 @@ public class ServiceMethod {
         this.returnType = (Class<?>) meta[2];
         this.requestType = (Class<?>) meta[1];
         this.type = (MethodDescriptor.MethodType) meta[0];
-        try {
-            currentUserClz = this.requestType.getMethod("getCurrentUser").getReturnType();
-        }
-        catch (NoSuchMethodException e) {
-            currentUserClz = null;
-        }
     }
 
     void setBean(Object bean) {

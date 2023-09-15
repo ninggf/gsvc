@@ -19,6 +19,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.*;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.RouterFunction;
 
 import java.util.*;
@@ -59,11 +60,11 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             })
             .toList();
 
-        for (String appName : services) {
-            val interfaceName = environment.getProperty("apzda.cloud.service." + appName + ".interface-name");
+        for (String cfgName : services) {
+            val interfaceName = environment.getProperty("apzda.cloud.service." + cfgName + ".interface-name");
 
             if (StringUtils.isNotBlank(interfaceName)) {
-                log.debug("Found Gsvc Service: {} - {}", appName, interfaceName);
+                log.debug("Found Gsvc Service: {} - {}", cfgName, interfaceName);
                 try {
                     val aClass = Class.forName(interfaceName);
                     if (bf.getBeanNamesForType(aClass).length == 0) {
@@ -77,7 +78,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     // 注册服务路由
                     registerRouterFunction(bf, aClass);
                     // 注册网关路由
-                    val prefix = "apzda.cloud.gateway." + appName + ".routes";
+                    val prefix = "apzda.cloud.gateway." + cfgName + ".routes";
                     val routes = createRoutes(prefix, aClass, environment);
                     for (GroupRoute route : routes) {
                         registerRouterFunction(bf, route);
@@ -105,7 +106,28 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     throw new BeanCreationException(e.getMessage(), e);
                 }
             }
+            else {
+                // 注册WebClient
+                registerWebclient(cfgName, bf);
+            }
         }
+    }
+
+    private void registerWebclient(String cfgName, DefaultListableBeanFactory bf) {
+        BeanDefinitionBuilder definition = BeanDefinitionBuilder.genericBeanDefinition(WebclientFactoryBean.class);
+
+        definition.addConstructorArgValue(cfgName);
+        definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+
+        String[] qualifiers = new String[] { cfgName + "Webclient" };
+        val beanDefinition = definition.getBeanDefinition();
+        beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, WebClient.class.getName());
+
+        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, cfgName + "WebClient", qualifiers);
+
+        BeanDefinitionReaderUtils.registerBeanDefinition(holder, bf);
+
+        log.trace("Register WebClient: '{}WebClient'", cfgName);
     }
 
     private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> clazz) {

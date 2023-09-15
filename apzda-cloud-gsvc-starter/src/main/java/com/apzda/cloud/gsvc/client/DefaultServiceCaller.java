@@ -10,7 +10,6 @@ import com.apzda.cloud.gsvc.plugin.IPreCall;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
@@ -26,16 +25,18 @@ import java.util.List;
  * @author fengz
  */
 @Slf4j
-@RequiredArgsConstructor
 public class DefaultServiceCaller implements IServiceCaller {
-
-    protected final ApplicationContext applicationContext;
-
-    protected final WebClient webClient;
 
     protected final ObjectMapper objectMapper = ResponseUtils.OBJECT_MAPPER;
 
+    protected final ApplicationContext applicationContext;
+
     protected final GatewayServiceConfigure svcConfigure;
+
+    public DefaultServiceCaller(ApplicationContext applicationContext, GatewayServiceConfigure svcConfigure) {
+        this.applicationContext = applicationContext;
+        this.svcConfigure = svcConfigure;
+    }
 
     @Override
     public <T, R> R unaryCall(Class<?> clazz, String method, T request, Class<T> reqClazz, Class<R> resClazz) {
@@ -68,7 +69,7 @@ public class DefaultServiceCaller implements IServiceCaller {
     protected <R> R doBlockCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
         val cfgName = serviceMethod.getCfgName();
         val methodName = serviceMethod.getDmName();
-        val readTimeout = svcConfigure.getReadTimeout(cfgName, methodName, true);
+        val readTimeout = svcConfigure.getReadTimeout(cfgName, true);
         // bookmark: block rpc
         reqBody = reqBody.timeout(readTimeout);
         val res = handleRpcFallback(reqBody, serviceMethod, String.class).block();
@@ -84,11 +85,12 @@ public class DefaultServiceCaller implements IServiceCaller {
         val cfgName = serviceMethod.getCfgName();
         val methodName = serviceMethod.getDmName();
         val requestId = GsvcContextHolder.getRequestId();
-        val readTimeout = svcConfigure.getReadTimeout(cfgName, methodName, true);
+        val readTimeout = svcConfigure.getReadTimeout(cfgName, true);
         // bookmark: async rpc
         var reqMono = reqBody.<R>handle((res, sink) -> {
             if (log.isDebugEnabled()) {
-                log.debug("[{}] Response from {}: {}", requestId, uri, res);
+                val requestId1 = GsvcContextHolder.getRequestId();
+                log.debug("+[{}] Response from {}: {}", requestId1, uri, res);
             }
             // 这里使用到了GsvcContextHolder, 不知道使用contextCapture()是否有用!
             sink.next(ResponseUtils.parseResponse(res, rClass));
@@ -122,13 +124,15 @@ public class DefaultServiceCaller implements IServiceCaller {
         }
         // tbd: fallback or throw exception?
         // onErrorResume(e -> Mono.just(ResponseUtils.fallback(e,serviceName,rClass)));
-        return reqBody;
+        return reqBody.contextCapture();
     }
 
     @SuppressWarnings("unchecked")
     protected Mono<String> prepareRequestBody(Object requestObj, ServiceMethod method) {
         val requestId = GsvcContextHolder.getRequestId();
         var url = method.getRpcAddr();
+        val webClient = applicationContext.getBean(method.getClientBeanName(), WebClient.class);
+
         WebClient.RequestBodySpec req = webClient.post().uri(url).accept(MediaType.APPLICATION_JSON);
         List<IPlugin> plugins = method.getPlugins();
 

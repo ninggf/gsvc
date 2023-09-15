@@ -163,7 +163,7 @@ public class ServiceMethodHandler {
         val cfgName = serviceMethod.getCfgName();
         val reqClass = serviceMethod.reqClass();
         val dmName = serviceMethod.getDmName();
-        val readTimeout = svcConfigure.getReadTimeout(cfgName, dmName, false);
+        val readTimeout = svcConfigure.getReadTimeout(cfgName, false);
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
             if (type == BIDI_STREAMING) {

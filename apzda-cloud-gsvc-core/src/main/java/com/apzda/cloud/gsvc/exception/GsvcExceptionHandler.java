@@ -99,10 +99,10 @@ public class GsvcExceptionHandler {
         else if (e instanceof HttpStatusCodeException codeException) {
             val statusCode = codeException.getStatusCode();
             if (statusCode == HttpStatus.UNAUTHORIZED) {
-                return Response.error(ServiceError.REMOTE_SERVICE_UNAUTHORIZED);
+                return Response.error(ServiceError.UNAUTHORIZED);
             }
             else if (statusCode == HttpStatus.FORBIDDEN) {
-                return Response.error(ServiceError.REMOTE_SERVICE_FORBIDDEN);
+                return Response.error(ServiceError.FORBIDDEN);
             }
         }
         else if (e instanceof DegradedException) {
@@ -117,7 +117,7 @@ public class GsvcExceptionHandler {
         // bookmark: Gateway Redirect to Login Page
 
         if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-            val loginUrl = ResponseUtils.getLoginUrl(request.headers().accept(), properties);
+            val loginUrl = ResponseUtils.getLoginUrl(request.headers().accept());
             if (loginUrl != null) {
                 if (rClass.isAssignableFrom(ServerResponse.class)) {
                     return (R) ServerResponse.status(HttpStatus.FOUND).location(loginUrl).build();

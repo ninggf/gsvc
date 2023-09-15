@@ -4,6 +4,7 @@
 package com.apzda.cloud.gsvc.security.token;
 
 import com.apzda.cloud.gsvc.security.IUser;
+import com.apzda.cloud.gsvc.security.JwtToken;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -13,6 +14,16 @@ import java.util.Collection;
  * @author fengz windywany@gmail.com
  **/
 public abstract class AuthenticationToken extends AbstractAuthenticationToken implements IUser {
+
+    protected JwtToken jwtToken;
+
+    public JwtToken getJwtToken() {
+        return jwtToken;
+    }
+
+    public void setJwtToken(JwtToken jwtToken) {
+        this.jwtToken = jwtToken;
+    }
 
     /**
      * Creates a token with the supplied array of authorities.

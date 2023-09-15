@@ -25,14 +25,11 @@ import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguratio
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
-import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Scope;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.List;
@@ -56,17 +53,9 @@ public class ApzdaGsvcAutoConfiguration {
     }
 
     @Bean
-    @Scope("prototype")
     @ConditionalOnMissingBean
-    WebClient webClient(WebClient.Builder builder, ReactorLoadBalancerExchangeFilterFunction lbFunction) {
-        return builder.filter(lbFunction).build();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    IServiceCaller serviceCaller(ApplicationContext applicationContext, WebClient webClient,
-            GatewayServiceConfigure serviceConfigure) {
-        return new DefaultServiceCaller(applicationContext, webClient, serviceConfigure);
+    IServiceCaller serviceCaller(ApplicationContext applicationContext, GatewayServiceConfigure serviceConfigure) {
+        return new DefaultServiceCaller(applicationContext, serviceConfigure);
     }
 
     @Bean

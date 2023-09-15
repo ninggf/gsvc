@@ -54,8 +54,10 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
             .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
             .serializeLongsAsString(config.isSerializeLongsAsString())
             .build();
-        ResponseUtils.config(pbConfig);
+        ResponseUtils.config(pbConfig, config);
+        log.trace("ResponseUtils configured: {}", config);
         objectMapper.registerModule(new ProtobufModule(pbConfig));
+        log.trace("ObjectMapper register ProtobufModule with config: {}", config);
     }
 
     @Bean

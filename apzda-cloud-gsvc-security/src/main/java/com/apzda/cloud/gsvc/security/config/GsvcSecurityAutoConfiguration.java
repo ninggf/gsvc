@@ -4,11 +4,13 @@ import cn.hutool.jwt.signers.JWTSigner;
 import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.security.AuthorizeCustomizer;
+import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.filter.AuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
 import com.apzda.cloud.gsvc.security.repository.InMemoryRepository;
+import com.apzda.cloud.gsvc.security.token.DefaultTokenManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -17,11 +19,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -43,12 +47,15 @@ import org.springframework.util.Assert;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+
 /**
  * @author fengz windywany@gmail.com
  */
 @Slf4j
 @AutoConfiguration(before = SecurityAutoConfiguration.class)
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
+@Import(RedisTokenManagerConfiguration.class)
 public class GsvcSecurityAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
@@ -69,7 +76,7 @@ public class GsvcSecurityAutoConfiguration {
         private String errorPath;
 
         @Bean
-        @Order(1)
+        @Order(-100)
         SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager,
                 SecurityContextRepository securityContextRepository, AuthenticationHandler authenticationHandler)
                 throws Exception {
@@ -139,7 +146,7 @@ public class GsvcSecurityAutoConfiguration {
                         customizer.customize(authorize);
                     }
                 }
-                authorize.requestMatchers(error).permitAll();
+                authorize.requestMatchers(antMatcher(error)).permitAll();
                 authorize.anyRequest().permitAll();
             });
             log.info("SecurityFilterChain Initialized");
@@ -173,17 +180,16 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        AuthenticationHandler authenticationHandler(JWTSigner jwtSigner,
-                ServiceConfigProperties serviceConfigProperties) {
-            // 认证处理器
-            return new DefaultAuthenticationHandler(serviceConfigProperties.getConfig(), properties, jwtSigner);
+        AuthenticationHandler authenticationHandler(ServiceConfigProperties serviceConfigProperties,
+                TokenManager tokenManager) {
+            return new DefaultAuthenticationHandler(properties, tokenManager);
         }
 
         @Bean
         @ConditionalOnMissingBean
-        SecurityContextRepository securityContextRepository() {
+        SecurityContextRepository securityContextRepository(TokenManager tokenManager) {
             // bookmark: 自义存储 Context 仓储
-            return new InMemoryRepository();
+            return new InMemoryRepository(tokenManager);
         }
 
         @Bean
@@ -197,6 +203,14 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         InjectCurrentUserPlugin injectCurrentUserPlugin() {
             return new InjectCurrentUserPlugin();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        @ConditionalOnProperty(name = "apzda.cloud.security.token-manager", havingValue = "", matchIfMissing = true)
+        TokenManager defaultTokenManager(JWTSigner jwtSigner) {
+
+            return new DefaultTokenManager(properties, jwtSigner);
         }
 
     }

@@ -1,20 +1,17 @@
 package com.apzda.cloud.gsvc.security.repository;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.security.TokenManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.web.context.HttpRequestResponseHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
-
-import java.util.Collections;
 
 /**
  * @author fengz
@@ -26,6 +23,12 @@ public class InMemoryRepository implements SecurityContextRepository {
 
     private final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder
         .getContextHolderStrategy();
+
+    private final TokenManager tokenManager;
+
+    public InMemoryRepository(TokenManager tokenManager) {
+        this.tokenManager = tokenManager;
+    }
 
     @Override
     @SuppressWarnings("deprecation")
@@ -39,6 +42,7 @@ public class InMemoryRepository implements SecurityContextRepository {
     public void saveContext(SecurityContext context, HttpServletRequest request, HttpServletResponse response) {
         // 登录成功之后被调用或手动调用
         log.warn("[{}] InMemoryRepository saveContext: {}", GsvcContextHolder.getRequestId(), context);
+        tokenManager.saveToken(context.getAuthentication(), request);
     }
 
     @Override
@@ -64,12 +68,16 @@ public class InMemoryRepository implements SecurityContextRepository {
         }
         log.warn("[{}] Load context from JWT", GsvcContextHolder.getRequestId());
         val context = securityContextHolderStrategy.createEmptyContext();
-        val authority = new SimpleGrantedAuthority("ROLE_ANONYMOUS");
-        // 什么类型的Token？
-        val token = new UsernamePasswordAuthenticationToken("abc", "aaaa", Collections.singletonList(authority));
-        context.setAuthentication(token);
-        request.setAttribute(CONTEXT_ATTR_NAME, context);
-        return context;
+
+        val token = tokenManager.restore(request);
+
+        if (token != null) {
+            context.setAuthentication(token);
+            request.setAttribute(CONTEXT_ATTR_NAME, context);
+            return context;
+        }
+
+        return null;
     }
 
 }

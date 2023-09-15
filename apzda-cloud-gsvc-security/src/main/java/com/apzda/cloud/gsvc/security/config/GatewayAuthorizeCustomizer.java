@@ -12,6 +12,8 @@ import org.springframework.security.web.access.expression.WebExpressionAuthoriza
 
 import java.util.Map;
 
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+
 /**
  * @author fengz
  */
@@ -23,16 +25,17 @@ class GatewayAuthorizeCustomizer implements AuthorizeCustomizer {
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
 
         if (!GatewayServiceRegistry.AUTHED_ROUTES.isEmpty()) {
-            log.debug("Found Authed Pages: {}", GatewayServiceRegistry.AUTHED_ROUTES);
+            log.trace("ACL: {}", GatewayServiceRegistry.AUTHED_ROUTES);
             for (Map.Entry<String, RouteMeta> kv : GatewayServiceRegistry.AUTHED_ROUTES.entrySet()) {
                 val path = kv.getKey();
                 val meta = kv.getValue();
                 val access = meta.getAccess();
+                val matcher = antMatcher(path);
                 if (StringUtils.isNotBlank(access)) {
-                    authorize.requestMatchers(path).access(new WebExpressionAuthorizationManager(access));
+                    authorize.requestMatchers(matcher).access(new WebExpressionAuthorizationManager(access));
                 }
                 else {
-                    authorize.requestMatchers(path).authenticated();
+                    authorize.requestMatchers(matcher).authenticated();
                 }
             }
         }

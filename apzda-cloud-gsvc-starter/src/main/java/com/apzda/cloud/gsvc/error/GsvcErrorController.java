@@ -52,7 +52,7 @@ public class GsvcErrorController extends BasicErrorController {
             while (error.getCause() != null) {
                 error = error.getCause();
             }
-            val loginUrl = ResponseUtils.getLoginUrl(ResponseUtils.mediaTypes(request), properties);
+            val loginUrl = ResponseUtils.getLoginUrl(ResponseUtils.mediaTypes(request));
 
             if (loginUrl != null) {
                 val redirectView = new ModelAndView(new RedirectView(loginUrl.toString()));

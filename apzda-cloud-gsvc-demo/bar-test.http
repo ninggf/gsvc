@@ -191,3 +191,21 @@ Content-Type: application/json
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
     });
 %}
+
+### Route - SaService - /sa/hi
+POST http://{{barService}}/sa/hi
+Content-Type: application/json
+Accept: text/html
+
+{
+    "name": "gsvc"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+    });
+%}

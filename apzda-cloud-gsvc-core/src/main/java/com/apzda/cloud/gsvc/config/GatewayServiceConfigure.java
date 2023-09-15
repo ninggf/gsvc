@@ -25,61 +25,36 @@ public class GatewayServiceConfigure {
 
     private final ObjectProvider<List<IGlobalPlugin>> globalPlugins;
 
-    public Duration getReadTimeout(String svcName, String methodName, boolean isRef) {
+    public Duration getReadTimeout(String svcName, boolean isRef) {
         val config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
-        // 方法级
-        val methodConfig = config.getMethods().get(methodName);
-        if (methodConfig != null) {
-            val mrTimeout = methodConfig.getReadTimeout();
-            if (!mrTimeout.isZero()) {
-                return mrTimeout;
-            }
-        }
         // service global
         val readTimeout = config.getReadTimeout();
         if (!readTimeout.isZero()) {
             return readTimeout;
         }
         // default
-        return Duration.ofSeconds(3600);
+        return Duration.ofSeconds(60);
     }
 
-    public Duration getConnectTimeout(String svcName, String methodName) {
+    public Duration getConnectTimeout(String svcName) {
         val config = serviceConfig.refConfig(svcName);
-        // method
-        val methodConfig = config.getMethods().get(methodName);
-        if (methodConfig != null) {
-            val mrTimeout = methodConfig.getConnectTimeout();
-            if (!mrTimeout.isZero()) {
-                return mrTimeout;
-            }
-        }
         // service global
         val readTimeout = config.getConnectTimeout();
         if (!readTimeout.isZero()) {
             return readTimeout;
         }
         // default
-        return Duration.ofSeconds(5);
+        return Duration.ofSeconds(3);
     }
 
-    public Duration getTimeout(String svcName, String methodName) {
+    public Duration getTimeout(String svcName) {
         val config = serviceConfig.svcConfig(svcName);
-        // method
-        val methodConfig = config.getMethods().get(methodName);
-        if (methodConfig != null) {
-            val mrTimeout = methodConfig.getTimeout();
-            if (!mrTimeout.isZero()) {
-                return mrTimeout;
-            }
-        }
-        // service global
         val readTimeout = config.getTimeout();
         if (!readTimeout.isZero()) {
             return readTimeout;
         }
         // default
-        return Duration.ofSeconds(3610);
+        return Duration.ofSeconds(0);
     }
 
     public String svcLbName(String cfgName) {

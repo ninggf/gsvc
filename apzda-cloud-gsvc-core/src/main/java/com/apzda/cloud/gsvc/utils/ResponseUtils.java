@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.utils;
 
-import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
+import com.apzda.cloud.gsvc.config.GlobalConfig;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
@@ -37,6 +37,8 @@ public class ResponseUtils {
 
     public static final ObjectMapper OBJECT_MAPPER;
 
+    private static GlobalConfig gsvcConfig;
+
     static {
         OBJECT_MAPPER = new ObjectMapper();
         OBJECT_MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -45,8 +47,9 @@ public class ResponseUtils {
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    public static void config(ProtobufJacksonConfig config) {
+    public static void config(ProtobufJacksonConfig config, GlobalConfig globalConfig) {
         OBJECT_MAPPER.registerModule(new ProtobufModule(config));
+        gsvcConfig = globalConfig;
     }
 
     public static void config() {
@@ -74,13 +77,13 @@ public class ResponseUtils {
 
     public static <R> R fallback(Throwable e, String serviceName, Class<R> rClass) {
         if (e instanceof WebClientResponseException.Unauthorized) {
-            return fallback(ServiceError.REMOTE_SERVICE_UNAUTHORIZED, serviceName, rClass);
+            return fallback(ServiceError.UNAUTHORIZED, serviceName, rClass);
         }
         else if (e instanceof WebClientResponseException.Forbidden) {
-            return fallback(ServiceError.REMOTE_SERVICE_FORBIDDEN, serviceName, rClass);
+            return fallback(ServiceError.FORBIDDEN, serviceName, rClass);
         }
         else if (e instanceof WebClientResponseException.NotFound) {
-            return fallback(ServiceError.REMOTE_SERVICE_NOT_FOUND, serviceName, rClass);
+            return fallback(ServiceError.NOT_FOUND, serviceName, rClass);
         }
         else if (e instanceof WebClientResponseException.TooManyRequests) {
             return fallback(ServiceError.TOO_MANY_REQUESTS, serviceName, rClass);
@@ -105,19 +108,31 @@ public class ResponseUtils {
     public static void respond(HttpServletRequest request, HttpServletResponse response, Response<?> data)
             throws IOException {
         val errCode = data.getErrCode();
-        if (errCode != 0) {
-            response.setStatus(500);
-        }
         val serverHttpRequest = new ServletServerHttpRequest(request);
         val mediaTypes = serverHttpRequest.getHeaders().getAccept();
-        val jsonStr = OBJECT_MAPPER.writeValueAsString(data);
 
-        if (isCompatibleWith(MediaType.APPLICATION_JSON, mediaTypes)) {
+        if (isCompatibleWith(TEXT_MASK, mediaTypes)) {
+            response.setContentType(MediaType.TEXT_PLAIN_VALUE);
+            if (errCode == -401) {
+                val loginUrl = getLoginUrl(mediaTypes);
+                if (loginUrl != null) {
+                    response.sendRedirect(loginUrl.toString());
+                    return;
+                }
+            }
+        }
+        else if (isCompatibleWith(MediaType.APPLICATION_JSON, mediaTypes)) {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         }
-        else if (isCompatibleWith(TEXT_MASK, mediaTypes)) {
-            response.setContentType(MediaType.TEXT_PLAIN_VALUE);
+
+        if (ServiceError.isHttpError(errCode)) {
+            response.setStatus(Math.abs(errCode));
         }
+        else if (errCode != 0) {
+            response.setStatus(500);
+        }
+
+        val jsonStr = OBJECT_MAPPER.writeValueAsString(data);
         response.setContentLength(jsonStr.length());
 
         try (val writer = response.getWriter()) {
@@ -141,13 +156,14 @@ public class ResponseUtils {
         return serverHttpRequest.getHeaders().getAccept();
     }
 
-    public static URI getLoginUrl(List<MediaType> contentTypes, ServiceConfigProperties properties) {
-        val loginUrl = properties.getConfig().getLoginPage();
+    public static URI getLoginUrl(List<MediaType> contentTypes) {
+        if (gsvcConfig != null) {
+            val loginUrl = gsvcConfig.getLoginPage();
 
-        if (loginUrl != null && ResponseUtils.isCompatibleWith(TEXT_MASK, contentTypes)) {
-            return loginUrl;
+            if (loginUrl != null && ResponseUtils.isCompatibleWith(TEXT_MASK, contentTypes)) {
+                return loginUrl;
+            }
         }
-
         return null;
     }
 
