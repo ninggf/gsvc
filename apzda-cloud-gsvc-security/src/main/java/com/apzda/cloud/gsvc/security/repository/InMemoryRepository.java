@@ -2,25 +2,24 @@ package com.apzda.cloud.gsvc.security.repository;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.TokenManager;
+import com.apzda.cloud.gsvc.security.token.AuthenticationToken;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.web.context.HttpRequestResponseHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
 
-import java.util.Collections;
-
 /**
  * @author fengz
  */
 @Slf4j
 public class InMemoryRepository implements SecurityContextRepository {
+
+    private static final AuthenticationToken ANONYMOUS = new AuthenticationToken.AnonymousToken();
 
     private static final String CONTEXT_ATTR_NAME = "GSVC.SECURITY.CONTEXT";
 
@@ -57,29 +56,24 @@ public class InMemoryRepository implements SecurityContextRepository {
     }
 
     private SecurityContext getContext(HttpServletRequest request) {
-        val authToken = request.getHeader("AUTHORIZATION");
-        log.debug("[{}] InMemoryRepository getContext: Token = {}", GsvcContextHolder.getRequestId(), authToken);
-        UsernamePasswordAuthenticationToken.authenticated("leo", "hahah", Collections.emptyList());
-        if (StringUtils.isBlank(authToken)) {
-            return null;
-        }
-
         val storedContext = request.getAttribute(CONTEXT_ATTR_NAME);
 
         if (storedContext != null) {
             return (SecurityContext) storedContext;
         }
-        log.warn("[{}] Load context from JWT", GsvcContextHolder.getRequestId());
+
         val context = securityContextHolderStrategy.createEmptyContext();
-
-        val token = tokenManager.restore(request);
-
-        if (token != null) {
-            context.setAuthentication(token);
-            request.setAttribute(CONTEXT_ATTR_NAME, context);
-            return context;
+        try {
+            val token = tokenManager.restore(request);
+            if (token != null) {
+                context.setAuthentication(token);
+                request.setAttribute(CONTEXT_ATTR_NAME, context);
+                return context;
+            }
         }
-
+        catch (Exception e) {
+            log.error("[{}] Cannot load context", GsvcContextHolder.getRequestId(), e);
+        }
         return null;
     }
 

@@ -88,7 +88,6 @@ public class DefaultServiceCaller implements IServiceCaller {
                 val requestId = GsvcContextHolder.getRequestId();
                 log.debug("[{}] Response from {}: {}", requestId, uri, res);
             }
-            // 这里使用到了GsvcContextHolder, 不知道使用contextCapture()是否有用!
             sink.next(ResponseUtils.parseResponse(res, rClass));
             sink.complete();
         });
@@ -113,8 +112,6 @@ public class DefaultServiceCaller implements IServiceCaller {
                 reqBody = postPlugin.postCall(reqBody, method, rClass);
             }
         }
-        // tbd: fallback or throw exception?
-        // onErrorResume(e -> Mono.just(ResponseUtils.fallback(e,serviceName,rClass)));
         return reqBody.contextCapture();
     }
 

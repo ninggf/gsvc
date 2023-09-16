@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -37,14 +36,20 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.builder = applicationContext.getBean(WebClient.Builder.class);
         this.svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
-
+        val svcLbName = svcConfigure.svcLbName(cfgName);
+        val baseUrl = ServiceMethod.baseUrl(svcLbName);
         try {
-            val lbFunction = applicationContext.getBean(ReactorLoadBalancerExchangeFilterFunction.class);
-            this.builder.filter(lbFunction);
+            Class.forName(
+                    "org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction");
+
+            this.builder.filter(applicationContext.getBean(
+                    org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction.class));
+            log.debug("LoadBalancer is enabled for {}. BASE URI: {}", cfgName, baseUrl);
         }
         catch (Exception e) {
-            log.trace("lb is not work for {}.", cfgName, e);
+            log.debug("LoadBalancer is disabled for {}. BASE URI: {}", cfgName, baseUrl);
         }
+        this.builder.baseUrl(baseUrl);
     }
 
     @Override
@@ -65,8 +70,8 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
 
         val connector = new ReactorClientHttpConnector(httpClient);
 
-        log.trace("Setup WebClient for {}: ConnectTimeout={}, ReadTimeout={}, WriteTimeout={}", cfgName, connectTimeout,
-                readTimeout, writeTimeout);
+        log.trace("[{}] Setup WebClient for {}: ConnectTimeout={}, ReadTimeout={}, WriteTimeout={}",
+                GsvcContextHolder.getRequestId(), cfgName, connectTimeout, readTimeout, writeTimeout);
         // bookmark 设置连接和读取超时时间
         return this.builder.clientConnector(connector).build();
     }

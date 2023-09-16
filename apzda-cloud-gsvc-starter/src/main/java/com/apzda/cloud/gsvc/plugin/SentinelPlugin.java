@@ -17,7 +17,7 @@ public class SentinelPlugin implements IGlobalPlugin, IPostCall {
 
     @Override
     public <R> Mono<R> postCall(Mono<R> response, ServiceMethod method, Class<R> rClass) {
-        val resource = String.format("/~%s/%s/%s", method.getSvcLbName(), method.getServiceName(), method.getDmName());
+        val resource = String.format("/~%s/%s/%s", method.getCfgName(), method.getServiceName(), method.getDmName());
 
         // log.trace("Register Sentinel Resource: {}", resource);
 

@@ -13,7 +13,6 @@ import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
 import com.apzda.cloud.gsvc.security.config.GsvcSecurityAutoConfiguration;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -23,8 +22,6 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +31,6 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author fengz
@@ -86,7 +82,6 @@ public class ApzdaGsvcAutoConfiguration {
                 val service = svc.getValue();
                 val cfgName = service.getCfgName();
                 val interfaceName = service.getClazz();
-                val svcLbName = gatewayServiceConfigure.svcLbName(cfgName);
                 val bean = applicationContext.getBean(interfaceName);
                 GatewayServiceRegistry.setBean(interfaceName, bean, service.isLocal());
 
@@ -94,7 +89,6 @@ public class ApzdaGsvcAutoConfiguration {
                 val methods = GatewayServiceRegistry.getDeclaredServiceMethods(interfaceName);
                 for (Map.Entry<String, ServiceMethod> mv : methods.entrySet()) {
                     val method = mv.getValue();
-                    method.setSvcLbName(svcLbName);
                     for (IGlobalPlugin plugin : globalPlugins) {
                         method.registerPlugin(plugin);
                     }
@@ -115,28 +109,6 @@ public class ApzdaGsvcAutoConfiguration {
         @Override
         public boolean isRunning() {
             return running;
-        }
-
-    }
-
-    @Configuration(proxyBeanMethods = false)
-    @Slf4j
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    static class CacheConfig {
-
-        @Bean
-        @ConditionalOnMissingBean
-        public Caffeine caffeineConfig() {
-            log.debug("Creating Caffeine cache backend");
-            return Caffeine.newBuilder().expireAfterWrite(60, TimeUnit.MINUTES);
-        }
-
-        @Bean
-        @ConditionalOnMissingBean
-        public CacheManager cacheManager(Caffeine caffeine) {
-            CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
-            caffeineCacheManager.setCaffeine(caffeine);
-            return caffeineCacheManager;
         }
 
     }

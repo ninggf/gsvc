@@ -12,12 +12,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author fengz
  */
 @Getter
 public class ServiceMethod {
+
+    private static final Pattern SVC_NAME_PATTERN = Pattern.compile("^(https?|lb://).+", Pattern.CASE_INSENSITIVE);
 
     private final Method method;
 
@@ -33,6 +36,8 @@ public class ServiceMethod {
 
     private final Object[] meta;
 
+    private final String rpcAddr;
+
     private final Class<?> returnType;
 
     private final Class<?> requestType;
@@ -43,10 +48,6 @@ public class ServiceMethod {
 
     private Object bean;
 
-    private String svcLbName;
-
-    private String rpcAddr;
-
     public ServiceMethod(Method method, String cfgName, String serviceName, Object[] meta, Object bean) {
         this.interfaceName = method.getDeclaringClass();
         this.method = method;
@@ -56,6 +57,7 @@ public class ServiceMethod {
         this.meta = meta;
         this.bean = bean;
         this.dmName = method.getName();
+        this.rpcAddr = String.format("/~%s/%s", serviceName, dmName);
         this.returnType = (Class<?>) meta[2];
         this.requestType = (Class<?>) meta[1];
         this.type = (MethodDescriptor.MethodType) meta[0];
@@ -77,16 +79,18 @@ public class ServiceMethod {
         return requestType;
     }
 
-    public void setSvcLbName(String svcLbName) {
-        this.svcLbName = svcLbName;
-        this.rpcAddr = String.format("http://%s/~%s/%s", svcLbName, serviceName, dmName);
+    public static String baseUrl(String svcLbName) {
+        if (SVC_NAME_PATTERN.matcher(svcLbName).matches()) {
+            return svcLbName;
+        }
+        else {
+            return String.format("lb://%s", svcLbName);
+        }
     }
 
     @Override
     public String toString() {
-        return new ToStringCreator(this).append("cfgName", cfgName)
-            .append("svcLbName", svcLbName)
-            .append("serviceName", serviceName)
+        return new ToStringCreator(this).append("serviceName", serviceName)
             .append("method", dmName)
             .append("bean", bean)
             .toString();

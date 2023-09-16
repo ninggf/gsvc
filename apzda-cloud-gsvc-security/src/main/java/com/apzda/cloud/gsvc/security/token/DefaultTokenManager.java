@@ -12,6 +12,7 @@ import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 
@@ -21,6 +22,7 @@ import java.util.UUID;
  * @author fengz
  */
 @RequiredArgsConstructor
+@Slf4j
 public class DefaultTokenManager implements TokenManager {
 
     protected final SecurityConfigProperties properties;
@@ -30,24 +32,35 @@ public class DefaultTokenManager implements TokenManager {
     @Override
     public AuthenticationToken restore(HttpServletRequest request) {
         val argName = properties.getArgName();
-        val tokenName = properties.getTokenName();
+        val headerName = properties.getTokenName();
         val cookieConfig = properties.getCookie();
+        val cookieName = cookieConfig.getCookieName();
         val bearer = properties.getBearer();
+        val requestId = GsvcContextHolder.getRequestId();
 
         String accessToken = null;
         if (StringUtils.isNotBlank(argName)) {
             accessToken = StringUtils.defaultIfBlank(request.getParameter(argName), null);
-        }
-
-        val token = request.getHeader(tokenName);
-        if (accessToken != null && StringUtils.isNotBlank(token)) {
-            if (StringUtils.isNotBlank(bearer) && token.startsWith(bearer)) {
-                accessToken = token.substring(bearer.length() + 1);
+            if (log.isDebugEnabled()) {
+                log.debug("[{}] Try token from parameter({}): {}", requestId, argName, accessToken);
             }
         }
 
-        if (StringUtils.isBlank(accessToken) && StringUtils.isNotBlank(cookieConfig.getCookieName())) {
-            accessToken = GsvcContextHolder.cookies().get(cookieConfig.getCookieName()).getValue();
+        val token = request.getHeader(headerName);
+        if (accessToken != null && StringUtils.isNotBlank(token)) {
+            if (StringUtils.isNotBlank(bearer) && token.startsWith(bearer)) {
+                accessToken = token.substring(bearer.length() + 1);
+                if (log.isDebugEnabled()) {
+                    log.debug("[{}] Try token from header({}: {}): {}", requestId, headerName, bearer, accessToken);
+                }
+            }
+        }
+
+        if (StringUtils.isBlank(accessToken) && StringUtils.isNotBlank(cookieName)) {
+            accessToken = GsvcContextHolder.cookies().get(cookieName).getValue();
+            if (log.isDebugEnabled()) {
+                log.debug("[{}] Try token from cookie({}): {}", requestId, cookieName, accessToken);
+            }
         }
 
         if (StringUtils.isNotBlank(accessToken)) {
@@ -62,6 +75,9 @@ public class DefaultTokenManager implements TokenManager {
                     .expireAt(DateUtil.parse(JWT.EXPIRES_AT))
                     .build();
             }
+        }
+        else {
+            log.debug("[{}] No token found", requestId);
         }
         return null;
     }

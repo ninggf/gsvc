@@ -37,7 +37,8 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
     public Mono<JsonNode> preInvoke(ServerRequest request, Mono<JsonNode> data, ServiceMethod method) {
         val context = SecurityContextHolder.getContext();
         val authentication = context.getAuthentication();
-        if (authentication.isAuthenticated() && authentication instanceof AuthenticationToken authenticationToken) {
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication instanceof AuthenticationToken authenticationToken) {
             val jwtToken = authenticationToken.getJwtToken();
 
             data = data.map(d -> {
