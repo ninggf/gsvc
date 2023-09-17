@@ -99,6 +99,7 @@ public class GtwRouterFunctionFactoryBean
 
         setupFilter(groupRoute, routeBuilder, globalFilters);
         val exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
+        // bookmark exception handle(gtw call)
         return routeBuilder.onError(Exception.class, exceptionHandler::handle).build();
     }
 

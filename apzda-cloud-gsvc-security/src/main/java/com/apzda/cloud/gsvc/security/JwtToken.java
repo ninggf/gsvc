@@ -8,7 +8,6 @@ import lombok.Data;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * @author fengz windywany@gmail.com
@@ -20,14 +19,10 @@ public class JwtToken implements Serializable {
     @Serial
     private static final long serialVersionUID = -2763131228048354173L;
 
-    private String uid;
-
     private String name;
 
     private String accessToken;
 
     private String refreshToken;
-
-    private Date expireAt;
 
 }

@@ -30,6 +30,8 @@ public class ServiceConfig {
      */
     private Class<?> interfaceName;
 
+    private boolean grpc;
+
     private final Map<String, MethodConfig> methods = new LinkedHashMap<>();
 
     private final List<String> plugins = new ArrayList<>();

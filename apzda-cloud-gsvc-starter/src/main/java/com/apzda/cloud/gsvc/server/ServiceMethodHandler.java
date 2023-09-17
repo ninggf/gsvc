@@ -108,7 +108,7 @@ public class ServiceMethodHandler {
 
             log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
                     serviceMethod.getDmName(), e);
-
+            // bookmark exception handle(service call)
             return exceptionHandler.handle(e, request);
         }
     }
@@ -161,6 +161,8 @@ public class ServiceMethodHandler {
                 .onErrorResume((e) -> {
                     log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
                             serviceMethod.getDmName(), e);
+
+                    // bookmark exception handle(service call)
                     return Mono.just(exceptionHandler.handle(e, this.request));
                 }));
     }

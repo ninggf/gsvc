@@ -3,6 +3,7 @@
  */
 package com.apzda.cloud.gsvc.security.config;
 
+import com.apzda.cloud.gsvc.security.captcha.CaptchaProvider;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -11,6 +12,10 @@ import org.springframework.boot.web.server.Cookie;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author fengz windywany@gmail.com
@@ -19,13 +24,11 @@ import java.time.temporal.ChronoUnit;
 @Data
 public class SecurityConfigProperties {
 
-    private boolean csrfEnabled;
-
-    private boolean corsEnabled;
-
     private String tokenManager;
 
     private CookieConfig cookie = new CookieConfig();
+
+    private CaptchaConfig captcha = new CaptchaConfig();
 
     private String argName;
 
@@ -34,6 +37,11 @@ public class SecurityConfigProperties {
     private String bearer = "Bearer";
 
     private String jwtKey;
+
+    @DurationUnit(ChronoUnit.SECONDS)
+    private Duration jwtLeeway = Duration.ofSeconds(30);
+
+    private List<String> exclude = new ArrayList<>();
 
     @DurationUnit(ChronoUnit.MINUTES)
     private Duration accessTokenTimeout = Duration.ofMinutes(5);
@@ -59,6 +67,20 @@ public class SecurityConfigProperties {
         private Cookie.SameSite sameSite = Cookie.SameSite.STRICT;
 
         private int maxAge = -1;
+
+    }
+
+    @Data
+    public static class CaptchaConfig {
+
+        private boolean enabled;
+
+        @DurationUnit(ChronoUnit.MINUTES)
+        private Duration timeout = Duration.ofMinutes(30);
+
+        private Class<? extends CaptchaProvider> provider;
+
+        private Map<String, String> props = new HashMap<>();
 
     }
 

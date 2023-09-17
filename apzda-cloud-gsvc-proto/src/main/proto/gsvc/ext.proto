@@ -6,13 +6,9 @@ import "google/protobuf/descriptor.proto";
 
 option java_package = "com.apzda.cloud.gsvc.ext";
 option java_outer_classname = "GsvcExt";
+option optimize_for = SPEED;
 
 extend google.protobuf.ServiceOptions {string serviceName = 50001;}
-extend google.protobuf.MethodOptions {bool login = 50002;}
-extend google.protobuf.MethodOptions {string access = 50003;}
-extend google.protobuf.MethodOptions {string path = 50004;}
-extend google.protobuf.MethodOptions {string methods = 50005;}
-extend google.protobuf.MethodOptions {string filters = 50006;}
 
 message Valid {
   bool  required = 1; // not empty string
@@ -31,21 +27,22 @@ message Valid {
   string empty_or_arrlen = 13;
 }
 
-extend google.protobuf.FieldOptions {Valid valid = 50007;}
+extend google.protobuf.FieldOptions {Valid valid = 50002;}
 
 message Route {
   string path = 1;
   bool login = 2;
   string access = 3;
-  repeated string methods = 4;
-  repeated string  filters = 5;
+  string methods = 4;
+  string  filters = 5;
 }
 
-extend google.protobuf.MethodOptions {Route route = 50008;}
+extend google.protobuf.MethodOptions {Route route = 50003;}
 
 message CurrentUser {
   string uid = 1;
-  string name = 2;
+  optional string device = 2;
+  optional string device_id = 3;
 }
 
 message UploadFile {

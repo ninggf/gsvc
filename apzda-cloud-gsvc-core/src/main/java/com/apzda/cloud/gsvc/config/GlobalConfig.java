@@ -16,6 +16,10 @@ public class GlobalConfig {
 
     private URI loginPage;
 
+    private URI logoutPath;
+
+    private URI homePage;
+
     private boolean acceptLiteralFieldNames;
 
     private boolean properUnsignedNumberSerialization;

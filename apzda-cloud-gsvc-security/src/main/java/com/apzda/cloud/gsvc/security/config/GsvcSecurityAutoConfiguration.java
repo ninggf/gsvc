@@ -9,17 +9,20 @@ import com.apzda.cloud.gsvc.security.filter.AuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
-import com.apzda.cloud.gsvc.security.repository.InMemoryRepository;
-import com.apzda.cloud.gsvc.security.token.DefaultTokenManager;
+import com.apzda.cloud.gsvc.security.repository.JwtContextRepository;
+import com.apzda.cloud.gsvc.security.token.JwtTokenManager;
+import com.apzda.cloud.gsvc.security.userdetails.InMemoryUserDetailsContainer;
+import com.apzda.cloud.gsvc.security.userdetails.InMemoryUserServiceWrapper;
+import com.apzda.cloud.gsvc.security.userdetails.UserDetailsWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
@@ -36,10 +39,18 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.util.Assert;
@@ -74,6 +85,12 @@ public class GsvcSecurityAutoConfiguration {
 
         @Value("${server.error.path:/error}")
         private String errorPath;
+
+        @Value("${apzda.cloud.config.logout-path:}")
+        private String logoutPath;
+
+        @Value("${apzda.cloud.config.home-page:/}")
+        private String homePage;
 
         @Bean
         @Order(-100)
@@ -125,20 +142,42 @@ public class GsvcSecurityAutoConfiguration {
             });
 
             // 禁用自定义特征
-            if (!properties.isCsrfEnabled()) {
-                http.csrf(AbstractHttpConfigurer::disable);
-            }
-            if (!properties.isCorsEnabled()) {
-                http.cors(AbstractHttpConfigurer::disable);
-            }
+            http.csrf(AbstractHttpConfigurer::disable);
+            http.cors(AbstractHttpConfigurer::disable);
             http.anonymous(AbstractHttpConfigurer::disable);
             http.rememberMe(AbstractHttpConfigurer::disable);
             http.formLogin(AbstractHttpConfigurer::disable);
             http.httpBasic(AbstractHttpConfigurer::disable);
-            http.logout(AbstractHttpConfigurer::disable);
+            // bookmark config logout
+            if (StringUtils.isNotBlank(logoutPath)) {
+                http.logout((logout) -> {
+                    logout.logoutUrl(logoutPath);
+                    if (StringUtils.isNotBlank(homePage)) {
+                        logout.logoutSuccessUrl(homePage);
+                    }
+
+                    logout.addLogoutHandler(authenticationHandler);
+                    logout.addLogoutHandler(new HeaderWriterLogoutHandler(
+                            new ClearSiteDataHeaderWriter(ClearSiteDataHeaderWriter.Directive.ALL)));
+                    logout.logoutSuccessHandler(authenticationHandler);
+                    logout.clearAuthentication(true);
+                    val cookie = properties.getCookie();
+                    if (StringUtils.isNotBlank(cookie.getCookieName())) {
+                        logout.deleteCookies(cookie.getCookieName());
+                    }
+                });
+            }
+            else {
+                http.logout(AbstractHttpConfigurer::disable);
+            }
             // URL 过滤
             String error = this.errorPath;
             http.authorizeHttpRequests((authorize) -> {
+                val excludes = properties.getExclude();
+                for (String exclude : excludes) {
+                    authorize.requestMatchers(antMatcher(exclude)).permitAll();
+                }
+
                 val customizers = authorizeCustomizer.getIfAvailable();
                 if (customizers != null) {
                     customizers.sort(Comparator.comparingInt(AuthorizeCustomizer::getOrder));
@@ -146,6 +185,7 @@ public class GsvcSecurityAutoConfiguration {
                         customizer.customize(authorize);
                     }
                 }
+
                 authorize.requestMatchers(antMatcher(error)).permitAll();
                 authorize.anyRequest().permitAll();
             });
@@ -159,9 +199,17 @@ public class GsvcSecurityAutoConfiguration {
         }
 
         @Bean
+        @ConditionalOnMissingBean
+        AuthenticationProvider jwtAuthenticationProvider(UserDetailsService userDetailsService,
+                UserDetailsWrapper userDetailsWrapper, PasswordEncoder passwordEncoder, TokenManager tokenManager) {
+            return new DefaultAuthenticationProvider(userDetailsService, userDetailsWrapper, passwordEncoder,
+                    tokenManager);
+        }
+
+        @Bean
         AuthenticationManager authenticationManager(ObjectPostProcessor<Object> objectPostProcessor,
                 ObjectProvider<List<AuthenticationProvider>> providers) throws Exception {
-            // bookmark: 自定义认证管理器（可以自定义登录,相当于shiro中的Realm）
+            // bookmark: 自定义认证管理器
             val builder = new AuthenticationManagerBuilder(objectPostProcessor);
             if (providers.getIfAvailable() != null) {
                 for (AuthenticationProvider authenticationProvider : providers.getIfAvailable()) {
@@ -170,12 +218,6 @@ public class GsvcSecurityAutoConfiguration {
             }
 
             return builder.build();
-        }
-
-        @Bean
-        @ConditionalOnMissingBean
-        AuthenticationProvider authenticationProvider() {
-            return new DefaultAuthenticationProvider();
         }
 
         @Bean
@@ -189,7 +231,7 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnMissingBean
         SecurityContextRepository securityContextRepository(TokenManager tokenManager) {
             // bookmark: 自义存储 Context 仓储
-            return new InMemoryRepository(tokenManager);
+            return new JwtContextRepository(tokenManager);
         }
 
         @Bean
@@ -201,16 +243,46 @@ public class GsvcSecurityAutoConfiguration {
         }
 
         @Bean
+        @ConditionalOnMissingBean
+        PasswordEncoder defaultGsvcPasswordEncoder() {
+            return new BCryptPasswordEncoder();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        UserDetailsWrapper userDetailsWrapper(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder,
+                SecurityConfigProperties properties) {
+            InMemoryUserDetailsContainer.init(properties);
+
+            return new InMemoryUserServiceWrapper(userDetailsService);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
+            val manager = new InMemoryUserDetailsManager();
+            val authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"),
+                    new SimpleGrantedAuthority("ROLE_USER"));
+            val password = "123456";
+            log.warn("Default User, username: {}, password: {}", "admin", password);
+            val admin = User.withUsername("admin")
+                .password(passwordEncoder.encode(password))
+                .authorities(authorities)
+                .build();
+            manager.createUser(admin);
+            return manager;
+        }
+
+        @Bean
         InjectCurrentUserPlugin injectCurrentUserPlugin() {
             return new InjectCurrentUserPlugin();
         }
 
         @Bean
         @ConditionalOnMissingBean
-        @ConditionalOnProperty(name = "apzda.cloud.security.token-manager", havingValue = "", matchIfMissing = true)
-        TokenManager defaultTokenManager(JWTSigner jwtSigner) {
-
-            return new DefaultTokenManager(properties, jwtSigner);
+        TokenManager defaultTokenManager(UserDetailsService userDetailsService, UserDetailsWrapper userDetailsWrapper,
+                JWTSigner jwtSigner) {
+            return new JwtTokenManager(userDetailsService, userDetailsWrapper, properties, jwtSigner);
         }
 
     }

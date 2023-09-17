@@ -2,6 +2,7 @@ package com.apzda.cloud.gsvc.error;
 
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.val;
@@ -49,7 +50,7 @@ public class GsvcErrorController extends BasicErrorController {
 
         Throwable error = errorAttributes.getError(webRequest);
         if (error != null) {
-            while (error.getCause() != null) {
+            while (error instanceof ServletException && error.getCause() != null) {
                 error = error.getCause();
             }
             val loginUrl = ResponseUtils.getLoginUrl(ResponseUtils.mediaTypes(request));

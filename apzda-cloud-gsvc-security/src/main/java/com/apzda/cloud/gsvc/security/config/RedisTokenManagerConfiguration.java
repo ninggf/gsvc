@@ -2,7 +2,6 @@ package com.apzda.cloud.gsvc.security.config;
 
 import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.security.TokenManager;
-import com.apzda.cloud.gsvc.security.token.RedisTokenManager;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -21,7 +20,7 @@ public class RedisTokenManagerConfiguration {
     @ConditionalOnProperty(name = "apzda.cloud.security.token-manager", havingValue = "redis")
     TokenManager redisTokenManager(StringRedisTemplate redisTemplate, SecurityConfigProperties properties,
             JWTSigner jwtSigner) {
-        return new RedisTokenManager(redisTemplate, properties, jwtSigner);
+        return null;
     }
 
 }

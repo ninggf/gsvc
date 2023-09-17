@@ -6,31 +6,35 @@ import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
 import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
-import com.apzda.cloud.gsvc.security.IUser;
 import com.apzda.cloud.gsvc.security.JwtToken;
 import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
+import com.apzda.cloud.gsvc.security.userdetails.UserDetailsWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 /**
  * @author fengz
  */
 @RequiredArgsConstructor
 @Slf4j
-public class DefaultTokenManager implements TokenManager {
+public class JwtTokenManager implements TokenManager {
+
+    protected final UserDetailsService userDetailsService;
+
+    protected final UserDetailsWrapper userDetailsWrapper;
 
     protected final SecurityConfigProperties properties;
 
     protected final JWTSigner jwtSigner;
 
     @Override
-    public AuthenticationToken restore(HttpServletRequest request) {
+    public Authentication restoreAuthentication(HttpServletRequest request) {
         val argName = properties.getArgName();
         val headerName = properties.getTokenName();
         val cookieConfig = properties.getCookie();
@@ -47,7 +51,7 @@ public class DefaultTokenManager implements TokenManager {
         }
 
         val token = request.getHeader(headerName);
-        if (accessToken != null && StringUtils.isNotBlank(token)) {
+        if (StringUtils.isBlank(accessToken) && StringUtils.isNotBlank(token)) {
             if (StringUtils.isNotBlank(bearer) && token.startsWith(bearer)) {
                 accessToken = token.substring(bearer.length() + 1);
                 if (log.isDebugEnabled()) {
@@ -65,31 +69,49 @@ public class DefaultTokenManager implements TokenManager {
 
         if (StringUtils.isNotBlank(accessToken)) {
             val verified = JWTUtil.verify(accessToken, jwtSigner);
+
             if (verified) {
                 val jwt = JWTUtil.parseToken(accessToken);
-                val uid = jwt.getPayload("uid");
+                jwt.setSigner(jwtSigner);
+                val jwtLeeway = properties.getJwtLeeway();
+                if (!jwt.validate(jwtLeeway.toSeconds())) {
+                    log.debug("[{}] accessToken({}) is expired!", requestId, accessToken);
+                    return null;
+                }
+
                 val jwtToken = JwtToken.builder()
                     .accessToken(accessToken)
-                    .uid((String) uid)
                     .name((String) jwt.getPayload(JWT.SUBJECT))
-                    .expireAt(DateUtil.parse(JWT.EXPIRES_AT))
                     .build();
+
+                val userDetails = userDetailsService.loadUserByUsername(jwtToken.getName());
+                if (userDetails == null) {
+                    log.debug("[{}] accessToken({}) session is expired!", requestId, accessToken);
+                    return null;
+                }
+
+                val authentication = JwtAuthenticationToken.authenticated(userDetailsWrapper.wrap(userDetails),
+                        userDetails.getPassword());
+
+                authentication.setJwtToken(jwtToken);
+
+                return authentication;
+            }
+            else {
+                log.debug("[{}] accessToken({}) is invalid", requestId, accessToken);
             }
         }
         else {
-            log.debug("[{}] No token found", requestId);
+            log.trace("[{}] No token found", requestId);
         }
+        // JwtAuthenticationToken.unauthenticated("anonymous", "ANONYMOUS");
         return null;
     }
 
     @Override
-    public JwtToken createJwtToken(AuthenticationToken authentication) {
+    public JwtToken createJwtToken(Authentication authentication, boolean loadAuthority) {
         val token = JWT.create();
-        var uid = "0";
-        if (authentication.getPrincipal() instanceof IUser user) {
-            uid = user.getUid();
-            token.setPayload("uid", uid);
-        }
+        val principal = authentication.getPrincipal();
         token.setSubject(authentication.getName());
         token.setSigner(jwtSigner);
         val accessExpireAt = DateUtil.date()
@@ -97,23 +119,27 @@ public class DefaultTokenManager implements TokenManager {
         token.setExpiresAt(accessExpireAt);
 
         val accessToken = token.sign();
-        var refreshToken = genRefreshToken(authentication);
+        var refreshToken = createRefreshToken(authentication);
 
-        return JwtToken.builder()
+        val jwtToken = JwtToken.builder()
             .refreshToken(refreshToken)
             .accessToken(accessToken)
-            .uid(uid)
             .name(authentication.getName())
             .build();
+
+        return jwtToken;
     }
 
     @Override
-    public JwtToken refresh(JwtToken token, AuthenticationToken authentication) {
-        return createJwtToken(authentication);
+    public JwtToken refreshAccessToken(JwtToken token, Authentication authentication) {
+        // todo refresh AccessToken
+        return null;
     }
 
-    protected String genRefreshToken(AuthenticationToken authentication) {
-        return UUID.randomUUID().toString();
+    @Override
+    public String createRefreshToken(Authentication authentication) {
+        // todo create RefreshToken
+        return "";
     }
 
 }

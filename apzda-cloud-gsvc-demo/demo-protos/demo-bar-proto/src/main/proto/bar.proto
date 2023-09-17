@@ -38,6 +38,8 @@ message LoginRes {
   optional string err_msg = 2;
   string access_token = 3;
   string refresh_token = 4;
+  int32 flags = 5;
+  repeated string authorities = 6;
 }
 
 message SaReq {
@@ -58,12 +60,10 @@ service SaService {
 
   rpc hi(SaReq) returns(SaRes) {
     option(gsvc.route) = {
+      path: "/sa/hi",
       login: true,
-      path: "/sa/hi"
+      access: "r('ADMIN') || r('USER')",
+      methods:"get,post"
     };
-
-    option(gsvc.path) = "/sa/hi";
-    option(gsvc.access) = "r('ADMIN')";
-    option(gsvc.methods) = "get";
   }
 }

@@ -58,6 +58,8 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
             route.POST(path, request -> ServiceMethodHandler.handle(request, null, methodHolder, applicationContext));
         }
         val errorHandler = applicationContext.getBean(GsvcExceptionHandler.class);
+
+        // bookmark exception handle(service call)
         return route.onError(Exception.class, errorHandler::handle).build();
     }
 

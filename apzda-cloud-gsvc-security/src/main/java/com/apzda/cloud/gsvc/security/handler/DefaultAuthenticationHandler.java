@@ -1,10 +1,11 @@
 package com.apzda.cloud.gsvc.security.handler;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
-import com.apzda.cloud.gsvc.security.token.AuthenticationToken;
+import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -36,14 +38,14 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
             Authentication authentication) throws IOException, ServletException {
         log.trace("Authentication Success: {}", authentication);
-        if (authentication instanceof AuthenticationToken authenticationToken) {
+        if (authentication instanceof JwtAuthenticationToken) {
             try {
-                val jwtToken = tokenManager.createJwtToken(authenticationToken);
+                val jwtToken = tokenManager.createJwtToken(authentication, true);
                 val cookieCfg = properties.getCookie();
                 val cookieName = cookieCfg.getCookieName();
-                val accessToken = jwtToken.getAccessToken();
 
                 if (StringUtils.isNoneBlank(cookieName)) {
+                    val accessToken = jwtToken.getAccessToken();
                     val cookie = new Cookie(cookieName, accessToken);
                     cookie.setDomain(cookieCfg.getCookieDomain());
                     cookie.setHttpOnly(true);
@@ -64,7 +66,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
             }
         }
         else {
-            log.error("Authentication is not a AuthenticationToken instance!");
+            log.error("Authentication is not a JwtAuthenticationToken instance!");
             ResponseUtils.respond(request, response, Response.error(ServiceError.INVALID_PRINCIPAL_TYPE));
         }
     }
@@ -106,9 +108,25 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
             HttpServletResponse response) throws SessionAuthenticationException {
         log.trace("会话检测，保证当前会议中的认证有效: {}", authentication);
 
-        if (authentication instanceof AuthenticationToken authenticationToken) {
+        if (authentication instanceof JwtAuthenticationToken authenticationToken) {
             val token = authenticationToken.getJwtToken();
             tokenManager.verify(token, authenticationToken);
+        }
+    }
+
+    @Override
+    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
+            throws IOException, ServletException {
+        log.trace("[{}] DefaultAuthenticationHandler onLogoutSuccess", GsvcContextHolder.getRequestId());
+
+        val mediaTypes = ResponseUtils.mediaTypes(request);
+        val homePage = ResponseUtils.getHomePage(mediaTypes);
+        if (homePage != null) {
+            response.setContentType(MediaType.TEXT_PLAIN_VALUE);
+            response.sendRedirect(homePage.toString());
+        }
+        else {
+            ResponseUtils.respond(request, response, Response.success("Logout"));
         }
     }
 

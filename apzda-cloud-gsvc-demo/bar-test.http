@@ -160,7 +160,7 @@ POST http://{{barService}}/sa/login
 Content-Type: application/json
 
 {
-    "username": "gsvc",
+    "username": "admin",
     "password": "123456"
 }
 
@@ -196,6 +196,7 @@ Content-Type: application/json
 POST http://{{barService}}/sa/hi
 Content-Type: application/json
 Accept: text/html
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY5NDkxNTU1OH0.A0xJfmCz9LWcfgYv74E9AfESXRtA25o3xkTpYsLjXVE
 
 {
     "name": "gsvc"
@@ -206,5 +207,34 @@ Accept: text/html
         client.assert(response.status === 401, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "text/plain", "Expected 'text/plain' but received '" + type + "'");
+    });
+%}
+
+### Auth - html - /logout
+// @no-redirect
+POST http://{{barService}}/logout
+Accept: text/html
+
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 302, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "text/plain", "Expected 'text/plain' but received '" + type + "'");
+        client.assert(response.headers.location === "http://localhost:12562/home",response.headers.get('location')+" != 'http://localhost:12562/home'")
+    });
+%}
+
+### Auth - API - /logout
+POST http://{{barService}}/logout
+Content-Type: application/json
+Accept: application/json
+
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'text/plain' but received '" + type + "'");
     });
 %}

@@ -2,7 +2,6 @@ package com.apzda.cloud.gsvc.security.repository;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.TokenManager;
-import com.apzda.cloud.gsvc.security.token.AuthenticationToken;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +16,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
  * @author fengz
  */
 @Slf4j
-public class InMemoryRepository implements SecurityContextRepository {
-
-    private static final AuthenticationToken ANONYMOUS = new AuthenticationToken.AnonymousToken();
+public class JwtContextRepository implements SecurityContextRepository {
 
     private static final String CONTEXT_ATTR_NAME = "GSVC.SECURITY.CONTEXT";
 
@@ -28,7 +25,7 @@ public class InMemoryRepository implements SecurityContextRepository {
 
     private final TokenManager tokenManager;
 
-    public InMemoryRepository(TokenManager tokenManager) {
+    public JwtContextRepository(TokenManager tokenManager) {
         this.tokenManager = tokenManager;
     }
 
@@ -36,21 +33,21 @@ public class InMemoryRepository implements SecurityContextRepository {
     @SuppressWarnings("deprecation")
     public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
         // 此方法是一个会被延时加载的方法。
-        log.warn("[{}] InMemoryRepository loadContext", GsvcContextHolder.getRequestId());
+        log.warn("[{}] JwtContextRepository loadContext", GsvcContextHolder.getRequestId());
         return getContext(requestResponseHolder.getRequest());
     }
 
     @Override
     public void saveContext(SecurityContext context, HttpServletRequest request, HttpServletResponse response) {
-        // 登录成功之后被调用或手动调用
-        log.warn("[{}] InMemoryRepository saveContext: {}", GsvcContextHolder.getRequestId(), context);
-        tokenManager.saveToken(context.getAuthentication(), request);
+        // 登录/退出成功之后被调用或手动调用
+        log.warn("[{}] JwtContextRepository saveContext: {}", GsvcContextHolder.getRequestId(), context);
+        tokenManager.save(context.getAuthentication(), request);
     }
 
     @Override
     public boolean containsContext(HttpServletRequest request) {
         // 不包括Context时，会触发loadContext()。
-        log.warn("[{}] InMemoryRepository containsContext", GsvcContextHolder.getRequestId());
+        log.warn("[{}] JwtContextRepository containsContext", GsvcContextHolder.getRequestId());
         val storedContext = request.getAttribute(CONTEXT_ATTR_NAME);
         return storedContext != null;
     }
@@ -64,7 +61,7 @@ public class InMemoryRepository implements SecurityContextRepository {
 
         val context = securityContextHolderStrategy.createEmptyContext();
         try {
-            val token = tokenManager.restore(request);
+            val token = tokenManager.restoreAuthentication(request);
             if (token != null) {
                 context.setAuthentication(token);
                 request.setAttribute(CONTEXT_ATTR_NAME, context);

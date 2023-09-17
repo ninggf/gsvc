@@ -83,8 +83,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     for (GroupRoute route : routes) {
                         registerRouterFunction(bf, route);
                     }
-                    val descriptor = GatewayServiceRegistry.SERVCIE_DESCRIPTOR.get(aClass);
 
+                    val descriptor = GatewayServiceRegistry.SERVCIE_DESCRIPTOR.get(aClass);
                     if (descriptor != null) {
                         val defaultFilters = environment.getProperty("apzda.cloud.gateway.default.filters");
                         List<GroupRoute> routes1 = new ArrayList<>();
@@ -224,16 +224,17 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
     private GroupRoute createRoute(Class<?> aClass, Descriptors.MethodDescriptor methodDescriptor,
             String defaultFilters) {
         val options = methodDescriptor.getOptions();
-        var path = options.getExtension(GsvcExt.path).trim();
+        val api = options.getExtension(GsvcExt.route);
+        var path = api.getPath().trim();
         if (StringUtils.isBlank(path)) {
             return null;
         }
         var index = methodDescriptor.getIndex() + 10001;
         path = "/" + StringUtils.strip(path, "/");
-        val login = options.getExtension(GsvcExt.login);
-        val access = options.getExtension(GsvcExt.access).trim();
-        val methods = options.getExtension(GsvcExt.methods).trim();
-        var filters = options.getExtension(GsvcExt.filters).trim();
+        val login = api.getLogin();
+        val access = api.getAccess().trim();
+        val methods = api.getMethods().trim();
+        var filters = api.getFilters().trim();
 
         if (StringUtils.isNotBlank(defaultFilters)) {
             if (StringUtils.isBlank(filters)) {

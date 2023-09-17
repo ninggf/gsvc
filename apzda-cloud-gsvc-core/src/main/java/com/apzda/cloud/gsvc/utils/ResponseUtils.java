@@ -122,7 +122,7 @@ public class ResponseUtils {
             }
         }
         else if (isCompatibleWith(MediaType.APPLICATION_JSON, mediaTypes)) {
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE + "; charset=utf-8");
         }
 
         if (ServiceError.isHttpError(errCode)) {
@@ -154,6 +154,17 @@ public class ResponseUtils {
     public static List<MediaType> mediaTypes(HttpServletRequest request) {
         val serverHttpRequest = new ServletServerHttpRequest(request);
         return serverHttpRequest.getHeaders().getAccept();
+    }
+
+    public static URI getHomePage(List<MediaType> contentTypes) {
+        if (gsvcConfig != null) {
+            val homePage = gsvcConfig.getHomePage();
+
+            if (homePage != null && ResponseUtils.isCompatibleWith(TEXT_MASK, contentTypes)) {
+                return homePage;
+            }
+        }
+        return null;
     }
 
     public static URI getLoginUrl(List<MediaType> contentTypes) {

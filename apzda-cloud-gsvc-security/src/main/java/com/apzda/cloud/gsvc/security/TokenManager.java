@@ -1,10 +1,8 @@
 package com.apzda.cloud.gsvc.security;
 
-import cn.hutool.core.date.DateField;
-import cn.hutool.core.date.DateUtil;
-import com.apzda.cloud.gsvc.security.token.AuthenticationToken;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.val;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
@@ -13,31 +11,24 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
  */
 public interface TokenManager {
 
-    AuthenticationToken restore(HttpServletRequest request);
+    Authentication restoreAuthentication(HttpServletRequest request);
 
-    default void saveToken(Authentication authentication, HttpServletRequest request) {
+    default void save(Authentication authentication, HttpServletRequest request) {
 
     }
 
-    JwtToken createJwtToken(AuthenticationToken authentication);
-
-    JwtToken refresh(JwtToken token, AuthenticationToken authentication);
-
-    default void verify(JwtToken token, AuthenticationToken authentication) throws SessionAuthenticationException {
-        if (token != null) {
-            val expireAt = token.getExpireAt();
-            if (expireAt != null) {
-                // expire - 60 > current
-                if (expireAt.before(DateUtil.date().offset(DateField.SECOND, 30))) {
-                    return;
-                }
-            }
-        }
-
-        throw new SessionAuthenticationException("Login Session expired");
+    default void remove(Authentication authentication, HttpServletRequest request) {
     }
 
-    default void remove(JwtToken token) {
+    JwtToken createJwtToken(Authentication authentication, boolean loadAuthorities);
+
+    JwtToken refreshAccessToken(JwtToken token, Authentication authentication);
+
+    default void verify(@Nullable JwtToken token, @NonNull Authentication authentication)
+            throws SessionAuthenticationException {
+
     }
+
+    String createRefreshToken(Authentication authentication);
 
 }
