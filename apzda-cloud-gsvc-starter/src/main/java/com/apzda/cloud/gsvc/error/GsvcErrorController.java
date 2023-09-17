@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
 import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolver;
@@ -55,8 +56,8 @@ public class GsvcErrorController extends BasicErrorController {
             }
             val loginUrl = ResponseUtils.getLoginUrl(ResponseUtils.mediaTypes(request));
 
-            if (loginUrl != null) {
-                val redirectView = new ModelAndView(new RedirectView(loginUrl.toString()));
+            if (StringUtils.isNotBlank(loginUrl)) {
+                val redirectView = new ModelAndView(new RedirectView(loginUrl));
                 if (error instanceof HttpStatusCodeException codeException
                         && codeException.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                     return redirectView;

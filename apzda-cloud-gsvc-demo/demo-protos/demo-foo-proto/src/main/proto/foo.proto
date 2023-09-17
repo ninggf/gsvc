@@ -2,10 +2,11 @@ syntax = "proto3";
 
 package foo;
 
+import "gsvc/ext.proto";
+
 option java_package = "com.apzda.cloud.demo.foo.proto";
 option java_multiple_files = true;
 option java_outer_classname = "FooProto";
-
 
 message FooReq {
   optional string name = 1;
@@ -19,9 +20,27 @@ message FooRes {
   optional uint32 age = 4;
 }
 
+message LoginReq {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginRes {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  string access_token = 3;
+  string refresh_token = 4;
+  string name = 5;
+}
+
 service FooService {
   rpc greeting(FooReq) returns (FooRes);
   rpc hello(FooReq) returns (stream FooRes);
   rpc hi(stream FooReq) returns(stream FooRes);
   rpc saInfo(FooReq) returns(FooRes);
+  rpc login(LoginReq) returns(LoginRes){
+    option(gsvc.route) = {
+      path: "/foo/login"
+    };
+  }
 }

@@ -4,9 +4,7 @@ import com.apzda.cloud.demo.bar.proto.BarReq;
 import com.apzda.cloud.demo.bar.proto.BarService;
 import com.apzda.cloud.demo.bar.proto.SaReq;
 import com.apzda.cloud.demo.bar.proto.SaService;
-import com.apzda.cloud.demo.foo.proto.FooReq;
-import com.apzda.cloud.demo.foo.proto.FooRes;
-import com.apzda.cloud.demo.foo.proto.FooService;
+import com.apzda.cloud.demo.foo.proto.*;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -64,6 +62,11 @@ public class FooServiceImpl implements FooService {
             .setErrCode(info.getErrCode())
             .setName(info.getUserName())
             .buildPartial();
+    }
+
+    @Override
+    public LoginRes login(LoginReq request) {
+        return null;
     }
 
 }

@@ -38,8 +38,7 @@ message LoginRes {
   optional string err_msg = 2;
   string access_token = 3;
   string refresh_token = 4;
-  int32 flags = 5;
-  repeated string authorities = 6;
+  string name = 5;
 }
 
 message SaReq {

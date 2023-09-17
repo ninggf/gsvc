@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -104,12 +106,12 @@ public class GsvcExceptionHandler {
 
         if (status == HttpStatus.UNAUTHORIZED) {
             val loginUrl = ResponseUtils.getLoginUrl(request.headers().accept());
-            if (loginUrl != null) {
+            if (StringUtils.isNotBlank(loginUrl)) {
                 if (rClass.isAssignableFrom(ServerResponse.class)) {
-                    return (R) ServerResponse.status(HttpStatus.FOUND).location(loginUrl).build();
+                    return (R) ServerResponse.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
                 }
                 else {
-                    return (R) ResponseEntity.status(HttpStatus.FOUND).location(loginUrl).build();
+                    return (R) ResponseEntity.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
                 }
             }
         }

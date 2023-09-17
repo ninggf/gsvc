@@ -3,32 +3,54 @@
  */
 package com.apzda.cloud.gsvc.security.plugin;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.dto.CurrentUser;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
 import com.apzda.cloud.gsvc.plugin.IPreInvoke;
+import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.POJONode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerRequest;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
+
 /**
  * @author fengz windywany@gmail.com
  **/
 @Slf4j
+@RequiredArgsConstructor
 public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreCall {
 
-    // private final ObjectMapper objectMapper;
+    private final SecurityConfigProperties properties;
+
     @Override
     public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data,
             ServiceMethod method) {
+        val tokenName = properties.getTokenName();
+
+        if (StringUtils.isNotBlank(tokenName)) {
+            val tokenValue = GsvcContextHolder.header(tokenName);
+            if (StringUtils.isNotBlank(tokenValue)) {
+                request = request.headers(httpHeaders -> {
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}] Transit Header: {}: {}", GsvcContextHolder.getRequestId(), tokenName,
+                                tokenValue);
+                    }
+                    httpHeaders.put(tokenName, Collections.singletonList(tokenValue));
+                });
+            }
+        }
 
         return request;
     }
@@ -37,6 +59,7 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
     public Mono<JsonNode> preInvoke(ServerRequest request, Mono<JsonNode> data, ServiceMethod method) {
         val context = SecurityContextHolder.getContext();
         val authentication = context.getAuthentication();
+
         if (authentication != null && authentication.isAuthenticated()
                 && authentication instanceof JwtAuthenticationToken authenticationToken) {
             val jwtToken = authenticationToken.getJwtToken();
@@ -50,6 +73,9 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
                     .build();
 
                 if (d instanceof ObjectNode objectNode) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}] Inject CurrentUser: {}", GsvcContextHolder.getRequestId(), currentUser);
+                    }
                     objectNode.set("currentUser", new POJONode(currentUser));
                 }
 

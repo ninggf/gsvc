@@ -10,14 +10,6 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  */
 public abstract class AuthenticationProcessingFilter extends AbstractAuthenticationProcessingFilter implements Ordered {
 
-    protected AuthenticationProcessingFilter(String defaultFilterProcessesUrl) {
-        super(defaultFilterProcessesUrl);
-    }
-
-    protected AuthenticationProcessingFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
-        super(requiresAuthenticationRequestMatcher);
-    }
-
     protected AuthenticationProcessingFilter(String defaultFilterProcessesUrl,
             AuthenticationManager authenticationManager) {
         super(defaultFilterProcessesUrl, authenticationManager);

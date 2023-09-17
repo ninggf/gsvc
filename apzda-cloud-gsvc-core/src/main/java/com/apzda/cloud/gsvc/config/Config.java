@@ -1,24 +1,18 @@
 package com.apzda.cloud.gsvc.config;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.net.URI;
 
 /**
  * @author fengz
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class GlobalConfig {
+public class Config {
 
-    private URI loginPage;
+    private String loginPage;
 
-    private URI logoutPath;
+    private String logoutPath;
 
-    private URI homePage;
+    private String homePage;
 
     private boolean acceptLiteralFieldNames;
 

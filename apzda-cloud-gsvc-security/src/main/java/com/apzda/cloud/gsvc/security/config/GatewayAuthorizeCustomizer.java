@@ -25,16 +25,17 @@ class GatewayAuthorizeCustomizer implements AuthorizeCustomizer {
             AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
 
         if (!GatewayServiceRegistry.AUTHED_ROUTES.isEmpty()) {
-            log.trace("ACL: {}", GatewayServiceRegistry.AUTHED_ROUTES);
             for (Map.Entry<String, RouteMeta> kv : GatewayServiceRegistry.AUTHED_ROUTES.entrySet()) {
                 val path = kv.getKey();
                 val meta = kv.getValue();
                 val access = meta.getAccess();
                 val matcher = antMatcher(path);
                 if (StringUtils.isNotBlank(access)) {
+                    log.debug("ACL: {}(access={})", path, access);
                     authorize.requestMatchers(matcher).access(new WebExpressionAuthorizationManager(access));
                 }
                 else {
+                    log.debug("ACL: {}", path);
                     authorize.requestMatchers(matcher).authenticated();
                 }
             }

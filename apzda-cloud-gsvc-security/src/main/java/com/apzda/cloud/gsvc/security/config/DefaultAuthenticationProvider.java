@@ -2,7 +2,7 @@ package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
-import com.apzda.cloud.gsvc.security.userdetails.UserDetailsWrapper;
+import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -22,7 +22,7 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
 
     private final UserDetailsService userDetailsService;
 
-    private final UserDetailsWrapper userDetailsWrapper;
+    private final UserDetailsMetaRepository userDetailsMetaRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -37,7 +37,7 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
         val password = userDetails.getPassword();
 
         if (passwordEncoder.matches((CharSequence) credentials, password)) {
-            return JwtAuthenticationToken.authenticated(userDetailsWrapper.wrap(userDetails), password);
+            return JwtAuthenticationToken.authenticated(userDetailsMetaRepository.create(userDetails), password);
         }
 
         throw new UsernameNotFoundException(authentication.getName());

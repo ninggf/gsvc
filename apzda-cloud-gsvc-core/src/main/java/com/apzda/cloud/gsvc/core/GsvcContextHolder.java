@@ -28,6 +28,8 @@ public class GsvcContextHolder {
 
     private static final String FILTERED_HTTP_HEADERS = "FILTERED_HTTP_HEADERS";
 
+    private static final String HTTP_COOKIES = "FILTERED_HTTP_COOKIES";
+
     public static Optional<HttpServletRequest> getRequest() {
         val requestAttributes = RequestContextHolder.getRequestAttributes();
         if (requestAttributes instanceof ServletRequestAttributes request) {
@@ -44,14 +46,13 @@ public class GsvcContextHolder {
         return Optional.empty();
     }
 
-    public static Map<String, String> headers() {
-        val headers = new HashMap<String, String>();
+    public static DefaultHttpHeaders headers() {
         val request = getRequest();
         if (request.isPresent()) {
             HttpServletRequest httpServletRequest = request.get();
             Object filtered = httpServletRequest.getAttribute(FILTERED_HTTP_HEADERS);
             if (filtered == null) {
-                synchronized (FILTERED_HTTP_HEADERS) {
+                synchronized (httpServletRequest) {
                     filtered = httpServletRequest.getAttribute(FILTERED_HTTP_HEADERS);
                     if (filtered == null) {
                         val httpHeaders = HttpHeaders.readOnlyHttpHeaders(createDefaultHttpHeaders(httpServletRequest));
@@ -64,45 +65,52 @@ public class GsvcContextHolder {
                 }
             }
             if (filtered instanceof DefaultHttpHeaders defaultHttpHeaders) {
-                defaultHttpHeaders.forEach((kv) -> {
-                    headers.put(kv.getKey(), kv.getValue());
-                });
+                return defaultHttpHeaders;
             }
         }
-        return headers;
+        return new DefaultHttpHeaders();
     }
 
     public static String header(String name) {
-        return headers().get(name.toLowerCase());
-    }
-
-    public static String headerIgnoreCase(String name) {
-        val s = headers().keySet().stream().filter(name::equalsIgnoreCase).findFirst().orElse("-_-");
-        return headers().get(s);
+        return headers().get(name);
     }
 
     public static Map<String, String> headers(String prefix) {
         val headers = new HashMap<String, String>();
-        headers().forEach((k, v) -> {
-            if (StringUtils.startsWithIgnoreCase(k, prefix)) {
-                headers.put(k, v);
+        headers().forEach(header -> {
+            if (StringUtils.startsWithIgnoreCase(header.getKey(), prefix)) {
+                headers.put(header.getKey(), header.getValue());
             }
         });
         return headers;
     }
 
+    @SuppressWarnings("unchecked")
     public static Map<String, HttpCookie> cookies() {
-        val cookies = new HashMap<String, HttpCookie>();
-        if (getRequest().isPresent()) {
-            val httpServletRequest = getRequest().get();
-            val cookies1 = httpServletRequest.getCookies();
-            if (cookies1 != null) {
-                for (Cookie cookie : cookies1) {
-                    cookies.put(cookie.getName(), new HttpCookie(cookie.getName(), cookie.getValue()));
+        val request = getRequest();
+        if (request.isPresent()) {
+            HttpServletRequest httpServletRequest = request.get();
+            Object filtered = httpServletRequest.getAttribute(HTTP_COOKIES);
+            if (filtered != null) {
+                return (Map<String, HttpCookie>) filtered;
+            }
+            synchronized (httpServletRequest) {
+                filtered = httpServletRequest.getAttribute(HTTP_COOKIES);
+                if (filtered != null) {
+                    return (Map<String, HttpCookie>) filtered;
                 }
+                val cookies = new HashMap<String, HttpCookie>();
+                val cookies1 = httpServletRequest.getCookies();
+                if (cookies1 != null) {
+                    for (Cookie cookie : cookies1) {
+                        cookies.put(cookie.getName(), new HttpCookie(cookie.getName(), cookie.getValue()));
+                    }
+                }
+                httpServletRequest.setAttribute(HTTP_COOKIES, cookies);
+                return cookies;
             }
         }
-        return cookies;
+        return Collections.emptyMap();
     }
 
     public static Map<String, HttpCookie> cookies(String prefix) {
@@ -138,7 +146,7 @@ public class GsvcContextHolder {
     }
 
     public static String getRequestId() {
-        val requestId = headerIgnoreCase("x-request-id");
+        val requestId = header("x-request-id");
         if (StringUtils.hasText(requestId)) {
             return requestId;
         }

@@ -33,45 +33,63 @@ public class JwtContextRepository implements SecurityContextRepository {
     @SuppressWarnings("deprecation")
     public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
         // 此方法是一个会被延时加载的方法。
-        log.warn("[{}] JwtContextRepository loadContext", GsvcContextHolder.getRequestId());
-        return getContext(requestResponseHolder.getRequest());
-    }
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] Start to load Context", GsvcContextHolder.getRequestId());
+        }
+        val request = requestResponseHolder.getRequest();
 
-    @Override
-    public void saveContext(SecurityContext context, HttpServletRequest request, HttpServletResponse response) {
-        // 登录/退出成功之后被调用或手动调用
-        log.warn("[{}] JwtContextRepository saveContext: {}", GsvcContextHolder.getRequestId(), context);
-        tokenManager.save(context.getAuthentication(), request);
-    }
-
-    @Override
-    public boolean containsContext(HttpServletRequest request) {
-        // 不包括Context时，会触发loadContext()。
-        log.warn("[{}] JwtContextRepository containsContext", GsvcContextHolder.getRequestId());
-        val storedContext = request.getAttribute(CONTEXT_ATTR_NAME);
-        return storedContext != null;
-    }
-
-    private SecurityContext getContext(HttpServletRequest request) {
         val storedContext = request.getAttribute(CONTEXT_ATTR_NAME);
 
         if (storedContext != null) {
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] Loaded Context from request attribute", GsvcContextHolder.getRequestId());
+            }
             return (SecurityContext) storedContext;
         }
 
         val context = securityContextHolderStrategy.createEmptyContext();
+        // context.setAuthentication(JwtAuthenticationToken.unauthenticated("anonymous",
+        // ""));
+
         try {
-            val token = tokenManager.restoreAuthentication(request);
-            if (token != null) {
-                context.setAuthentication(token);
-                request.setAttribute(CONTEXT_ATTR_NAME, context);
-                return context;
+            val authentication = tokenManager.restoreAuthentication(request);
+            if (authentication != null) {
+                context.setAuthentication(authentication);
+                if (log.isTraceEnabled()) {
+                    log.trace("[{}] Loading Context by {}", GsvcContextHolder.getRequestId(), tokenManager);
+                }
+            }
+            else if (log.isTraceEnabled()) {
+                log.trace("[{}] Cannot Restore Authentication", GsvcContextHolder.getRequestId());
             }
         }
         catch (Exception e) {
-            log.error("[{}] Cannot load context", GsvcContextHolder.getRequestId(), e);
+            log.error("[{}] Cannot Restore Authentication: {}", GsvcContextHolder.getRequestId(), e.getMessage());
         }
-        return null;
+        request.setAttribute(CONTEXT_ATTR_NAME, context);
+        return context;
+    }
+
+    @Override
+    public void saveContext(SecurityContext context, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            tokenManager.save(context.getAuthentication(), request);
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] Context saved: {}", GsvcContextHolder.getRequestId(), context);
+            }
+        }
+        catch (Exception e) {
+            log.error("[{}]  Save Context failed: {} - {}", GsvcContextHolder.getRequestId(), e.getMessage(), context);
+        }
+    }
+
+    @Override
+    public boolean containsContext(HttpServletRequest request) {
+        val containsContext = request.getAttribute(CONTEXT_ATTR_NAME) != null;
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] Contains Context: {}", GsvcContextHolder.getRequestId(), containsContext);
+        }
+        return containsContext;
     }
 
 }

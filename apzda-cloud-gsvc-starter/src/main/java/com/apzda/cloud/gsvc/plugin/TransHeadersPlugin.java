@@ -33,15 +33,15 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
     @Override
     public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data,
             ServiceMethod method) {
+        val headers = GsvcContextHolder.headers("X-");
+
         val appName = context.getEnvironment().getProperty("spring.application.name");
-        val headers = GsvcContextHolder.headers("x-gh-");
-        headers.put("X-Gsvc-Caller", appName);
+        headers.remove("x-gsvc-caller");
+        headers.put("x-gsvc-caller", appName);
+
         val requestId = GsvcContextHolder.getRequestId();
         headers.put("X-Request-Id", requestId);
-        // X-Forwarded-For
-        val forwards = GsvcContextHolder.headers("X-Forwarded-");
-        headers.putAll(forwards);
-        // bookmark: 透传请求头
+
         request = request.headers(httpHeaders -> {
             for (Map.Entry<String, String> kv : headers.entrySet()) {
                 httpHeaders.put(kv.getKey(), Collections.singletonList(kv.getValue()));
@@ -51,7 +51,7 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
         if (log.isTraceEnabled()) {
             log.trace("[{}] Transit Headers: {}", requestId, headers);
         }
-        // bookmark: 透传 xgh_开头的COOKIE
+
         val cookies = GsvcContextHolder.cookies("xgh_");
         if (!cookies.isEmpty()) {
             request = request.cookies(cookie -> {
@@ -59,6 +59,10 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
                     cookie.put(kv.getKey(), Collections.singletonList(kv.getValue().getValue()));
                 }
             });
+
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] Transit Cookies: {}", requestId, cookies);
+            }
         }
 
         return request;

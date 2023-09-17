@@ -170,7 +170,7 @@ Content-Type: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.accessToken === "access token for gsvc", "响应不等于\"access token for gsvc\"")
+        client.global.set("accessToken",response.body.accessToken)
     });
 %}
 
@@ -196,7 +196,7 @@ Content-Type: application/json
 POST http://{{barService}}/sa/hi
 Content-Type: application/json
 Accept: text/html
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTY5NDkxNTU1OH0.A0xJfmCz9LWcfgYv74E9AfESXRtA25o3xkTpYsLjXVE
+Authorization: Bearer {{accessToken}}
 
 {
     "name": "gsvc"
@@ -204,9 +204,10 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsI
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401, "Response status is not 200");
+        client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
-        client.assert(type === "text/plain", "Expected 'text/plain' but received '" + type + "'");
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.userName === "gsvc, admin",response.body.userName + "!= gsvc, admin")
     });
 %}
 
@@ -220,8 +221,9 @@ Accept: text/html
     client.test("Request executed successfully", function () {
         client.assert(response.status === 302, "Response status is not 200");
         const type = response.contentType.mimeType;
-        client.assert(type === "text/plain", "Expected 'text/plain' but received '" + type + "'");
-        client.assert(response.headers.location === "http://localhost:12562/home",response.headers.get('location')+" != 'http://localhost:12562/home'")
+        client.assert(type === "text/html", "Expected 'text/plain' but received '" + type + "'");
+        client.assert(response.headers.valueOf("Location").endsWith("/home") ,"'"+response.headers.valueOf('Location')+" not end with /home")
+        client.global.clear("accessToken")
     });
 %}
 

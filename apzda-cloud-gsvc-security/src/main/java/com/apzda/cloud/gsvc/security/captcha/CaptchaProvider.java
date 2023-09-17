@@ -1,14 +1,18 @@
 package com.apzda.cloud.gsvc.security.captcha;
 
-import org.springframework.security.core.Authentication;
+import org.springframework.web.servlet.function.ServerRequest;
 
 /**
  * @author fengz
  */
-public interface CaptchaProvider {
+public interface CaptchaProvider<T extends CaptchaWidget> {
 
-    boolean valid(Authentication captchaToken, boolean removeOnFailure);
+    String getId();
 
-    Captcha generate();
+    boolean valid(String captchaId, ServerRequest request, boolean removeOnFailure);
+
+    T create(String captchaId);
+
+    boolean supports(String id);
 
 }

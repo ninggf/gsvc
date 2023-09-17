@@ -11,6 +11,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.lang.NonNull;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
@@ -24,36 +25,39 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
 
     private final String cfgName;
 
-    private WebClient.Builder builder;
-
-    private GatewayServiceConfigure svcConfigure;
+    private ApplicationContext applicationContext;
 
     public WebclientFactoryBean(String cfgName) {
         this.cfgName = cfgName;
     }
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.builder = applicationContext.getBean(WebClient.Builder.class);
-        this.svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
-        val svcLbName = svcConfigure.svcLbName(cfgName);
-        val baseUrl = ServiceMethod.baseUrl(svcLbName);
-        try {
-            Class.forName(
-                    "org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction");
-
-            this.builder.filter(applicationContext.getBean(
-                    org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction.class));
-            log.debug("LoadBalancer is enabled for {}. BASE URI: {}", cfgName, baseUrl);
-        }
-        catch (Exception e) {
-            log.debug("LoadBalancer is disabled for {}. BASE URI: {}", cfgName, baseUrl);
-        }
-        this.builder.baseUrl(baseUrl);
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 
     @Override
     public WebClient getObject() throws Exception {
+        WebClient.Builder builder = applicationContext.getBean(WebClient.Builder.class);
+        GatewayServiceConfigure svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
+
+        val svcLbName = svcConfigure.svcLbName(cfgName);
+        val baseUrl = ServiceMethod.baseUrl(svcLbName);
+        boolean lb;
+        try {
+            Class.forName(
+                    "org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction");
+            val lbFunc = this.applicationContext.getBean(
+                    org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction.class);
+            builder.filter(lbFunc);
+            lb = true;
+        }
+        catch (Exception ignored) {
+            lb = false;
+        }
+
+        builder.baseUrl(baseUrl);
+
         val readTimeout = svcConfigure.getReadTimeout(cfgName, true);
         val writeTimeout = svcConfigure.getWriteTimeout(cfgName, true);
         val connectTimeout = svcConfigure.getConnectTimeout(cfgName);
@@ -70,10 +74,10 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
 
         val connector = new ReactorClientHttpConnector(httpClient);
 
-        log.trace("[{}] Setup WebClient for {}: ConnectTimeout={}, ReadTimeout={}, WriteTimeout={}",
-                GsvcContextHolder.getRequestId(), cfgName, connectTimeout, readTimeout, writeTimeout);
-        // bookmark 设置连接和读取超时时间
-        return this.builder.clientConnector(connector).build();
+        log.trace("[{}] Setup WebClient for {}: BASE={}, LB={}, ConnectTimeout={}, ReadTimeout={}, WriteTimeout={}",
+                GsvcContextHolder.getRequestId(), cfgName, baseUrl, lb, connectTimeout, readTimeout, writeTimeout);
+
+        return builder.clientConnector(connector).build();
     }
 
     @Override

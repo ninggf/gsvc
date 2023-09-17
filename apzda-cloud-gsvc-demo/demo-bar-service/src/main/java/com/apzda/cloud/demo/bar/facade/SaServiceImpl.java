@@ -3,7 +3,6 @@ package com.apzda.cloud.demo.bar.facade;
 import com.apzda.cloud.demo.bar.proto.*;
 import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -50,8 +49,8 @@ public class SaServiceImpl implements SaService {
 
                 return LoginRes.newBuilder()
                     .setErrCode(0)
-                    .setAccessToken("access token for " + jwtToken.getAccessToken())
-                    .setRefreshToken("refresh token for " + jwtToken.getRefreshToken())
+                    .setAccessToken(jwtToken.getAccessToken())
+                    .setRefreshToken(jwtToken.getRefreshToken())
                     .build();
             }
         }
@@ -64,18 +63,21 @@ public class SaServiceImpl implements SaService {
 
     @Override
     public SaRes info(SaReq request) {
-        return SaRes.newBuilder().setUserName(request.getName() + ".sa").setErrCode(0).buildPartial();
+        val currentUser = request.getCurrentUser();
+        var uid = "";
+        if (request.hasCurrentUser()) {
+            uid = request.getCurrentUser().getUid();
+        }
+        return SaRes.newBuilder().setUserName(request.getName() + "." + uid).setErrCode(0).buildPartial();
     }
 
     @Override
     public SaRes hi(SaReq request) {
 
-        try {
-            return SaRes.newBuilder().setUserName(objectMapper.writeValueAsString(request)).setErrCode(0).build();
-        }
-        catch (JsonProcessingException e) {
-            return SaRes.newBuilder().setErrCode(1000).buildPartial();
-        }
+        return SaRes.newBuilder()
+            .setUserName(request.getName() + ", " + request.getCurrentUser().getUid())
+            .setErrCode(0)
+            .build();
     }
 
 }

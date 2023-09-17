@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.config;
 
-import lombok.Getter;
+import lombok.Data;
 import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * @author fengz
  */
-@Getter
+@Data
 @ToString
 @ConfigurationProperties("apzda.cloud")
 public class ServiceConfigProperties {
@@ -19,7 +19,7 @@ public class ServiceConfigProperties {
 
     private final static ServiceConfig REFERENCE_DEFAULT = new ServiceConfig();
 
-    private final GlobalConfig config = new GlobalConfig();
+    private Config config = new Config();
 
     private final Map<String, ServiceConfig> service = new LinkedHashMap<>();
 

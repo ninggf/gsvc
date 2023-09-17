@@ -1,3 +1,20 @@
+### FooService Login
+POST http://{{fooService}}/foobar/login
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+Accept: application/json
+
+username=admin&password=123456
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.global.set("accessToken",response.body.data.accessToken)
+    });
+ %}
+
 ### FooService Greeting
 POST http://{{fooService}}/~fooService/greeting
 Content-Type: application/json
@@ -42,6 +59,7 @@ client.test("Request executed successfully", function() {
 POST http://{{fooService}}/~fooService/hi
 Content-Type: application/json
 X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
 
 {
     "name": "gsvc",
@@ -62,6 +80,7 @@ client.test("Request executed successfully", function() {
 POST http://{{fooService}}/~fooService/hi?a=1
 Content-Type: application/x-www-form-urlencoded
 X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
 
 name=gsvc&age=18
 
@@ -80,6 +99,7 @@ name=gsvc&age=18
 POST http://{{fooService}}/~fooService/saInfo
 Content-Type: application/x-www-form-urlencoded
 X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
 
 name=gsvc&age=18
 
@@ -89,7 +109,7 @@ name=gsvc&age=18
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-        client.assert(response.body.name === "gsvc.sa","name != 'gsvc.sa'")
+        client.assert(response.body.name.startsWith("gsvc."),response.body.name +" !=  " +  client.global.get("userName"))
     });
 %}
 

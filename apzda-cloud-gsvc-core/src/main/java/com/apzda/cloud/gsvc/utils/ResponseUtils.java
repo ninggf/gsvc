@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.utils;
 
-import com.apzda.cloud.gsvc.config.GlobalConfig;
+import com.apzda.cloud.gsvc.config.Config;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.util.CollectionUtils;
@@ -23,7 +24,6 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -37,7 +37,7 @@ public class ResponseUtils {
 
     public static final ObjectMapper OBJECT_MAPPER;
 
-    private static GlobalConfig gsvcConfig;
+    private static Config gsvcConfig;
 
     static {
         OBJECT_MAPPER = new ObjectMapper();
@@ -47,7 +47,7 @@ public class ResponseUtils {
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    public static void config(ProtobufJacksonConfig config, GlobalConfig globalConfig) {
+    public static void config(ProtobufJacksonConfig config, Config globalConfig) {
         OBJECT_MAPPER.registerModule(new ProtobufModule(config));
         gsvcConfig = globalConfig;
     }
@@ -110,18 +110,18 @@ public class ResponseUtils {
         val errCode = data.getErrCode();
         val serverHttpRequest = new ServletServerHttpRequest(request);
         val mediaTypes = serverHttpRequest.getHeaders().getAccept();
-
-        if (isCompatibleWith(TEXT_MASK, mediaTypes)) {
+        val compatibleWith = isCompatibleWith(TEXT_MASK, mediaTypes);
+        if (compatibleWith != null) {
             response.setContentType(MediaType.TEXT_PLAIN_VALUE);
             if (errCode == -401) {
                 val loginUrl = getLoginUrl(mediaTypes);
-                if (loginUrl != null) {
-                    response.sendRedirect(loginUrl.toString());
+                if (StringUtils.isNotBlank(loginUrl)) {
+                    response.sendRedirect(loginUrl);
                     return;
                 }
             }
         }
-        else if (isCompatibleWith(MediaType.APPLICATION_JSON, mediaTypes)) {
+        else {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE + "; charset=utf-8");
         }
 
@@ -131,7 +131,7 @@ public class ResponseUtils {
         else if (errCode != 0) {
             response.setStatus(500);
         }
-
+        // tbd contentNegotiation?
         val jsonStr = OBJECT_MAPPER.writeValueAsString(data);
         response.setContentLength(jsonStr.length());
 
@@ -140,15 +140,15 @@ public class ResponseUtils {
         }
     }
 
-    public static boolean isCompatibleWith(MediaType mediaType, List<MediaType> mediaTypes) {
+    public static MediaType isCompatibleWith(MediaType mediaType, List<MediaType> mediaTypes) {
         if (mediaType != null && !CollectionUtils.isEmpty(mediaTypes)) {
             for (MediaType contentType : mediaTypes) {
                 if (contentType.isCompatibleWith(mediaType)) {
-                    return true;
+                    return contentType;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     public static List<MediaType> mediaTypes(HttpServletRequest request) {
@@ -156,22 +156,22 @@ public class ResponseUtils {
         return serverHttpRequest.getHeaders().getAccept();
     }
 
-    public static URI getHomePage(List<MediaType> contentTypes) {
+    public static String getHomePage(List<MediaType> contentTypes) {
         if (gsvcConfig != null) {
             val homePage = gsvcConfig.getHomePage();
-
-            if (homePage != null && ResponseUtils.isCompatibleWith(TEXT_MASK, contentTypes)) {
+            val compatibleWith = isCompatibleWith(TEXT_MASK, contentTypes);
+            if (homePage != null && compatibleWith != null) {
                 return homePage;
             }
         }
         return null;
     }
 
-    public static URI getLoginUrl(List<MediaType> contentTypes) {
+    public static String getLoginUrl(List<MediaType> contentTypes) {
         if (gsvcConfig != null) {
             val loginUrl = gsvcConfig.getLoginPage();
-
-            if (loginUrl != null && ResponseUtils.isCompatibleWith(TEXT_MASK, contentTypes)) {
+            val compatibleWith = isCompatibleWith(TEXT_MASK, contentTypes);
+            if (loginUrl != null && compatibleWith != null) {
                 return loginUrl;
             }
         }

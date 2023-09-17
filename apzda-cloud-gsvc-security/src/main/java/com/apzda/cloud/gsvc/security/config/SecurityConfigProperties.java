@@ -4,11 +4,13 @@
 package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.security.captcha.CaptchaProvider;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.convert.DurationUnit;
 import org.springframework.boot.web.server.Cookie;
+import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -23,8 +25,6 @@ import java.util.Map;
 @ConfigurationProperties("apzda.cloud.security")
 @Data
 public class SecurityConfigProperties {
-
-    private String tokenManager;
 
     private CookieConfig cookie = new CookieConfig();
 
@@ -42,6 +42,8 @@ public class SecurityConfigProperties {
     private Duration jwtLeeway = Duration.ofSeconds(30);
 
     private List<String> exclude = new ArrayList<>();
+
+    private List<ACL> acl = new ArrayList<>();
 
     @DurationUnit(ChronoUnit.MINUTES)
     private Duration accessTokenTimeout = Duration.ofMinutes(5);
@@ -81,6 +83,17 @@ public class SecurityConfigProperties {
         private Class<? extends CaptchaProvider> provider;
 
         private Map<String, String> props = new HashMap<>();
+
+    }
+
+    @Data
+    @Validated
+    public static class ACL {
+
+        @NotBlank
+        private String path;
+
+        private String access;
 
     }
 

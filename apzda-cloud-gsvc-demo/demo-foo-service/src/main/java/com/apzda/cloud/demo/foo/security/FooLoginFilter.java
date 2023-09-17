@@ -1,6 +1,7 @@
-package com.apzda.cloud.gsvc.security.filter;
+package com.apzda.cloud.demo.foo.security;
 
-import com.apzda.cloud.gsvc.security.token.WechatScanToken;
+import com.apzda.cloud.gsvc.security.filter.AuthenticationProcessingFilter;
+import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -9,32 +10,30 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
 /**
- * Created at 2023/5/24 17:56.
- *
- * @author Leo Ning
- * @version 1.0.0
- * @since 1.0.0
- **/
-public class WechatScanAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
+ * @author fengz
+ */
+@Component
+public class FooLoginFilter extends AuthenticationProcessingFilter {
 
-    private static final AntPathRequestMatcher DEFAULT_ANT_PATH_REQUEST_MATCHER = new AntPathRequestMatcher("/wechat",
-            "GET");
+    private static final AntPathRequestMatcher DEFAULT_ANT_PATH_REQUEST_MATCHER = new AntPathRequestMatcher(
+            "/foobar/login", "POST");
 
-    public WechatScanAuthenticationFilter(AuthenticationManager authenticationManager) {
+    public FooLoginFilter(AuthenticationManager authenticationManager) {
         super(DEFAULT_ANT_PATH_REQUEST_MATCHER, authenticationManager);
     }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException, IOException, ServletException {
-        // 获取微信扫码登录回调参数
-        val token = new WechatScanToken(null);
+        val username = request.getParameter("username");
+        val password = request.getParameter("password");
+        val token = new JwtAuthenticationToken(username, password);
 
         setDetails(request, token);
         // 开始认证

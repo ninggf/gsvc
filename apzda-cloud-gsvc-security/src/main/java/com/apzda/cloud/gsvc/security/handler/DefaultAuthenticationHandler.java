@@ -37,7 +37,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
             Authentication authentication) throws IOException, ServletException {
-        log.trace("Authentication Success: {}", authentication);
+        log.trace("on Authentication Success: {}", authentication);
         if (authentication instanceof JwtAuthenticationToken) {
             try {
                 val jwtToken = tokenManager.createJwtToken(authentication, true);
@@ -74,7 +74,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException exception) throws IOException, ServletException {
-        log.trace("Authentication Failure: {}", exception.toString());
+        log.trace("on Authentication Failure: {}", exception.toString());
         ResponseUtils.respond(request, response,
                 Response.error(ServiceError.UNAUTHORIZED.code, exception.getMessage()));
     }
@@ -82,7 +82,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onAccessDenied(HttpServletRequest request, HttpServletResponse response,
             AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        log.trace("onAccessDenied: {}", accessDeniedException.getMessage());
+        log.trace("on Access Denied: {}", accessDeniedException.getMessage());
         if (!response.isCommitted()) {
             ResponseUtils.respond(request, response, Response.error(ServiceError.FORBIDDEN));
         }
@@ -94,7 +94,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onUnauthorized(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
-        log.trace("onUnauthorized: {}", authException.getMessage());
+        log.trace("on Unauthorized: {}", authException.getMessage());
         if (!response.isCommitted()) {
             ResponseUtils.respond(request, response, Response.error(ServiceError.UNAUTHORIZED));
         }
@@ -106,7 +106,9 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onAuthentication(Authentication authentication, HttpServletRequest request,
             HttpServletResponse response) throws SessionAuthenticationException {
-        log.trace("会话检测，保证当前会议中的认证有效: {}", authentication);
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] on Authentication do session check: {}", GsvcContextHolder.getRequestId(), authentication);
+        }
 
         if (authentication instanceof JwtAuthenticationToken authenticationToken) {
             val token = authenticationToken.getJwtToken();
@@ -117,15 +119,19 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
             throws IOException, ServletException {
-        log.trace("[{}] DefaultAuthenticationHandler onLogoutSuccess", GsvcContextHolder.getRequestId());
 
         val mediaTypes = ResponseUtils.mediaTypes(request);
         val homePage = ResponseUtils.getHomePage(mediaTypes);
-        if (homePage != null) {
-            response.setContentType(MediaType.TEXT_PLAIN_VALUE);
-            response.sendRedirect(homePage.toString());
+        val compatibleWith = ResponseUtils.isCompatibleWith(ResponseUtils.TEXT_MASK, mediaTypes);
+
+        if (compatibleWith != null && StringUtils.isNotBlank(homePage)) {
+            log.trace("[{}] on Logout Success and redirect to: {}", GsvcContextHolder.getRequestId(), homePage);
+            response
+                .setContentType(compatibleWith.isConcrete() ? compatibleWith.toString() : MediaType.TEXT_PLAIN_VALUE);
+            response.sendRedirect(homePage);
         }
         else {
+            log.trace("[{}] on Logout Success with json data", GsvcContextHolder.getRequestId());
             ResponseUtils.respond(request, response, Response.success("Logout"));
         }
     }
