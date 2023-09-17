@@ -40,7 +40,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
         log.trace("on Authentication Success: {}", authentication);
         if (authentication instanceof JwtAuthenticationToken) {
             try {
-                val jwtToken = tokenManager.createJwtToken(authentication, true);
+                val jwtToken = tokenManager.createJwtToken(authentication);
                 val cookieCfg = properties.getCookie();
                 val cookieName = cookieCfg.getCookieName();
 

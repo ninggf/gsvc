@@ -20,7 +20,7 @@ public interface TokenManager {
     default void remove(Authentication authentication, HttpServletRequest request) {
     }
 
-    JwtToken createJwtToken(Authentication authentication, boolean loadAuthorities);
+    JwtToken createJwtToken(Authentication authentication);
 
     JwtToken refreshAccessToken(JwtToken token, Authentication authentication);
 

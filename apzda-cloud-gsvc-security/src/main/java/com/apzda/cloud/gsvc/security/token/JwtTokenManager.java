@@ -117,7 +117,7 @@ public class JwtTokenManager implements TokenManager {
     }
 
     @Override
-    public JwtToken createJwtToken(Authentication authentication, boolean loadAuthority) {
+    public JwtToken createJwtToken(Authentication authentication) {
         val token = JWT.create();
         val principal = authentication.getPrincipal();
         token.setSubject(authentication.getName());

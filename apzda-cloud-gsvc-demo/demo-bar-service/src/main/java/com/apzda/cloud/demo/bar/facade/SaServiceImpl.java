@@ -37,7 +37,7 @@ public class SaServiceImpl implements SaService {
             val authenticate = authenticationManager.authenticate(authRequest);
 
             if (authenticate != null && authenticate.isAuthenticated()) {
-                val jwtToken = tokenManager.createJwtToken(authenticate, true);
+                val jwtToken = tokenManager.createJwtToken(authenticate);
 
                 if (authenticate instanceof JwtAuthenticationToken jwtAuthenticationToken) {
                     jwtAuthenticationToken.setJwtToken(jwtToken);
