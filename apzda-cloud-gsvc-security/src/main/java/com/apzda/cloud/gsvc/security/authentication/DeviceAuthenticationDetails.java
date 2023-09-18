@@ -7,8 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
-import java.util.Optional;
-
 /**
  * @author fengz
  */
@@ -34,9 +32,9 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
         this.appVer = StringUtils.defaultString(headers.get("X-App-Ver"));
     }
 
-    public static Optional<DeviceAuthenticationDetails> create() {
+    public static DeviceAuthenticationDetails create() {
         val request = GsvcContextHolder.getRequest();
-        return request.map(DeviceAuthenticationDetails::new);
+        return request.map(DeviceAuthenticationDetails::new).orElse(null);
     }
 
     public String getDevice() {

@@ -1,4 +1,4 @@
-package com.apzda.cloud.gsvc.security;
+package com.apzda.cloud.gsvc.security.token;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.lang.NonNull;
@@ -20,7 +20,7 @@ public interface TokenManager {
 
     JwtToken createJwtToken(Authentication authentication);
 
-    JwtToken refreshAccessToken(JwtToken token, Authentication authentication);
+    JwtToken refreshAccessToken(@NonNull JwtToken jwtToken);
 
     default void verify(@NonNull Authentication authentication) throws SessionAuthenticationException {
     }

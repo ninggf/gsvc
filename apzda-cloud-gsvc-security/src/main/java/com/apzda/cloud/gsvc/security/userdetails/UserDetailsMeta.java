@@ -1,6 +1,11 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
+import lombok.val;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.AccountExpiredException;
+import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
@@ -12,7 +17,6 @@ public interface UserDetailsMeta extends UserDetails {
 
     static String AUTHORITY_META_KEY = "Authorities";
     static String ACCESS_TOKEN_META_KEY = "AccessToken";
-    static String REFRESH_TOKEN_META_KEY = "RefreshToken";
 
     static String LOGIN_TIME_SUB_KEY = "loginTime";
 
@@ -36,5 +40,21 @@ public interface UserDetailsMeta extends UserDetails {
     void remove(String key);
 
     void clear();
+
+    static void checkUserDetails(UserDetails userDetails) {
+        val username = userDetails.getUsername();
+        if (!userDetails.isEnabled()) {
+            throw new DisabledException(String.format("%s is disabled", username));
+        }
+        if (!userDetails.isCredentialsNonExpired()) {
+            throw new CredentialsExpiredException(String.format("%s's password is expired", username));
+        }
+        if (!userDetails.isAccountNonExpired()) {
+            throw new AccountExpiredException(String.format("%s's account is expired", username));
+        }
+        if (!userDetails.isAccountNonLocked()) {
+            throw new LockedException(String.format("%s's account is expired", username));
+        }
+    }
 
 }

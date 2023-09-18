@@ -1,8 +1,8 @@
 package com.apzda.cloud.demo.bar.facade;
 
 import com.apzda.cloud.demo.bar.proto.*;
-import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
+import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -33,15 +33,13 @@ public class SaServiceImpl implements SaService {
         try {
 
             val authRequest = JwtAuthenticationToken.unauthenticated(username, password);
-
             val authenticate = authenticationManager.authenticate(authRequest);
 
             if (authenticate != null && authenticate.isAuthenticated()) {
                 val jwtToken = tokenManager.createJwtToken(authenticate);
 
                 if (authenticate instanceof JwtAuthenticationToken jwtAuthenticationToken) {
-                    jwtAuthenticationToken.setJwtToken(jwtToken);
-                    jwtAuthenticationToken.login();
+                    jwtAuthenticationToken.login(jwtToken);
                 }
 
                 val context = SecurityContextHolder.getContextHolderStrategy().createEmptyContext();
@@ -52,6 +50,7 @@ public class SaServiceImpl implements SaService {
                     .setErrCode(0)
                     .setAccessToken(jwtToken.getAccessToken())
                     .setRefreshToken(jwtToken.getRefreshToken())
+                    .setName(jwtToken.getName())
                     .build();
             }
         }

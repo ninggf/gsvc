@@ -95,6 +95,8 @@ public class InMemoryUserServiceMetaRepository implements UserDetailsMetaReposit
 
         try {
             val ud = userDetailsService.loadUserByUsername(userDetails.getUsername());
+            UserDetailsMeta.checkUserDetails(ud);
+
             var authorities = ud.getAuthorities();
             if (CollectionUtils.isEmpty(authorities)) {
                 authorities = Collections.emptyList();

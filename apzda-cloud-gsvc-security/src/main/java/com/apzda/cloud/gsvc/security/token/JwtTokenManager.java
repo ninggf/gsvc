@@ -2,12 +2,11 @@ package com.apzda.cloud.gsvc.security.token;
 
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.crypto.digest.MD5;
 import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
 import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
-import com.apzda.cloud.gsvc.security.JwtToken;
-import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
@@ -17,10 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
+
+import java.util.Objects;
 
 /**
  * @author fengz
@@ -138,8 +140,59 @@ public class JwtTokenManager implements TokenManager {
     }
 
     @Override
-    public JwtToken refreshAccessToken(JwtToken token, Authentication authentication) {
-        // todo refresh AccessToken
+    public JwtToken refreshAccessToken(@NonNull JwtToken jwtToken) {
+        try {
+            val name = jwtToken.getName();
+            if (StringUtils.isBlank(name)) {
+                throw new InsufficientAuthenticationException("username is empty");
+            }
+
+            val requestId = GsvcContextHolder.getRequestId();
+
+            val refreshToken = jwtToken.getRefreshToken();
+            if (StringUtils.isBlank(refreshToken)) {
+                log.error("[{}] refreshToken is empty!", requestId);
+                return null;
+            }
+
+            try {
+                JWTUtil.verify(refreshToken, jwtSigner);
+            }
+            catch (Exception e) {
+                log.error("[{}] refreshToken({}) is invalid: {}", requestId, refreshToken, e.getMessage());
+                return null;
+            }
+
+            val jwt = JWTUtil.parseToken(refreshToken);
+            jwt.setSigner(jwtSigner);
+
+            val jwtLeeway = properties.getJwtLeeway();
+            if (!jwt.validate(jwtLeeway.toSeconds())) {
+                log.trace("[{}] refreshToken({}) is expired!", requestId, refreshToken);
+
+                return null;
+            }
+
+            val userDetails = userDetailsService.loadUserByUsername(name);
+            val authentication = JwtAuthenticationToken.unauthenticated(userDetailsMetaRepository.create(userDetails),
+                    userDetails.getPassword());
+
+            val accessToken = StringUtils.defaultString(jwtToken.getAccessToken());
+            val password = userDetails.getPassword();
+            val oldSign = (String) jwt.getPayload(JWT.SUBJECT);
+            val sign = MD5.create().digestHex(accessToken + password);
+
+            if (Objects.equals(oldSign, sign)) {
+                return createJwtToken(authentication);
+            }
+
+            log.error("[{}] refreshToken({}) is invalid: accessToken or password does not match", requestId,
+                    refreshToken);
+        }
+        catch (Exception e) {
+            log.warn("[{}] Cannot refresh accessToken: {}", GsvcContextHolder.getRequestId(), e.getMessage());
+        }
+
         return null;
     }
 
@@ -149,42 +202,37 @@ public class JwtTokenManager implements TokenManager {
         if (principal instanceof UserDetails userDetails) {
             val password = userDetails.getPassword();
             val expire = properties.getRefreshTokenTimeout();
-            val expireAt = DateUtil.date().offset(DateField.MINUTE, (int) expire.toMinutes());
-            val details = authentication.getDetails();
-
+            val accessExpireAt = DateUtil.date().offset(DateField.MINUTE, (int) expire.toMinutes());
+            val token = JWT.create();
+            val refreshToken = MD5.create().digestHex(accessToken + password);
+            token.setSubject(refreshToken);
+            token.setExpiresAt(accessExpireAt);
+            token.setSigner(jwtSigner);
+            return token.sign();
         }
         return "";
     }
 
     @Override
     public void verify(@NonNull Authentication authentication) throws SessionAuthenticationException {
+        val requestId = GsvcContextHolder.getRequestId();
+
         if (authentication instanceof JwtAuthenticationToken auth) {
             if (auth.isLogin()) {
                 return;
             }
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Current Session is not login", GsvcContextHolder.getRequestId());
+                log.trace("[{}] Current Session is not login", requestId);
             }
-            throw new InvalidSessionException("Current Session is not login");
+            throw new InvalidSessionException(String.format("[%s] Current Session is not login!", requestId));
         }
-        if (log.isTraceEnabled()) {
-            log.trace("[{}] Current Session is invalid", GsvcContextHolder.getRequestId());
-        }
-        throw new InvalidSessionException("Session is invalid");
-    }
 
-    @Override
-    public void save(Authentication authentication, HttpServletRequest request) {
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Save Security Context", GsvcContextHolder.getRequestId());
+            log.trace("[{}] Current Token is not supported: {}", requestId, authentication);
         }
-    }
 
-    @Override
-    public void remove(Authentication authentication, HttpServletRequest request) {
-        if (log.isTraceEnabled()) {
-            log.trace("[{}] Remove Security Context", GsvcContextHolder.getRequestId());
-        }
+        throw new InvalidSessionException(
+                String.format("[%s] Authentication is not supported: %s", requestId, authentication));
     }
 
 }

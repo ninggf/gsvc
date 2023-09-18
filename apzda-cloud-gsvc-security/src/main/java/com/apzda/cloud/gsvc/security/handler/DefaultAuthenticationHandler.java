@@ -3,9 +3,9 @@ package com.apzda.cloud.gsvc.security.handler;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
-import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
+import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -37,7 +37,10 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
             Authentication authentication) throws IOException, ServletException {
-        log.trace("on Authentication Success: {}", authentication);
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] on Authentication Success: {}", GsvcContextHolder.getRequestId(), authentication);
+        }
+
         if (authentication instanceof JwtAuthenticationToken authenticationToken) {
             try {
                 val jwtToken = tokenManager.createJwtToken(authentication);
@@ -56,7 +59,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
                     response.addCookie(cookie);
                 }
 
-                authenticationToken.login();
+                authenticationToken.login(jwtToken);
 
                 ResponseUtils.respond(request, response, Response.success(jwtToken));
             }
@@ -68,7 +71,8 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
             }
         }
         else {
-            log.error("Authentication is not a JwtAuthenticationToken instance!");
+            log.error("[{}] Authentication is not a JwtAuthenticationToken instance!",
+                    GsvcContextHolder.getRequestId());
             ResponseUtils.respond(request, response, Response.error(ServiceError.INVALID_PRINCIPAL_TYPE));
         }
     }
@@ -76,7 +80,9 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException exception) throws IOException, ServletException {
-        log.trace("on Authentication Failure: {}", exception.toString());
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] on Authentication Failure: {}", GsvcContextHolder.getRequestId(), exception.toString());
+        }
         ResponseUtils.respond(request, response,
                 Response.error(ServiceError.UNAUTHORIZED.code, exception.getMessage()));
     }
@@ -84,7 +90,10 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onAccessDenied(HttpServletRequest request, HttpServletResponse response,
             AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        log.trace("on Access Denied: {}", accessDeniedException.getMessage());
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] on Access Denied: {}", GsvcContextHolder.getRequestId(),
+                    accessDeniedException.getMessage());
+        }
         if (!response.isCommitted()) {
             ResponseUtils.respond(request, response, Response.error(ServiceError.FORBIDDEN));
         }
@@ -96,7 +105,9 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     @Override
     public void onUnauthorized(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
-        log.trace("on Unauthorized: {}", authException.getMessage());
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] on Unauthorized: {}", GsvcContextHolder.getRequestId(), authException.getMessage());
+        }
         if (!response.isCommitted()) {
             ResponseUtils.respond(request, response, Response.error(ServiceError.UNAUTHORIZED));
         }
@@ -111,16 +122,12 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
         if (log.isTraceEnabled()) {
             log.trace("[{}] on Authentication Do Session check: {}", GsvcContextHolder.getRequestId(), authentication);
         }
-
         tokenManager.verify(authentication);
     }
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         try {
-            if (authentication == null) {
-                authentication = tokenManager.restoreAuthentication(request);
-            }
             if (log.isTraceEnabled()) {
                 log.trace("[{}] logout: {}", GsvcContextHolder.getRequestId(), authentication);
             }

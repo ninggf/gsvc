@@ -171,6 +171,7 @@ Content-Type: application/json
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
         client.global.set("accessToken",response.body.accessToken)
+        client.global.set("refreshToken",response.body.refreshToken)
     });
 %}
 
@@ -192,10 +193,11 @@ Content-Type: application/json
     });
 %}
 
-### Route - SaService - /sa/hi
+### Route - SaService - /sa/hi#after-login
 POST http://{{barService}}/sa/hi
+// @no-redirect
 Content-Type: application/json
-Accept: text/html
+Accept: application/json
 Authorization: Bearer {{accessToken}}
 
 {
@@ -211,11 +213,53 @@ Authorization: Bearer {{accessToken}}
     });
 %}
 
-### Auth - html - /logout
+### Auth - API - /token/refresh
+POST http://{{barService}}/token/refresh
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "admin",
+  "refreshToken": "{{refreshToken}}",
+  "accessToken": "{{accessToken}}"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'text/plain' but received '" + type + "'");
+        client.global.set("accessToken",response.body.data.accessToken)
+        client.global.set("refreshToken",response.body.data.refreshToken)
+    });
+%}
+
+### Route - SaService - /sa/hi#after-refresh
+POST http://{{barService}}/sa/hi
+// @no-redirect
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "name": "gsvc"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.userName === "gsvc, admin",response.body.userName + "!= gsvc, admin")
+    });
+%}
+
+### Auth - html - /logout#1
 // @no-redirect
 POST http://{{barService}}/logout
 Accept: text/html
-
+Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
@@ -226,16 +270,40 @@ Accept: text/html
     });
 %}
 
-### Auth - API - /logout
+### Auth - API - /token/refresh#after-login
+POST http://{{barService}}/token/refresh
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "name": "admin",
+  "refreshToken": "{{refreshToken}}",
+  "accessToken": "{{accessToken}}"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401 || response.status === 500 , "Response status is not 500 or 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'text/plain' but received '" + type + "'");
+        // client.assert(request.body.errCode === 500,"status != 500")
+    });
+%}
+
+### Auth - API - /logout#2
 POST http://{{barService}}/logout
 Content-Type: application/json
 Accept: application/json
-
+Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'text/plain' but received '" + type + "'");
+        client.global.clear("accessToken")
+        client.global.clear("refreshToken")
     });
 %}
+

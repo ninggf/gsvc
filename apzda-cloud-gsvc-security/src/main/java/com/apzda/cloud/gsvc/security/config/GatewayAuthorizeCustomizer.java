@@ -2,7 +2,7 @@ package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.gtw.RouteMeta;
-import com.apzda.cloud.gsvc.security.AuthorizeCustomizer;
+import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;

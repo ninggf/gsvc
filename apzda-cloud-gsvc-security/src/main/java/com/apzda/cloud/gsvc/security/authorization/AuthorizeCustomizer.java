@@ -1,4 +1,4 @@
-package com.apzda.cloud.gsvc.security;
+package com.apzda.cloud.gsvc.security.authorization;
 
 import org.springframework.core.Ordered;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

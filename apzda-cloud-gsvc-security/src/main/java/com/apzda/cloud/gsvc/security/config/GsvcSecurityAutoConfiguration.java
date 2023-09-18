@@ -3,8 +3,8 @@ package com.apzda.cloud.gsvc.security.config;
 import cn.hutool.jwt.signers.JWTSigner;
 import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
-import com.apzda.cloud.gsvc.security.AuthorizeCustomizer;
-import com.apzda.cloud.gsvc.security.TokenManager;
+import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
+import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
@@ -98,6 +98,7 @@ public class GsvcSecurityAutoConfiguration {
             http.sessionManagement((session) -> {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
                 session.sessionAuthenticationStrategy(authenticationHandler);
+                session.sessionAuthenticationFailureHandler(authenticationHandler);
                 session.invalidSessionStrategy(authenticationHandler);
             });
 

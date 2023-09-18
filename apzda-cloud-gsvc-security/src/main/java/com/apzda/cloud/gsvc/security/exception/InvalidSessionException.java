@@ -3,12 +3,12 @@
  */
 package com.apzda.cloud.gsvc.security.exception;
 
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
 /**
  * @author fengzi windywany@gmail.com
  **/
-public class InvalidSessionException extends AuthenticationException {
+public class InvalidSessionException extends SessionAuthenticationException {
 
     public InvalidSessionException(String msg) {
         super(msg);

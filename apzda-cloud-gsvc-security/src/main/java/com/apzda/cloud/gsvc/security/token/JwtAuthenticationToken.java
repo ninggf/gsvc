@@ -4,12 +4,11 @@
 package com.apzda.cloud.gsvc.security.token;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
-import com.apzda.cloud.gsvc.security.JwtToken;
-import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,15 +26,13 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     protected JwtToken jwtToken;
 
-    protected TokenManager tokenManager;
-
     private final Object principal;
 
     private Object credentials;
 
     public JwtAuthenticationToken(Object principal, Object credentials) {
         super(null);
-        this.principal = principal;
+        this.principal = checkPrincipal(principal);
         this.credentials = credentials;
         setAuthenticated(false);
         if (getDetails() == null) {
@@ -46,7 +43,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     public JwtAuthenticationToken(UserDetails principal, Object credentials,
             Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
-        this.principal = principal;
+        this.principal = checkPrincipal(principal);
         this.credentials = credentials;
         super.setAuthenticated(true); // must use super, as we override
 
@@ -66,7 +63,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     public String deviceAwareMetaKey(String key, String subKey) {
         val details = this.getDetails();
         if (details instanceof DeviceAuthenticationDetails deviceAuthenticationDetails) {
-            return key + "." + deviceAuthenticationDetails.getDevice();
+            key = key + "." + deviceAuthenticationDetails.getDevice();
         }
         return key + "." + subKey;
     }
@@ -127,9 +124,13 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             val accessToken = jwtToken.getAccessToken();
             val principal = getPrincipal();
             if (principal instanceof UserDetailsMeta userDetailsMeta) {
-                val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY, UserDetailsMeta.LOGIN_TIME_SUB_KEY);
+
                 try {
+                    val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY,
+                            UserDetailsMeta.LOGIN_TIME_SUB_KEY);
+
                     userDetailsMeta.remove(key);
+
                     if (log.isTraceEnabled()) {
                         log.trace("[{}] accessToken({}) now is logout", GsvcContextHolder.getRequestId(), accessToken);
                     }
@@ -144,6 +145,12 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         }
     }
 
+    public void login(@NonNull JwtToken jwtToken) {
+        Assert.notNull(jwtToken, "JwtToken must not be null");
+        this.jwtToken = jwtToken;
+        login();
+    }
+
     public void login() {
         if (principal instanceof UserDetailsMeta userDetailsMeta) {
             val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY, UserDetailsMeta.LOGIN_TIME_SUB_KEY);
@@ -152,15 +159,18 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     public boolean isLogin() {
-        if (jwtToken != null) {
-            val accessToken = jwtToken.getAccessToken();
-            val principal = getPrincipal();
-            if (principal instanceof UserDetailsMeta userDetailsMeta) {
-                val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY, UserDetailsMeta.LOGIN_TIME_SUB_KEY);
-                return userDetailsMeta.get(key, Long.valueOf("0")) > 0;
-            }
+        if (principal instanceof UserDetailsMeta userDetailsMeta) {
+            val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY, UserDetailsMeta.LOGIN_TIME_SUB_KEY);
+            return userDetailsMeta.get(key, Long.valueOf("0")) > 0;
         }
         return false;
+    }
+
+    protected Object checkPrincipal(Object principal) {
+        if (principal instanceof UserDetails userDetails) {
+            UserDetailsMeta.checkUserDetails(userDetails);
+        }
+        return principal;
     }
 
 }

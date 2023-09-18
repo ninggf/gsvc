@@ -1,7 +1,7 @@
 package com.apzda.cloud.gsvc.security.repository;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
-import com.apzda.cloud.gsvc.security.TokenManager;
+import com.apzda.cloud.gsvc.security.token.TokenManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
