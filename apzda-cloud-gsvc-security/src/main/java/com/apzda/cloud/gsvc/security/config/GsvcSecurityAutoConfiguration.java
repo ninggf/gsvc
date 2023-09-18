@@ -5,7 +5,7 @@ import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.security.AuthorizeCustomizer;
 import com.apzda.cloud.gsvc.security.TokenManager;
-import com.apzda.cloud.gsvc.security.filter.AuthenticationProcessingFilter;
+import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
@@ -79,7 +79,7 @@ public class GsvcSecurityAutoConfiguration {
 
         private final ApplicationEventPublisher eventPublisher;
 
-        private final ObjectProvider<List<AuthenticationProcessingFilter>> authenticationProcessingFilter;
+        private final ObjectProvider<List<DeviceAwareAuthenticationProcessingFilter>> authenticationProcessingFilter;
 
         private final ObjectProvider<List<AuthorizeCustomizer>> authorizeCustomizer;
 
@@ -142,7 +142,7 @@ public class GsvcSecurityAutoConfiguration {
 
             val filters = authenticationProcessingFilter.getIfAvailable();
             if (filters != null) {
-                filters.sort(Comparator.comparingInt(AuthenticationProcessingFilter::getOrder));
+                filters.sort(Comparator.comparingInt(DeviceAwareAuthenticationProcessingFilter::getOrder));
                 for (AbstractAuthenticationProcessingFilter filter : filters) {
                     filter.setSecurityContextHolderStrategy(SecurityContextHolder.getContextHolderStrategy());
 

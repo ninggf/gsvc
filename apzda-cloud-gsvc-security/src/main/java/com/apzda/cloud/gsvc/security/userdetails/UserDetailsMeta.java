@@ -4,7 +4,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 /**
  * @author fengz
@@ -12,11 +11,15 @@ import java.util.concurrent.ExecutionException;
 public interface UserDetailsMeta extends UserDetails {
 
     static String AUTHORITY_META_KEY = "Authorities";
+    static String ACCESS_TOKEN_META_KEY = "AccessToken";
+    static String REFRESH_TOKEN_META_KEY = "RefreshToken";
+
+    static String LOGIN_TIME_SUB_KEY = "loginTime";
 
     @NonNull
     UserDetails getUserDetails();
 
-    void set(String key, Object value) throws ExecutionException;
+    void set(String key, Object value);
 
     <R> Optional<R> get(String key, Class<R> rClass);
 

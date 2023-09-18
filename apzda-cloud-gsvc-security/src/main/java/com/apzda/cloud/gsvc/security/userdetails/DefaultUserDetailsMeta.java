@@ -7,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 /**
  * @author fengz
@@ -63,7 +62,7 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
     }
 
     @Override
-    public void set(String key, Object value) throws ExecutionException {
+    public void set(String key, Object value) {
         this.userDetailsMetaRepository.setMetaData(this.userDetails, key, value);
     }
 

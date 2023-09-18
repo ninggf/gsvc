@@ -3,8 +3,12 @@
  */
 package com.apzda.cloud.gsvc.security.token;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.JwtToken;
 import com.apzda.cloud.gsvc.security.TokenManager;
+import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
+import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -18,6 +22,7 @@ import java.util.Collections;
 /**
  * @author fengz windywany@gmail.com
  **/
+@Slf4j
 public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     protected JwtToken jwtToken;
@@ -33,6 +38,9 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         this.principal = principal;
         this.credentials = credentials;
         setAuthenticated(false);
+        if (getDetails() == null) {
+            setDetails(DeviceAuthenticationDetails.create());
+        }
     }
 
     public JwtAuthenticationToken(UserDetails principal, Object credentials,
@@ -41,6 +49,26 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         this.principal = principal;
         this.credentials = credentials;
         super.setAuthenticated(true); // must use super, as we override
+
+        if (getDetails() == null) {
+            setDetails(DeviceAuthenticationDetails.create());
+        }
+    }
+
+    public String deviceAwareMetaKey(String key) {
+        val details = this.getDetails();
+        if (details instanceof DeviceAuthenticationDetails deviceAuthenticationDetails) {
+            return key + "." + deviceAuthenticationDetails.getDevice();
+        }
+        return key;
+    }
+
+    public String deviceAwareMetaKey(String key, String subKey) {
+        val details = this.getDetails();
+        if (details instanceof DeviceAuthenticationDetails deviceAuthenticationDetails) {
+            return key + "." + deviceAuthenticationDetails.getDevice();
+        }
+        return key + "." + subKey;
     }
 
     @Override
@@ -92,6 +120,47 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     public void setJwtToken(JwtToken jwtToken) {
         this.jwtToken = jwtToken;
+    }
+
+    public void logout() {
+        if (jwtToken != null) {
+            val accessToken = jwtToken.getAccessToken();
+            val principal = getPrincipal();
+            if (principal instanceof UserDetailsMeta userDetailsMeta) {
+                val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY, UserDetailsMeta.LOGIN_TIME_SUB_KEY);
+                try {
+                    userDetailsMeta.remove(key);
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}] accessToken({}) now is logout", GsvcContextHolder.getRequestId(), accessToken);
+                    }
+                }
+                catch (Exception e) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}] accessToken({}) logout failed: ", GsvcContextHolder.getRequestId(), accessToken,
+                                e);
+                    }
+                }
+            }
+        }
+    }
+
+    public void login() {
+        if (principal instanceof UserDetailsMeta userDetailsMeta) {
+            val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY, UserDetailsMeta.LOGIN_TIME_SUB_KEY);
+            userDetailsMeta.set(key, System.currentTimeMillis());
+        }
+    }
+
+    public boolean isLogin() {
+        if (jwtToken != null) {
+            val accessToken = jwtToken.getAccessToken();
+            val principal = getPrincipal();
+            if (principal instanceof UserDetailsMeta userDetailsMeta) {
+                val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY, UserDetailsMeta.LOGIN_TIME_SUB_KEY);
+                return userDetailsMeta.get(key, Long.valueOf("0")) > 0;
+            }
+        }
+        return false;
     }
 
 }

@@ -223,7 +223,6 @@ Accept: text/html
         const type = response.contentType.mimeType;
         client.assert(type === "text/html", "Expected 'text/plain' but received '" + type + "'");
         client.assert(response.headers.valueOf("Location").endsWith("/home") ,"'"+response.headers.valueOf('Location')+" not end with /home")
-        client.global.clear("accessToken")
     });
 %}
 

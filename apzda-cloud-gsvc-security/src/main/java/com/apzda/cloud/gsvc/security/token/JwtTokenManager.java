@@ -9,14 +9,18 @@ import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.JwtToken;
 import com.apzda.cloud.gsvc.security.TokenManager;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
+import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
 /**
  * @author fengz
@@ -119,23 +123,18 @@ public class JwtTokenManager implements TokenManager {
     @Override
     public JwtToken createJwtToken(Authentication authentication) {
         val token = JWT.create();
-        val principal = authentication.getPrincipal();
-        token.setSubject(authentication.getName());
+        val name = authentication.getName();
+        token.setSubject(name);
         token.setSigner(jwtSigner);
         val accessExpireAt = DateUtil.date()
             .offset(DateField.MINUTE, (int) properties.getAccessTokenTimeout().toMinutes());
+
         token.setExpiresAt(accessExpireAt);
 
         val accessToken = token.sign();
-        var refreshToken = createRefreshToken(authentication);
+        var refreshToken = createRefreshToken(accessToken, authentication);
 
-        val jwtToken = JwtToken.builder()
-            .refreshToken(refreshToken)
-            .accessToken(accessToken)
-            .name(authentication.getName())
-            .build();
-
-        return jwtToken;
+        return JwtToken.builder().refreshToken(refreshToken).accessToken(accessToken).name(name).build();
     }
 
     @Override
@@ -145,9 +144,47 @@ public class JwtTokenManager implements TokenManager {
     }
 
     @Override
-    public String createRefreshToken(Authentication authentication) {
-        // todo create RefreshToken
+    public String createRefreshToken(String accessToken, Authentication authentication) {
+        val principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails userDetails) {
+            val password = userDetails.getPassword();
+            val expire = properties.getRefreshTokenTimeout();
+            val expireAt = DateUtil.date().offset(DateField.MINUTE, (int) expire.toMinutes());
+            val details = authentication.getDetails();
+
+        }
         return "";
+    }
+
+    @Override
+    public void verify(@NonNull Authentication authentication) throws SessionAuthenticationException {
+        if (authentication instanceof JwtAuthenticationToken auth) {
+            if (auth.isLogin()) {
+                return;
+            }
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] Current Session is not login", GsvcContextHolder.getRequestId());
+            }
+            throw new InvalidSessionException("Current Session is not login");
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] Current Session is invalid", GsvcContextHolder.getRequestId());
+        }
+        throw new InvalidSessionException("Session is invalid");
+    }
+
+    @Override
+    public void save(Authentication authentication, HttpServletRequest request) {
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] Save Security Context", GsvcContextHolder.getRequestId());
+        }
+    }
+
+    @Override
+    public void remove(Authentication authentication, HttpServletRequest request) {
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] Remove Security Context", GsvcContextHolder.getRequestId());
+        }
     }
 
 }

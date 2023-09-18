@@ -1,12 +1,11 @@
 package com.apzda.cloud.demo.foo.security;
 
-import com.apzda.cloud.gsvc.security.filter.AuthenticationProcessingFilter;
+import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.val;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -19,7 +18,7 @@ import java.io.IOException;
  * @author fengz
  */
 @Component
-public class FooLoginFilter extends AuthenticationProcessingFilter {
+public class FooLoginFilter extends DeviceAwareAuthenticationProcessingFilter {
 
     private static final AntPathRequestMatcher DEFAULT_ANT_PATH_REQUEST_MATCHER = new AntPathRequestMatcher(
             "/foobar/login", "POST");
@@ -33,15 +32,11 @@ public class FooLoginFilter extends AuthenticationProcessingFilter {
             throws AuthenticationException, IOException, ServletException {
         val username = request.getParameter("username");
         val password = request.getParameter("password");
-        val token = new JwtAuthenticationToken(username, password);
+        val token = JwtAuthenticationToken.unauthenticated(username, password);
 
         setDetails(request, token);
         // 开始认证
         return this.getAuthenticationManager().authenticate(token);
-    }
-
-    protected void setDetails(HttpServletRequest request, AbstractAuthenticationToken authRequest) {
-        authRequest.setDetails(this.authenticationDetailsSource.buildDetails(request));
     }
 
 }

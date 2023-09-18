@@ -40,9 +40,14 @@ public class InMemoryUserServiceMetaRepository implements UserDetailsMetaReposit
     }
 
     @Override
-    public void setMetaData(UserDetails userDetails, String key, Object value) throws ExecutionException {
-        val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
-        userMeta.put(key, value);
+    public void setMetaData(UserDetails userDetails, String key, Object value) {
+        try {
+            val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
+            userMeta.put(key, value);
+        }
+        catch (ExecutionException e) {
+            log.warn("[{}] Cannot set user meta: {} = {}", GsvcContextHolder.getRequestId(), key, value, e);
+        }
     }
 
     @Override

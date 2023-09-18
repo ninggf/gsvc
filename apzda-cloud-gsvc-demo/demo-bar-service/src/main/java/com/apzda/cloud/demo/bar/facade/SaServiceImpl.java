@@ -41,6 +41,7 @@ public class SaServiceImpl implements SaService {
 
                 if (authenticate instanceof JwtAuthenticationToken jwtAuthenticationToken) {
                     jwtAuthenticationToken.setJwtToken(jwtToken);
+                    jwtAuthenticationToken.login();
                 }
 
                 val context = SecurityContextHolder.getContextHolderStrategy().createEmptyContext();

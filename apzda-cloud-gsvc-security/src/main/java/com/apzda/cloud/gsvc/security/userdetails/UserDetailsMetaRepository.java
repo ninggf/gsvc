@@ -6,7 +6,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 /**
  * @author fengz
@@ -16,7 +15,7 @@ public interface UserDetailsMetaRepository {
     @NonNull
     UserDetailsMeta create(@NonNull UserDetails userDetails);
 
-    void setMetaData(UserDetails userDetails, String key, Object value) throws ExecutionException;
+    void setMetaData(UserDetails userDetails, String key, Object value);
 
     <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass);
 

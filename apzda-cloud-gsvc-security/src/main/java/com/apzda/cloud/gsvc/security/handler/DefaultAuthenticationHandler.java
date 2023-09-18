@@ -38,7 +38,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
             Authentication authentication) throws IOException, ServletException {
         log.trace("on Authentication Success: {}", authentication);
-        if (authentication instanceof JwtAuthenticationToken) {
+        if (authentication instanceof JwtAuthenticationToken authenticationToken) {
             try {
                 val jwtToken = tokenManager.createJwtToken(authentication);
                 val cookieCfg = properties.getCookie();
@@ -55,6 +55,8 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
                     cookie.setAttribute("SameSite", cookieCfg.getSameSite().attributeValue());
                     response.addCookie(cookie);
                 }
+
+                authenticationToken.login();
 
                 ResponseUtils.respond(request, response, Response.success(jwtToken));
             }
@@ -107,18 +109,39 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     public void onAuthentication(Authentication authentication, HttpServletRequest request,
             HttpServletResponse response) throws SessionAuthenticationException {
         if (log.isTraceEnabled()) {
-            log.trace("[{}] on Authentication do session check: {}", GsvcContextHolder.getRequestId(), authentication);
+            log.trace("[{}] on Authentication Do Session check: {}", GsvcContextHolder.getRequestId(), authentication);
         }
 
-        if (authentication instanceof JwtAuthenticationToken authenticationToken) {
-            val token = authenticationToken.getJwtToken();
-            tokenManager.verify(token, authenticationToken);
+        tokenManager.verify(authentication);
+    }
+
+    @Override
+    public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
+        try {
+            if (authentication == null) {
+                authentication = tokenManager.restoreAuthentication(request);
+            }
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] logout: {}", GsvcContextHolder.getRequestId(), authentication);
+            }
+            if (authentication instanceof JwtAuthenticationToken auth) {
+                auth.logout();
+            }
+            this.tokenManager.remove(authentication, request);
+        }
+        catch (Exception e) {
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] Token Manager cannot remove authentication data: {}", authentication, e);
+            }
         }
     }
 
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
             throws IOException, ServletException {
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] on Logout Success: {}", GsvcContextHolder.getRequestId(), authentication);
+        }
 
         val mediaTypes = ResponseUtils.mediaTypes(request);
         val homePage = ResponseUtils.getHomePage(mediaTypes);
