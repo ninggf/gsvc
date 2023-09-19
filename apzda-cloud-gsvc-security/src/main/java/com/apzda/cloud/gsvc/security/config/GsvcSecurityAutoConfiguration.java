@@ -3,15 +3,15 @@ package com.apzda.cloud.gsvc.security.config;
 import cn.hutool.jwt.signers.JWTSigner;
 import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
-import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
-import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
+import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
 import com.apzda.cloud.gsvc.security.repository.JwtContextRepository;
 import com.apzda.cloud.gsvc.security.token.JwtTokenManager;
-import com.apzda.cloud.gsvc.security.userdetails.InMemoryUserServiceMetaRepository;
+import com.apzda.cloud.gsvc.security.token.TokenManager;
+import com.apzda.cloud.gsvc.security.userdetails.InMemoryUserDetailsMetaRepository;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +22,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -65,6 +67,7 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 @Slf4j
 @AutoConfiguration(before = SecurityAutoConfiguration.class)
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
+@Import(RedisMetaRepoConfiguration.class)
 public class GsvcSecurityAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
@@ -267,8 +270,10 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        UserDetailsMetaRepository userDetailsWrapper(UserDetailsService userDetailsService) {
-            return new InMemoryUserServiceMetaRepository(userDetailsService);
+        @ConditionalOnProperty(name = "apzda.cloud.security.meta-repo", havingValue = "mem", matchIfMissing = true)
+        UserDetailsMetaRepository userDetailsWrapper(UserDetailsService userDetailsService,
+                SecurityConfigProperties properties) {
+            return new InMemoryUserDetailsMetaRepository(userDetailsService, properties.getAuthorityClass());
         }
 
         @Bean

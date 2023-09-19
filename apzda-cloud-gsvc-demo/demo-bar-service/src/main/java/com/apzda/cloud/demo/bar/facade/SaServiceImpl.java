@@ -63,12 +63,11 @@ public class SaServiceImpl implements SaService {
 
     @Override
     public SaRes info(SaReq request) {
-        val currentUser = request.getCurrentUser();
         var uid = "";
         if (request.hasCurrentUser()) {
             uid = request.getCurrentUser().getUid();
         }
-        return SaRes.newBuilder().setUserName(request.getName() + "." + uid).setErrCode(0).buildPartial();
+        return SaRes.newBuilder().setUserName(request.getName() + "." + uid).setUid(uid).setErrCode(0).build();
     }
 
     @Override

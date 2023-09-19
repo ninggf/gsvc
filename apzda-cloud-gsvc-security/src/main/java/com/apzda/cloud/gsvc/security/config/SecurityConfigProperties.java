@@ -10,6 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.convert.DurationUnit;
 import org.springframework.boot.web.server.Cookie;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
@@ -25,6 +27,10 @@ import java.util.Map;
 @ConfigurationProperties("apzda.cloud.security")
 @Data
 public class SecurityConfigProperties {
+
+    private String metaRepo;
+
+    private Class<? extends GrantedAuthority> authorityClass = SimpleGrantedAuthority.class;
 
     private CookieConfig cookie = new CookieConfig();
 

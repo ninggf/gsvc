@@ -178,10 +178,10 @@ Content-Type: application/json
 ### Route - SaService - /sa/info
 POST http://{{barService}}/sa/info
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
-    "username": "gsvc",
-    "password": "123456"
+    "name": "gsvc"
 }
 
 > {%
@@ -190,6 +190,8 @@ Content-Type: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.userName === "gsvc.admin", "userName != gsvc.admin");
+        client.assert(response.body.uid === "admin", "uid != admin");
     });
 %}
 

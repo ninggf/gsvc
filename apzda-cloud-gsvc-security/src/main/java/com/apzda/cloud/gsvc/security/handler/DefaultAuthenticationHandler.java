@@ -122,6 +122,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
         if (log.isTraceEnabled()) {
             log.trace("[{}] on Authentication Do Session check: {}", GsvcContextHolder.getRequestId(), authentication);
         }
+        // note: run before onAuthenticationSuccess
         tokenManager.verify(authentication);
     }
 

@@ -5,8 +5,10 @@ import com.apzda.cloud.demo.bar.proto.BarService;
 import com.apzda.cloud.demo.bar.proto.SaReq;
 import com.apzda.cloud.demo.bar.proto.SaService;
 import com.apzda.cloud.demo.foo.proto.*;
+import com.apzda.cloud.gsvc.ext.GsvcExt;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -54,7 +56,9 @@ public class FooServiceImpl implements FooService {
 
     @Override
     public FooRes saInfo(FooReq request) {
-        val saReq = SaReq.newBuilder().setName(request.getName()).buildPartial();
+        val authentication = SecurityContextHolder.getContext().getAuthentication();
+        val cu = GsvcExt.CurrentUser.newBuilder().setUid(authentication.getName()).buildPartial();
+        val saReq = SaReq.newBuilder().setName(request.getName()).setCurrentUser(cu).buildPartial();
         val info = saService.info(saReq);
 
         return FooRes.newBuilder()

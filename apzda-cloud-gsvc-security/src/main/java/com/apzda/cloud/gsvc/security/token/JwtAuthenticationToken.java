@@ -8,6 +8,7 @@ import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,6 +18,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * @author fengz windywany@gmail.com
@@ -126,9 +128,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             if (principal instanceof UserDetailsMeta userDetailsMeta) {
 
                 try {
-                    val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY,
-                            UserDetailsMeta.LOGIN_TIME_SUB_KEY);
-
+                    val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
                     userDetailsMeta.remove(key);
 
                     if (log.isTraceEnabled()) {
@@ -152,16 +152,26 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     public void login() {
-        if (principal instanceof UserDetailsMeta userDetailsMeta) {
-            val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY, UserDetailsMeta.LOGIN_TIME_SUB_KEY);
-            userDetailsMeta.set(key, System.currentTimeMillis());
+        if (jwtToken != null && StringUtils.isNotBlank(jwtToken.getAccessToken())
+                && principal instanceof UserDetailsMeta userDetailsMeta) {
+            val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
+            userDetailsMeta.set(key, jwtToken.getAccessToken());
+
+            val loginKey = deviceAwareMetaKey(UserDetailsMeta.LOGIN_TIME_META_KEY);
+            if (userDetailsMeta.get(loginKey, Long.valueOf("0")) == 0) {
+                userDetailsMeta.set(loginKey, System.currentTimeMillis());
+            }
         }
     }
 
     public boolean isLogin() {
+        if (jwtToken == null || StringUtils.isBlank(jwtToken.getAccessToken())) {
+            return false;
+        }
         if (principal instanceof UserDetailsMeta userDetailsMeta) {
-            val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY, UserDetailsMeta.LOGIN_TIME_SUB_KEY);
-            return userDetailsMeta.get(key, Long.valueOf("0")) > 0;
+            val accessToken = jwtToken.getAccessToken();
+            val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
+            return Objects.equals(accessToken, userDetailsMeta.getString(key));
         }
         return false;
     }

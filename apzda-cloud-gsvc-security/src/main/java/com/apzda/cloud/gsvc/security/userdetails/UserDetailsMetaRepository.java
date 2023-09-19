@@ -19,10 +19,16 @@ public interface UserDetailsMetaRepository {
 
     <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass);
 
+    <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass);
+
     @SuppressWarnings("unchecked")
     default <R> R getMetaData(UserDetails userDetails, String key, @NonNull R defaultValue) {
         Optional<R> meta = (Optional<R>) getMetaData(userDetails, key, defaultValue.getClass());
         return meta.orElse(defaultValue);
+    }
+
+    default String getMetaData(UserDetails userDetails, String key) {
+        return getMetaData(userDetails, key, "");
     }
 
     default String getString(UserDetails userDetails, String key) {

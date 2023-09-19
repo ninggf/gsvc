@@ -183,7 +183,14 @@ public class JwtTokenManager implements TokenManager {
             val sign = MD5.create().digestHex(accessToken + password);
 
             if (Objects.equals(oldSign, sign)) {
-                return createJwtToken(authentication);
+                authentication.setJwtToken(jwtToken);
+                if (!authentication.isLogin()) {
+                    throw new InvalidSessionException("Not Login");
+                }
+                val newJwtToken = createJwtToken(authentication);
+                authentication.login(newJwtToken);
+
+                return newJwtToken;
             }
 
             log.error("[{}] refreshToken({}) is invalid: accessToken or password does not match", requestId,
@@ -218,21 +225,20 @@ public class JwtTokenManager implements TokenManager {
         val requestId = GsvcContextHolder.getRequestId();
 
         if (authentication instanceof JwtAuthenticationToken auth) {
-            if (auth.isLogin()) {
+            if (auth.getJwtToken() == null || auth.isLogin()) {
                 return;
             }
             if (log.isTraceEnabled()) {
                 log.trace("[{}] Current Session is not login", requestId);
             }
-            throw new InvalidSessionException(String.format("[%s] Current Session is not login!", requestId));
+            throw new InvalidSessionException("Not Login");
         }
 
         if (log.isTraceEnabled()) {
             log.trace("[{}] Current Token is not supported: {}", requestId, authentication);
         }
 
-        throw new InvalidSessionException(
-                String.format("[%s] Authentication is not supported: %s", requestId, authentication));
+        throw new InvalidSessionException("Not Support");
     }
 
 }
