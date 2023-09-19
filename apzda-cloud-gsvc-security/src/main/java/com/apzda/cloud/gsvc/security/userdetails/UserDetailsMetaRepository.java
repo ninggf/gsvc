@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,6 +21,8 @@ public interface UserDetailsMetaRepository {
     <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass);
 
     <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass);
+
+    <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference);
 
     @SuppressWarnings("unchecked")
     default <R> R getMetaData(UserDetails userDetails, String key, @NonNull R defaultValue) {

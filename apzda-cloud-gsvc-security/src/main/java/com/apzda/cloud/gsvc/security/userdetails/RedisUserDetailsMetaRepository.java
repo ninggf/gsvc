@@ -70,17 +70,21 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     @Override
     public <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass) {
+        val typeReference = new TypeReference<Collection<R>>() {
+            @Override
+            public Type getType() {
+                return new ParameterizedTypeImpl(new Type[] { rClass }, null, Collection.class);
+            }
+        };
+        return getMetaDataByHint(userDetails, key, typeReference);
+    }
+
+    @Override
+    public <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
             if (value != null) {
-                val typeHint = new TypeReference<Collection<R>>() {
-                    @Override
-                    public Type getType() {
-                        return new ParameterizedTypeImpl(new Type[] { rClass }, null, Collection.class);
-                    }
-                };
-
-                return Optional.of(objectMapper.readValue(value, typeHint));
+                return Optional.of(objectMapper.readValue(value, typeReference));
             }
         }
         catch (Exception e) {

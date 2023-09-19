@@ -1,6 +1,8 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
+import cn.hutool.core.lang.ParameterizedTypeImpl;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.lang.NonNull;
@@ -9,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.CollectionUtils;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -36,7 +39,14 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails) {
-        val authorityMeta = getMetaDataByHint(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, authorityClass);
+        var typeHing = new TypeReference<Collection<? extends GrantedAuthority>>() {
+            @Override
+            public Type getType() {
+                return new ParameterizedTypeImpl(new Type[] { authorityClass }, null, Collection.class);
+            }
+        };
+
+        val authorityMeta = getMetaDataByHint(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, typeHing);
 
         if (authorityMeta.isPresent()) {
             if (log.isTraceEnabled()) {

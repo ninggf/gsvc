@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -66,6 +67,24 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
             val meta = userMeta.get(key);
             if (meta != null) {
                 return Optional.of((Collection<R>) meta);
+            }
+        }
+        catch (Exception e) {
+            log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
+                    userDetails.getUsername(), key, e.getMessage());
+
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference) {
+        try {
+            val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
+            val meta = userMeta.get(key);
+            if (meta != null) {
+                return Optional.of((R) meta);
             }
         }
         catch (Exception e) {
