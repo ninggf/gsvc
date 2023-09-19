@@ -25,7 +25,7 @@ message BarRes {
 service BarService {
   rpc greeting(BarReq) returns (BarRes);
   rpc hello(BarReq) returns (stream BarRes);
-  rpc hi(stream BarReq) returns(stream BarRes);
+  rpc hi(BarReq) returns(stream BarRes);
 }
 
 message LoginReq {

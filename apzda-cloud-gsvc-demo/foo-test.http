@@ -31,7 +31,7 @@ client.test("Request executed successfully", function() {
   const type = response.contentType.mimeType;
   client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
   client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.foo.bar@greeting","响应不等于'gsvc.foo.bar@greeting'")
+  client.assert(response.body.data.name === "gsvc.foo.bar@greeting","响应不等于'gsvc.foo.bar@greeting'")
 });
 %}
 
@@ -51,7 +51,7 @@ client.test("Request executed successfully", function() {
   const type = response.contentType.mimeType;
   client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
   client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.foo2.bar@hello","响应不等于'gsvc.foo2.bar@hello'")
+  client.assert(response.body.data.name === "gsvc.foo2.bar@hello","响应不等于'gsvc.foo2.bar@hello'")
 });
 %}
 
@@ -72,7 +72,7 @@ client.test("Request executed successfully", function() {
   const type = response.contentType.mimeType;
   client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
   client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.foo3.bar@hi","响应不等于'gsvc.foo3.bar@hi'")
+  client.assert(response.body.data.name === "gsvc.foo3.bar@hi","响应不等于'gsvc.foo3.bar@hi'")
 });
 %}
 
@@ -90,8 +90,8 @@ name=gsvc&age=18
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-        client.assert(response.body.name === "gsvc.foo3.bar@hi","name != 'gsvc.foo3.bar@hi'")
-        client.assert(response.body.age === 24,"age != 24")
+        client.assert(response.body.data.name === "gsvc.foo3.bar@hi","name != 'gsvc.foo3.bar@hi'")
+        client.assert(response.body.data.age === 24,"age != 24")
     });
 %}
 
@@ -109,7 +109,7 @@ name=gsvc&age=18
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-        client.assert(response.body.name === "gsvc.admin",response.body.name +" !=  gsvc.admin" )
+        client.assert(response.body.data.name === "gsvc.admin",response.body.name +" !=  gsvc.admin" )
     });
 %}
 
@@ -128,7 +128,7 @@ client.test("Request executed successfully", function() {
   const type = response.contentType.mimeType;
   client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
   client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.foo.bar@greeting","响应不等于'gsvc.foo.bar@greeting'")
+  client.assert(response.body.data.name === "gsvc.foo.bar@greeting","响应不等于'gsvc.foo.bar@greeting'")
 });
 %}
 
@@ -147,7 +147,7 @@ client.test("Request executed successfully", function() {
   const type = response.contentType.mimeType;
   client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
   client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-  client.assert(response.body.name === "gsvc.foo2.bar@hello","响应不等于'gsvc.foo2.bar@hello'")
+  client.assert(response.body.data.name === "gsvc.foo2.bar@hello","响应不等于'gsvc.foo2.bar@hello'")
 });
 %}
 
@@ -161,7 +161,7 @@ X-Gsvc-Caller: gtw
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: "+ response.body.errMsg);
-        client.assert(response.body.name === "gsvc.foo3.bar@hi","name != 'gsvc.foo3.bar@hi'")
-        client.assert(response.body.age === 24,"age != 24")
+        client.assert(response.body.data.name === "gsvc.foo3.bar@hi","name != 'gsvc.foo3.bar@hi'")
+        client.assert(response.body.data.age === 24,"age != 24")
     });
 %}

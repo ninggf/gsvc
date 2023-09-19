@@ -39,14 +39,14 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails) {
-        var typeHing = new TypeReference<Collection<? extends GrantedAuthority>>() {
+        var typeReference = new TypeReference<Collection<? extends GrantedAuthority>>() {
             @Override
             public Type getType() {
                 return new ParameterizedTypeImpl(new Type[] { authorityClass }, null, Collection.class);
             }
         };
 
-        val authorityMeta = getMetaDataByHint(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, typeHing);
+        val authorityMeta = getMetaDataByHint(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, typeReference);
 
         if (authorityMeta.isPresent()) {
             if (log.isTraceEnabled()) {

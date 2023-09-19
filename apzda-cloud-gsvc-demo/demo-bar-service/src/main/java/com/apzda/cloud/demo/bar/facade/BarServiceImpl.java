@@ -43,8 +43,8 @@ public class BarServiceImpl implements BarService {
     }
 
     @Override
-    public Mono<BarRes> hi(Mono<BarReq> request) {
-        return request.map(barReq -> {
+    public Mono<BarRes> hi(BarReq request) {
+        return Mono.just(request).map(barReq -> {
             for (GsvcExt.UploadFile uploadFile : barReq.getFilesList()) {
                 if (uploadFile.getSize() > 0) {
                     log.info("删除 File: {}", uploadFile.getFilename());

@@ -4,7 +4,9 @@ import com.apzda.cloud.demo.bar.proto.BarReq;
 import com.apzda.cloud.demo.bar.proto.BarService;
 import com.apzda.cloud.demo.bar.proto.SaReq;
 import com.apzda.cloud.demo.bar.proto.SaService;
-import com.apzda.cloud.demo.foo.proto.*;
+import com.apzda.cloud.demo.foo.proto.FooReq;
+import com.apzda.cloud.demo.foo.proto.FooRes;
+import com.apzda.cloud.demo.foo.proto.FooService;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +49,10 @@ public class FooServiceImpl implements FooService {
     }
 
     @Override
-    public Mono<FooRes> hi(Mono<FooReq> request) {
-        return request
-            .map(fooReq -> BarReq.newBuilder().setName(fooReq.getName() + ".foo3").setAge(fooReq.getAge() + 3).build())
-            .transform(barService::hi)
+    public Mono<FooRes> hi(FooReq request) {
+        val req = BarReq.newBuilder().setName(request.getName() + ".foo3").setAge(request.getAge() + 3).build();
+
+        return barService.hi(req)
             .map(res -> FooRes.newBuilder().setErrCode(0).setName(res.getName()).setAge(res.getAge()).build());
     }
 
@@ -66,11 +68,6 @@ public class FooServiceImpl implements FooService {
             .setErrCode(info.getErrCode())
             .setName(info.getUserName())
             .buildPartial();
-    }
-
-    @Override
-    public LoginRes login(LoginReq request) {
-        return null;
     }
 
 }

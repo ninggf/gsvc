@@ -14,7 +14,7 @@ X-Gsvc-Caller: gtw
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
+        client.assert(response.body.data.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
     });
 %}
 
@@ -34,7 +34,7 @@ X-Gsvc-Caller: gtw
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+        client.assert(response.body.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
     });
 %}
 
@@ -54,7 +54,7 @@ X-Gsvc-Caller: gtw
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.name === "gsvc.bar@hi", "响应不等于'gsvc.bar@hi'")
+        client.assert(response.body.data.name === "gsvc.bar@hi", "响应不等于'gsvc.bar@hi'")
     });
 %}
 
@@ -73,7 +73,7 @@ Content-Type: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.name === "gsvc.bar@hi", "响应不等于'gsvc.bar@hi'")
+        client.assert(response.body.data.name === "gsvc.bar@hi", "响应不等于'gsvc.bar@hi'")
     });
 %}
 
@@ -93,7 +93,7 @@ Content-Type: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+        client.assert(response.body.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
     });
 %}
 
@@ -113,7 +113,7 @@ Content-Type: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
+        client.assert(response.body.data.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
     });
 %}
 
@@ -132,7 +132,7 @@ Content-Type: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+        client.assert(response.body.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
     });
 %}
 
@@ -151,7 +151,7 @@ Content-Type: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
+        client.assert(response.body.data.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
     });
 %}
 
@@ -170,8 +170,8 @@ Content-Type: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.global.set("accessToken",response.body.accessToken)
-        client.global.set("refreshToken",response.body.refreshToken)
+        client.global.set("accessToken",response.body.data.accessToken)
+        client.global.set("refreshToken",response.body.data.refreshToken)
     });
 %}
 
@@ -190,8 +190,8 @@ Authorization: Bearer {{accessToken}}
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.userName === "gsvc.admin", "userName != gsvc.admin");
-        client.assert(response.body.uid === "admin", "uid != admin");
+        client.assert(response.body.data.userName === "gsvc.admin", "userName != gsvc.admin");
+        client.assert(response.body.data.uid === "admin", "uid != admin");
     });
 %}
 
@@ -211,7 +211,7 @@ Authorization: Bearer {{accessToken}}
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.userName === "gsvc, admin",response.body.userName + "!= gsvc, admin")
+        client.assert(response.body.data.userName === "gsvc, admin",response.body.userName + "!= gsvc, admin")
     });
 %}
 
@@ -253,7 +253,7 @@ Authorization: Bearer {{accessToken}}
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.userName === "gsvc, admin",response.body.userName + "!= gsvc, admin")
+        client.assert(response.body.data.userName === "gsvc, admin",response.body.userName + "!= gsvc, admin")
     });
 %}
 

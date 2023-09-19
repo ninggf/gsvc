@@ -36,11 +36,6 @@ message LoginRes {
 service FooService {
   rpc greeting(FooReq) returns (FooRes);
   rpc hello(FooReq) returns (stream FooRes);
-  rpc hi(stream FooReq) returns(stream FooRes);
+  rpc hi(FooReq) returns(stream FooRes);
   rpc saInfo(FooReq) returns(FooRes);
-  rpc login(LoginReq) returns(LoginRes){
-    option(gsvc.route) = {
-      path: "/foo/login"
-    };
-  }
 }

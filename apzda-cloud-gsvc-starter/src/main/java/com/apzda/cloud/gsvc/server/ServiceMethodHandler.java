@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
+import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.dto.UploadFile;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
@@ -13,6 +14,7 @@ import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.grpc.MethodDescriptor;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +60,8 @@ public class ServiceMethodHandler {
 
     private String logId;
 
+    private String caller;
+
     public ServiceMethodHandler(ServerRequest request, ServiceMethod serviceMethod,
             ApplicationContext applicationContext) {
         this.request = request;
@@ -71,7 +75,7 @@ public class ServiceMethodHandler {
     public static ServerResponse handle(ServerRequest request, String caller, ServiceMethod serviceMethod,
             ApplicationContext applicationContext) {
 
-        if (caller == null) {
+        if (!StringUtils.hasText(caller)) {
             caller = request.headers().firstHeader("X-Gsvc-Caller");
         }
 
@@ -83,6 +87,7 @@ public class ServiceMethodHandler {
             if (!StringUtils.hasText(caller)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND);
             }
+            this.caller = caller;
             logId = GsvcContextHolder.getRequestId();
             val type = serviceMethod.getType();
             if (log.isTraceEnabled()) {
@@ -95,8 +100,8 @@ public class ServiceMethodHandler {
             // 2. 调用方法
             return switch (type) {
                 case UNARY -> doUnaryCall(requestObj);
-                case SERVER_STREAMING, BIDI_STREAMING -> doStreamingCall(requestObj);
-                default -> exceptionHandler.handle(new ResponseStatusException(HttpStatus.BAD_REQUEST), request);
+                case SERVER_STREAMING -> doStreamingCall(requestObj);
+                default -> exceptionHandler.handle(new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED), request);
             };
         }
         catch (Throwable throwable) {
@@ -135,13 +140,7 @@ public class ServiceMethodHandler {
             }
         });
 
-        Mono<Object> mono;
-        if (serviceMethod.getType() == MethodDescriptor.MethodType.SERVER_STREAMING) {
-            mono = (Mono<Object>) serviceMethod.call(realReqObj.block());
-        }
-        else {
-            mono = (Mono<Object>) serviceMethod.call(realReqObj);
-        }
+        Mono<Object> mono = (Mono<Object>) serviceMethod.call(realReqObj.block());
 
         while (--size >= 0) {
             var plugin = plugins.get(size);
@@ -156,15 +155,22 @@ public class ServiceMethodHandler {
         }
 
         // reactive is so hard!!!
-        return ServerResponse
-            .async(mono.map(rtn -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(rtn))
-                .onErrorResume((e) -> {
-                    log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
-                            serviceMethod.getDmName(), e);
+        return ServerResponse.async(mono.handle((resp, sink) -> {
+            try {
+                val response = createResponse(resp);
+                sink.next(ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response));
+                sink.complete();
+            }
+            catch (JsonProcessingException e) {
+                sink.error(e);
+            }
+        }).onErrorResume((e) -> {
+            log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
+                    serviceMethod.getDmName(), e);
 
-                    // bookmark exception handle(service call)
-                    return Mono.just(exceptionHandler.handle(e, this.request));
-                }));
+            // bookmark exception handle(service call)
+            return Mono.just(exceptionHandler.handle(e, this.request));
+        }));
     }
 
     private ServerResponse doUnaryCall(Mono<JsonNode> requestObj)
@@ -317,6 +323,25 @@ public class ServiceMethodHandler {
     }
 
     private String createResponse(Object resp) throws JsonProcessingException {
+
+        if ("gtw".equals(this.caller)) {
+            // bookmark: wrap response for the request from gateway.
+            val node = objectMapper.convertValue(resp, JsonNode.class);
+            if (node instanceof ObjectNode objectNode) {
+                val wrappedResp = new Response<JsonNode>();
+                val errCode = objectNode.get("errCode").asInt();
+                objectNode.remove("errCode");
+                wrappedResp.setErrCode(errCode);
+                if (objectNode.has("errMsg")) {
+                    val errMsg = objectNode.get("errMsg").asText();
+                    objectNode.remove("errMsg");
+                    wrappedResp.setErrMsg(errMsg);
+                }
+                wrappedResp.setData(node);
+                resp = wrappedResp;
+            }
+        }
+
         val respStr = objectMapper.writeValueAsString(resp);
         if (log.isTraceEnabled()) {
             log.trace("[{}] Response of {}.{}: {}", logId, serviceMethod.getServiceName(), serviceMethod.getDmName(),

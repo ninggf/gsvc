@@ -12,12 +12,12 @@ import com.apzda.cloud.demo.demo.proto.DemoService;
 import com.apzda.cloud.demo.foo.proto.FooReq;
 import com.apzda.cloud.demo.foo.proto.FooRes;
 import com.apzda.cloud.demo.foo.proto.FooService;
+import com.apzda.cloud.gsvc.dto.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Mono;
 
 /**
  * Created at 2023/9/10 15:49.
@@ -37,23 +37,23 @@ public class DemoController {
     private final DemoService demoService;
 
     @GetMapping("/bar/hi")
-    public BarRes barHi(@RequestParam String name, @RequestParam int age) {
+    public Response<BarRes> barHi(@RequestParam String name, @RequestParam int age) {
         val req = BarReq.newBuilder().setName(name).setAge(age).build();
-        val res = barService.hi(Mono.just(req));
+        val res = barService.hi(req);
 
-        return res.block();
+        return Response.wrap(res.block());
     }
 
     @GetMapping("/foo/hi")
-    public FooRes fooHi(@RequestParam String name, @RequestParam int age) {
+    public Response<FooRes> fooHi(@RequestParam String name, @RequestParam int age) {
         val req = FooReq.newBuilder().setName(name).setAge(age).build();
-        val res = fooService.hi(Mono.just(req));
-        return res.block();
+        val res = fooService.hi(req);
+        return Response.wrap(res.block());
     }
 
     @GetMapping("/greeting")
-    public DemoRes greeting(@RequestParam String name) {
-        return demoService.greeting(DemoReq.newBuilder().setName(name).buildPartial());
+    public Response<DemoRes> greeting(@RequestParam String name) {
+        return Response.wrap(demoService.greeting(DemoReq.newBuilder().setName(name).buildPartial()));
     }
 
 }

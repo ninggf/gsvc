@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.val;
+import org.springframework.beans.BeanUtils;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -31,6 +32,19 @@ public class Response<T> implements Serializable {
     private MessageType type;
 
     private T data;
+
+    public static <T> Response<T> wrap(T data) {
+        val resp = new Response<T>();
+        if (data == null) {
+            resp.setErrMsg("data is null");
+            resp.setErrCode(500);
+        }
+        else {
+            BeanUtils.copyProperties(data, resp, "data", "type", "message");
+        }
+        resp.setData(data);
+        return resp;
+    }
 
     public Response<?> type(MessageType type) {
         this.type = type;
