@@ -14,9 +14,9 @@ public class Config {
 
     private String homePage;
 
-    private boolean acceptLiteralFieldNames;
+    private boolean acceptLiteralFieldNames = true;
 
-    private boolean properUnsignedNumberSerialization;
+    private boolean properUnsignedNumberSerialization = true;
 
     private boolean serializeLongsAsString = true;
 

@@ -45,11 +45,12 @@ public class DefaultServiceCaller implements IServiceCaller {
 
     @Override
     public <T, R> R unaryCall(Class<?> clazz, String method, T request, Class<T> reqClazz, Class<R> resClazz) {
-        val requestId = GsvcContextHolder.getRequestId();
         val serviceMethod = GatewayServiceRegistry.getServiceMethod(clazz, method);
         val url = serviceMethod.getRpcAddr();
-        log.debug("[{}] Start Block RPC: {}", requestId, url);
-
+        if (log.isDebugEnabled()) {
+            val requestId = GsvcContextHolder.getRequestId();
+            log.debug("[{}] Start Block RPC: {}", requestId, url);
+        }
         val reqBody = prepareRequestBody(request, serviceMethod);
         return doBlockCall(reqBody.bodyToMono(String.class), serviceMethod, url, resClazz);
     }
@@ -68,10 +69,13 @@ public class DefaultServiceCaller implements IServiceCaller {
     @Override
     public <T, R> Flux<R> serverStreamingCall(Class<?> clazz, String method, T request, Class<T> reqClazz,
             Class<R> resClazz) {
-        val requestId = GsvcContextHolder.getRequestId();
         val serviceMethod = GatewayServiceRegistry.getServiceMethod(clazz, method);
         val url = serviceMethod.getRpcAddr();
-        log.debug("[{}] Start Async RPC: {}", requestId, url);
+
+        if (log.isDebugEnabled()) {
+            val requestId = GsvcContextHolder.getRequestId();
+            log.debug("[{}] Start Async RPC: {}", requestId, url);
+        }
         val reqBody = prepareRequestBody(request, serviceMethod);
 
         return doAsyncCall(reqBody.bodyToFlux(SSE_RESPONSE_TYPE), serviceMethod, url, resClazz);
@@ -80,18 +84,17 @@ public class DefaultServiceCaller implements IServiceCaller {
     protected <R> Flux<R> doAsyncCall(Flux<ServerSentEvent<String>> reqBody, ServiceMethod serviceMethod, String uri,
             Class<R> rClass) {
         // bookmark: async rpc
-        var reqMono = reqBody.<R>handle((res, sink) -> {
+        val requestId = GsvcContextHolder.getRequestId();
+        var reqMono = reqBody.map(res -> {
             if (log.isTraceEnabled()) {
-                val requestId = GsvcContextHolder.getRequestId();
                 log.trace("[{}] Response from {}: {}", requestId, uri, res);
             }
             try {
                 val data = res.data();
-                sink.next(ResponseUtils.parseResponse(data, rClass));
-                sink.complete();
+                return ResponseUtils.parseResponse(data, rClass);
             }
             catch (Exception e) {
-                sink.error(e);
+                return ResponseUtils.fallback(e, serviceMethod.getServiceName(), rClass);
             }
         });
 
@@ -101,11 +104,11 @@ public class DefaultServiceCaller implements IServiceCaller {
     protected <R> Flux<R> handleRpcFallback(Flux<R> reqBody, ServiceMethod method, Class<R> rClass) {
         // bookmark: fallback
         val uri = method.getRpcAddr();
-        val requestId = GsvcContextHolder.getRequestId();
         val plugins = method.getPlugins();
         var size = plugins.size();
 
         reqBody = reqBody.doOnError(err -> {
+            val requestId = GsvcContextHolder.getRequestId();
             log.error("[{}] RPC({}) failed: {}", requestId, uri, err.getMessage());
         });
 

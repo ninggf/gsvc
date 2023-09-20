@@ -32,9 +32,13 @@ X-Gsvc-Caller: gtw
     client.test("Request executed successfully", function () {
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
-        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+        client.assert(type === "text/event-stream", "Expected 'application/json' but received '" + type + "'");
+        response.body.onEachLine((line, unsubscribe) => {
+            client.log("response is: "+line)
+            client.assert(line.data.name === "gsvc.bar@hello", line+" 不等于'gsvc.bar@hi'")
+        },()=>{
+            client.log("done!")
+        })
     });
 %}
 
@@ -53,8 +57,12 @@ X-Gsvc-Caller: gtw
         client.assert(response.status === 200, "Response status is not 400");
         const type = response.contentType.mimeType;
         client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
-        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.data.name === "gsvc.bar@hi", "响应不等于'gsvc.bar@hi'")
+        response.body.onEachLine((line, unsubscribe) => {
+            client.log("response is: "+line)
+            client.assert(line.data.name === "gsvc.bar@hi", line+" 不等于'gsvc.bar@hi'")
+        },()=>{
+            client.log("done!")
+        })
     });
 %}
 
@@ -71,9 +79,14 @@ Content-Type: application/json
     client.test("Request executed successfully", function () {
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
-        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.data.name === "gsvc.bar@hi", "响应不等于'gsvc.bar@hi'")
+        client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
+        client.log("check response: ")
+        response.body.onEachLine((line, unsubscribe) => {
+            client.log("response is: "+line)
+            client.assert(line.data.name === "gsvc.bar@hi", line+" 不等于'gsvc.bar@hi'")
+        },()=>{
+            client.log("done!")
+        })
     });
 %}
 
@@ -91,9 +104,12 @@ Content-Type: application/json
     client.test("Request executed successfully", function () {
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
-        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+        client.assert(type === "text/event-stream", "Expected 'application/json' but received '" + type + "'");
+        response.body.onEachLine((line,unsubscribe)=>{
+            client.assert(line.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+        },()=>{
+            client.log("done!")
+        })
     });
 %}
 
@@ -130,9 +146,13 @@ Content-Type: application/json
     client.test("Request executed successfully", function () {
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
-        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+        client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
+
+         response.body.onEachLine((line,unsubscribe)=>{
+            client.assert(line.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
+        },()=>{
+            client.log("done!")
+        })
     });
 %}
 

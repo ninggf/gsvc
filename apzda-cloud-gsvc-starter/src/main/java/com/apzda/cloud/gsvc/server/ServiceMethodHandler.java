@@ -141,22 +141,22 @@ public class ServiceMethodHandler {
             }
         });
 
-        Flux<Object> resultObj = (Flux<Object>) serviceMethod.call(realReqObj.block());
+        Flux<Object> returnObj = (Flux<Object>) serviceMethod.call(realReqObj.block());
 
         while (--size >= 0) {
             var plugin = plugins.get(size);
             if (plugin instanceof IPostInvoke preInvoke) {
-                resultObj = (Flux<Object>) preInvoke.postInvoke(requestObj, resultObj, serviceMethod);
+                returnObj = (Flux<Object>) preInvoke.postInvoke(requestObj, returnObj, serviceMethod);
             }
         }
 
         val timeout = svcConfigure.getTimeout(serviceMethod.getCfgName(), serviceMethod.getDmName());
         if (!timeout.isZero()) {
-            resultObj = resultObj.timeout(timeout);
+            returnObj = returnObj.timeout(timeout);
         }
 
-        final Flux<Object> responseFlux = resultObj.contextCapture();
-        // reactive is so hard!!!
+        final Flux<Object> responseFlux = returnObj.contextCapture();
+        // server-streaming method will respond text/event-stream
         return ServerResponse.sse(sseBuilder -> {
             responseFlux.doOnComplete(sseBuilder::complete).doOnError(err -> {
                 log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
@@ -171,7 +171,6 @@ public class ServiceMethodHandler {
             }).subscribe(resp -> {
                 try {
                     val response = createResponse(resp);
-                    log.warn("序列化响应: {}", response);
                     sseBuilder.data(response);
                 }
                 catch (IOException e) {
@@ -338,7 +337,6 @@ public class ServiceMethodHandler {
     }
 
     private String createResponse(Object resp) throws JsonProcessingException {
-
         if ("gtw".equals(this.caller)) {
             // bookmark: wrap response for the request from gateway.
             val node = objectMapper.convertValue(resp, JsonNode.class);
