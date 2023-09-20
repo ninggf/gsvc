@@ -4,12 +4,12 @@ package {{packageName}};
 
 import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
+import io.grpc.stub.StreamObserver;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 {{#deprecated}}
 @java.lang.Deprecated
@@ -54,6 +54,7 @@ public class {{className}} {
 
     @Bean
     @ConditionalOnMissingBean({{interfaceClassName}}.class)
+    @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc", havingValue = "false", matchIfMissing = true)
     {{interfaceClassName}} gsvc{{interfaceClassName}}Stub(IServiceCaller serviceCaller) {
         GatewayServiceRegistry.registerProxy({{interfaceClassName}}.class);
         return new {{interfaceClassName}}() {
@@ -65,22 +66,39 @@ public class {{className}} {
         {{/unaryMethods}}
         {{#serverStreamingMethods}}
             @Override
-            public Flux<{{outputType}}> {{methodName}}({{inputType}} request) {
+            public reactor.core.publisher.Flux<{{outputType}}> {{methodName}}({{inputType}} request) {
                 return serviceCaller.serverStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
         {{/serverStreamingMethods}}
         {{#clientStreamingMethods}}
             @Override
-            public {{outputType}} {{methodName}}(Flux<{{inputType}}> request) {
+            public {{outputType}} {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request) {
                 return serviceCaller.clientStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
         {{/clientStreamingMethods}}
         {{#biStreamingWithoutClientStreamMethods}}
             @Override
-            public Flux<{{outputType}}> {{methodName}}(Flux<{{inputType}}> request) {
+            public reactor.core.publisher.Flux<{{outputType}}> {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request) {
                 return serviceCaller.bidiStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
         {{/biStreamingWithoutClientStreamMethods}}
         };
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc", havingValue = "true")
+    {{interfaceClassName}} grpc{{interfaceClassName}}Stub(
+        @com.apzda.cloud.gsvc.grpc.GrpcClient("{{interfaceClassName}}") {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub,
+        @com.apzda.cloud.gsvc.grpc.GrpcClient("{{interfaceClassName}}") {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub stub
+    ) {
+        return null;
+    }
+
+    @com.apzda.cloud.gsvc.grpc.GrpcService
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(value = "apzda.cloud.service.{{interfaceClassName}}.grpc", havingValue = "true")
+    {{interfaceClassName}}Grpc.{{interfaceClassName}}ImplBase grpc{{interfaceClassName}}Impl() {
+        return null;
     }
 }

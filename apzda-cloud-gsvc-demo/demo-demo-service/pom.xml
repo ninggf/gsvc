@@ -22,6 +22,11 @@
             <artifactId>apzda-cloud-gsvc-starter</artifactId>
         </dependency>
         <dependency>
+            <groupId>net.devh</groupId>
+            <artifactId>grpc-server-spring-boot-starter</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>com.apzda.cloud</groupId>
             <artifactId>demo-demo-proto</artifactId>
         </dependency>

@@ -24,8 +24,6 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
 
     private final String app;
 
-    private final String appVer;
-
     private final Map<String, String> appMeta;
 
     public DeviceAuthenticationDetails(HttpServletRequest request) {
@@ -36,7 +34,6 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
         this.osName = StringUtils.defaultString(headers.get("X-OS-Name"));
         this.osVer = StringUtils.defaultString(headers.get("X-OS-Ver"));
         this.app = StringUtils.defaultIfBlank(headers.get("X-App"), "web");
-        this.appVer = StringUtils.defaultString(headers.get("X-App-Ver"));
         this.appMeta = GsvcContextHolder.headers("X-App-");
     }
 
@@ -65,10 +62,6 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
         return app;
     }
 
-    public String getAppVer() {
-        return appVer;
-    }
-
     public Map<String, String> getAppMeta() {
         return appMeta;
     }
@@ -81,7 +74,6 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
             .append("os", osName)
             .append("osVer", osVer)
             .append("app", app)
-            .append("appVer", appVer)
             .append("appMeta", appMeta)
             .toString();
     }

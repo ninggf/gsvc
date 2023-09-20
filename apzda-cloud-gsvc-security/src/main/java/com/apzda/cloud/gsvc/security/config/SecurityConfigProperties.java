@@ -4,6 +4,7 @@
 package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.security.captcha.CaptchaProvider;
+import com.apzda.cloud.gsvc.security.captcha.CaptchaWidget;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -86,7 +87,7 @@ public class SecurityConfigProperties {
         @DurationUnit(ChronoUnit.MINUTES)
         private Duration timeout = Duration.ofMinutes(30);
 
-        private Class<? extends CaptchaProvider> provider;
+        private Class<? extends CaptchaProvider<? extends CaptchaWidget>> provider;
 
         private Map<String, String> props = new HashMap<>();
 

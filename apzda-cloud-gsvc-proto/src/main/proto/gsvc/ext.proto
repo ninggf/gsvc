@@ -11,20 +11,13 @@ option optimize_for = SPEED;
 extend google.protobuf.ServiceOptions {string serviceName = 50001;}
 
 message Valid {
-  bool  required = 1; // not empty string
-  string match = 2; // regex or special value: int,long,double,email,date,timestamp
-  string values = 3; // enums
-  string length = 4; // n or min,max or min,- or -,max
-  string nrange = 5; // n or min,max or min,- or -,max compare by number
-  string srange = 6; // like nrange but compare by string
-  string arrlen = 7; // length for repeated field
+  repeated ValidRule rules = 1;
+}
 
-  string empty_or_match = 8;
-  string empty_or_values = 9;
-  string empty_or_length = 10;
-  string empty_or_nrange = 11;
-  string empty_or_srange = 12;
-  string empty_or_arrlen = 13;
+message ValidRule {
+  string rule = 1;
+  optional string  group = 2;
+  optional  string message = 3;
 }
 
 extend google.protobuf.FieldOptions {Valid valid = 50002;}
@@ -43,6 +36,10 @@ message CurrentUser {
   string uid = 1;
   optional string device = 2;
   optional string device_id = 3;
+  optional string os = 4;
+  optional string os_ver = 5;
+  optional string  app = 6;
+  map<string, string > app_meta = 7;
 }
 
 message UploadFile {
@@ -52,6 +49,6 @@ message UploadFile {
   string content_type = 4;
   string ext = 5;
   string name = 6;
-  string error = 7;
+  optional string error = 7;
 }
 
