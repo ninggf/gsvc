@@ -7,6 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 
+import java.util.Map;
+
 /**
  * @author fengz
  */
@@ -20,7 +22,11 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
 
     private final String osVer;
 
+    private final String app;
+
     private final String appVer;
+
+    private final Map<String, String> appMeta;
 
     public DeviceAuthenticationDetails(HttpServletRequest request) {
         super(request);
@@ -29,7 +35,9 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
         this.deviceId = StringUtils.defaultString(headers.get("X-Device-Id"));
         this.osName = StringUtils.defaultString(headers.get("X-OS-Name"));
         this.osVer = StringUtils.defaultString(headers.get("X-OS-Ver"));
+        this.app = StringUtils.defaultString(headers.get("X-App"));
         this.appVer = StringUtils.defaultString(headers.get("X-App-Ver"));
+        this.appMeta = GsvcContextHolder.headers("X-App-");
     }
 
     public static DeviceAuthenticationDetails create() {
@@ -53,8 +61,16 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
         return osVer;
     }
 
+    public String getApp() {
+        return app;
+    }
+
     public String getAppVer() {
         return appVer;
+    }
+
+    public Map<String, String> getAppMeta() {
+        return appMeta;
     }
 
     @Override
@@ -64,7 +80,9 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
             .append("deviceId", deviceId)
             .append("os", osName)
             .append("osVer", osVer)
+            .append("app", app)
             .append("appVer", appVer)
+            .append("appMeta", appMeta)
             .toString();
     }
 
