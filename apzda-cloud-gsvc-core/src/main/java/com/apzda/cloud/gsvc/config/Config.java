@@ -18,6 +18,6 @@ public class Config {
 
     private boolean properUnsignedNumberSerialization;
 
-    private boolean serializeLongsAsString;
+    private boolean serializeLongsAsString = true;
 
 }

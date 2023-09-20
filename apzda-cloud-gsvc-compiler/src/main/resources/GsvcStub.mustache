@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 {{#deprecated}}
@@ -34,13 +35,20 @@ public class {{className}} {
             {{outputType}}.class
         });
     {{/serverStreamingMethods}}
-    {{#biStreamingMethods}}
+    {{#clientStreamingMethods}}
+        METHOD_META_INFO.put("{{methodName}}",new Object[]{
+            io.grpc.MethodDescriptor.MethodType.CLIENT_STREAMING,
+            {{inputType}}.class,
+            {{outputType}}.class
+        });
+    {{/clientStreamingMethods}}
+    {{#biStreamingWithoutClientStreamMethods}}
         METHOD_META_INFO.put("{{methodName}}",new Object[]{
             io.grpc.MethodDescriptor.MethodType.BIDI_STREAMING,
             {{inputType}}.class,
             {{outputType}}.class
         });
-    {{/biStreamingMethods}}
+    {{/biStreamingWithoutClientStreamMethods}}
         GatewayServiceRegistry.register({{interfaceClassName}}.class, METHOD_META_INFO);
     }
 
@@ -57,16 +65,22 @@ public class {{className}} {
         {{/unaryMethods}}
         {{#serverStreamingMethods}}
             @Override
-            public Mono<{{outputType}}> {{methodName}}({{inputType}} request) {
+            public Flux<{{outputType}}> {{methodName}}({{inputType}} request) {
                 return serviceCaller.serverStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
         {{/serverStreamingMethods}}
-        {{#biStreamingMethods}}
+        {{#clientStreamingMethods}}
             @Override
-            public Mono<{{outputType}}> {{methodName}}(Mono<{{inputType}}> request) {
+            public {{outputType}} {{methodName}}(Flux<{{inputType}}> request) {
+                return serviceCaller.clientStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
+            }
+        {{/clientStreamingMethods}}
+        {{#biStreamingWithoutClientStreamMethods}}
+            @Override
+            public Flux<{{outputType}}> {{methodName}}(Flux<{{inputType}}> request) {
                 return serviceCaller.bidiStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
-        {{/biStreamingMethods}}
+        {{/biStreamingWithoutClientStreamMethods}}
         };
     }
 }

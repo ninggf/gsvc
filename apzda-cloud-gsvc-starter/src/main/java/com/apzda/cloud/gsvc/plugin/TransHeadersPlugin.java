@@ -11,7 +11,6 @@ import lombok.val;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpCookie;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.Map;
@@ -31,8 +30,7 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
     }
 
     @Override
-    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data,
-            ServiceMethod method) {
+    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Object data, ServiceMethod method) {
         val headers = GsvcContextHolder.headers("X-");
 
         val appName = context.getEnvironment().getProperty("spring.application.name");

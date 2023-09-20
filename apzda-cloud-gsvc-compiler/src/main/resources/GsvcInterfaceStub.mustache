@@ -2,6 +2,9 @@
 package {{packageName}};
 {{/packageName}}
 
+{{#javaDoc}}
+{{{javaDoc}}}
+{{/javaDoc}}
 {{#deprecated}}
 @java.lang.Deprecated
 {{/deprecated}}
@@ -22,15 +25,24 @@ public interface {{interfaceClassName}} {
     {{#deprecated}}
     @java.lang.Deprecated
     {{/deprecated}}
-    reactor.core.publisher.Mono<{{outputType}}> {{methodName}}({{inputType}} request);
+    reactor.core.publisher.Flux<{{outputType}}> {{methodName}}({{inputType}} request);
 {{/serverStreamingMethods}}
-{{#biStreamingMethods}}
+{{#clientStreamingMethods}}
     {{#javaDoc}}
     {{{javaDoc}}}
     {{/javaDoc}}
     {{#deprecated}}
     @java.lang.Deprecated
     {{/deprecated}}
-    reactor.core.publisher.Mono<{{outputType}}> {{methodName}}(reactor.core.publisher.Mono<{{inputType}}> request);
-{{/biStreamingMethods}}
+    {{outputType}} {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request);
+{{/clientStreamingMethods}}
+{{#biStreamingWithoutClientStreamMethods}}
+    {{#javaDoc}}
+    {{{javaDoc}}}
+    {{/javaDoc}}
+    {{#deprecated}}
+    @java.lang.Deprecated
+    {{/deprecated}}
+    reactor.core.publisher.Flux<{{outputType}}> {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request);
+{{/biStreamingWithoutClientStreamMethods}}
 }

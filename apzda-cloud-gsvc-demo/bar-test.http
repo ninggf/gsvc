@@ -52,7 +52,7 @@ X-Gsvc-Caller: gtw
     client.test("Request executed successfully", function () {
         client.assert(response.status === 200, "Response status is not 400");
         const type = response.contentType.mimeType;
-        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
         client.assert(response.body.data.name === "gsvc.bar@hi", "响应不等于'gsvc.bar@hi'")
     });

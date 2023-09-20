@@ -39,16 +39,16 @@ public class DemoController {
     @GetMapping("/bar/hi")
     public Response<BarRes> barHi(@RequestParam String name, @RequestParam int age) {
         val req = BarReq.newBuilder().setName(name).setAge(age).build();
-        val res = barService.hi(req);
+        val res = barService.hi(req).blockFirst();
 
-        return Response.wrap(res.block());
+        return Response.wrap(res);
     }
 
     @GetMapping("/foo/hi")
     public Response<FooRes> fooHi(@RequestParam String name, @RequestParam int age) {
         val req = FooReq.newBuilder().setName(name).setAge(age).build();
         val res = fooService.hi(req);
-        return Response.wrap(res.block());
+        return Response.wrap(res.blockFirst());
     }
 
     @GetMapping("/greeting")

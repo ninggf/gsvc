@@ -32,6 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.util.ContentCachingRequestWrapper;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -140,37 +141,51 @@ public class ServiceMethodHandler {
             }
         });
 
-        Mono<Object> mono = (Mono<Object>) serviceMethod.call(realReqObj.block());
+        Flux<Object> resultObj = (Flux<Object>) serviceMethod.call(realReqObj.block());
 
         while (--size >= 0) {
             var plugin = plugins.get(size);
             if (plugin instanceof IPostInvoke preInvoke) {
-                mono = (Mono<Object>) preInvoke.postInvoke(request, requestObj, mono, serviceMethod);
+                resultObj = (Flux<Object>) preInvoke.postInvoke(requestObj, resultObj, serviceMethod);
             }
         }
 
         val timeout = svcConfigure.getTimeout(serviceMethod.getCfgName(), serviceMethod.getDmName());
         if (!timeout.isZero()) {
-            mono = mono.timeout(timeout);
+            resultObj = resultObj.timeout(timeout);
         }
 
+        final Flux<Object> responseFlux = resultObj.contextCapture();
         // reactive is so hard!!!
-        return ServerResponse.async(mono.handle((resp, sink) -> {
-            try {
-                val response = createResponse(resp);
-                sink.next(ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response));
-                sink.complete();
-            }
-            catch (JsonProcessingException e) {
-                sink.error(e);
-            }
-        }).onErrorResume((e) -> {
-            log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
-                    serviceMethod.getDmName(), e);
-
-            // bookmark exception handle(service call)
-            return Mono.just(exceptionHandler.handle(e, this.request));
-        }));
+        return ServerResponse.sse(sseBuilder -> {
+            responseFlux.doOnComplete(sseBuilder::complete).doOnError(err -> {
+                log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
+                        serviceMethod.getDmName(), err);
+                try {
+                    sseBuilder.data(ResponseUtils.fallback(err, serviceMethod.getServiceName(), String.class));
+                    sseBuilder.complete();
+                }
+                catch (IOException ie) {
+                    sseBuilder.error(ie);
+                }
+            }).subscribe(resp -> {
+                try {
+                    val response = createResponse(resp);
+                    log.warn("序列化响应: {}", response);
+                    sseBuilder.data(response);
+                }
+                catch (IOException e) {
+                    log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
+                            serviceMethod.getDmName(), e);
+                    try {
+                        sseBuilder.data(ResponseUtils.fallback(e, serviceMethod.getServiceName(), String.class));
+                    }
+                    catch (IOException ie) {
+                        sseBuilder.error(ie);
+                    }
+                }
+            });
+        });
     }
 
     private ServerResponse doUnaryCall(Mono<JsonNode> requestObj)
@@ -193,16 +208,16 @@ public class ServiceMethodHandler {
             }
         }).block();
 
-        Object resp = serviceMethod.call(realReqObj);
+        Object returnObj = serviceMethod.call(realReqObj);
 
         while (--size >= 0) {
             var plugin = plugins.get(size);
             if (plugin instanceof IPostInvoke preInvoke) {
-                resp = preInvoke.postInvoke(request, requestObj, resp, serviceMethod);
+                returnObj = preInvoke.postInvoke(requestObj, returnObj, serviceMethod);
             }
         }
 
-        val response = createResponse(resp);
+        val response = createResponse(returnObj);
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }
 

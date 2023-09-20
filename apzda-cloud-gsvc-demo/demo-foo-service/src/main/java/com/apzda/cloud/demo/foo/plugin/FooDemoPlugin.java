@@ -20,8 +20,7 @@ import reactor.core.publisher.Mono;
 public class FooDemoPlugin implements IGlobalPlugin, IPreCall, IPreInvoke {
 
     @Override
-    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data,
-            ServiceMethod method) {
+    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Object data, ServiceMethod method) {
         log.info("[{}] FooDemoPlugin#preCall is working", GsvcContextHolder.getRequestId());
         return request;
     }

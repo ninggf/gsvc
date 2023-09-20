@@ -4,13 +4,13 @@
 package com.apzda.cloud.gsvc.plugin;
 
 import com.apzda.cloud.gsvc.core.ServiceMethod;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 /**
  * @author fengz
  */
 public interface IPostCall extends IPlugin {
 
-    <R> Mono<R> postCall(Mono<R> response, ServiceMethod method, Class<R> rClass);
+    <R> Flux<R> postCall(Flux<R> response, ServiceMethod method, Class<R> rClass);
 
 }

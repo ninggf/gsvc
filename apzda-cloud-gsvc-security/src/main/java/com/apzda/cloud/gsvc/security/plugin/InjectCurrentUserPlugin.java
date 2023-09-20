@@ -35,8 +35,7 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
     private final SecurityConfigProperties properties;
 
     @Override
-    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Mono<Object> data,
-            ServiceMethod method) {
+    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Object data, ServiceMethod method) {
         val tokenName = properties.getTokenName();
 
         if (StringUtils.isNotBlank(tokenName)) {

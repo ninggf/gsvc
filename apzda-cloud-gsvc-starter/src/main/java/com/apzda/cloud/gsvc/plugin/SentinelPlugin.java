@@ -7,7 +7,7 @@ import com.apzda.cloud.gsvc.exception.DegradedException;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.core.Ordered;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 /**
  * @author fengz
@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 public class SentinelPlugin implements IGlobalPlugin, IPostCall {
 
     @Override
-    public <R> Mono<R> postCall(Mono<R> response, ServiceMethod method, Class<R> rClass) {
+    public <R> Flux<R> postCall(Flux<R> response, ServiceMethod method, Class<R> rClass) {
         val resource = String.format("/~%s/%s/%s", method.getCfgName(), method.getServiceName(), method.getDmName());
 
         // log.trace("Register Sentinel Resource: {}", resource);

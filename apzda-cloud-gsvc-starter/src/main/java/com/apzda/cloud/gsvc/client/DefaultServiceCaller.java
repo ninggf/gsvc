@@ -13,9 +13,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
-import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
@@ -26,6 +28,9 @@ import java.util.List;
  */
 @Slf4j
 public class DefaultServiceCaller implements IServiceCaller {
+
+    public static final ParameterizedTypeReference<ServerSentEvent<String>> SSE_RESPONSE_TYPE = new ParameterizedTypeReference<>() {
+    };
 
     protected final ObjectMapper objectMapper = ResponseUtils.OBJECT_MAPPER;
 
@@ -44,33 +49,14 @@ public class DefaultServiceCaller implements IServiceCaller {
         val serviceMethod = GatewayServiceRegistry.getServiceMethod(clazz, method);
         val url = serviceMethod.getRpcAddr();
         log.debug("[{}] Start Block RPC: {}", requestId, url);
+
         val reqBody = prepareRequestBody(request, serviceMethod);
-        return doBlockCall(reqBody, serviceMethod, url, resClazz);
-    }
-
-    @Override
-    public <T, R> Mono<R> serverStreamingCall(Class<?> clazz, String method, T request, Class<T> reqClazz,
-            Class<R> resClazz) {
-        return bidiStreamingCall(clazz, method, Mono.just(request), reqClazz, resClazz);
-    }
-
-    @Override
-    public <T, R> Mono<R> bidiStreamingCall(Class<?> clazz, String method, Mono<T> request, Class<T> reqClazz,
-            Class<R> resClazz) {
-        val requestId = GsvcContextHolder.getRequestId();
-        val serviceMethod = GatewayServiceRegistry.getServiceMethod(clazz, method);
-        val url = serviceMethod.getRpcAddr();
-        log.debug("[{}] Start Async RPC: {}", requestId, url);
-        val reqBody = prepareRequestBody(request, serviceMethod);
-
-        return doAsyncCall(reqBody, serviceMethod, url, resClazz);
+        return doBlockCall(reqBody.bodyToMono(String.class), serviceMethod, url, resClazz);
     }
 
     protected <R> R doBlockCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
-        val cfgName = serviceMethod.getCfgName();
-        val methodName = serviceMethod.getDmName();
         // bookmark: block rpc
-        val res = handleRpcFallback(reqBody, serviceMethod, String.class).block();
+        val res = handleRpcFallback(Flux.concat(reqBody), serviceMethod, String.class).blockFirst();
 
         if (log.isDebugEnabled()) {
             log.debug("[{}] Response from {}: {}", GsvcContextHolder.getRequestId(), uri, res);
@@ -79,23 +65,40 @@ public class DefaultServiceCaller implements IServiceCaller {
         return ResponseUtils.parseResponse(res, rClass);
     }
 
-    protected <R> Mono<R> doAsyncCall(Mono<String> reqBody, ServiceMethod serviceMethod, String uri, Class<R> rClass) {
-        val cfgName = serviceMethod.getCfgName();
-        val methodName = serviceMethod.getDmName();
+    @Override
+    public <T, R> Flux<R> serverStreamingCall(Class<?> clazz, String method, T request, Class<T> reqClazz,
+            Class<R> resClazz) {
+        val requestId = GsvcContextHolder.getRequestId();
+        val serviceMethod = GatewayServiceRegistry.getServiceMethod(clazz, method);
+        val url = serviceMethod.getRpcAddr();
+        log.debug("[{}] Start Async RPC: {}", requestId, url);
+        val reqBody = prepareRequestBody(request, serviceMethod);
+
+        return doAsyncCall(reqBody.bodyToFlux(SSE_RESPONSE_TYPE), serviceMethod, url, resClazz);
+    }
+
+    protected <R> Flux<R> doAsyncCall(Flux<ServerSentEvent<String>> reqBody, ServiceMethod serviceMethod, String uri,
+            Class<R> rClass) {
         // bookmark: async rpc
         var reqMono = reqBody.<R>handle((res, sink) -> {
-            if (log.isDebugEnabled()) {
+            if (log.isTraceEnabled()) {
                 val requestId = GsvcContextHolder.getRequestId();
-                log.debug("[{}] Response from {}: {}", requestId, uri, res);
+                log.trace("[{}] Response from {}: {}", requestId, uri, res);
             }
-            sink.next(ResponseUtils.parseResponse(res, rClass));
-            sink.complete();
+            try {
+                val data = res.data();
+                sink.next(ResponseUtils.parseResponse(data, rClass));
+                sink.complete();
+            }
+            catch (Exception e) {
+                sink.error(e);
+            }
         });
 
         return handleRpcFallback(reqMono, serviceMethod, rClass);
     }
 
-    protected <R> Mono<R> handleRpcFallback(Mono<R> reqBody, ServiceMethod method, Class<R> rClass) {
+    protected <R> Flux<R> handleRpcFallback(Flux<R> reqBody, ServiceMethod method, Class<R> rClass) {
         // bookmark: fallback
         val uri = method.getRpcAddr();
         val requestId = GsvcContextHolder.getRequestId();
@@ -112,42 +115,34 @@ public class DefaultServiceCaller implements IServiceCaller {
                 reqBody = postPlugin.postCall(reqBody, method, rClass);
             }
         }
+
         return reqBody.contextCapture();
     }
 
-    @SuppressWarnings("unchecked")
-    protected Mono<String> prepareRequestBody(Object requestObj, ServiceMethod method) {
-        val requestId = GsvcContextHolder.getRequestId();
+    protected WebClient.ResponseSpec prepareRequestBody(Object requestObj, ServiceMethod method) {
         var url = method.getRpcAddr();
         val webClient = applicationContext.getBean(method.getClientBeanName(), WebClient.class);
 
         WebClient.RequestBodySpec req = webClient.post().uri(url).accept(MediaType.APPLICATION_JSON);
         List<IPlugin> plugins = method.getPlugins();
 
-        if (!(requestObj instanceof Mono)) {
-            requestObj = Mono.just(requestObj);
-        }
-
         for (IPlugin plugin : plugins) {
             if (plugin instanceof IPreCall prePlugin) {
-                req = prePlugin.preCall(req, (Mono<Object>) requestObj, method);
+                req = prePlugin.preCall(req, requestObj, method);
             }
         }
 
-        val request = req.contentType(MediaType.APPLICATION_JSON)
-            .acceptCharset(StandardCharsets.UTF_8)
-            .body(BodyInserters.fromPublisher(((Mono<Object>) requestObj).handle((obj, sink) -> {
-                try {
-                    sink.next(objectMapper.writeValueAsString(obj));
-                    sink.complete();
-                }
-                catch (JsonProcessingException e) {
-                    log.error("[{}] Bad Request for {}: {} - {}", requestId, url, e.getMessage(), obj);
-                    sink.error(e);
-                }
-            }), String.class));
+        try {
+            val requestBody = objectMapper.writeValueAsString(requestObj);
+            val request = req.contentType(MediaType.APPLICATION_JSON)
+                .acceptCharset(StandardCharsets.UTF_8)
+                .bodyValue(requestBody);
 
-        return request.retrieve().bodyToMono(String.class);
+            return request.retrieve();
+        }
+        catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(e.getMessage(), e);
+        }
     }
 
 }

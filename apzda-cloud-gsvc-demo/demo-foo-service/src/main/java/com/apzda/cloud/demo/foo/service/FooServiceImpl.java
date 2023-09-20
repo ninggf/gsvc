@@ -8,16 +8,18 @@ import com.apzda.cloud.demo.foo.proto.FooReq;
 import com.apzda.cloud.demo.foo.proto.FooRes;
 import com.apzda.cloud.demo.foo.proto.FooService;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 /**
  * @author fengz
  */
 @Service
+@Slf4j
 public class FooServiceImpl implements FooService {
 
     @Autowired
@@ -37,7 +39,7 @@ public class FooServiceImpl implements FooService {
     }
 
     @Override
-    public Mono<FooRes> hello(FooReq request) {
+    public Flux<FooRes> hello(FooReq request) {
         val req = BarReq.newBuilder().setName(request.getName() + ".foo2").setAge(request.getAge() + 2).build();
         return barService.hello(req)
             .map(res -> FooRes.newBuilder()
@@ -49,11 +51,13 @@ public class FooServiceImpl implements FooService {
     }
 
     @Override
-    public Mono<FooRes> hi(FooReq request) {
+    public Flux<FooRes> hi(FooReq request) {
         val req = BarReq.newBuilder().setName(request.getName() + ".foo3").setAge(request.getAge() + 3).build();
 
-        return barService.hi(req)
-            .map(res -> FooRes.newBuilder().setErrCode(0).setName(res.getName()).setAge(res.getAge()).build());
+        return barService.hi(req).map(res -> {
+            log.warn("收到 barService.hi响应: {}", res);
+            return FooRes.newBuilder().setErrCode(0).setName(res.getName()).setAge(res.getAge()).build();
+        });
     }
 
     @Override
