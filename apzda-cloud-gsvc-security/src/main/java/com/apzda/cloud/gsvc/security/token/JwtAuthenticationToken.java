@@ -57,17 +57,13 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     public String deviceAwareMetaKey(String key) {
         val details = this.getDetails();
         if (details instanceof DeviceAuthenticationDetails deviceAuthenticationDetails) {
-            return key + "." + deviceAuthenticationDetails.getDevice();
+            return key + "." + deviceAuthenticationDetails.getApp() + "@" + deviceAuthenticationDetails.getDevice();
         }
         return key;
     }
 
     public String deviceAwareMetaKey(String key, String subKey) {
-        val details = this.getDetails();
-        if (details instanceof DeviceAuthenticationDetails deviceAuthenticationDetails) {
-            key = key + "." + deviceAuthenticationDetails.getDevice();
-        }
-        return key + "." + subKey;
+        return deviceAwareMetaKey(key) + "." + subKey;
     }
 
     @Override

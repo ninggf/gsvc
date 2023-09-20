@@ -31,11 +31,11 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
     public DeviceAuthenticationDetails(HttpServletRequest request) {
         super(request);
         val headers = GsvcContextHolder.headers();
-        this.device = StringUtils.defaultString(headers.get("X-Device"), "pc");
+        this.device = StringUtils.defaultIfBlank(headers.get("X-Device"), "pc");
         this.deviceId = StringUtils.defaultString(headers.get("X-Device-Id"));
         this.osName = StringUtils.defaultString(headers.get("X-OS-Name"));
         this.osVer = StringUtils.defaultString(headers.get("X-OS-Ver"));
-        this.app = StringUtils.defaultString(headers.get("X-App"));
+        this.app = StringUtils.defaultIfBlank(headers.get("X-App"), "web");
         this.appVer = StringUtils.defaultString(headers.get("X-App-Ver"));
         this.appMeta = GsvcContextHolder.headers("X-App-");
     }
