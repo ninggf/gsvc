@@ -13,7 +13,7 @@ public interface IServiceCaller {
 
     <T, R> Flux<R> serverStreamingCall(Class<?> clazz, String method, T request, Class<T> reqClazz, Class<R> resClazz);
 
-    default <T, R> R clientStreamingCall(Class<?> clazz, String method, Flux<T> request, Class<T> reqClazz,
+    default <T, R> Flux<R> clientStreamingCall(Class<?> clazz, String method, Flux<T> request, Class<T> reqClazz,
             Class<R> resClazz) {
         throw new HttpServerErrorException(HttpStatus.NOT_IMPLEMENTED,
                 String.format("'%s' is client-streaming method which not supported by webclient now", method));

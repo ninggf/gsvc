@@ -17,45 +17,42 @@
 package com.apzda.cloud.gsvc.grpc;
 
 import io.grpc.stub.StreamObserver;
+import lombok.Getter;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.SynchronousSink;
 
-import java.time.Duration;
-import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class MonoResultObserver<V> implements StreamObserver<V> {
+public class FluxObserver<V> implements Consumer<SynchronousSink<V>>, StreamObserver<V> {
 
-    private V value;
+    @Getter
+    private final Flux<V> flux = Flux.generate(this);
 
-    private final CountDownLatch countDownLatch = new CountDownLatch(1);
-
-    private Throwable throwable;
+    private SynchronousSink<V> sink;
 
     @Override
     public void onNext(V value) {
-        this.value = value;
+        sink.next(value);
     }
 
     @Override
     public void onError(Throwable t) {
-        this.throwable = t;
-        this.countDownLatch.countDown();
+        sink.error(t);
     }
 
     @Override
     public void onCompleted() {
-        this.countDownLatch.countDown();
+        sink.complete();
     }
 
-    public V getValue(Duration timeout) throws Throwable {
-        if (this.throwable != null) {
-            throw throwable;
-        }
-        this.countDownLatch.wait(timeout.toMillis());
-        return value;
+    @Override
+    public void accept(SynchronousSink<V> tSynchronousSink) {
+        this.sink = tSynchronousSink;
     }
 
 }

@@ -16,43 +16,15 @@
  */
 package com.apzda.cloud.gsvc.grpc;
 
-import io.grpc.stub.StreamObserver;
-import lombok.Getter;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.SynchronousSink;
-
-import java.util.function.Consumer;
+import io.grpc.Channel;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class FluxResultObserver<V> implements Consumer<SynchronousSink<V>>, StreamObserver<V> {
+public interface GrpcChannelFactoryAdapter {
 
-    @Getter
-    private final Flux<V> flux = Flux.generate(this);
-
-    private SynchronousSink<V> sink;
-
-    @Override
-    public void onNext(V value) {
-        sink.next(value);
-    }
-
-    @Override
-    public void onError(Throwable t) {
-        sink.error(t);
-    }
-
-    @Override
-    public void onCompleted() {
-        sink.complete();
-    }
-
-    @Override
-    public void accept(SynchronousSink<V> tSynchronousSink) {
-        this.sink = tSynchronousSink;
-    }
+    Channel createChannel(final String name);
 
 }

@@ -16,15 +16,15 @@
  */
 package com.apzda.cloud.gsvc.grpc;
 
-import io.grpc.Channel;
-
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface GrpcChannelFactory {
+public interface StubFactoryAdapter {
 
-    Channel createChannel(final String name);
+    <T> T createAsyncStub(String serviceName, Class<T> stubType);
+
+    <T> T createBlockingStub(String serviceName, Class<T> stubType);
 
 }

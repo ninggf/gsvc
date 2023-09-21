@@ -30,7 +30,7 @@ public class ServiceConfig {
      */
     private Class<?> interfaceName;
 
-    private boolean grpc;
+    private GrpcConfig grpc = new GrpcConfig();
 
     private final Map<String, MethodConfig> methods = new LinkedHashMap<>();
 
@@ -65,5 +65,16 @@ public class ServiceConfig {
      */
     @DurationUnit(ChronoUnit.MILLIS)
     private Duration connectTimeout = Duration.ZERO;
+
+    @Data
+    public static class GrpcConfig {
+
+        private boolean enabled;
+
+        private List<String> interceptors = new ArrayList<>();
+
+        private boolean sortInterceptors;
+
+    }
 
 }

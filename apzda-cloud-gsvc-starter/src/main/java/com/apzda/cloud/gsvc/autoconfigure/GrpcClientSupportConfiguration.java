@@ -1,9 +1,19 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
+import com.apzda.cloud.gsvc.grpc.DefaultGrpcChannelFactoryAdapter;
+import com.apzda.cloud.gsvc.grpc.DefaultStubFactoryAdapter;
+import com.apzda.cloud.gsvc.grpc.GrpcChannelFactoryAdapter;
+import com.apzda.cloud.gsvc.grpc.StubFactoryAdapter;
 import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
+import net.devh.boot.grpc.client.stubfactory.AsyncStubFactory;
+import net.devh.boot.grpc.client.stubfactory.BlockingStubFactory;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -24,7 +34,21 @@ public class GrpcClientSupportConfiguration {
             net.devh.boot.grpc.client.autoconfigure.GrpcDiscoveryClientAutoConfiguration.class })
     static class GrpcClientAutoImporter {
 
-        // todo: remove this after then official support spring boot 3.x
+        @Bean
+        @ConditionalOnMissingBean
+        GrpcChannelFactoryAdapter grpcChannelFactoryAdapter(
+                net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory grpcChannelFactory,
+                ServiceConfigProperties properties, ApplicationContext applicationContext) {
+            return new DefaultGrpcChannelFactoryAdapter(grpcChannelFactory, properties, applicationContext);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        StubFactoryAdapter stubFactoryAdapter(ApplicationContext applicationContext, AsyncStubFactory asyncStubFactory,
+                BlockingStubFactory blockingStubFactory, GrpcChannelFactoryAdapter grpcChannelFactoryAdapter) {
+            return new DefaultStubFactoryAdapter(asyncStubFactory, blockingStubFactory, grpcChannelFactoryAdapter,
+                    applicationContext);
+        }
 
     }
 

@@ -107,7 +107,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 }
             }
             else {
-                val grpc = environment.getProperty("apzda.cloud.reference." + cfgName + ".grpc");
+                val grpc = environment.getProperty("apzda.cloud.reference." + cfgName + ".grpc.enabled");
                 if (StringUtils.isBlank(grpc) || "false".equalsIgnoreCase(grpc)) {
                     // 注册WebClient
                     registerWebclient(cfgName, bf);

@@ -3,13 +3,18 @@ package {{packageName}};
 {{/packageName}}
 
 import com.apzda.cloud.gsvc.client.IServiceCaller;
+import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
+import com.apzda.cloud.gsvc.grpc.FluxObserver;
+import com.apzda.cloud.gsvc.grpc.StubFactoryAdapter;
 import io.grpc.stub.StreamObserver;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+
+import java.time.Duration;
 
 {{#deprecated}}
 @java.lang.Deprecated
@@ -72,7 +77,7 @@ public class {{className}} {
         {{/serverStreamingMethods}}
         {{#clientStreamingMethods}}
             @Override
-            public {{outputType}} {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request) {
+            public reactor.core.publisher.Flux<{{outputType}}> {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request) {
                 return serviceCaller.clientStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
         {{/clientStreamingMethods}}
@@ -87,21 +92,113 @@ public class {{className}} {
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc", havingValue = "true")
-    {{interfaceClassName}} grpc{{interfaceClassName}}Adapter (
-        com.apzda.cloud.gsvc.grpc.GrpcChannelFactory channelFactory,
-        GatewayServiceConfigure gatewayServiceConfigure
-    ) {
-        final io.grpc.Channel channel = channelFactory.createChannel("BarService");
-        final {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub = {{interfaceClassName}}Grpc.newBlockingStub(channel);
-        final {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub stub = {{interfaceClassName}}Grpc.newStub(channel);
-        return null;
+    @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc.enabled", havingValue = "true")
+    {{interfaceClassName}} grpc{{interfaceClassName}}Adapter (final StubFactoryAdapter adapter, final GatewayServiceConfigure serviceConfigure) {
+        final {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub = adapter.createBlockingStub("{{interfaceClassName}}",
+                {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub.class);
+        final {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub stub = adapter.createAsyncStub("{{interfaceClassName}}",
+                {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub.class);
+        final Duration timeout = serviceConfigure.getReadTimeout("{{interfaceClassName}}", true);
+
+        return new {{interfaceClassName}}() {
+        {{#unaryMethods}}
+            @Override
+            public {{outputType}} {{methodName}}({{inputType}} request) {
+                return blockingStub.{{methodName}}(request);
+            }
+        {{/unaryMethods}}
+        {{#serverStreamingMethods}}
+            @Override
+            public reactor.core.publisher.Flux<{{outputType}}> {{methodName}}({{inputType}} request) {
+                final FluxObserver<{{outputType}}> observer = new FluxObserver<>();
+                stub.{{methodName}}(request, observer);
+                return observer.getFlux().timeout(timeout);
+            }
+        {{/serverStreamingMethods}}
+        {{#clientStreamingMethods}}
+            @Override
+            public reactor.core.publisher.Flux<{{outputType}}> {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request) {
+                final FluxObserver<{{outputType}}> observer = new FluxObserver<>();
+                final StreamObserver<{{inputType}}> reqObserver = stub.{{methodName}}(observer);
+
+                request.doOnComplete(reqObserver::onCompleted)
+                    .doOnError(reqObserver::onError)
+                    .subscribe(reqObserver::onNext);
+
+                return observer.getFlux().timeout(timeout);
+            }
+        {{/clientStreamingMethods}}
+        {{#biStreamingWithoutClientStreamMethods}}
+            @Override
+            public reactor.core.publisher.Flux<{{outputType}}> {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request) {
+                final FluxObserver<{{outputType}}> resultObserver = new FluxObserver<>();
+                final StreamObserver<{{inputType}}> reqObserver = stub.{{methodName}}(resultObserver);
+
+                request.doOnComplete(reqObserver::onCompleted)
+                    .doOnError(reqObserver::onError)
+                    .subscribe(reqObserver::onNext);
+
+                return resultObserver.getFlux().timeout(timeout);
+            }
+        {{/biStreamingWithoutClientStreamMethods}}
+        };
     }
 
     @com.apzda.cloud.gsvc.grpc.GrpcService
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(value = "apzda.cloud.service.{{interfaceClassName}}.grpc", havingValue = "true")
-    {{interfaceClassName}}Grpc.{{interfaceClassName}}ImplBase grpc{{interfaceClassName}}Impl() {
-        return null;
+    @ConditionalOnProperty(value = "apzda.cloud.service.{{interfaceClassName}}.grpc.enabled", havingValue = "true")
+    {{interfaceClassName}}Grpc.{{interfaceClassName}}ImplBase grpc{{interfaceClassName}}ImplAdapter(final {{interfaceClassName}} serviceImpl) {
+        return new {{interfaceClassName}}Grpc.{{interfaceClassName}}ImplBase() {
+        {{#unaryMethods}}
+            public void {{methodName}}({{inputType}} request, StreamObserver<{{outputType}}> responseObserver) {
+                try {
+                    responseObserver.onNext(serviceImpl.{{methodName}}(request));
+                    responseObserver.onCompleted();
+                }
+                catch (Exception e) {
+                    responseObserver.onError(e);
+                }
+            }
+        {{/unaryMethods}}
+        {{#serverStreamingMethods}}
+            public void {{methodName}}({{inputType}} request, StreamObserver<{{outputType}}> responseObserver) {
+                try {
+                    serviceImpl.{{methodName}}(request)
+                        .doOnError(responseObserver::onError)
+                        .doOnComplete(responseObserver::onCompleted)
+                        .subscribe(responseObserver::onNext);
+                }
+                catch (Exception e) {
+                    responseObserver.onError(e);
+                }
+            }
+        {{/serverStreamingMethods}}
+        {{#clientStreamingMethods}}
+            @Override
+            public StreamObserver<{{inputType}}> {{methodName}}(StreamObserver<{{outputType}}> responseObserver) {
+                final FluxObserver<{{inputType}}> req = new FluxObserver<>();
+                final reactor.core.publisher.Flux<{{outputType}}> res = serviceImpl.{{methodName}}(req.getFlux());
+
+                res.doOnComplete(responseObserver::onCompleted)
+                    .doOnError(responseObserver::onError)
+                    .subscribe(responseObserver::onNext);
+
+                return req;
+            }
+        {{/clientStreamingMethods}}
+        {{#biStreamingWithoutClientStreamMethods}}
+            @Override
+            public StreamObserver<{{inputType}}> {{methodName}}(StreamObserver<{{outputType}}> responseObserver) {
+                final FluxObserver<{{inputType}}> req = new FluxObserver<>();
+                final reactor.core.publisher.Flux<{{outputType}}> res = serviceImpl.{{methodName}}(req.getFlux());
+
+                res.doOnComplete(responseObserver::onCompleted)
+                    .doOnError(responseObserver::onError)
+                    .subscribe(responseObserver::onNext);
+
+                return req;
+            }
+        {{/biStreamingWithoutClientStreamMethods}}
+        };
     }
 }

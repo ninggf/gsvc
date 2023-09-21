@@ -71,7 +71,7 @@ public class BarServiceImpl implements BarService {
     }
 
     @Override
-    public BarRes clientStreaming(Flux<BarReq> request) {
+    public Flux<BarRes> clientStreaming(Flux<BarReq> request) {
         return null;
     }
 

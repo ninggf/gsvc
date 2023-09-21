@@ -34,7 +34,7 @@ public interface {{interfaceClassName}} {
     {{#deprecated}}
     @java.lang.Deprecated
     {{/deprecated}}
-    {{outputType}} {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request);
+    reactor.core.publisher.Flux<{{outputType}}> {{methodName}}(reactor.core.publisher.Flux<{{inputType}}> request);
 {{/clientStreamingMethods}}
 {{#biStreamingWithoutClientStreamMethods}}
     {{#javaDoc}}
