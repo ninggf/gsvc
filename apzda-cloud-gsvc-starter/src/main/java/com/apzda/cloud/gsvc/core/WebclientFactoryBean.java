@@ -12,6 +12,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.lang.NonNull;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
@@ -43,17 +44,21 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
 
         val svcLbName = svcConfigure.svcLbName(cfgName);
         val baseUrl = ServiceMethod.baseUrl(svcLbName);
-        boolean lb;
-        try {
-            Class.forName(
-                    "org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction");
-            val lbFunc = this.applicationContext.getBean(
-                    org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction.class);
-            builder.filter(lbFunc);
-            lb = true;
+        var lb = "N/A";
+
+        ExchangeFilterFunction lbFunc = null;
+        if (this.applicationContext.containsBean("retryableLoadBalancerExchangeFilterFunction")) {
+            lbFunc = this.applicationContext.getBean("retryableLoadBalancerExchangeFilterFunction",
+                    ExchangeFilterFunction.class);
+            lb = "Retryable";
         }
-        catch (Exception ignored) {
-            lb = false;
+        else if (this.applicationContext.containsBean("loadBalancerExchangeFilterFunction")) {
+            lbFunc = this.applicationContext.getBean("loadBalancerExchangeFilterFunction",
+                    ExchangeFilterFunction.class);
+            lb = "Simple";
+        }
+        if (lbFunc != null) {
+            builder.filter(lbFunc);
         }
 
         builder.baseUrl(baseUrl);
