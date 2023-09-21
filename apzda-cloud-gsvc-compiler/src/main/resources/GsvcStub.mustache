@@ -88,10 +88,13 @@ public class {{className}} {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc", havingValue = "true")
-    {{interfaceClassName}} grpc{{interfaceClassName}}Stub(
-        @com.apzda.cloud.gsvc.grpc.GrpcClient("{{interfaceClassName}}") {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub,
-        @com.apzda.cloud.gsvc.grpc.GrpcClient("{{interfaceClassName}}") {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub stub
+    {{interfaceClassName}} grpc{{interfaceClassName}}Adapter (
+        com.apzda.cloud.gsvc.grpc.GrpcChannelFactory channelFactory,
+        GatewayServiceConfigure gatewayServiceConfigure
     ) {
+        final io.grpc.Channel channel = channelFactory.createChannel("BarService");
+        final {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub = {{interfaceClassName}}Grpc.newBlockingStub(channel);
+        final {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub stub = {{interfaceClassName}}Grpc.newStub(channel);
         return null;
     }
 
