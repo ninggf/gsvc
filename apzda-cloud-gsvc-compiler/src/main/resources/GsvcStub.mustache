@@ -58,9 +58,9 @@ public class {{className}} {
     }
 
     @Bean
-    @ConditionalOnMissingBean({{interfaceClassName}}.class)
-    @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc", havingValue = "false", matchIfMissing = true)
-    {{interfaceClassName}} gsvc{{interfaceClassName}}Stub(IServiceCaller serviceCaller) {
+    @ConditionalOnMissingBean
+    @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc.enabled", havingValue = "false", matchIfMissing = true)
+    {{interfaceClassName}} gsvc{{interfaceClassName}}Stub (IServiceCaller serviceCaller) {
         GatewayServiceRegistry.registerProxy({{interfaceClassName}}.class);
         return new {{interfaceClassName}}() {
         {{#unaryMethods}}
@@ -87,13 +87,17 @@ public class {{className}} {
                 return serviceCaller.bidiStreamingCall({{interfaceClassName}}.class, "{{methodName}}", request, {{inputType}}.class, {{outputType}}.class);
             }
         {{/biStreamingWithoutClientStreamMethods}}
+            @Override
+            public String toString() {
+                return "{{interfaceClassName}}HttpStub";
+            }
         };
     }
 
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc.enabled", havingValue = "true")
-    {{interfaceClassName}} grpc{{interfaceClassName}}Adapter (final StubFactoryAdapter adapter, final GatewayServiceConfigure serviceConfigure) {
+    {{interfaceClassName}} grpc{{interfaceClassName}}Stub (final StubFactoryAdapter adapter, final GatewayServiceConfigure serviceConfigure) {
         final {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub = adapter.createBlockingStub("{{interfaceClassName}}",
                 {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub.class);
         final {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub stub = adapter.createAsyncStub("{{interfaceClassName}}",
@@ -112,7 +116,7 @@ public class {{className}} {
             public reactor.core.publisher.Flux<{{outputType}}> {{methodName}}({{inputType}} request) {
                 final FluxObserver<{{outputType}}> observer = new FluxObserver<>();
                 stub.{{methodName}}(request, observer);
-                return observer.getFlux().timeout(timeout);
+                return observer.asFlux().timeout(timeout);
             }
         {{/serverStreamingMethods}}
         {{#clientStreamingMethods}}
@@ -123,9 +127,10 @@ public class {{className}} {
 
                 request.doOnComplete(reqObserver::onCompleted)
                     .doOnError(reqObserver::onError)
+                    .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
                     .subscribe(reqObserver::onNext);
 
-                return observer.getFlux().timeout(timeout);
+                return observer.asFlux().timeout(timeout);
             }
         {{/clientStreamingMethods}}
         {{#biStreamingWithoutClientStreamMethods}}
@@ -136,11 +141,16 @@ public class {{className}} {
 
                 request.doOnComplete(reqObserver::onCompleted)
                     .doOnError(reqObserver::onError)
+                    .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
                     .subscribe(reqObserver::onNext);
 
-                return resultObserver.getFlux().timeout(timeout);
+                return resultObserver.asFlux().timeout(timeout);
             }
         {{/biStreamingWithoutClientStreamMethods}}
+            @Override
+            public String toString() {
+                return "{{interfaceClassName}}GrpcStub";
+            }
         };
     }
 
@@ -150,6 +160,7 @@ public class {{className}} {
     {{interfaceClassName}}Grpc.{{interfaceClassName}}ImplBase grpc{{interfaceClassName}}ImplAdapter(final {{interfaceClassName}} serviceImpl) {
         return new {{interfaceClassName}}Grpc.{{interfaceClassName}}ImplBase() {
         {{#unaryMethods}}
+            @Override
             public void {{methodName}}({{inputType}} request, StreamObserver<{{outputType}}> responseObserver) {
                 try {
                     responseObserver.onNext(serviceImpl.{{methodName}}(request));
@@ -161,11 +172,13 @@ public class {{className}} {
             }
         {{/unaryMethods}}
         {{#serverStreamingMethods}}
+            @Override
             public void {{methodName}}({{inputType}} request, StreamObserver<{{outputType}}> responseObserver) {
                 try {
                     serviceImpl.{{methodName}}(request)
                         .doOnError(responseObserver::onError)
                         .doOnComplete(responseObserver::onCompleted)
+                        .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
                         .subscribe(responseObserver::onNext);
                 }
                 catch (Exception e) {
@@ -177,10 +190,11 @@ public class {{className}} {
             @Override
             public StreamObserver<{{inputType}}> {{methodName}}(StreamObserver<{{outputType}}> responseObserver) {
                 final FluxObserver<{{inputType}}> req = new FluxObserver<>();
-                final reactor.core.publisher.Flux<{{outputType}}> res = serviceImpl.{{methodName}}(req.getFlux());
+                final reactor.core.publisher.Flux<{{outputType}}> res = serviceImpl.{{methodName}}(req.asFlux());
 
                 res.doOnComplete(responseObserver::onCompleted)
                     .doOnError(responseObserver::onError)
+                    .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
                     .subscribe(responseObserver::onNext);
 
                 return req;
@@ -190,10 +204,11 @@ public class {{className}} {
             @Override
             public StreamObserver<{{inputType}}> {{methodName}}(StreamObserver<{{outputType}}> responseObserver) {
                 final FluxObserver<{{inputType}}> req = new FluxObserver<>();
-                final reactor.core.publisher.Flux<{{outputType}}> res = serviceImpl.{{methodName}}(req.getFlux());
+                final reactor.core.publisher.Flux<{{outputType}}> res = serviceImpl.{{methodName}}(req.asFlux());
 
                 res.doOnComplete(responseObserver::onCompleted)
                     .doOnError(responseObserver::onError)
+                    .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
                     .subscribe(responseObserver::onNext);
 
                 return req;

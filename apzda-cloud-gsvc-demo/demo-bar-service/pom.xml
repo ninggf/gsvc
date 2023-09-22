@@ -49,6 +49,10 @@
             <artifactId>demo-bar-proto</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>demo-math-proto</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>

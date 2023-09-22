@@ -1,8 +1,11 @@
 package com.apzda.cloud.gsvc.config;
 
+import lombok.ToString;
+
 /**
  * @author fengz
  */
+@ToString
 public class Config {
 
     private String loginPage;

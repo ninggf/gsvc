@@ -36,3 +36,42 @@ GET http://{{demoService}}/demo/greeting?name=demo
         client.assert(response.body.data.name === "Hello demo", "响应不等于'Hello demo'")
     });
 %}
+
+### DemoService /demo/add
+GET http://{{demoService}}/demo/add/1/2
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.data === 3, "响应不等于3")
+    });
+%}
+
+### DemoService /demo/sum
+GET http://{{demoService}}/demo/sum
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.data === 55, "响应不等于55")
+    });
+%}
+
+### DemoService /demo/even
+GET http://{{demoService}}/demo/square
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.data === "1,4,9", "响应不等于1,4,9")
+    });
+%}

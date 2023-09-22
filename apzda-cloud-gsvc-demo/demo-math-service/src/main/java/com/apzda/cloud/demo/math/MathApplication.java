@@ -14,38 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.grpc;
+package com.apzda.cloud.demo.math;
 
-import io.grpc.stub.StreamObserver;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Sinks;
+import com.apzda.cloud.demo.math.proto.MathServiceGsvc;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class FluxObserver<V> implements StreamObserver<V> {
+@SpringBootApplication
+@Import(MathServiceGsvc.class)
+public class MathApplication {
 
-    private final Sinks.Many<V> sink = Sinks.many().replay().all();
-
-    @Override
-    public void onNext(V value) {
-        sink.tryEmitNext(value);
-    }
-
-    @Override
-    public void onError(Throwable t) {
-        sink.tryEmitError(t);
-    }
-
-    @Override
-    public void onCompleted() {
-        sink.tryEmitComplete();
-    }
-
-    public Flux<V> asFlux() {
-        return sink.asFlux();
+    public static void main(String[] args) {
+        SpringApplication.run(MathApplication.class, args);
     }
 
 }

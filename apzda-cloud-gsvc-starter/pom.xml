@@ -71,12 +71,12 @@
         <!-- grpc server & client -->
         <dependency>
             <groupId>net.devh</groupId>
-            <artifactId>grpc-server-spring-boot-starter</artifactId>
+            <artifactId>grpc-server-spring-boot-autoconfigure</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>net.devh</groupId>
-            <artifactId>grpc-client-spring-boot-starter</artifactId>
+            <artifactId>grpc-client-spring-boot-autoconfigure</artifactId>
             <optional>true</optional>
         </dependency>
         <!-- sentinel -->

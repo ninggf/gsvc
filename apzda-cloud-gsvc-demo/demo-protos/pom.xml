@@ -13,6 +13,7 @@
         <module>demo-foo-proto</module>
         <module>demo-bar-proto</module>
         <module>demo-demo-proto</module>
+        <module>demo-math-proto</module>
     </modules>
     <artifactId>demo-protos</artifactId>
 

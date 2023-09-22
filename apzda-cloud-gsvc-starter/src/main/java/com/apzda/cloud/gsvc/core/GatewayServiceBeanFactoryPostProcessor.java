@@ -112,6 +112,9 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     // 注册WebClient
                     registerWebclient(cfgName, bf);
                 }
+                else {
+                    log.info("{} is using grpc", cfgName);
+                }
             }
         }
     }

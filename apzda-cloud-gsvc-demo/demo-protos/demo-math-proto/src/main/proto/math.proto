@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package math;
+
+option java_package = "com.apzda.cloud.demo.math.proto";
+option java_multiple_files = true;
+option java_outer_classname = "MathProto";
+
+
+message OpNum {
+  int32 num1 = 1;
+  int32 num2 = 2;
+}
+
+message Result {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  int64 result = 3;
+}
+
+service MathService {
+  /**
+   * 返回 num1+num2.
+   */
+  rpc add(OpNum) returns(Result);
+  /**
+   * 将所有的num1相加.
+   */
+  rpc sum(stream OpNum) returns(Result);
+  /**
+   * 返回 num1 与 num2 之间所有奇数.
+   */
+  rpc even(OpNum) returns(stream Result);
+  /**
+   * 返回 num1的平方.
+   */
+  rpc square(stream OpNum) returns(stream Result);
+}
