@@ -93,6 +93,38 @@ public class GatewayServiceConfigure {
         return Duration.ZERO;
     }
 
+    public Duration getGrpcKeepAliveTime(String svcName) {
+        var config = serviceConfig.refConfig(svcName);
+        // service global
+        var keepAliveTime = config.getGrpc().getKeepAliveTime();
+        if (!keepAliveTime.isZero()) {
+            return keepAliveTime;
+        }
+        config = serviceConfig.refConfig("default");
+        keepAliveTime = config.getGrpc().getKeepAliveTime();
+        if (!keepAliveTime.isZero()) {
+            return keepAliveTime;
+        }
+        // default
+        return Duration.ofSeconds(120);
+    }
+
+    public Duration getGrpcKeepAliveTimeout(String svcName) {
+        var config = serviceConfig.refConfig(svcName);
+        // service global
+        var keepAliveTimeout = config.getGrpc().getKeepAliveTimeout();
+        if (!keepAliveTimeout.isZero()) {
+            return keepAliveTimeout;
+        }
+        config = serviceConfig.refConfig("default");
+        keepAliveTimeout = config.getGrpc().getKeepAliveTimeout();
+        if (!keepAliveTimeout.isZero()) {
+            return keepAliveTimeout;
+        }
+        // default
+        return Duration.ofSeconds(5);
+    }
+
     public String svcLbName(String cfgName) {
         var svcLbName = serviceConfig.refConfig(cfgName).getSvcName();
         svcLbName = StringUtils.defaultIfBlank(svcLbName, cfgName);

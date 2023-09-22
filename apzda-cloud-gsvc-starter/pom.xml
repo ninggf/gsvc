@@ -34,6 +34,7 @@
         <dependency>
             <groupId>com.apzda.cloud</groupId>
             <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
+            <optional>true</optional>
         </dependency>
         <!-- spring boot & cloud -->
         <dependency>
@@ -77,16 +78,6 @@
         <dependency>
             <groupId>net.devh</groupId>
             <artifactId>grpc-client-spring-boot-autoconfigure</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <!-- sentinel -->
-        <dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-reactor-adapter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-transport-simple-http</artifactId>
             <optional>true</optional>
         </dependency>
     </dependencies>

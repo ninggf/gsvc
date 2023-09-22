@@ -18,6 +18,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author fengz
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Bean;
 @AutoConfiguration(before = ApzdaGsvcAutoConfiguration.class)
 @ConditionalOnClass(SimpleHttpClient.class)
 @ConditionalOnProperty("csp.sentinel.dashboard.server")
+@Import(SentinelGrpcAutoConfiguration.class)
 @Slf4j
 public class SentinelAutoConfiguration {
 

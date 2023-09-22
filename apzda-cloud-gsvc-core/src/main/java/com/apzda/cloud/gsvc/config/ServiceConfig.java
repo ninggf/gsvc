@@ -75,6 +75,12 @@ public class ServiceConfig {
 
         private boolean sortInterceptors;
 
+        @DurationUnit(ChronoUnit.SECONDS)
+        private Duration keepAliveTime = Duration.ZERO;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        private Duration keepAliveTimeout = Duration.ZERO;
+
     }
 
 }

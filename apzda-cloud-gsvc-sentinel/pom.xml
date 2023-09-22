@@ -24,9 +24,18 @@
             <groupId>com.apzda.cloud</groupId>
             <artifactId>apzda-cloud-gsvc-core</artifactId>
         </dependency>
+        <!-- sentinel -->
         <dependency>
             <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-core</artifactId>
+            <artifactId>sentinel-reactor-adapter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-grpc-adapter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-transport-simple-http</artifactId>
         </dependency>
     </dependencies>
 

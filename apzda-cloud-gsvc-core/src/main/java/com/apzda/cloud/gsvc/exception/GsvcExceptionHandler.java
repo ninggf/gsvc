@@ -40,8 +40,6 @@ import java.util.concurrent.TimeoutException;
 @RequiredArgsConstructor
 public class GsvcExceptionHandler {
 
-    private final ServiceConfigProperties properties;
-
     private final ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters;
 
     public ServerResponse handle(Throwable error, ServerRequest request) {

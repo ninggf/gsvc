@@ -60,9 +60,8 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
     }
 
     @Bean
-    GsvcExceptionHandler gsvcExceptionHandler(ServiceConfigProperties properties,
-            ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters) {
-        return new GsvcExceptionHandler(properties, httpMessageConverters);
+    GsvcExceptionHandler gsvcExceptionHandler(ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters) {
+        return new GsvcExceptionHandler(httpMessageConverters);
     }
 
     @Bean
