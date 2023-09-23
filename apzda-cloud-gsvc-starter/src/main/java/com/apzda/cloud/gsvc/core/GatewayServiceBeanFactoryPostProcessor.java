@@ -138,7 +138,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, bf);
 
-        log.trace("Register WebClient: '{}WebClient'", cfgName);
+        log.trace("Registered {}WebClient For: {}", cfgName, cfgName);
     }
 
     private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> clazz) {

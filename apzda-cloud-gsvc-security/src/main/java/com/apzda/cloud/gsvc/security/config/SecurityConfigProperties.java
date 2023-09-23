@@ -31,6 +31,8 @@ public class SecurityConfigProperties {
 
     private String metaRepo;
 
+    private boolean traceEnabled;
+
     private Class<? extends GrantedAuthority> authorityClass = SimpleGrantedAuthority.class;
 
     private CookieConfig cookie = new CookieConfig();

@@ -11,6 +11,15 @@
 
     <artifactId>apzda-cloud-gsvc-tracing</artifactId>
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
         <!-- grpc -->
         <dependency>
             <groupId>net.devh</groupId>

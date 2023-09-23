@@ -21,6 +21,8 @@ import io.grpc.ServerInterceptor;
 import net.devh.boot.grpc.common.util.InterceptorOrder;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -40,6 +42,8 @@ import org.springframework.core.annotation.Order;
 @ConditionalOnBean(GrpcTracing.class)
 public class GrpcServerTraceAutoConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(GrpcServerTraceAutoConfiguration.class);
+
     /**
      * Configures a global server interceptor that applies brave's tracing logic to the
      * requests.
@@ -49,6 +53,7 @@ public class GrpcServerTraceAutoConfiguration {
     @GrpcGlobalServerInterceptor
     @Order(InterceptorOrder.ORDER_TRACING_METRICS + 1)
     public ServerInterceptor globalTraceServerInterceptorConfigurer(final GrpcTracing grpcTracing) {
+        log.trace("Grpc Tracing ServerInterceptor created!");
         return grpcTracing.newServerInterceptor();
     }
 

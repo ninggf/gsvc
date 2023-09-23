@@ -3,21 +3,29 @@ package com.apzda.cloud.demo.bar.facade;
 import com.apzda.cloud.demo.bar.proto.BarReq;
 import com.apzda.cloud.demo.bar.proto.BarRes;
 import com.apzda.cloud.demo.bar.proto.BarService;
+import com.apzda.cloud.demo.math.proto.MathService;
+import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author fengz
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class BarServiceImpl implements BarService {
+
+    private final MathService mathService;
 
     @Override
     public BarRes greeting(BarReq request) {
@@ -46,6 +54,7 @@ public class BarServiceImpl implements BarService {
 
     @Override
     public Flux<BarRes> hi(BarReq request) {
+        val atomicInteger = new AtomicInteger();
         return Flux.fromIterable(List.of(request, request)).map(barReq -> {
             try {
                 for (GsvcExt.UploadFile uploadFile : barReq.getFilesList()) {
@@ -61,10 +70,17 @@ public class BarServiceImpl implements BarService {
             catch (Exception ignored) {
 
             }
-            log.info("处理请求: {}", barReq);
+            val rst = mathService.add(OpNum.newBuilder()
+                .setNum1(atomicInteger.incrementAndGet())
+                .setNum2(atomicInteger.incrementAndGet())
+                .build());
+            val result = mathService.square(Flux.just(1, 2).map(n -> OpNum.newBuilder().setNum1(n).build()))
+                .publishOn(Schedulers.boundedElastic())
+                .blockLast();
+            log.info("处理请求: {}, 最后一个数的平方: {}", barReq, result.getResult());
             return BarRes.newBuilder()
                 .setAge(barReq.getAge() + 3)
-                .setFileCount(new Random().nextInt())
+                .setFileCount((int) rst.getResult())
                 .setName(barReq.getName() + ".bar@hi")
                 .build();
         });

@@ -1,6 +1,7 @@
 server:
   port: 12564
 
+
 grpc:
   server:
     port: 9090
@@ -9,7 +10,7 @@ logging:
   level:
     web: debug
     com.apzda: trace
-    net.devh: debug
+    net.devh: trace
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSSXXX} %highlight(%-5level) --- [%15.15t] %cyan(%-40.40logger{39}):%-4L - %msg%n"
 
@@ -19,3 +20,11 @@ apzda:
       MathService:
         grpc:
           enabled: true
+
+# tracing
+management.zipkin.tracing.endpoint: http://localhost:9411/api/v2/spans
+management.tracing.sampling.probability: 1.0
+
+spring:
+  application:
+    name: math
