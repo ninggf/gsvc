@@ -38,7 +38,6 @@ public class GrpcClientSupportConfiguration {
             net.devh.boot.grpc.client.autoconfigure.GrpcClientMetricAutoConfiguration.class,
             net.devh.boot.grpc.client.autoconfigure.GrpcClientHealthAutoConfiguration.class,
             net.devh.boot.grpc.client.autoconfigure.GrpcClientSecurityAutoConfiguration.class,
-            // net.devh.boot.grpc.client.autoconfigure.GrpcClientTraceAutoConfiguration.class,
             net.devh.boot.grpc.client.autoconfigure.GrpcDiscoveryClientAutoConfiguration.class })
     static class GrpcClientAutoImporter {
 
@@ -63,8 +62,8 @@ public class GrpcClientSupportConfiguration {
         GrpcChannelConfigurer gsvcClientConfigurer(GatewayServiceConfigure configure) {
             return ((channelBuilder, cfgName) -> {
                 if (channelBuilder instanceof AbstractManagedChannelImplBuilder nettyChannelBuilder) {
-                    val keepAliveTime = configure.getGrpcKeepAliveTime(cfgName);
-                    val keepAliveTimeout = configure.getGrpcKeepAliveTimeout(cfgName);
+                    val keepAliveTime = configure.getGrpcKeepAliveTime(cfgName, true);
+                    val keepAliveTimeout = configure.getGrpcKeepAliveTimeout(cfgName, true);
                     log.debug("ChannelBuilder for {} Stub, keepAliveTime = {}, keepAliveTimeout = {}", cfgName,
                             keepAliveTime, keepAliveTimeout);
                     nettyChannelBuilder.keepAliveTime(keepAliveTime.toSeconds(), TimeUnit.SECONDS);

@@ -64,17 +64,13 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             val interfaceName = environment.getProperty("apzda.cloud.service." + cfgName + ".interface-name");
 
             if (StringUtils.isNotBlank(interfaceName)) {
-                log.debug("Found Gsvc Service: {} - {}", cfgName, interfaceName);
+                log.info("Found Gsvc Service(impl): {} - {}", cfgName, interfaceName);
                 try {
                     val aClass = Class.forName(interfaceName);
                     if (bf.getBeanNamesForType(aClass).length == 0) {
                         throw new BeanDefinitionValidationException("No bean of '" + aClass + "' Found");
                     }
 
-                    val serviceName = GatewayServiceRegistry.svcName(aClass);
-                    log.info("Register Gsvc Service: {} - {}", serviceName, aClass);
-                    // 注册服务
-                    GatewayServiceRegistry.register(aClass);
                     // 注册服务路由
                     registerRouterFunction(bf, aClass);
                     // 注册网关路由
@@ -84,7 +80,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                         registerRouterFunction(bf, route);
                     }
 
-                    val descriptor = GatewayServiceRegistry.SERVCIE_DESCRIPTOR.get(aClass);
+                    val descriptor = GatewayServiceRegistry.SERVICE_DESCRIPTOR.get(aClass);
                     if (descriptor != null) {
                         val defaultFilters = environment.getProperty("apzda.cloud.gateway.default.filters");
                         List<GroupRoute> routes1 = new ArrayList<>();
@@ -107,13 +103,22 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 }
             }
             else {
-                val grpc = environment.getProperty("apzda.cloud.reference." + cfgName + ".grpc.enabled");
-                if (StringUtils.isBlank(grpc) || "false".equalsIgnoreCase(grpc)) {
-                    // 注册WebClient
+                val gsvcStub = "gsvc" + cfgName + "Stub";
+                val grpcStub = "grpc" + cfgName + "Stub";
+                if (beanFactory.containsBeanDefinition(gsvcStub)) {
+                    val beanDefinition = beanFactory.getBeanDefinition(gsvcStub);
+                    log.info("Found Gsvc Service(http): {} - {}", cfgName,
+                            GatewayServiceRegistry.SERVICE_INTERFACES.get(cfgName));
                     registerWebclient(cfgName, bf);
                 }
+                else if (beanFactory.containsBeanDefinition(grpcStub)) {
+                    val beanDefinition = beanFactory.getBeanDefinition(grpcStub);
+                    log.info("Found Gsvc Service(grpc): {} - {}", cfgName,
+                            GatewayServiceRegistry.SERVICE_INTERFACES.get(cfgName));
+                }
                 else {
-                    log.info("{} is using grpc", cfgName);
+                    log.info("Found Gsvc Service(impl): {} - {}", cfgName,
+                            GatewayServiceRegistry.SERVICE_INTERFACES.get(cfgName));
                 }
             }
         }

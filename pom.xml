@@ -20,6 +20,7 @@
         <module>apzda-cloud-gsvc-sentinel</module>
         <module>apzda-cloud-gsvc-security</module>
         <module>apzda-cloud-gsvc-proto</module>
+        <module>apzda-cloud-gsvc-tracing</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -48,6 +49,7 @@
         <jackson-protobuf.version>0.9.14</jackson-protobuf.version>
         <net-devh-grpc.version>2.14.0.RELEASE</net-devh-grpc.version>
         <sentinel.version>1.8.6</sentinel.version>
+        <brave.version>5.16.0</brave.version>
         <!-- plugins versions -->
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
         <spring-javaformat.version>0.0.39</spring-javaformat.version>
@@ -153,6 +155,11 @@
                 <artifactId>apzda-cloud-gsvc-starter</artifactId>
                 <version>1.0.0-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
+                <artifactId>apzda-cloud-gsvc-tracing</artifactId>
+                <version>1.0.0-SNAPSHOT</version>
+            </dependency>
             <!-- spring boot & cloud -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
@@ -168,6 +175,16 @@
                 <version>${grpc-java.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java-util</artifactId>
+                <version>${protobuf.java.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.salesforce.servicelibs</groupId>
@@ -208,16 +225,6 @@
                 <version>${guava.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>${protobuf.java.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java-util</artifactId>
-                <version>${protobuf.java.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-collections4</artifactId>
                 <version>${commons-collections4.version}</version>
@@ -248,7 +255,14 @@
                 <artifactId>sentinel-transport-simple-http</artifactId>
                 <version>${sentinel.version}</version>
             </dependency>
-            <!-- skywalking -->
+            <!-- brave -->
+            <dependency>
+                <groupId>io.zipkin.brave</groupId>
+                <artifactId>brave-bom</artifactId>
+                <version>${brave.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

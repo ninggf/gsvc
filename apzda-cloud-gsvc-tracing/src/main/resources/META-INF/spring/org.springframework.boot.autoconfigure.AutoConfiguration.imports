@@ -1,0 +1,3 @@
+com.apzda.cloud.gsvc.autoconfigure.GrpcCommonTraceAutoConfiguration
+com.apzda.cloud.gsvc.autoconfigure.GrpcClientTraceAutoConfiguration
+com.apzda.cloud.gsvc.autoconfigure.GrpcServerTraceAutoConfiguration

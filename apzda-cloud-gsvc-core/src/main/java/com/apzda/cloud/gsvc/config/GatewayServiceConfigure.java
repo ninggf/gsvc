@@ -93,14 +93,14 @@ public class GatewayServiceConfigure {
         return Duration.ZERO;
     }
 
-    public Duration getGrpcKeepAliveTime(String svcName) {
-        var config = serviceConfig.refConfig(svcName);
+    public Duration getGrpcKeepAliveTime(String svcName, boolean isRef) {
+        var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
         // service global
         var keepAliveTime = config.getGrpc().getKeepAliveTime();
         if (!keepAliveTime.isZero()) {
             return keepAliveTime;
         }
-        config = serviceConfig.refConfig("default");
+        config = isRef ? serviceConfig.refConfig("default") : serviceConfig.svcConfig("default");
         keepAliveTime = config.getGrpc().getKeepAliveTime();
         if (!keepAliveTime.isZero()) {
             return keepAliveTime;
@@ -109,14 +109,14 @@ public class GatewayServiceConfigure {
         return Duration.ofSeconds(120);
     }
 
-    public Duration getGrpcKeepAliveTimeout(String svcName) {
-        var config = serviceConfig.refConfig(svcName);
+    public Duration getGrpcKeepAliveTimeout(String svcName, boolean isRef) {
+        var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
         // service global
         var keepAliveTimeout = config.getGrpc().getKeepAliveTimeout();
         if (!keepAliveTimeout.isZero()) {
             return keepAliveTimeout;
         }
-        config = serviceConfig.refConfig("default");
+        config = isRef ? serviceConfig.refConfig("default") : serviceConfig.svcConfig("default");
         keepAliveTimeout = config.getGrpc().getKeepAliveTimeout();
         if (!keepAliveTimeout.isZero()) {
             return keepAliveTimeout;

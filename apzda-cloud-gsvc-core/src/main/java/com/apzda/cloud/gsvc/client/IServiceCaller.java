@@ -15,14 +15,14 @@ public interface IServiceCaller {
 
     default <T, R> Flux<R> clientStreamingCall(Class<?> clazz, String method, Flux<T> request, Class<T> reqClazz,
             Class<R> resClazz) {
-        throw new HttpServerErrorException(HttpStatus.NOT_IMPLEMENTED,
-                String.format("'%s' is client-streaming method which not supported by webclient now", method));
+        throw new HttpServerErrorException(HttpStatus.NOT_IMPLEMENTED, String.format(
+                "'%s.%s' is a client-streaming method which not supported by webclient now", clazz.getName(), method));
     }
 
     default <T, R> Flux<R> bidiStreamingCall(Class<?> clazz, String method, Flux<T> request, Class<T> reqClazz,
             Class<R> resClazz) {
-        throw new HttpServerErrorException(HttpStatus.NOT_IMPLEMENTED,
-                String.format("'%s' is bidi-streaming method which not supported by webclient now", method));
+        throw new HttpServerErrorException(HttpStatus.NOT_IMPLEMENTED, String
+            .format("'%s.%s' is a bidi-streaming method which not supported by webclient now", clazz.getName(), method));
     }
 
 }

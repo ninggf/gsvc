@@ -89,7 +89,7 @@ public class {{className}} {
         {{/biStreamingWithoutClientStreamMethods}}
             @Override
             public String toString() {
-                return "{{interfaceClassName}}HttpStub";
+                return getClass().getName() + "@WebClientStub";
             }
         };
     }
@@ -149,7 +149,7 @@ public class {{className}} {
         {{/biStreamingWithoutClientStreamMethods}}
             @Override
             public String toString() {
-                return "{{interfaceClassName}}GrpcStub";
+                return getClass().getName() + "@GrpcClientStub";
             }
         };
     }

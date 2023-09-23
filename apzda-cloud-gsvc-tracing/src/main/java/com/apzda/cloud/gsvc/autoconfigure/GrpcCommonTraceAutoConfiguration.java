@@ -5,7 +5,7 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -16,14 +16,13 @@
  */
 package com.apzda.cloud.gsvc.autoconfigure;
 
-import com.alibaba.csp.sentinel.adapter.grpc.SentinelGrpcClientInterceptor;
-import com.alibaba.csp.sentinel.adapter.grpc.SentinelGrpcServerInterceptor;
-import io.grpc.ClientInterceptor;
-import io.grpc.ServerInterceptor;
-import net.devh.boot.grpc.client.interceptor.GrpcGlobalClientInterceptor;
-import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
+import brave.Tracing;
+import brave.grpc.GrpcTracing;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -31,17 +30,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
  * @since 1.0.0
  **/
 @AutoConfiguration
-@ConditionalOnClass({ ServerInterceptor.class, ClientInterceptor.class })
-public class SentinelGrpcAutoConfiguration {
+@ConditionalOnClass({ Tracing.class, GrpcTracing.class })
+@ConditionalOnBean(Tracing.class)
+public class GrpcCommonTraceAutoConfiguration {
 
-    @GrpcGlobalClientInterceptor
-    SentinelGrpcClientInterceptor sentinelGrpcClientInterceptor() {
-        return new SentinelGrpcClientInterceptor();
-    }
-
-    @GrpcGlobalServerInterceptor
-    SentinelGrpcServerInterceptor sentinelGrpcServerInterceptor() {
-        return new SentinelGrpcServerInterceptor();
+    @Bean
+    @ConditionalOnMissingBean
+    public GrpcTracing grpcTracing(final Tracing tracing) {
+        return GrpcTracing.create(tracing);
     }
 
 }

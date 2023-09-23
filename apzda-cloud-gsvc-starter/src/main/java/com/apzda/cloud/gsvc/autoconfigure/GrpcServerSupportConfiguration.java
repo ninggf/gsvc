@@ -1,24 +1,31 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
+import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
+import com.apzda.cloud.gsvc.error.GlobalGrpcExceptionAdvice;
 import com.apzda.cloud.gsvc.grpc.GrpcService;
 import com.google.common.collect.Lists;
 import io.grpc.BindableService;
 import io.grpc.ServerInterceptor;
 import io.grpc.ServerInterceptors;
 import io.grpc.ServerServiceDefinition;
+import io.grpc.internal.AbstractServerImplBuilder;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
 import net.devh.boot.grpc.server.interceptor.GlobalServerInterceptorRegistry;
+import net.devh.boot.grpc.server.serverfactory.GrpcServerConfigurer;
 import net.devh.boot.grpc.server.service.GrpcServiceDefinition;
 import net.devh.boot.grpc.server.service.GrpcServiceDiscoverer;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
 
@@ -26,17 +33,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author fengz
  */
 @AutoConfiguration
 @ConditionalOnClass(GrpcServerAutoConfiguration.class)
+@Import(GlobalGrpcExceptionAdvice.class)
+@Slf4j
 public class GrpcServerSupportConfiguration {
 
     @Configuration
     @ImportAutoConfiguration({ net.devh.boot.grpc.common.autoconfigure.GrpcCommonCodecAutoConfiguration.class,
-            net.devh.boot.grpc.common.autoconfigure.GrpcCommonTraceAutoConfiguration.class,
             net.devh.boot.grpc.server.autoconfigure.GrpcAdviceAutoConfiguration.class,
             net.devh.boot.grpc.server.autoconfigure.GrpcHealthServiceAutoConfiguration.class,
             net.devh.boot.grpc.server.autoconfigure.GrpcMetadataConsulConfiguration.class,
@@ -47,7 +56,6 @@ public class GrpcServerSupportConfiguration {
             net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration.class,
             net.devh.boot.grpc.server.autoconfigure.GrpcServerFactoryAutoConfiguration.class,
             net.devh.boot.grpc.server.autoconfigure.GrpcServerMetricAutoConfiguration.class,
-            // net.devh.boot.grpc.server.autoconfigure.GrpcServerTraceAutoConfiguration.class,
             net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration.class })
     static class GrpcServerAutoImporter {
 
@@ -59,6 +67,22 @@ public class GrpcServerSupportConfiguration {
     @Primary
     GrpcServiceDiscoverer gsvcGrpcServiceDiscoverer() {
         return new AnnotationGrpcServiceDiscoverer();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    @SuppressWarnings("rawtypes")
+    GrpcServerConfigurer gsvcGrpcServerConfigurer(GatewayServiceConfigure configure) {
+        return serverBuilder -> {
+            if (serverBuilder instanceof AbstractServerImplBuilder abstractServerImplBuilder) {
+                val keepAliveTime = configure.getGrpcKeepAliveTime("default", false);
+                val keepAliveTimeout = configure.getGrpcKeepAliveTimeout("default", false);
+                log.info("GrpcServer(keepAliveTime={}, keepAliveTimeout={})", keepAliveTime, keepAliveTimeout);
+                abstractServerImplBuilder.keepAliveTime(keepAliveTime.getSeconds(), TimeUnit.SECONDS)
+                    .keepAliveTimeout(keepAliveTimeout.getSeconds(), TimeUnit.SECONDS)
+                    .permitKeepAliveWithoutCalls(true);
+            }
+        };
     }
 
     @Slf4j

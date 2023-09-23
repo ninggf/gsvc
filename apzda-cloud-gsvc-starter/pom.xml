@@ -80,6 +80,7 @@
             <artifactId>grpc-client-spring-boot-autoconfigure</artifactId>
             <optional>true</optional>
         </dependency>
+
     </dependencies>
 
     <build>

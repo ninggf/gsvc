@@ -24,7 +24,9 @@ public class GatewayServiceRegistry {
 
     public static final Map<Class<?>, ServiceInfo> DECLARED_SERVICES = new HashMap<>();
 
-    public static final Map<Class<?>, ServiceDescriptor> SERVCIE_DESCRIPTOR = new HashMap<>();
+    public static final Map<String, Class<?>> SERVICE_INTERFACES = new HashMap<>();
+
+    public static final Map<Class<?>, ServiceDescriptor> SERVICE_DESCRIPTOR = new HashMap<>();
 
     public static final Map<String, RouteMeta> AUTHED_ROUTES = new HashMap<>();
 
@@ -35,6 +37,7 @@ public class GatewayServiceRegistry {
         DECLARED_SERVICES.computeIfAbsent(interfaceName, key -> {
             val svcName = svcName(interfaceName);
             val cfgName = cfgName(interfaceName);
+            SERVICE_INTERFACES.put(cfgName, interfaceName);
             return ServiceInfo.builder().clazz(interfaceName).serviceName(svcName).cfgName(cfgName).local(true).build();
         });
     }
@@ -53,7 +56,8 @@ public class GatewayServiceRegistry {
     }
 
     public static void register(Class<?> interfaceName, ServiceDescriptor descriptor) {
-        SERVCIE_DESCRIPTOR.putIfAbsent(interfaceName, descriptor);
+        register(interfaceName);
+        SERVICE_DESCRIPTOR.putIfAbsent(interfaceName, descriptor);
     }
 
     public static void setBean(Class<?> interfaceName, Object bean, boolean local) {

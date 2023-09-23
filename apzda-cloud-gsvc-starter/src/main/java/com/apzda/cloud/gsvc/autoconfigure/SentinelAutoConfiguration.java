@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Import;
 @AutoConfiguration(before = ApzdaGsvcAutoConfiguration.class)
 @ConditionalOnClass(SimpleHttpClient.class)
 @ConditionalOnProperty("csp.sentinel.dashboard.server")
-@Import(SentinelGrpcAutoConfiguration.class)
+@Import({ SentinelGrpClientConfiguration.class, SentinelGrpcServerConfiguration.class })
 @Slf4j
 public class SentinelAutoConfiguration {
 
