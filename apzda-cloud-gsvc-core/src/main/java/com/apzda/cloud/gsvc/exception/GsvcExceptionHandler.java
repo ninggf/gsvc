@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.exception;
 
-import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
@@ -42,6 +41,8 @@ public class GsvcExceptionHandler {
 
     private final ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters;
 
+    private final ObjectProvider<List<ExceptionTransformer>> transformers;
+
     public ServerResponse handle(Throwable error, ServerRequest request) {
         // bookmark: RouterFunction Exception Handler
         return handle(error, request, ServerResponse.class);
@@ -56,6 +57,7 @@ public class GsvcExceptionHandler {
     }
 
     public Response<Void> handle(Throwable e) {
+        e = transform(e);
         if (e instanceof GsvcException gsvcException) {
             val error = gsvcException.getError();
             return Response.error(error);
@@ -86,6 +88,15 @@ public class GsvcExceptionHandler {
         }
         else if (e instanceof DegradedException) {
             return Response.error(ServiceError.DEGRADE);
+        }
+        else if (e instanceof ErrorResponseException codeException) {
+            val statusCode = codeException.getStatusCode();
+            if (statusCode == HttpStatus.UNAUTHORIZED) {
+                return Response.error(ServiceError.UNAUTHORIZED);
+            }
+            else if (statusCode == HttpStatus.FORBIDDEN) {
+                return Response.error(ServiceError.FORBIDDEN);
+            }
         }
 
         return Response.error(ServiceError.SERVICE_ERROR);
@@ -123,6 +134,7 @@ public class GsvcExceptionHandler {
     }
 
     private <R> R handle(Throwable error, ServerRequest request, Class<R> rClazz) {
+        error = transform(error);
         if (error instanceof HttpStatusCodeException || error instanceof ErrorResponseException) {
             // bookmark login
             return checkLoginRedirect(request, error, rClazz);
@@ -134,7 +146,7 @@ public class GsvcExceptionHandler {
         else if (error instanceof TimeoutException || error instanceof io.netty.handler.timeout.TimeoutException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.GATEWAY_TIMEOUT).body(handle(error));
         }
-        else if (error instanceof WebClientRequestException webClientRequestException) {
+        else if (error instanceof WebClientRequestException) {
             // rpc exception
             responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
         }
@@ -150,6 +162,23 @@ public class GsvcExceptionHandler {
         }
 
         return responseWrapper.unwrap(rClazz);
+    }
+
+    private Throwable transform(Throwable throwable) {
+        val ts = transformers.getIfAvailable();
+        if (ts == null) {
+            return throwable;
+        }
+        val aClass = throwable.getClass();
+        for (ExceptionTransformer t : ts) {
+            if (t.supports(aClass)) {
+                val te = t.transform(throwable);
+                if (te != null) {
+                    return te;
+                }
+            }
+        }
+        return throwable;
     }
 
     static class ResponseWrapper {

@@ -3,7 +3,9 @@ package com.apzda.cloud.gsvc.security.config;
 import cn.hutool.jwt.signers.JWTSigner;
 import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
+import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
+import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
@@ -25,20 +27,26 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.PermissionEvaluator;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -55,6 +63,7 @@ import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.util.Assert;
+import org.springframework.web.ErrorResponseException;
 
 import java.util.Comparator;
 import java.util.List;
@@ -65,7 +74,7 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
  * @author fengz windywany@gmail.com
  */
 @Slf4j
-@AutoConfiguration(before = SecurityAutoConfiguration.class)
+@AutoConfiguration(before = { SecurityAutoConfiguration.class })
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
 @Import(RedisMetaRepoConfiguration.class)
 public class GsvcSecurityAutoConfiguration {
@@ -186,7 +195,9 @@ public class GsvcSecurityAutoConfiguration {
                     var access = acl.getAccess();
                     if (StringUtils.isNotBlank(path)) {
                         if (StringUtils.isNotBlank(access)) {
-                            access = access.replace("r(", "hasRole(").replace("p(", "hasAuthority(");
+                            access = access.replace("r(", "hasRole(")
+                                .replace("a(", "hasAuthority(")
+                                .replace("p(", "hasPermission(");
                             log.debug("ACL: {}(access={})", path, access);
                             authorize.requestMatchers(matcher).access(new WebExpressionAuthorizationManager(access));
                         }
@@ -302,6 +313,49 @@ public class GsvcSecurityAutoConfiguration {
         TokenManager defaultTokenManager(UserDetailsService userDetailsService,
                 UserDetailsMetaRepository userDetailsMetaRepository, JWTSigner jwtSigner) {
             return new JwtTokenManager(userDetailsService, userDetailsMetaRepository, properties, jwtSigner);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        static MethodSecurityExpressionHandler methodSecurityExpressionHandler(ApplicationContext applicationContext,
+                PermissionEvaluator permissionEvaluator) {
+            DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+            try {
+                val roleHierarchy = applicationContext.getBean(RoleHierarchy.class);
+                expressionHandler.setRoleHierarchy(roleHierarchy);
+            }
+            catch (Exception ignored) {
+
+            }
+            expressionHandler.setPermissionEvaluator(permissionEvaluator);
+            return expressionHandler;
+        }
+
+        @Bean
+        static ExceptionTransformer authExceptionTransformer() {
+            return new ExceptionTransformer() {
+                @Override
+                public ErrorResponseException transform(Throwable exception) {
+                    if (exception instanceof AccessDeniedException || exception instanceof LockedException
+                            || exception instanceof AccountExpiredException
+                            || exception instanceof CredentialsExpiredException) {
+                        return new ErrorResponseException(HttpStatus.FORBIDDEN, exception);
+                    }
+                    return new ErrorResponseException(HttpStatus.UNAUTHORIZED, exception);
+                }
+
+                @Override
+                public boolean supports(Class<? extends Throwable> eClass) {
+                    return AuthenticationException.class.isAssignableFrom(eClass)
+                            || AccessDeniedException.class.isAssignableFrom(eClass);
+                }
+            };
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        static PermissionEvaluator asteriskPermissionEvaluator() {
+            return new AsteriskPermissionEvaluator();
         }
 
     }

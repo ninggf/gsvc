@@ -17,7 +17,9 @@ public class RouteMeta {
 
     public RouteMeta setAccess(String access) {
         if (StringUtils.isNotBlank(access)) {
-            this.access = access.replace("r(", "hasRole(").replace("p(", "hasAuthority(");
+            this.access = access.replace("r(", "hasRole(")
+                .replace("a(", "hasAuthority(")
+                .replace("p(", "hasPermission(");
             this.login = true;
         }
         return this;

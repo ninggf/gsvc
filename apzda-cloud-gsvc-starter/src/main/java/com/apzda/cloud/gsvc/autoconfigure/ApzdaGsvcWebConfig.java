@@ -3,6 +3,7 @@ package com.apzda.cloud.gsvc.autoconfigure;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.error.GsvcErrorAttributes;
 import com.apzda.cloud.gsvc.error.GsvcErrorController;
+import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.filter.GsvcServletFilter;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
@@ -60,8 +61,9 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
     }
 
     @Bean
-    GsvcExceptionHandler gsvcExceptionHandler(ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters) {
-        return new GsvcExceptionHandler(httpMessageConverters);
+    GsvcExceptionHandler gsvcExceptionHandler(ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters,
+            ObjectProvider<List<ExceptionTransformer>> transformers) {
+        return new GsvcExceptionHandler(httpMessageConverters, transformers);
     }
 
     @Bean

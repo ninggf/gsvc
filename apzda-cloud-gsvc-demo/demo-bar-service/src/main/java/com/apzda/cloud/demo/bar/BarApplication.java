@@ -6,6 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 /**
  * @author fengz
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("classpath:bar.service.properties")
 @Slf4j
 @Import(MathServiceGsvc.class)
+@EnableMethodSecurity
 public class BarApplication {
 
     public static void main(String[] args) {
