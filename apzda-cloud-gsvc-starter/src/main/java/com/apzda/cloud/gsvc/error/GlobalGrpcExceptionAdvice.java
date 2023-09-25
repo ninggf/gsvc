@@ -39,7 +39,7 @@ public class GlobalGrpcExceptionAdvice {
         return Status.INTERNAL.withDescription(error.toString()).withCause(e);
     }
 
-    @GrpcExceptionHandler(Exception.class)
+    @GrpcExceptionHandler
     public Status handleException(Exception e) {
         log.error("{}", e.getMessage(), e);
         return Status.INTERNAL.withDescription(e.getMessage()).withCause(e);

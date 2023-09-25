@@ -30,6 +30,8 @@ public class GsvcContextHolder {
 
     private static final String HTTP_COOKIES = "FILTERED_HTTP_COOKIES";
 
+    private static final ThreadLocal<String> CONTEXT_BOX = new InheritableThreadLocal<>();
+
     public static Optional<HttpServletRequest> getRequest() {
         val requestAttributes = RequestContextHolder.getRequestAttributes();
         if (requestAttributes instanceof ServletRequestAttributes request) {
@@ -89,7 +91,7 @@ public class GsvcContextHolder {
     public static Map<String, HttpCookie> cookies() {
         val request = getRequest();
         if (request.isPresent()) {
-            HttpServletRequest httpServletRequest = request.get();
+            final HttpServletRequest httpServletRequest = request.get();
             Object filtered = httpServletRequest.getAttribute(HTTP_COOKIES);
             if (filtered != null) {
                 return (Map<String, HttpCookie>) filtered;
@@ -124,7 +126,7 @@ public class GsvcContextHolder {
     }
 
     private static MultiValueMap<String, String> createDefaultHttpHeaders(HttpServletRequest request) {
-        MultiValueMap<String, String> headers = CollectionUtils
+        final MultiValueMap<String, String> headers = CollectionUtils
             .toMultiValueMap(new LinkedCaseInsensitiveMap<>(8, Locale.ENGLISH));
         for (Enumeration<?> names = request.getHeaderNames(); names.hasMoreElements();) {
             String name = (String) names.nextElement();
@@ -150,7 +152,11 @@ public class GsvcContextHolder {
         if (StringUtils.hasText(requestId)) {
             return requestId;
         }
-        return "";
+        return org.apache.commons.lang3.StringUtils.defaultString(CONTEXT_BOX.get(), "");
+    }
+
+    public static void setRequestId(String requestId) {
+        CONTEXT_BOX.set(requestId);
     }
 
     @Data

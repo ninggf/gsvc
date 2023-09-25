@@ -48,8 +48,6 @@ public class JwtContextRepository implements SecurityContextRepository {
         }
 
         val context = securityContextHolderStrategy.createEmptyContext();
-        // context.setAuthentication(JwtAuthenticationToken.unauthenticated("anonymous",
-        // ""));
 
         try {
             val authentication = tokenManager.restoreAuthentication(request);

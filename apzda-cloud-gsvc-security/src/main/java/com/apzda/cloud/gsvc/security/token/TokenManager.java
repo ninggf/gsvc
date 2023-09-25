@@ -12,6 +12,8 @@ public interface TokenManager {
 
     Authentication restoreAuthentication(HttpServletRequest request);
 
+    Authentication restoreAuthentication(String accessToken);
+
     default void save(Authentication authentication, HttpServletRequest request) {
     }
 

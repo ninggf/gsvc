@@ -39,6 +39,8 @@ public class JwtTokenManager implements TokenManager {
 
     protected final JWTSigner jwtSigner;
 
+    private String requestId;
+
     @Override
     public Authentication restoreAuthentication(HttpServletRequest request) {
         val argName = properties.getArgName();
@@ -46,7 +48,7 @@ public class JwtTokenManager implements TokenManager {
         val cookieConfig = properties.getCookie();
         val cookieName = cookieConfig.getCookieName();
         val bearer = properties.getBearer();
-        val requestId = GsvcContextHolder.getRequestId();
+        requestId = GsvcContextHolder.getRequestId();
 
         String accessToken = null;
         if (StringUtils.isNotBlank(argName)) {
@@ -74,51 +76,57 @@ public class JwtTokenManager implements TokenManager {
         }
 
         if (StringUtils.isNotBlank(accessToken)) {
-            boolean verified = false;
-            try {
-                verified = JWTUtil.verify(accessToken, jwtSigner);
-            }
-            catch (Exception e) {
-                if (log.isTraceEnabled()) {
-                    log.trace("[{}] accessToken({}) is invalid: {}", requestId, accessToken, e.getMessage());
-                }
-            }
-
-            if (verified) {
-                val jwt = JWTUtil.parseToken(accessToken);
-                jwt.setSigner(jwtSigner);
-                val jwtLeeway = properties.getJwtLeeway();
-                if (!jwt.validate(jwtLeeway.toSeconds())) {
-                    log.trace("[{}] accessToken({}) is expired!", requestId, accessToken);
-                    return null;
-                }
-
-                val jwtToken = JwtToken.builder()
-                    .accessToken(accessToken)
-                    .name((String) jwt.getPayload(JWT.SUBJECT))
-                    .build();
-
-                val userDetails = userDetailsService.loadUserByUsername(jwtToken.getName());
-                if (userDetails == null) {
-                    log.trace("[{}] accessToken({}) user details not found!", requestId, accessToken);
-                    return null;
-                }
-
-                val authentication = JwtAuthenticationToken.authenticated(userDetailsMetaRepository.create(userDetails),
-                        userDetails.getPassword());
-
-                authentication.setJwtToken(jwtToken);
-
-                return authentication;
-            }
-            else {
-                log.trace("[{}] accessToken({}) is invalid", requestId, accessToken);
-            }
+            return restoreAuthentication(accessToken);
         }
         else {
             log.trace("[{}] No token found", requestId);
         }
 
+        return null;
+    }
+
+    @Override
+    public Authentication restoreAuthentication(String accessToken) {
+        boolean verified = false;
+        try {
+            verified = JWTUtil.verify(accessToken, jwtSigner);
+        }
+        catch (Exception e) {
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] accessToken({}) is invalid: {}", requestId, accessToken, e.getMessage());
+            }
+        }
+
+        if (verified) {
+            val jwt = JWTUtil.parseToken(accessToken);
+            jwt.setSigner(jwtSigner);
+            val jwtLeeway = properties.getJwtLeeway();
+            if (!jwt.validate(jwtLeeway.toSeconds())) {
+                log.trace("[{}] accessToken({}) is expired!", requestId, accessToken);
+                return null;
+            }
+
+            val jwtToken = JwtToken.builder()
+                .accessToken(accessToken)
+                .name((String) jwt.getPayload(JWT.SUBJECT))
+                .build();
+
+            val userDetails = userDetailsService.loadUserByUsername(jwtToken.getName());
+            if (userDetails == null) {
+                log.trace("[{}] accessToken({}) user details not found!", requestId, accessToken);
+                return null;
+            }
+
+            val authentication = JwtAuthenticationToken.authenticated(userDetailsMetaRepository.create(userDetails),
+                    userDetails.getPassword());
+
+            authentication.setJwtToken(jwtToken);
+
+            return authentication;
+        }
+        else {
+            log.trace("[{}] accessToken({}) is invalid", requestId, accessToken);
+        }
         return null;
     }
 

@@ -14,26 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.demo.math;
+package com.apzda.cloud.gsvc.security.grpc;
 
-import com.apzda.cloud.demo.math.proto.MathServiceGsvc;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import io.grpc.Metadata;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@SpringBootApplication
-@Import(MathServiceGsvc.class)
-@EnableMethodSecurity
-public class MathApplication {
+public final class HeaderMetas {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MathApplication.class, args);
-    }
+    public static final Metadata.Key<String> REQUEST_ID = Metadata.Key.of("X-Request-Id",
+            Metadata.ASCII_STRING_MARSHALLER);
 
 }

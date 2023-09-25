@@ -1,3 +1,23 @@
+### Route - SaService - /sa/login
+POST http://{{barService}}/sa/login
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "123456"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.global.set("accessToken",response.body.data.accessToken)
+        client.global.set("refreshToken",response.body.data.refreshToken)
+    });
+%}
+
 ### BarService Greeting
 POST http://{{barService}}/~barService/greeting
 Content-Type: application/json
@@ -69,6 +89,7 @@ X-Gsvc-Caller: gtw
 ### Route - BooService bar/hi
 POST http://{{barService}}/bar/hi
 Content-Type: application/json
+Authorization: Bearer {{accessToken}}
 
 {
     "name": "gsvc",
@@ -172,26 +193,6 @@ Content-Type: application/json
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
         client.assert(response.body.data.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
-    });
-%}
-
-### Route - SaService - /sa/login
-POST http://{{barService}}/sa/login
-Content-Type: application/json
-
-{
-    "username": "admin",
-    "password": "123456"
-}
-
-> {%
-    client.test("Request executed successfully", function () {
-        client.assert(response.status === 200, "Response status is not 200");
-        const type = response.contentType.mimeType;
-        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.global.set("accessToken",response.body.data.accessToken)
-        client.global.set("refreshToken",response.body.data.refreshToken)
     });
 %}
 

@@ -1,18 +1,19 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.error.GlobalGrpcExceptionAdvice;
 import com.apzda.cloud.gsvc.grpc.GrpcService;
+import com.apzda.cloud.gsvc.security.config.GrpcServerSecurityConfiguration;
+import com.apzda.cloud.gsvc.security.grpc.HeaderMetas;
 import com.google.common.collect.Lists;
-import io.grpc.BindableService;
-import io.grpc.ServerInterceptor;
-import io.grpc.ServerInterceptors;
-import io.grpc.ServerServiceDefinition;
+import io.grpc.*;
 import io.grpc.internal.AbstractServerImplBuilder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
 import net.devh.boot.grpc.server.interceptor.GlobalServerInterceptorRegistry;
+import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import net.devh.boot.grpc.server.serverfactory.GrpcServerConfigurer;
 import net.devh.boot.grpc.server.service.GrpcServiceDefinition;
 import net.devh.boot.grpc.server.service.GrpcServiceDiscoverer;
@@ -56,10 +57,22 @@ public class GrpcServerSupportConfiguration {
             net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration.class,
             net.devh.boot.grpc.server.autoconfigure.GrpcServerFactoryAutoConfiguration.class,
             net.devh.boot.grpc.server.autoconfigure.GrpcServerMetricAutoConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcServerSecurityAutoConfiguration.class })
+            GrpcServerSecurityConfiguration.class })
     static class GrpcServerAutoImporter {
 
-        // todo: remove this after then official support spring boot 3.x
+        @GrpcGlobalServerInterceptor
+        ServerInterceptor requestIdServerInterceptor() {
+            return new ServerInterceptor() {
+                @Override
+                public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
+                        Metadata headers, ServerCallHandler<ReqT, RespT> next) {
+                    val requestId = headers.get(HeaderMetas.REQUEST_ID);
+                    GsvcContextHolder.setRequestId(requestId);
+
+                    return next.startCall(call, headers);
+                }
+            };
+        }
 
     }
 

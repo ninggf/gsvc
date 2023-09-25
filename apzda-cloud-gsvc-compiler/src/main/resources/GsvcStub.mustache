@@ -98,9 +98,10 @@ public class {{className}} {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc.enabled", havingValue = "true")
     {{interfaceClassName}} grpc{{interfaceClassName}}Stub (final StubFactoryAdapter adapter, final GatewayServiceConfigure serviceConfigure) {
-        final {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub = adapter.createBlockingStub("{{interfaceClassName}}",
+        final String svcName = serviceConfigure.getSvcName("{{interfaceClassName}}");
+        final {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub = adapter.createBlockingStub(svcName,
                 {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub.class);
-        final {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub stub = adapter.createAsyncStub("{{interfaceClassName}}",
+        final {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub stub = adapter.createAsyncStub(svcName,
                 {{interfaceClassName}}Grpc.{{interfaceClassName}}Stub.class);
         final Duration timeout = serviceConfigure.getReadTimeout("{{interfaceClassName}}", true);
 
@@ -168,6 +169,7 @@ public class {{className}} {
                 }
                 catch (Exception e) {
                     responseObserver.onError(e);
+                    throw e;
                 }
             }
         {{/unaryMethods}}
@@ -183,6 +185,7 @@ public class {{className}} {
                 }
                 catch (Exception e) {
                     responseObserver.onError(e);
+                    throw e;
                 }
             }
         {{/serverStreamingMethods}}

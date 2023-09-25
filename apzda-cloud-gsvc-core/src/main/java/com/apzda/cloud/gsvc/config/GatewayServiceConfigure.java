@@ -25,6 +25,10 @@ public class GatewayServiceConfigure {
 
     private final ObjectProvider<List<IGlobalPlugin>> globalPlugins;
 
+    public String getSvcName(String cfgName) {
+        return StringUtils.defaultIfBlank(serviceConfig.refConfig(cfgName).getSvcName(), cfgName);
+    }
+
     public Duration getReadTimeout(String svcName, boolean isRef) {
         var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
         // service

@@ -19,8 +19,10 @@ package com.apzda.cloud.demo.math.service;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.demo.math.proto.Result;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
@@ -38,9 +40,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MathServiceImpl implements MathService {
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public Result add(OpNum request) {
         val num1 = request.getNum1();
         val num2 = request.getNum2();
+        log.info("[{}] 收到请求, num1={}, num2={}", GsvcContextHolder.getRequestId(), num1, num2);
         return Result.newBuilder().setResult(num1 + num2).build();
     }
 
@@ -50,7 +54,7 @@ public class MathServiceImpl implements MathService {
         final Sinks.Many<Result> resultMany = Sinks.many().replay().all();
         val atomicLong = new AtomicLong();
         request.subscribeOn(Schedulers.boundedElastic()).doOnComplete(() -> {
-            log.info("请求处理完成啦: {}", atomicLong.get());
+            log.info("[{}] 请求处理完成啦: {}", GsvcContextHolder.getRequestId(), atomicLong.get());
             resultMany.tryEmitNext(Result.newBuilder().setResult(atomicLong.get()).build());
             resultMany.tryEmitComplete();
         }).doOnError(resultMany::tryEmitError).subscribe(opNum -> {

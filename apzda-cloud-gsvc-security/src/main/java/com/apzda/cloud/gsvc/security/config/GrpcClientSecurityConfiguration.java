@@ -14,26 +14,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.demo.math;
+package com.apzda.cloud.gsvc.security.config;
 
-import com.apzda.cloud.demo.math.proto.MathServiceGsvc;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import com.apzda.cloud.gsvc.security.grpc.GrpcClientSecurityInterceptor;
+import io.grpc.ClientInterceptor;
+import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
+import net.devh.boot.grpc.client.interceptor.GrpcGlobalClientInterceptor;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@SpringBootApplication
-@Import(MathServiceGsvc.class)
-@EnableMethodSecurity
-public class MathApplication {
+@AutoConfiguration(before = GrpcClientAutoConfiguration.class)
+public class GrpcClientSecurityConfiguration {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MathApplication.class, args);
+    @GrpcGlobalClientInterceptor
+    ClientInterceptor grpcClientSecurityInterceptor() {
+        return new GrpcClientSecurityInterceptor();
     }
 
 }

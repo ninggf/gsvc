@@ -1,6 +1,9 @@
 package com.apzda.cloud.gsvc.context;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import io.micrometer.context.ThreadLocalAccessor;
+import lombok.val;
+import org.springframework.lang.NonNull;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
@@ -12,6 +15,7 @@ public class GsvcContextThreadLocalAccessor implements ThreadLocalAccessor<Reque
     public static final String KEY = "gsvc.context";
 
     @Override
+    @NonNull
     public Object key() {
         return KEY;
     }
@@ -22,8 +26,10 @@ public class GsvcContextThreadLocalAccessor implements ThreadLocalAccessor<Reque
     }
 
     @Override
-    public void setValue(RequestAttributes value) {
+    public void setValue(@NonNull RequestAttributes value) {
         RequestContextHolder.setRequestAttributes(value);
+        val requestId = GsvcContextHolder.getRequestId();
+        GsvcContextHolder.setRequestId(requestId);
     }
 
     @Override
