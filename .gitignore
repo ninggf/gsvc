@@ -29,3 +29,10 @@ buildNumber.properties
 
 ### Mac OS ###
 .DS_Store
+
+### node js ###
+node_modules/
+
+### vitepress ###
+docs/.vitepress/dist
+docs/.vitepress/cache
