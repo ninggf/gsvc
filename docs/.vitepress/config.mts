@@ -4,7 +4,7 @@ import {defineConfig} from 'vitepress'
 export default defineConfig({
     title: "Gsvc Doc",
     description: "A Toy Based on Spring Boot & grpc-java",
-    base: "/gsvc/",
+    base: "/",
     themeConfig: {
         search: {
             provider: 'local'
