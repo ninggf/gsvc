@@ -4,7 +4,7 @@ A Toy Based on `Spring Boot` and `Grpc-Java`.
 
 > 它不是轮子，更不是新的框架！只是作者觉得（自以为是）OpenFeign的限制使得有些需求无法实现（可单体部署、又可以微服务部署），
 > 然后整合`Spring Boot`, `Spring Cloud`与`Grpc-Java`基于[Protocol Buffers](https://protobuf.dev/)
-> 搞的一个看上去解决了`OpenFeign`这些限制的小玩具, 顺带实现了一个小小的网关来隔离南北与东西流量.
+> 搞的一个看上去解决了`OpenFeign`这些限制的小玩具, 顺带实现了一个小小的网关来隔离南北与东西流量。
 
 ## Feature
 
@@ -28,11 +28,11 @@ A Toy Based on `Spring Boot` and `Grpc-Java`.
 
 ### 2. 实现接口协议
 
-请阅读**apzda-cloud-gsvc-demo/**下的工程源码.
+请阅读**apzda-cloud-gsvc-demo**下的工程源码。
 
 ### 3. 远程调用（微服务架构）
 
-请阅读**apzda-cloud-gsvc-demo**下的工程源码.
+请阅读**apzda-cloud-gsvc-demo**下的工程源码。
 
 调用关系如下:
 <pre>
@@ -43,7 +43,7 @@ demo → bar → math
 
 ### 4. 单体应用
 
-请阅读**apzda-cloud-gsvc-demo/demo-allinone-app**工程的源码.
+请阅读**apzda-cloud-gsvc-demo/demo-allinone-app**工程的源码。
 
 ### 运行DEMO
 
@@ -58,10 +58,10 @@ demo → bar → math
 
 ## 文档
 
-文档[传送门](https://gsvc.apzda.com).
+文档[传送门](https://gsvc.apzda.com)。
 
 ## 参与
 
-1. 欢迎`PR`.
-2. 欢迎提`ISSUE`.
-3. 欢迎提建议(意见请保留).
+1. 欢迎`PR`。
+2. 欢迎提`ISSUE`。
+3. 欢迎提建议(意见请保留)。
