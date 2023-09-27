@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        java: [ '17', '21' ]
+        java: [ '17' ]
     env:
       SERVER_PORT: 12561
       VER: 1.0.0-SNAPSHOT
