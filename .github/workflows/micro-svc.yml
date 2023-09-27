@@ -33,9 +33,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Install Gsvc Compiler
-        run: ./mvnw install -pl apzda-cloud-gsvc-compiler
+        run: mvn install -pl apzda-cloud-gsvc-compiler
       - name: Build with Maven
-        run: ./mvnw -B -DskipTests=true package --file pom.xml
+        run: mvn -B -DskipTests=true package --file pom.xml
       - name: Run AllInOne Application
         uses: JarvusInnovations/background-action@v1
         with:
