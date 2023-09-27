@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>3.1.2</version>
+        <version>3.1.4</version>
     </parent>
     <groupId>com.apzda.cloud</groupId>
     <artifactId>gsvc</artifactId>
@@ -36,9 +36,8 @@
         <cc.check.skip>false</cc.check.skip>
         <cs.check.skip>false</cs.check.skip>
         <!-- dependencies versions -->
-        <spring-boot.version>3.1.2</spring-boot.version>
+        <spring-boot.version>3.1.4</spring-boot.version>
         <spring-cloud.version>2022.0.4</spring-cloud.version>
-        <sa-token.version>1.35.0.RC</sa-token.version>
         <hutool.version>5.8.21</hutool.version>
         <guava.version>32.1.2-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
@@ -71,19 +70,19 @@
     </repositories>
 
     <issueManagement>
-        <url>https://gitee.com/apzda/gsvc/issues</url>
-        <system>Gitee Issue</system>
+        <system>Github Issue</system>
+        <url>https://github.com/ninggf/gsvc/issues</url>
     </issueManagement>
 
     <ciManagement>
-        <system>Jenkins</system>
-        <url>https://ci.quweyo.com/job/apzda-cloud-gsvc/</url>
+        <system>Github Actions</system>
+        <url>https://github.com/ninggf/gsvc/actions</url>
     </ciManagement>
 
     <licenses>
         <license>
-            <name>Mulan Permissive Software License，Version 2</name>
-            <url>https://license.coscl.org.cn/MulanPSL2</url>
+            <name>GPLv3</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.en.html</url>
         </license>
     </licenses>
 
@@ -118,7 +117,7 @@
         <site>
             <id>apzda-gsvc</id>
             <name>Apzda Project</name>
-            <url>https://github.com/ninggf/gsvc</url>
+            <url>https://gsvc.apzda.com</url>
         </site>
     </distributionManagement>
 
