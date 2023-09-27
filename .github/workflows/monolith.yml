@@ -49,6 +49,6 @@ jobs:
           files: |-
             apzda-cloud-gsvc-demo/bar-test.http
             apzda-cloud-gsvc-demo/foo-test.http
-          env_file: apzda-cloud-gsvc-demo/http-client.env.json
+          env_file: apzda-cloud-gsvc-demo/http-docker.env.json
           env: sit
           insecure: true
