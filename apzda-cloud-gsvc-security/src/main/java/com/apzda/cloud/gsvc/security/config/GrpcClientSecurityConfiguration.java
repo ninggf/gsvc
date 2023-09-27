@@ -17,10 +17,13 @@
 package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.security.grpc.GrpcClientSecurityInterceptor;
+import com.apzda.cloud.gsvc.security.token.TokenManager;
 import io.grpc.ClientInterceptor;
 import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
 import net.devh.boot.grpc.client.interceptor.GrpcGlobalClientInterceptor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -28,6 +31,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
  * @since 1.0.0
  **/
 @AutoConfiguration(before = GrpcClientAutoConfiguration.class)
+@ConditionalOnClass({ SecurityContextHolder.class, TokenManager.class })
 public class GrpcClientSecurityConfiguration {
 
     @GrpcGlobalClientInterceptor

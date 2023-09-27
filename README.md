@@ -12,6 +12,16 @@ A Toy Based on `Spring Boot` and `Grpc-Java`.
 2. 流量隔离: 通过内置网关实现南北流量与东西流量隔离，让内部的流量仅内部可见。
 3. 观测、流控与安全: 微调Spring Security提供安全保证、基于Spring Actuator提供可观性、整合Sentinel实现流控。
 
+## 版本
+
+| ArtifactId             | Version  |
+|:-----------------------|:---------|
+| Spring Boot            | 3.1.4    |
+| Spring Cloud           | 2022.0.4 |
+| grpc-java              | 1.58.0   |
+| protoc & protobuf-java | 3.24.3   |
+| protobuf-maven-plugin  | 0.6.1    |
+
 ## 使用
 
 ### 1. 编写`portobuf`接口协议

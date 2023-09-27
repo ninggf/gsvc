@@ -20,7 +20,6 @@ import com.apzda.cloud.demo.math.proto.MathServiceGsvc;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -29,7 +28,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
  **/
 @SpringBootApplication
 @Import(MathServiceGsvc.class)
-@EnableMethodSecurity
 public class MathApplication {
 
     public static void main(String[] args) {

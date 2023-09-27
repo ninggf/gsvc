@@ -3,7 +3,6 @@
  */
 package com.apzda.cloud.demo.demo.controller;
 
-import brave.grpc.GrpcTracing;
 import com.apzda.cloud.demo.bar.proto.BarReq;
 import com.apzda.cloud.demo.bar.proto.BarRes;
 import com.apzda.cloud.demo.bar.proto.BarService;
@@ -37,7 +36,7 @@ import java.util.ArrayList;
 @RestController
 @RequiredArgsConstructor
 public class DemoController {
-    private final GrpcTracing grpcTracing;
+
     private final BarService barService;
 
     private final FooService fooService;

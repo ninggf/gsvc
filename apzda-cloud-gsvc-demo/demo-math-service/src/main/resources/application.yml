@@ -1,6 +1,9 @@
 server:
   port: 12564
 
+spring:
+  application:
+    name: math
 
 grpc:
   server:
@@ -22,14 +25,20 @@ apzda:
       MathService:
         grpc:
           enabled: true
-    security:
-      jwt-key: abc12345678
-      meta-repo: redis
 
+management:
+  tracing:
+    enabled: false
+
+---
+spring:
+  config:
+    activate:
+      on-profile: tracing
 # tracing
+management:
+  tracing:
+    enabled: true
 management.zipkin.tracing.endpoint: http://localhost:9411/api/v2/spans
 management.tracing.sampling.probability: 1.0
 
-spring:
-  application:
-    name: math

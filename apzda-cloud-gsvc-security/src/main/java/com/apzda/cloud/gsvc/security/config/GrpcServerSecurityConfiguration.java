@@ -23,7 +23,7 @@ import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.security.core.context.SecurityContextHolderStrategy;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -31,7 +31,7 @@ import org.springframework.security.core.context.SecurityContextHolderStrategy;
  * @since 1.0.0
  **/
 @AutoConfiguration(before = GrpcServerAutoConfiguration.class, after = GsvcSecurityAutoConfiguration.class)
-@ConditionalOnClass({ SecurityContextHolderStrategy.class, TokenManager.class })
+@ConditionalOnClass({ SecurityContextHolder.class, TokenManager.class })
 public class GrpcServerSecurityConfiguration {
 
     @GrpcGlobalServerInterceptor

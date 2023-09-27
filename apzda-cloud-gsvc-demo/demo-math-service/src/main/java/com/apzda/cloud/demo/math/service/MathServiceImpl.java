@@ -22,7 +22,6 @@ import com.apzda.cloud.demo.math.proto.Result;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
@@ -40,7 +39,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class MathServiceImpl implements MathService {
 
     @Override
-    @PreAuthorize("hasRole('ADMIN')")
     public Result add(OpNum request) {
         val num1 = request.getNum1();
         val num2 = request.getNum2();

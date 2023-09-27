@@ -12,28 +12,12 @@
     <version>1.0.0-SNAPSHOT</version>
     <description>将protobuf的IDL编译成支持gsvc的接口.</description>
     <properties>
-        <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-        <grpc-java.version>1.57.2</grpc-java.version>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <!-- grpc -->
-            <dependency>
-                <groupId>io.grpc</groupId>
-                <artifactId>grpc-bom</artifactId>
-                <version>${grpc-java.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <dependency>
