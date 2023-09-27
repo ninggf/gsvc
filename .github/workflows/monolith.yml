@@ -1,0 +1,54 @@
+name: Monolithic Architecture Tests
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: monolithic
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        java: [ '17', '21' ]
+    env:
+      SERVER_PORT: 12560
+      VER: 1.0.0-SNAPSHOT
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: maven
+      - name: Install Gsvc Compiler
+        run: ./mvnw install -pl apzda-cloud-gsvc-compiler
+      - name: Build with Maven
+        run: ./mvnw -B -DskipTests=true package --file pom.xml
+      - name: Run AllInOne Application
+        uses: JarvusInnovations/background-action@v1
+        with:
+          working-directory: apzda-cloud-gsvc-demo
+          wait-for: 3m
+          tail: true
+          run: |-
+            java -jar demo-math-service/target/demo-math-service-${{ env.VER }}-fat.jar &
+            java -jar demo-allinone-app/target/demo-allinone-app-${{ env.VER }}-fat.jar &
+          wait-on: |-
+            http-get://localhost:${{ env.SERVER_PORT }}/actuator/health
+            tcp:localhost:9090
+      - name: Execute HTTP requests
+        uses: madhead/intellij-http-client-action@latest
+        with:
+          files: |-
+            apzda-cloud-gsvc-demo/bar-test.http
+            apzda-cloud-gsvc-demo/foo-test.http
+          env_file: apzda-cloud-gsvc-demo/http-client.env.json
+          env: sit
+          insecure: true

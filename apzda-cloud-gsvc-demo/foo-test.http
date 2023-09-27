@@ -49,13 +49,17 @@ X-Gsvc-Caller: gtw
 client.test("Request executed successfully", function() {
   client.assert(response.status === 200, "Response status is not 200");
   const type = response.contentType.mimeType;
-  client.assert(type === "text/event-stream", "Expected 'application/json' but received '" + type + "'");
-  response.body.onEachLine((line, unsubscribe) => {
-    client.log("response is: "+line)
-    client.assert(line.data.name === "gsvc.foo2.bar@hello", line+" 不等于'gsvc.bar@hi'")
-  },()=>{
-    client.log("done!")
-  })
+  client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
+});
+var cnt = 0;
+response.body.onEachLine((line, unsubscribe) => {
+    if(line && line.indexOf("gsvc.foo2.bar@hello")>0){
+        cnt ++;
+    }
+},()=>{
+    client.test("Get One Data",function (){
+       client.assert(cnt === 1,cnt + " != 1");
+    });
 });
 %}
 
@@ -74,13 +78,17 @@ Authorization: Bearer {{accessToken}}
 client.test("Request executed successfully", function() {
   client.assert(response.status === 200, "Response status is not 200");
   const type = response.contentType.mimeType;
-  client.assert(type === "text/event-stream", "Expected 'application/json' but received '" + type + "'");
-  response.body.onEachLine((line, unsubscribe) => {
-    client.log("response is: "+line)
-    client.assert(line.data.name === "gsvc.foo3.bar@hi", line+" 不等于'gsvc.bar@hi'")
-  },()=>{
-    client.log("done!")
-  })
+  client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
+});
+var cnt = 0;
+response.body.onEachLine((line, unsubscribe) => {
+    if (line && line.indexOf("gsvc.foo3.bar@hi") >0 ){
+        cnt ++;
+    }
+},()=>{
+    client.test("Get Two Datas",function (){
+        client.assert(cnt===2,cnt + " != 2")
+    });
 });
 %}
 
@@ -96,13 +104,17 @@ name=gsvc&age=18
     client.test("Request executed successfully", function() {
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
-        client.assert(type === "text/event-stream", "Expected 'application/json' but received '" + type + "'");
-        response.body.onEachLine((line, unsubscribe) => {
-            client.log("response is: "+line)
-            client.assert(line.data.name === "gsvc.foo3.bar@hi", line+" 不等于'gsvc.bar@hi'")
-        },()=>{
-            client.log("done!")
-        })
+        client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
+    });
+    var cnt = 0;
+    response.body.onEachLine((line, unsubscribe) => {
+        if (line && line.indexOf("gsvc.foo3.bar@hi") >0 ){
+            cnt ++;
+        }
+    },()=>{
+        client.test("Get Two Datas",function (){
+            client.assert(cnt===2,cnt + " != 2")
+        });
     });
 %}
 
@@ -156,14 +168,18 @@ Content-Type: application/json
 client.test("Request executed successfully", function() {
   client.assert(response.status === 200, "Response status is not 200");
   const type = response.contentType.mimeType;
-  client.assert(type === "text/event-stream", "Expected 'application/json' but received '" + type + "'");
-  response.body.onEachLine((line, unsubscribe) => {
-        client.log("response is: "+line)
-        client.assert(line.data.name === "gsvc.foo2.bar@hello", line+" 不等于'gsvc.bar@hi'")
-  },()=>{
-        client.log("done!")
-  })
+  client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
 });
+var cnt = 0;
+response.body.onEachLine((line, unsubscribe) => {
+    if (line && line.indexOf("gsvc.foo2.bar@hello")>0){
+        cnt ++;
+    }
+},()=>{
+    client.test("Get One Data",function (){
+        client.assert(cnt===1,cnt +" != 1")
+    });
+})
 %}
 
 ### Route - FooService hey - GET
@@ -174,12 +190,16 @@ X-Gsvc-Caller: gtw
     client.test("Request executed successfully", function() {
         client.assert(response.status === 200, "Response status is not 400");
         const type = response.contentType.mimeType;
-        client.assert(type === "text/event-stream", "Expected 'application/json' but received '" + type + "'");
-        response.body.onEachLine((line, unsubscribe) => {
-            client.log("response is: "+line)
-            client.assert(line.data.name === "gsvc.foo3.bar@hi", line+" 不等于'gsvc.bar@hi'")
-        },()=>{
-            client.log("done!")
-        })
+        client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
     });
+    var cnt = 0;
+    response.body.onEachLine((line, unsubscribe) => {
+        if (line && line.indexOf("gsvc.foo3.bar@hi")>0){
+            cnt ++;
+        }
+    },()=>{
+        client.test("Get Two Datas",function (){
+            client.assert(cnt===2,cnt + " != 2");
+        })
+    })
 %}

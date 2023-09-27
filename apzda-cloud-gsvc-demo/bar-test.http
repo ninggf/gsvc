@@ -53,13 +53,18 @@ X-Gsvc-Caller: gtw
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "text/event-stream", "Expected 'application/json' but received '" + type + "'");
-        response.body.onEachLine((line, unsubscribe) => {
-            client.log("response is: "+line)
-            client.assert(line.data.name === "gsvc.bar@hello", line+" 不等于'gsvc.bar@hi'")
-        },()=>{
-            client.log("done!")
-        })
     });
+    var cnt = 0;
+    response.body.onEachLine((line, unsubscribe) => {
+        if(line && line.indexOf("gsvc.bar@hello") > 0 ){
+            cnt = cnt +1;
+        }
+    },()=>{
+         client.test("Got one data", function () {
+            client.assert(cnt===1,cnt + " != 1");
+         });
+    });
+
 %}
 
 ### BooService Hi
@@ -77,13 +82,23 @@ X-Gsvc-Caller: gtw
         client.assert(response.status === 200, "Response status is not 400");
         const type = response.contentType.mimeType;
         client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
-        response.body.onEachLine((line, unsubscribe) => {
-            client.log("response is: "+line)
-            client.assert(line.data.name === "gsvc.bar@hi", line+" 不等于'gsvc.bar@hi'")
-        },()=>{
-            client.log("done!")
-        })
     });
+    var threeCnt = 0;
+    var sevenCnt = 0;
+    response.body.onEachLine((line, unsubscribe) => {
+        if(line && line.indexOf("\"fileCount\":3") > 0 ){
+            threeCnt = threeCnt +1;
+        }else if (line && line.indexOf("\"fileCount\":7") > 0){
+            sevenCnt = sevenCnt +1;
+        }
+    },()=>{
+        client.test("fileCount is 3", function () {
+            client.assert(threeCnt===1,threeCnt + " != 1");
+        });
+        client.test("fileCount is 7", function () {
+            client.assert(sevenCnt===1,sevenCnt + " != 1");
+        });
+    })
 %}
 
 ### Route - BooService bar/hi
@@ -101,14 +116,23 @@ Authorization: Bearer {{accessToken}}
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
-        client.log("check response: ")
-        response.body.onEachLine((line, unsubscribe) => {
-            client.log("response is: "+line)
-            client.assert(line.data.name === "gsvc.bar@hi", line+" 不等于'gsvc.bar@hi'")
-        },()=>{
-            client.log("done!")
-        })
     });
+    var threeCnt = 0;
+    var sevenCnt = 0;
+    response.body.onEachLine((line, unsubscribe) => {
+        if(line && line.indexOf("\"fileCount\":3") > 0 ){
+            threeCnt = threeCnt +1;
+        }else if (line && line.indexOf("\"fileCount\":7") > 0){
+            sevenCnt = sevenCnt +1;
+        }
+    },()=>{
+        client.test("fileCount is 3", function () {
+            client.assert(threeCnt===1,threeCnt + " != 1");
+        });
+        client.test("fileCount is 7", function () {
+            client.assert(sevenCnt===1,sevenCnt + " != 1");
+        });
+    })
 %}
 
 
@@ -126,11 +150,16 @@ Content-Type: application/json
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "text/event-stream", "Expected 'application/json' but received '" + type + "'");
-        response.body.onEachLine((line,unsubscribe)=>{
-            client.assert(line.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
-        },()=>{
-            client.log("done!")
-        })
+    });
+    var cnt = 0;
+    response.body.onEachLine((line, unsubscribe) => {
+        if(line && line.indexOf("gsvc.bar@hello") > 0 ){
+            cnt = cnt +1;
+        }
+    },()=>{
+         client.test("Got one data", function () {
+            client.assert(cnt===1,cnt + " != 1");
+         });
     });
 %}
 
@@ -164,16 +193,18 @@ Content-Type: application/json
 }
 
 > {%
-    client.test("Request executed successfully", function () {
-        client.assert(response.status === 200, "Response status is not 200");
-        const type = response.contentType.mimeType;
-        client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
-
-         response.body.onEachLine((line,unsubscribe)=>{
-            client.assert(line.data.name === "gsvc.bar@hello", "响应不等于'gsvc.bar@hello'")
-        },()=>{
-            client.log("done!")
-        })
+    response.body.onEachLine((line,unsubscribe)=>{
+        if (line){
+            client.test("Age is 20",function (){
+                client.assert(line.indexOf('"age":20')>0,"errCode is not 0");
+            })
+        }
+    },()=>{
+        client.test("Request executed successfully", function () {
+            client.assert(response.status === 200, "Response status is not 200");
+            const type = response.contentType.mimeType;
+            client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
+         });
     });
 %}
 

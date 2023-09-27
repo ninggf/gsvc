@@ -1,0 +1,64 @@
+name: MicroService Architecture Tests
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: micro-svc
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        java: [ '17', '21' ]
+    env:
+      SERVER_PORT: 12561
+      VER: 1.0.0-SNAPSHOT
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: maven
+      - name: Install Gsvc Compiler
+        run: ./mvnw install -pl apzda-cloud-gsvc-compiler
+      - name: Build with Maven
+        run: ./mvnw -B -DskipTests=true package --file pom.xml
+      - name: Run AllInOne Application
+        uses: JarvusInnovations/background-action@v1
+        with:
+          working-directory: apzda-cloud-gsvc-demo
+          wait-for: 3m
+          tail: true
+          run: |-
+            java -jar demo-math-service/target/demo-math-service-${{ env.VER }}-fat.jar &
+            java -jar demo-bar-service/target/demo-bar-service-${{ env.VER }}-fat.jar &
+            java -jar demo-foo-service/target/demo-foo-service-${{ env.VER }}-fat.jar &
+            java -jar demo-demo-service/target/demo-demo-service-${{ env.VER }}-fat.jar &
+          wait-on: |-
+            http-get://localhost:${{ env.SERVER_PORT }}/actuator/health
+            http-get://localhost:12562/actuator/health
+            http-get://localhost:12563/demo/actuator/health
+            tcp:localhost:9090
+      - name: Execute HTTP requests
+        uses: madhead/intellij-http-client-action@latest
+        with:
+          files: |-
+            apzda-cloud-gsvc-demo/bar-test.http
+            apzda-cloud-gsvc-demo/foo-test.http
+            apzda-cloud-gsvc-demo/demo-test.http
+          env_file: apzda-cloud-gsvc-demo/http-client.env.json
+          env: dev
+          insecure: true

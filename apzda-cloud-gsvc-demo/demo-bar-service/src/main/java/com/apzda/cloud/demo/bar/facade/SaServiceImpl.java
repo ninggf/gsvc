@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -63,7 +62,6 @@ public class SaServiceImpl implements SaService {
     }
 
     @Override
-    @PreAuthorize("hasPermission(filterObject.name == authentication.name,'view:/sa/info')")
     public SaRes info(SaReq request) {
         var uid = "";
         if (request.hasCurrentUser()) {
