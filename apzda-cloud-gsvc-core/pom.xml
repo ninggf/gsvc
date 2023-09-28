@@ -72,7 +72,8 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>context-propagation</artifactId>
-            <version>1.0.4</version>
+            <version>1.0.5</version>
+            <optional>true</optional>
         </dependency>
         <!-- spring-boot-configuration-processor -->
         <dependency>

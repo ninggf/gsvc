@@ -51,6 +51,7 @@
         <dependency>
             <groupId>com.apzda.cloud</groupId>
             <artifactId>apzda-cloud-gsvc-tracing</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>io.zipkin.brave</groupId>

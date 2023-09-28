@@ -54,12 +54,14 @@
         <dependency>
             <groupId>com.alibaba.csp</groupId>
             <artifactId>sentinel-transport-simple-http</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- micrometer -->
         <dependency>
             <groupId>com.apzda.cloud</groupId>
             <artifactId>apzda-cloud-gsvc-tracing</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
