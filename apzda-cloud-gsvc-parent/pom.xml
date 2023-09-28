@@ -153,8 +153,12 @@
                 <filtering>true</filtering>
             </resource>
             <resource>
-                <directory>src/test/resources</directory>
-                <filtering>true</filtering>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                    <include>**/*.json</include>
+                    <include>**/*.ftl</include>
+                </includes>
             </resource>
         </resources>
         <extensions>
@@ -187,6 +191,7 @@
                             <nonFilteredFileExtension>pem</nonFilteredFileExtension>
                             <nonFilteredFileExtension>cert</nonFilteredFileExtension>
                             <nonFilteredFileExtension>key</nonFilteredFileExtension>
+                            <nonFilteredFileExtension>ftl</nonFilteredFileExtension>
                         </nonFilteredFileExtensions>
                     </configuration>
                 </plugin>
