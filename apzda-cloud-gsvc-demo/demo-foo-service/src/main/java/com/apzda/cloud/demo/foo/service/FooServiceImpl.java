@@ -11,6 +11,7 @@ import com.apzda.cloud.gsvc.ext.GsvcExt;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -61,6 +62,7 @@ public class FooServiceImpl implements FooService {
     }
 
     @Override
+    @PreAuthorize("hasPermission(#request.name,'view:/foo/info')")
     public FooRes saInfo(FooReq request) {
         val authentication = SecurityContextHolder.getContext().getAuthentication();
         val cu = GsvcExt.CurrentUser.newBuilder().setUid(authentication.getName()).buildPartial();

@@ -7,6 +7,7 @@ import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
+import com.apzda.cloud.gsvc.security.authorization.PermissionChecker;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
@@ -47,6 +48,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
@@ -65,6 +67,7 @@ import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.util.Assert;
 import org.springframework.web.ErrorResponseException;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -291,15 +294,29 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnMissingBean
         UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
             val manager = new InMemoryUserDetailsManager();
-            val authorities = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"),
-                    new SimpleGrantedAuthority("ROLE_USER"));
+            val authorities = new ArrayList<GrantedAuthority>();
+
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+            authorities.add(new SimpleGrantedAuthority("view:/foo/info/user"));
+
             val password = "123456";
+            val user = User.withUsername("user")
+                .password(passwordEncoder.encode(password))
+                .authorities(authorities)
+                .build();
+            manager.createUser(user);
+
+            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            authorities.add(new SimpleGrantedAuthority("*:/foo/*"));
+
             log.warn("Default User, username: {}, password: {}", "admin", password);
+
             val admin = User.withUsername("admin")
                 .password(passwordEncoder.encode(password))
                 .authorities(authorities)
                 .build();
             manager.createUser(admin);
+
             return manager;
         }
 
@@ -354,8 +371,9 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        static PermissionEvaluator asteriskPermissionEvaluator() {
-            return new AsteriskPermissionEvaluator();
+        static PermissionEvaluator asteriskPermissionEvaluator(
+                ObjectProvider<List<PermissionChecker>> checkerProvider) {
+            return new AsteriskPermissionEvaluator(checkerProvider);
         }
 
     }

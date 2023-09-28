@@ -70,7 +70,6 @@ public class ServiceMethodHandler {
         this.svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
         this.exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
         this.objectMapper = ResponseUtils.OBJECT_MAPPER;
-
     }
 
     public static ServerResponse handle(ServerRequest request, String caller, ServiceMethod serviceMethod,
@@ -111,10 +110,15 @@ public class ServiceMethodHandler {
             if (throwable instanceof InvocationTargetException) {
                 e = ((InvocationTargetException) throwable).getTargetException();
             }
+            if (log.isDebugEnabled()) {
+                log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                        serviceMethod.getDmName(), e.getMessage());
+            }
+            else {
+                log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
+                        serviceMethod.getDmName(), e);
+            }
 
-            log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
-                    serviceMethod.getDmName(), e);
-            // bookmark exception handle(service call)
             return exceptionHandler.handle(e, request);
         }
     }
@@ -159,8 +163,14 @@ public class ServiceMethodHandler {
         // server-streaming method will respond text/event-stream
         return ServerResponse.sse(sseBuilder -> {
             responseFlux.doOnComplete(sseBuilder::complete).doOnError(err -> {
-                log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
-                        serviceMethod.getDmName(), err);
+                if (log.isDebugEnabled()) {
+                    log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
+                            serviceMethod.getDmName(), err);
+                }
+                else {
+                    log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                            serviceMethod.getDmName(), err.getMessage());
+                }
                 try {
                     sseBuilder.data(ResponseUtils.fallback(err, serviceMethod.getServiceName(), String.class));
                     sseBuilder.complete();
@@ -174,12 +184,26 @@ public class ServiceMethodHandler {
                     sseBuilder.data(response);
                 }
                 catch (IOException e) {
-                    log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
-                            serviceMethod.getDmName(), e);
+                    if (log.isDebugEnabled()) {
+                        log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
+                                serviceMethod.getDmName(), e);
+                    }
+                    else {
+                        log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                                serviceMethod.getDmName(), e.getMessage());
+                    }
                     try {
                         sseBuilder.data(ResponseUtils.fallback(e, serviceMethod.getServiceName(), String.class));
                     }
                     catch (IOException ie) {
+                        if (log.isDebugEnabled()) {
+                            log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
+                                    serviceMethod.getDmName(), ie);
+                        }
+                        else {
+                            log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                                    serviceMethod.getDmName(), ie.getMessage());
+                        }
                         sseBuilder.error(ie);
                     }
                 }
