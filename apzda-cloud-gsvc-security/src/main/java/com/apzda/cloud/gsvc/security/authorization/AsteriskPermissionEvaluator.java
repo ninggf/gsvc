@@ -40,8 +40,6 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class AsteriskPermissionEvaluator implements PermissionEvaluator {
 
-    private static final Pattern ASTERISK = Pattern.compile("\\\\*");
-
     private final ObjectProvider<List<PermissionChecker>> checkerProvider;
 
     @Override
