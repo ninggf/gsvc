@@ -2,6 +2,10 @@
 
 A Toy Based on `Spring Boot` and `Grpc-Java`.
 
+![Monolithic](https://github.com/ninggf/gsvc/actions/workflows/monolith.yml/badge.svg)
+![MicroService](https://github.com/ninggf/gsvc/actions/workflows/micro-svc.yml/badge.svg)
+![doc](https://github.com/ninggf/gsvc/actions/workflows/docs.yml/badge.svg)
+
 > 它不是轮子，更不是新的框架！只是作者觉得（自以为是）OpenFeign的限制使得有些需求无法实现（可单体部署、又可以微服务部署），
 > 然后整合`Spring Boot`, `Spring Cloud`与`Grpc-Java`基于[Protocol Buffers](https://protobuf.dev/)
 > 搞的一个看上去解决了`OpenFeign`这些限制的小玩具, 顺带实现了一个小小的网关来隔离南北与东西流量。
