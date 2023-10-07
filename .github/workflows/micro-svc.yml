@@ -1,6 +1,12 @@
 name: MicroService Architecture Tests
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -14,7 +20,6 @@ jobs:
       matrix:
         java: [ '17' ]
     env:
-      SERVER_PORT: 12561
       VER: 1.0.0-SNAPSHOT
     services:
       redis:
@@ -48,18 +53,17 @@ jobs:
             java -jar demo-foo-service/target/demo-foo-service-${{ env.VER }}-fat.jar &
             java -jar demo-demo-service/target/demo-demo-service-${{ env.VER }}-fat.jar &
           wait-on: |-
-            http-get://localhost:${{ env.SERVER_PORT }}/actuator/health
+            http-get://localhost:12561/actuator/health
             http-get://localhost:12562/actuator/health
             http-get://localhost:12563/demo/actuator/health
             tcp:localhost:9090
+      - name: Download ijhttp tools
+        run: |-
+          curl -f -L -o ijhttp.zip "https://jb.gg/ijhttp/latest"
+          unzip ijhttp.zip
+          ./ijhttp/ijhttp --version
       - name: Execute HTTP requests
-        uses: madhead/intellij-http-client-action@latest
-        with:
-          files: |-
-            apzda-cloud-gsvc-demo/bar-test.http
-            apzda-cloud-gsvc-demo/foo-test.http
-            apzda-cloud-gsvc-demo/demo-test.http
-          env_file: apzda-cloud-gsvc-demo/http-client.env.json
-          env: dev
-          insecure: true
-          docker_mode: true
+        run: |-
+          ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/demo-test.http
+          ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/bar-test.http
+          ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/foo-test.http
