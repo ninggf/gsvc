@@ -43,13 +43,11 @@ jobs:
           wait-on: |-
             http-get://localhost:${{ env.SERVER_PORT }}/actuator/health
             tcp:localhost:9090
+      - name: Download ijhttp tools
+        run: |-
+          curl -f -L -o ijhttp.zip "https://jb.gg/ijhttp/latest"
+          unzip ijhttp.zip
+          ./ijhttp/ijhttp -version
       - name: Execute HTTP requests
-        uses: madhead/intellij-http-client-action@latest
-        with:
-          files: |-
-            apzda-cloud-gsvc-demo/bar-test.http
-            apzda-cloud-gsvc-demo/foo-test.http
-          env_file: apzda-cloud-gsvc-demo/http-client.env.json
-          env: sit
-          insecure: true
-          docker_mode: true
+        run: |-
+          ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env sit apzda-cloud-gsvc-demo/bar-test.http apzda-cloud-gsvc-demo/foo-test.http
