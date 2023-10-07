@@ -47,7 +47,7 @@ jobs:
         run: |-
           curl -f -L -o ijhttp.zip "https://jb.gg/ijhttp/latest"
           unzip ijhttp.zip
-          ./ijhttp/ijhttp -version
+          ./ijhttp/ijhttp --version
       - name: Execute HTTP requests
         run: |-
           ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env sit apzda-cloud-gsvc-demo/bar-test.http apzda-cloud-gsvc-demo/foo-test.http
