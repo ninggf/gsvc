@@ -83,11 +83,6 @@ public class GatewayServiceRegistry {
         });
     }
 
-    public static Map<String, ServiceMethod> getServiceMethods(String cfgName, String serviceName) {
-        String serviceId = serviceName + "@" + cfgName;
-        return SERVICES.getOrDefault(serviceId, Collections.emptyMap());
-    }
-
     public static ServiceInfo getServiceInfo(Class<?> clazz) {
         return DECLARED_SERVICES.get(clazz);
     }

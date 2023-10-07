@@ -16,22 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  **/
 class GatewayServiceRegistryTest {
 
-    @Test
-    void should_be_a_unary_method() throws NoSuchMethodException {
-        // given
-        GatewayServiceRegistry.register(GreetingService.class);
-
-        // when
-        val methods = GatewayServiceRegistry.getServiceMethods("test", "greetingService");
-
-        // then
-        assertThat(methods).isNotEmpty();
-        assertThat(methods).containsKey("sayHello");
-        assertThat(methods).containsKey("sayHei");
-        assertThat(methods).containsKey("sayHi");
-        System.out.println(methods);
-    }
-
     @org.junit.jupiter.api.Test
     void shortSvcName() {
         // given
