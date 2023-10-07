@@ -14,7 +14,7 @@ jobs:
       matrix:
         java: [ '17' ]
     env:
-      SERVER_PORT: 12560
+      SERVER_PORT_NO: 12560
       VER: 1.0.0-SNAPSHOT
     steps:
       - name: Checkout
@@ -41,7 +41,7 @@ jobs:
             java -jar demo-math-service/target/demo-math-service-${{ env.VER }}-fat.jar &
             java -jar demo-allinone-app/target/demo-allinone-app-${{ env.VER }}-fat.jar &
           wait-on: |-
-            http-get://localhost:${{ env.SERVER_PORT }}/actuator/health
+            http-get://localhost:${{ env.SERVER_PORT_NO }}/actuator/health
             tcp:localhost:9090
       - name: Download ijhttp tools
         run: |-
