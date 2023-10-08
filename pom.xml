@@ -46,7 +46,7 @@
         <grpc-java.version>1.58.0</grpc-java.version>
         <jprotoc.version>1.2.2</jprotoc.version>
         <jackson-protobuf.version>0.9.14</jackson-protobuf.version>
-        <net-devh-grpc.version>2.14.0.RELEASE</net-devh-grpc.version>
+        <net-devh-grpc.version>2.15.0.RELEASE</net-devh-grpc.version>
         <sentinel.version>1.8.6</sentinel.version>
         <brave.version>5.16.0</brave.version>
         <!-- plugins versions -->
