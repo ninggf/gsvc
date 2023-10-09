@@ -50,7 +50,7 @@
         <sentinel.version>1.8.6</sentinel.version>
         <brave.version>5.16.0</brave.version>
         <!-- plugins versions -->
-        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
+        <maven-gpg-plugin.version>3.1.0</maven-gpg-plugin.version>
         <spring-javaformat.version>0.0.39</spring-javaformat.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <maven-assembly-plugin.version>3.6.0</maven-assembly-plugin.version>
