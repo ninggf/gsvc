@@ -1,9 +1,6 @@
 name: MicroService Architecture Tests
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
