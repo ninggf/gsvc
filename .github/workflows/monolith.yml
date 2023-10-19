@@ -21,7 +21,7 @@ jobs:
         java: [ '17' ]
     env:
       SERVER_PORT_NO: 12560
-      VER: 1.0.2-SNAPSHOT
+      VER: 1.0.3-SNAPSHOT
     steps:
       - name: Checkout
         uses: actions/checkout@v3
