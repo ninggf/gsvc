@@ -20,7 +20,7 @@ jobs:
       matrix:
         java: [ '17' ]
     env:
-      VER: 1.0.3-SNAPSHOT
+      VER: 1.0.4-SNAPSHOT
     services:
       redis:
         image: redis
