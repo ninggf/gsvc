@@ -4,10 +4,10 @@
     <parent>
         <artifactId>gsvc</artifactId>
         <groupId>com.apzda.cloud</groupId>
-        <version>1.0.0</version>
+        <version>1.0.1-SNAPSHOT</version>
     </parent>
     <artifactId>gsvc-compiler</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <description>将protobuf的IDL编译成支持gsvc的接口.</description>
     <properties>
         <maven.compiler.source>${java.version}</maven.compiler.source>
