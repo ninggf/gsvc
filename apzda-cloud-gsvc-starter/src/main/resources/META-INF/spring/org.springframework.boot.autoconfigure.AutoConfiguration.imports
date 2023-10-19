@@ -3,3 +3,4 @@ com.apzda.cloud.gsvc.autoconfigure.ApzdaGsvcAutoConfiguration
 com.apzda.cloud.gsvc.security.config.GsvcSecurityAutoConfiguration
 com.apzda.cloud.gsvc.autoconfigure.GrpcServerSupportConfiguration
 com.apzda.cloud.gsvc.autoconfigure.GrpcClientSupportConfiguration
+com.apzda.cloud.gsvc.autoconfigure.MyBatisPlusAutoConfiguration

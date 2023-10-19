@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.apzda.module.test.abc.def.a.mapper.UserMapper">
+    <select id="getUserById" resultType="com.apzda.boot.entity.User">
+        select *
+        from `t_users`
+        where uid = #{id}
+    </select>
+</mapper>
