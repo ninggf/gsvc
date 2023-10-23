@@ -18,7 +18,7 @@
         <!-- libraries version -->
         <groovy.version>4.0.12</groovy.version>
         <!-- plugins version -->
-        <gmavenplus-plugin.version>3.0.0</gmavenplus-plugin.version>
+        <gmavenplus-plugin.version>3.0.2</gmavenplus-plugin.version>
     </properties>
 
     <dependencies>
