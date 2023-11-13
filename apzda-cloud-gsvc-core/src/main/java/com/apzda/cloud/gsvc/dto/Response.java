@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.val;
 import org.springframework.beans.BeanUtils;
+import org.springframework.util.Assert;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -33,36 +34,57 @@ public class Response<T> implements Serializable {
 
     private T data;
 
-    public static <T> Response<T> wrap(T data) {
-        val resp = new Response<T>();
-        if (data == null) {
-            resp.setErrMsg("data is null");
-            resp.setErrCode(500);
-        }
-        else {
-            BeanUtils.copyProperties(data, resp, "data", "type", "message");
-        }
-        resp.setData(data);
-        return resp;
-    }
-
-    public Response<?> type(MessageType type) {
+    public Response<T> type(MessageType type) {
         this.type = type;
         return this;
     }
 
-    public static Response<Void> error(IServiceError error) {
-        return error(error.code(), error.message());
+    public Response<T> alert(String message) {
+        this.type = MessageType.ALERT;
+        this.errMsg = message;
+        return this;
     }
 
-    public static Response<Void> error(int code, String errMsg) {
-        val resp = new Response<Void>();
+    public Response<T> notify(String message) {
+        this.type = MessageType.NOTIFY;
+        this.errMsg = message;
+        return this;
+    }
+
+    public Response<T> toast(String message) {
+        this.type = MessageType.TOAST;
+        this.errMsg = message;
+        return this;
+    }
+
+    public Response<T> none(String message) {
+        this.type = MessageType.NONE;
+        this.errMsg = message;
+        return this;
+    }
+
+    public static <T> Response<T> wrap(T data) {
+        Assert.notNull(data, "data is null!");
+        val resp = new Response<T>();
+        BeanUtils.copyProperties(data, resp, "data", "type", "message");
+        resp.setData(data);
+        return resp;
+    }
+
+    public static <T> Response<T> error(IServiceError error) {
+        Response<T> resp = error(error.code(), error.message());
+        resp.type = error.type();
+        return resp;
+    }
+
+    public static <T> Response<T> error(int code, String errMsg) {
+        val resp = new Response<T>();
         resp.errCode = code;
         resp.errMsg = errMsg;
         return resp;
     }
 
-    public static Response<Void> error(int code) {
+    public static <T> Response<T> error(int code) {
         return error(code, null);
     }
 
@@ -77,7 +99,7 @@ public class Response<T> implements Serializable {
         return success(data, null);
     }
 
-    public static Response<Void> success(String message) {
+    public static <T> Response<T> success(String message) {
         return success(null, message);
     }
 

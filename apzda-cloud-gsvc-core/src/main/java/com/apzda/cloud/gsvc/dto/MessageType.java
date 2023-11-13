@@ -8,6 +8,6 @@ package com.apzda.cloud.gsvc.dto;
  **/
 public enum MessageType {
 
-    TOAST, ALERT, TIP, DIALOG;
+    TOAST, ALERT, NOTIFY, NONE
 
 }
