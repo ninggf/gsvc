@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.utils;
 
-import com.apzda.cloud.gsvc.config.Config;
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
@@ -37,7 +37,7 @@ public class ResponseUtils {
 
     public static final ObjectMapper OBJECT_MAPPER;
 
-    private static Config gsvcConfig;
+    private static ServiceConfigProperties.Config gsvcConfig;
 
     static {
         OBJECT_MAPPER = new ObjectMapper();
@@ -47,7 +47,7 @@ public class ResponseUtils {
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    public static void config(ProtobufJacksonConfig config, Config globalConfig) {
+    public static void config(ProtobufJacksonConfig config, ServiceConfigProperties.Config globalConfig) {
         OBJECT_MAPPER.registerModule(new ProtobufModule(config));
         gsvcConfig = globalConfig;
     }
