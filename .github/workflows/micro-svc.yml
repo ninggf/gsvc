@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        java: [ '17' ]
+        java: [ '17','21' ]
     env:
       VER: 1.0.4-SNAPSHOT
     services:
@@ -37,7 +37,7 @@ jobs:
       - name: Install Gsvc Compiler
         run: mvn install -pl apzda-cloud-gsvc-compiler
       - name: Build with Maven
-        run: mvn -B -DskipTests=true package --file pom.xml
+        run: mvn -B package --file pom.xml
       - name: Run AllInOne Application
         uses: JarvusInnovations/background-action@v1
         with:
