@@ -57,17 +57,6 @@
         <gsvc.compiler.version>${project.version}</gsvc.compiler.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>spring-milestones</id>
-            <name>Spring Milestones</name>
-            <url>https://repo.spring.io/milestone</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <issueManagement>
         <system>Github Issue</system>
         <url>https://github.com/ninggf/gsvc/issues</url>
