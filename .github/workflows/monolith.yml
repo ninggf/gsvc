@@ -18,7 +18,6 @@ jobs:
         java: [ '17','21' ]
     env:
       SERVER_PORT_NO: 12560
-      VER: 1.0.4-SNAPSHOT
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -41,8 +40,8 @@ jobs:
           wait-for: 3m
           tail: true
           run: |-
-            java -jar demo-math-service/target/demo-math-service-${{ env.VER }}-fat.jar &
-            java -jar demo-allinone-app/target/demo-allinone-app-${{ env.VER }}-fat.jar &
+            java -jar demo-math-service/target/demo-math-service-fat.jar &
+            java -jar demo-allinone-app/target/demo-allinone-app-fat.jar &
           wait-on: |-
             http-get://localhost:${{ env.SERVER_PORT_NO }}/actuator/health
             tcp:localhost:9090

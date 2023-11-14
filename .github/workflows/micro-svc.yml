@@ -16,8 +16,6 @@ jobs:
     strategy:
       matrix:
         java: [ '17','21' ]
-    env:
-      VER: 1.0.4-SNAPSHOT
     services:
       redis:
         image: redis
@@ -45,10 +43,10 @@ jobs:
           wait-for: 3m
           tail: true
           run: |-
-            java -jar demo-math-service/target/demo-math-service-${{ env.VER }}-fat.jar &
-            java -jar demo-bar-service/target/demo-bar-service-${{ env.VER }}-fat.jar &
-            java -jar demo-foo-service/target/demo-foo-service-${{ env.VER }}-fat.jar &
-            java -jar demo-demo-service/target/demo-demo-service-${{ env.VER }}-fat.jar &
+            java -jar demo-math-service/target/demo-math-service-fat.jar &
+            java -jar demo-bar-service/target/demo-bar-service-fat.jar &
+            java -jar demo-foo-service/target/demo-foo-service-fat.jar &
+            java -jar demo-demo-service/target/demo-demo-service-fat.jar &
           wait-on: |-
             http-get://localhost:12561/actuator/health
             http-get://localhost:12562/actuator/health
