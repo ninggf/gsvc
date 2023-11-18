@@ -9,6 +9,11 @@
 
     <artifactId>demo-allinone-app</artifactId>
 
+    <properties>
+        <spring-boot-maven-plugin.layer>true</spring-boot-maven-plugin.layer>
+        <spring-boot-maven-plugin.classifier>layer</spring-boot-maven-plugin.classifier>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.apzda.cloud</groupId>

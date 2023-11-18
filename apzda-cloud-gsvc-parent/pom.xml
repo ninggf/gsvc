@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>com.apzda.cloud</groupId>
         <artifactId>gsvc</artifactId>
@@ -19,6 +20,9 @@
         <groovy.version>4.0.12</groovy.version>
         <!-- plugins version -->
         <gmavenplus-plugin.version>3.0.2</gmavenplus-plugin.version>
+        <!-- spring-boot-maven-plugin -->
+        <spring-boot-maven-plugin.layer>false</spring-boot-maven-plugin.layer>
+        <spring-boot-maven-plugin.classifier>fat</spring-boot-maven-plugin.classifier>
     </properties>
 
     <dependencies>
@@ -42,30 +46,6 @@
                     <version>1.3.2</version>
                 </dependency>
             </dependencies>
-        </profile>
-        <!-- layer -->
-        <profile>
-            <id>layer</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.springframework.boot</groupId>
-                        <artifactId>spring-boot-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>repackage</id>
-                                <configuration>
-                                    <classifier>layer</classifier>
-                                    <layers>
-                                        <enabled>true</enabled>
-                                        <configuration>${project.basedir}/assembly/layers.xml</configuration>
-                                    </layers>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
         <!-- its -->
         <profile>
@@ -205,7 +185,11 @@
                             </goals>
                             <configuration>
                                 <attach>false</attach>
-                                <classifier>fat</classifier>
+                                <classifier>${spring-boot-maven-plugin.classifier}</classifier>
+                                <layers>
+                                    <enabled>${spring-boot-maven-plugin.layer}</enabled>
+                                    <configuration>${project.basedir}/assembly/layers.xml</configuration>
+                                </layers>
                                 <excludeDevtools>true</excludeDevtools>
                                 <excludeDockerCompose>true</excludeDockerCompose>
                                 <excludes>
