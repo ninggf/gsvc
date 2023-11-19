@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "gsvc/ext.proto";
+import "google/api/annotations.proto";
 
 package bar;
 
@@ -57,7 +58,11 @@ message SaRes {
 
 service SaService {
   rpc login(LoginReq) returns (LoginRes);
-  rpc info(SaReq) returns (SaRes);
+  rpc info(SaReq) returns (SaRes){
+    option(google.api.http) = {
+      get: "/sa/info"
+    };
+  }
 
   rpc hi(SaReq) returns(SaRes) {
     option(gsvc.route) = {

@@ -3,6 +3,7 @@ package com.apzda.cloud.gsvc.core;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.apzda.cloud.gsvc.gtw.GroupRoute;
 import com.apzda.cloud.gsvc.gtw.Route;
+import com.google.api.AnnotationsProto;
 import com.google.protobuf.Descriptors;
 import io.grpc.MethodDescriptor;
 import io.grpc.ServiceDescriptor;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.*;
 import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.RouterFunction;
 
@@ -73,13 +75,13 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
                     // 注册服务路由
                     registerRouterFunction(bf, aClass);
-                    // 注册网关路由
+                    // 注册网关路由(配置方式)
                     val prefix = "apzda.cloud.gateway." + cfgName + ".routes";
                     val routes = createRoutes(prefix, aClass, environment);
                     for (GroupRoute route : routes) {
                         registerRouterFunction(bf, route);
                     }
-
+                    // 注册网关路由(定义方式)
                     val descriptor = GatewayServiceRegistry.SERVICE_DESCRIPTOR.get(aClass);
                     if (descriptor != null) {
                         val defaultFilters = environment.getProperty("apzda.cloud.gateway.default.filters");
@@ -206,6 +208,9 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val method = environment.getProperty(prefix + ".method");
         val actions = environment.getProperty(prefix + ".actions");
         val access = environment.getProperty(prefix + ".access");
+        val summary = environment.getProperty(prefix + ".summary");
+        val desc = environment.getProperty(prefix + ".desc");
+        val tags = environment.getProperty(prefix + ".tags");
         var filters = environment.getProperty(prefix + ".filters");
 
         if (parent == null) {
@@ -229,6 +234,9 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .actions(actions)
             .login(login)
             .access(access)
+            .summary(summary)
+            .tags(tags)
+            .desc(desc)
             .filters(filters);
     }
 
@@ -237,14 +245,43 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val options = methodDescriptor.getOptions();
         val api = options.getExtension(GsvcExt.route);
         var path = api.getPath().trim();
+        var methods = api.getMethods().trim();
         if (StringUtils.isBlank(path)) {
-            return null;
+            val http = options.getExtension(AnnotationsProto.http);
+            val number = http.getPatternCase().getNumber();
+            switch (number) {
+                case 2:
+                    path = http.getGet().trim();
+                    methods = "get";
+                    break;
+                case 3:
+                    path = http.getPut().trim();
+                    methods = "put";
+                    break;
+                case 4:
+                    path = http.getPost().trim();
+                    methods = "post";
+                    break;
+                case 5:
+                    path = http.getDelete().trim();
+                    methods = "delete";
+                    break;
+                case 6:
+                    path = http.getPatch().trim();
+                    methods = "patch";
+                    break;
+                default:
+                    return null;
+            }
+
+            if (StringUtils.isBlank(path)) {
+                return null;
+            }
         }
         var index = methodDescriptor.getIndex() + 10001;
         path = "/" + StringUtils.strip(path, "/");
         val login = api.getLogin();
         val access = api.getAccess().trim();
-        val methods = api.getMethods().trim();
         var filters = api.getFilters().trim();
 
         if (StringUtils.isNotBlank(defaultFilters)) {
@@ -257,8 +294,11 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         }
 
         val route = new Route();
-        route.setPath(path);
+        route.path(path);
         route.index(index);
+        route.setSummary(api.getSummary());
+        route.setDesc(api.getDesc());
+        route.tags(api.getTags());
         route.setInterfaceName(aClass);
         route.setMethod(methodDescriptor.getName());
         route.filters(filters);
@@ -269,7 +309,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         return GroupRoute.valueOf(route);
     }
 
-    private void registerRouterFunction(BeanDefinitionRegistry registry, GroupRoute route) {
+    private void registerRouterFunction(BeanDefinitionRegistry registry, Route route) {
         // to
         val interfaceName = route.getInterfaceName();
         val serviceInfo = GatewayServiceRegistry.getServiceInfo(interfaceName);
@@ -277,17 +317,25 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             log.warn("Service not found for route: {} ", route);
             return;
         }
+        if (StringUtils.isNotBlank(route.getMethod())) {
+            val cfgName = serviceInfo.getCfgName();
+            val serviceName = serviceInfo.getServiceName();
+            val definition = BeanDefinitionBuilder.genericBeanDefinition(GtwRouterFunctionFactoryBean.class);
 
-        val cfgName = serviceInfo.getCfgName();
-        val serviceName = serviceInfo.getServiceName();
-        val definition = BeanDefinitionBuilder.genericBeanDefinition(GtwRouterFunctionFactoryBean.class);
-
-        definition.addConstructorArgValue(route);
-        definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
-        val holder = getBeanDefinitionHolder(cfgName, serviceName + ".route." + route.index(), definition);
-
-        BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
-
+            definition.addConstructorArgValue(route);
+            definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+            val holder = getBeanDefinitionHolder(cfgName, serviceName + ".route." + route.index(), definition);
+            BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
+        }
+        // 铺平子路由
+        if (route instanceof GroupRoute gRoute) {
+            val routes = gRoute.getRoutes();
+            if (!CollectionUtils.isEmpty(routes)) {
+                for (Route subRoute : routes) {
+                    registerRouterFunction(registry, subRoute);
+                }
+            }
+        }
     }
 
     private BeanDefinitionHolder getBeanDefinitionHolder(String appName, String serviceName,
@@ -300,29 +348,6 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
         return new BeanDefinitionHolder(beanDefinition, appName + "." + serviceName + ".RouterFunctionFactoryBean",
                 qualifiers);
-    }
-
-    private String getQualifier(Map<String, Object> client) {
-        if (client == null) {
-            return null;
-        }
-        String qualifier = (String) client.get("qualifier");
-        if (StringUtils.isNotBlank(qualifier)) {
-            return qualifier;
-        }
-        return null;
-    }
-
-    private String[] getQualifiers(Map<String, Object> client) {
-        if (client == null) {
-            return null;
-        }
-        List<String> qualifierList = new ArrayList<>(Arrays.asList((String[]) client.get("qualifiers")));
-        qualifierList.removeIf(StringUtils::isBlank);
-        if (qualifierList.isEmpty() && getQualifier(client) != null) {
-            qualifierList = Collections.singletonList(getQualifier(client));
-        }
-        return !qualifierList.isEmpty() ? qualifierList.toArray(new String[0]) : null;
     }
 
 }

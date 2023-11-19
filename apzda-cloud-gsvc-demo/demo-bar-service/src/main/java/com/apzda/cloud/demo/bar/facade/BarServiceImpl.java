@@ -6,6 +6,8 @@ import com.apzda.cloud.demo.bar.proto.BarService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -23,11 +25,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Tag(name = "BarService")
 public class BarServiceImpl implements BarService {
 
     private final MathService mathService;
 
     @Override
+    @Operation(summary = "打个招呼", description = "测试的的的的")
     public BarRes greeting(BarReq request) {
         return BarRes.newBuilder().setAge(request.getAge() + 1).setName(request.getName() + ".bar@greeting").build();
     }

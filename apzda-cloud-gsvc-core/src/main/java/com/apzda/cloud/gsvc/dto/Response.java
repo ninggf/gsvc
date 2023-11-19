@@ -2,6 +2,7 @@ package com.apzda.cloud.gsvc.dto;
 
 import com.apzda.cloud.gsvc.IServiceError;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,19 +20,25 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "Response")
 public class Response<T> implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 2865776613817344868L;
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "0 means success, others value mean error.")
     private int errCode;
 
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "The detail message of the error.")
     private String errMsg;
 
+    @Schema(description = "alias of errMsg")
     private String message;
 
+    @Schema(description = "When the errMsg(message) is not blank, client show the errMsg by 'type' method")
     private MessageType type;
 
+    @Schema(description = "The business data")
     private T data;
 
     public Response<T> type(MessageType type) {

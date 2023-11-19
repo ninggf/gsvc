@@ -28,6 +28,9 @@ message Route {
   string access = 3;
   string methods = 4;
   string  filters = 5;
+  string summary = 6;
+  string desc = 7;
+  string tags = 8;
 }
 
 extend google.protobuf.MethodOptions {Route route = 50003;}

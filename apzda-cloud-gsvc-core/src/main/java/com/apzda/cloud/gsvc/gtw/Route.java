@@ -29,6 +29,12 @@ public class Route {
 
     private String method;
 
+    private String summary;
+
+    private String desc;
+
+    private String[] tags;
+
     private List<HttpMethod> actions = Collections.emptyList();
 
     private Set<String> filters = new HashSet<>();
@@ -46,6 +52,9 @@ public class Route {
     String prefix;
 
     public int index() {
+        if (parent != null) {
+            return (parent.index() + 1) * 100000 + this.index;
+        }
         return this.index;
     }
 
@@ -152,7 +161,49 @@ public class Route {
         if (StringUtils.isNotBlank(filters)) {
             this.filters = new HashSet<>(Splitter.on(",").omitEmptyStrings().trimResults().splitToList(filters));
         }
+
+        if (parent != null && !CollectionUtils.isEmpty(parent.filters)) {
+            val mergedFilters = new HashSet<String>(parent.filters);
+            mergedFilters.addAll(this.filters);
+            this.filters = mergedFilters;
+        }
+
         return this;
+    }
+
+    public Route summary(String summary) {
+        this.summary = StringUtils.defaultString(summary);
+        return this;
+    }
+
+    public Route desc(String desc) {
+        this.desc = StringUtils.defaultString(desc);
+        return this;
+    }
+
+    public Route tags(String tags) {
+        if (StringUtils.isNotBlank(tags)) {
+            val tagList = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(tags);
+            this.tags = new String[tagList.size()];
+
+            for (int i = 0; i < this.tags.length; i++) {
+                this.tags[i] = tagList.get(i);
+            }
+        }
+        else if (this.parent != null) {
+            this.tags = this.parent.tags;
+        }
+        else {
+            this.tags = new String[] {};
+        }
+        return this;
+    }
+
+    public String absPath() {
+        if (parent != null) {
+            return parent.getPath() + path;
+        }
+        return path;
     }
 
     public RouteMeta meta() {
@@ -162,16 +213,13 @@ public class Route {
     @Override
     public String toString() {
         val str = new ToStringCreator(this);
-        if (parent != null) {
-            str.append("path", parent.path + path);
-        }
-        else {
-            str.append("path", path);
-        }
+
+        str.append("path", absPath());
         val svcName = GatewayServiceRegistry.svcName(interfaceName);
+
         str.append("svc", svcName)
             .append("method", method)
-            .append("index", index)
+            .append("index", index())
             .append("login", login)
             .append("access", access)
             .append("actions", actions)

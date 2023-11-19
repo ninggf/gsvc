@@ -234,10 +234,8 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         AuthenticationProvider jwtAuthenticationProvider(UserDetailsService userDetailsService,
-                UserDetailsMetaRepository userDetailsMetaRepository, PasswordEncoder passwordEncoder,
-                TokenManager tokenManager) {
-            return new DefaultAuthenticationProvider(userDetailsService, userDetailsMetaRepository, passwordEncoder,
-                    tokenManager);
+                UserDetailsMetaRepository userDetailsMetaRepository, PasswordEncoder passwordEncoder) {
+            return new DefaultAuthenticationProvider(userDetailsService, userDetailsMetaRepository, passwordEncoder);
         }
 
         @Bean
@@ -256,8 +254,7 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        AuthenticationHandler authenticationHandler(ServiceConfigProperties serviceConfigProperties,
-                TokenManager tokenManager) {
+        AuthenticationHandler authenticationHandler(TokenManager tokenManager) {
             return new DefaultAuthenticationHandler(properties, tokenManager);
         }
 

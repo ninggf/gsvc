@@ -2,12 +2,13 @@ package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
-import com.apzda.cloud.gsvc.security.token.TokenManager;
+import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -26,8 +27,6 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
 
     private final PasswordEncoder passwordEncoder;
 
-    private final TokenManager tokenManager;
-
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         log.warn("[{}] You are using a demo AuthenticationProvider, please use a real one!!!",
@@ -38,18 +37,7 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
         val userDetails = userDetailsService.loadUserByUsername((String) username);
         val password = userDetails.getPassword();
 
-        if (!userDetails.isEnabled()) {
-            throw new DisabledException(String.format("%s is disabled", username));
-        }
-        if (!userDetails.isCredentialsNonExpired()) {
-            throw new CredentialsExpiredException(String.format("%s's password is expired", username));
-        }
-        if (!userDetails.isAccountNonExpired()) {
-            throw new AccountExpiredException(String.format("%s's account is expired", username));
-        }
-        if (!userDetails.isAccountNonLocked()) {
-            throw new LockedException(String.format("%s's account is expired", username));
-        }
+        UserDetailsMeta.checkUserDetails(userDetails);
 
         if (passwordEncoder.matches((CharSequence) credentials, password)) {
             return JwtAuthenticationToken.authenticated(userDetailsMetaRepository.create(userDetails), password);

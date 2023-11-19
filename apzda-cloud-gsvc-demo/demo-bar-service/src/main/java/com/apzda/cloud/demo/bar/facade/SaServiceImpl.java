@@ -4,6 +4,7 @@ import com.apzda.cloud.demo.bar.proto.*;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.http.HttpStatusCode;
@@ -17,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
  */
 @Service
 @RequiredArgsConstructor
+@Tag(name = "SaService")
 public class SaServiceImpl implements SaService {
 
     private final TokenManager tokenManager;

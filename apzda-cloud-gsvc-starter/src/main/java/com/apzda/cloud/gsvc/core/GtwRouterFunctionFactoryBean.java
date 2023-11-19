@@ -2,13 +2,13 @@ package com.apzda.cloud.gsvc.core;
 
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
-import com.apzda.cloud.gsvc.gtw.GroupRoute;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.gtw.Route;
 import com.apzda.cloud.gsvc.server.ServiceMethodHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springdoc.core.fn.builders.operation.Builder;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationContext;
@@ -18,8 +18,9 @@ import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.function.*;
 
-import java.util.Collections;
 import java.util.List;
+
+import static org.springdoc.core.utils.Constants.OPERATION_ATTRIBUTE;
 
 /**
  * @author fengz
@@ -29,7 +30,7 @@ import java.util.List;
 public class GtwRouterFunctionFactoryBean
         implements FactoryBean<RouterFunction<ServerResponse>>, ApplicationContextAware {
 
-    private final GroupRoute groupRoute;
+    private final Route route;
 
     private ApplicationContext applicationContext;
 
@@ -40,84 +41,38 @@ public class GtwRouterFunctionFactoryBean
 
     @Override
     public RouterFunction<ServerResponse> getObject() throws Exception {
-        val routeBuilder = RouterFunctions.route();
-        val interfaceName = groupRoute.getInterfaceName();
+        val router = RouterFunctions.route();
+        val interfaceName = route.getInterfaceName();
         val serviceInfo = GatewayServiceRegistry.getServiceInfo(interfaceName);
-        val routes = groupRoute.getRoutes();
         val svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
         val globalFilters = svcConfigure.getGlobalFilters();
+        val serviceBean = applicationContext.getBean(interfaceName);
 
-        val gMethod = groupRoute.getMethod();
-        if (gMethod != null) {
-            setupGroupRoute(routeBuilder, groupRoute, serviceInfo);
-        }
+        setupRoute(router, route, serviceInfo);
+        setupFilter(route, router, globalFilters);
 
-        if (!CollectionUtils.isEmpty(routes)) {
-            routeBuilder.path(groupRoute.getPath(), builder -> {
-                for (Route subRoute : routes) {
-                    val actions = subRoute.getActions();
-                    val serviceMethod = getServiceMethod(subRoute, serviceInfo);
-                    val path = subRoute.getPath();
-                    val meta = subRoute.meta();
-                    if (meta.isLogin()) {
-                        GatewayServiceRegistry.registerRouteMeta(groupRoute.getPath() + path, meta);
-                    }
-
-                    builder.path(path, subBuilder -> {
-
-                        if (log.isDebugEnabled()) {
-                            log.debug("SN Route {}{} to {}.{}", groupRoute.getPath(), path,
-                                    serviceMethod.getServiceName(), serviceMethod.getDmName());
-                        }
-
-                        HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw",
-                                serviceMethod, applicationContext);
-
-                        for (HttpMethod action : actions) {
-                            if (action == HttpMethod.GET) {
-                                subBuilder.GET(func);
-                            }
-                            else if (action == HttpMethod.POST) {
-                                subBuilder.POST(func);
-                            }
-                            else if (action == HttpMethod.DELETE) {
-                                subBuilder.DELETE(func);
-                            }
-                            else if (action == HttpMethod.PUT) {
-                                subBuilder.PUT(func);
-                            }
-                            else if (action == HttpMethod.PATCH) {
-                                subBuilder.PATCH(func);
-                            }
-                        }
-
-                        setupFilter(subRoute, subBuilder, Collections.emptyList());
-                    });
-                }
-            });
-        }
-
-        setupFilter(groupRoute, routeBuilder, globalFilters);
         val exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
         // bookmark exception handle(gtw call)
-        return routeBuilder.onError(Exception.class, exceptionHandler::handle).build();
+        return router.onError(Exception.class, exceptionHandler::handle).build();
     }
 
-    private void setupGroupRoute(RouterFunctions.Builder builder, GroupRoute route, ServiceInfo serviceInfo) {
+    private void setupRoute(RouterFunctions.Builder builder, Route route, ServiceInfo serviceInfo) {
         val actions = route.getActions();
         val serviceMethod = getServiceMethod(route, serviceInfo);
-        val path = route.getPath();
+        val path = route.absPath();
         val meta = route.meta();
 
-        log.debug("SN Route {} to {}.{}({})", route.getPath(), serviceMethod.getServiceName(),
-                serviceMethod.getDmName(), meta);
+        if (log.isDebugEnabled()) {
+            log.debug("SN Route {} to {}.{}({})", path, serviceMethod.getServiceName(), serviceMethod.getDmName(),
+                    meta);
+        }
 
         if (meta.isLogin()) {
             GatewayServiceRegistry.registerRouteMeta(path, meta);
         }
 
-        HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw", serviceMethod,
-                applicationContext);
+        final HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw",
+                serviceMethod, applicationContext);
 
         for (HttpMethod action : actions) {
             if (action == HttpMethod.GET) {
@@ -136,6 +91,11 @@ public class GtwRouterFunctionFactoryBean
                 builder.PATCH(path, func);
             }
         }
+
+        log.warn("为{}生成文档!", path);
+        val operationBuilder = createOperationBuilder(route, serviceMethod);
+        operationBuilder.operationId(path);
+        builder.withAttribute(OPERATION_ATTRIBUTE, operationBuilder);
     }
 
     private ServiceMethod getServiceMethod(Route route, ServiceInfo serviceInfo) {
@@ -176,6 +136,14 @@ public class GtwRouterFunctionFactoryBean
     @Override
     public Class<?> getObjectType() {
         return RouterFunction.class;
+    }
+
+    private Builder createOperationBuilder(Route route, ServiceMethod serviceMethod) {
+        val ro = Builder.operationBuilder();
+        ro.beanClass(serviceMethod.getInterfaceName()).beanMethod(serviceMethod.getDmName());
+        ro.operationId(route.absPath());
+        // TODO 完成swagger
+        return ro;
     }
 
 }
