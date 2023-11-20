@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.exception;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
@@ -125,23 +126,22 @@ public class GsvcExceptionHandler {
             }
         }
 
-        if (rClass.isAssignableFrom(ServerResponse.class)) {
-            return (R) ServerResponse.status(status).body(handle(e));
-        }
-        else {
-            return (R) ResponseEntity.status(status).body(handle(e));
-        }
+        return null;
     }
 
     private <R> R handle(Throwable error, ServerRequest request, Class<R> rClazz) {
         error = transform(error);
         if (error instanceof HttpStatusCodeException || error instanceof ErrorResponseException) {
             // bookmark login
-            return checkLoginRedirect(request, error, rClazz);
+            val handled = checkLoginRedirect(request, error, rClazz);
+            if (handled != null) {
+                return handled;
+            }
         }
         ResponseWrapper responseWrapper;
-        if (error instanceof GsvcException) {
+        if (error instanceof GsvcException gsvcException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.SERVICE_UNAVAILABLE).body(handle(error));
+            responseWrapper.headers(gsvcException.getHeaders());
         }
         else if (error instanceof TimeoutException || error instanceof io.netty.handler.timeout.TimeoutException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.GATEWAY_TIMEOUT).body(handle(error));
@@ -157,10 +157,18 @@ public class GsvcExceptionHandler {
         else if (error instanceof HttpRequestMethodNotSupportedException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.METHOD_NOT_ALLOWED).body(handle(error));
         }
+        else if (error instanceof ErrorResponseException responseException) {
+            responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
+            responseWrapper.headers(responseException.getHeaders());
+        }
+        else if (error instanceof HttpStatusCodeException httpStatusCodeException) {
+            responseWrapper = ResponseWrapper.status(httpStatusCodeException.getStatusCode()).body(handle(error));
+            responseWrapper.headers(httpStatusCodeException.getResponseHeaders());
+        }
         else {
             responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
         }
-
+        log.error("[{}] Exception Resolved:", GsvcContextHolder.getRequestId(), error);
         return responseWrapper.unwrap(rClazz);
     }
 
@@ -181,7 +189,7 @@ public class GsvcExceptionHandler {
         return throwable;
     }
 
-    static class ResponseWrapper {
+    final static class ResponseWrapper {
 
         private HttpStatusCode status;
 

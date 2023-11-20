@@ -3,6 +3,7 @@ package com.apzda.cloud.gsvc.exception;
 import com.apzda.cloud.gsvc.IServiceError;
 import lombok.Getter;
 import org.springframework.core.style.ToStringCreator;
+import org.springframework.http.HttpHeaders;
 
 /**
  * @author fengz
@@ -10,16 +11,22 @@ import org.springframework.core.style.ToStringCreator;
 @Getter
 public class GsvcException extends RuntimeException {
 
-    private final IServiceError error;
+    protected final IServiceError error;
 
-    public GsvcException(IServiceError error, Throwable e) {
+    private final HttpHeaders headers;
+
+    public GsvcException(IServiceError error, HttpHeaders headers, Throwable e) {
         super(error.message(), e);
         this.error = error;
+        this.headers = headers == null ? HttpHeaders.EMPTY : headers;
+    }
+
+    public GsvcException(IServiceError error, Throwable e) {
+        this(error, null, e);
     }
 
     public GsvcException(IServiceError error) {
-        super(error.message());
-        this.error = error;
+        this(error, null, null);
     }
 
     @Override

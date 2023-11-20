@@ -110,15 +110,9 @@ public class ServiceMethodHandler {
             if (throwable instanceof InvocationTargetException) {
                 e = ((InvocationTargetException) throwable).getTargetException();
             }
-            if (log.isDebugEnabled()) {
-                log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
-                        serviceMethod.getDmName(), e.getMessage());
-            }
-            else {
-                log.error("[{}] Call method failed: {}.{}", logId, serviceMethod.getServiceName(),
-                        serviceMethod.getDmName(), e);
-            }
 
+            log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                    serviceMethod.getDmName(), e.getMessage());
             return exceptionHandler.handle(e, request);
         }
     }
