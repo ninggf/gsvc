@@ -69,7 +69,10 @@ service SaService {
       path: "/sa/hi",
       login: true,
       access: "r('ADMIN') || r('USER')",
-      methods:"get,post"
+      methods:"get,post",
+      summary: "打招呼",
+      desc: "当用户登录成功后，用于获取欢迎信息",
+      tags: "Home,首页"
     };
   }
 }
