@@ -6,6 +6,7 @@ package com.apzda.cloud.gsvc.security.token;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +27,7 @@ import java.util.Objects;
 @Slf4j
 public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
+    @Getter
     protected JwtToken jwtToken;
 
     private final Object principal;
@@ -107,10 +109,6 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             }
         }
         return Collections.emptyList();
-    }
-
-    public JwtToken getJwtToken() {
-        return jwtToken;
     }
 
     public void setJwtToken(JwtToken jwtToken) {

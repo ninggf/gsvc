@@ -18,4 +18,10 @@ public class CurrentUser {
 
     private String deviceId;
 
+    private String os;
+
+    private String osVer;
+
+    private String app;
+
 }

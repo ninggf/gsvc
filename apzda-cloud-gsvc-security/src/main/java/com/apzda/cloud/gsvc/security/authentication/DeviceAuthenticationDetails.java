@@ -2,6 +2,7 @@ package com.apzda.cloud.gsvc.security.authentication;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Getter;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.style.ToStringCreator;
@@ -12,6 +13,7 @@ import java.util.Map;
 /**
  * @author fengz
  */
+@Getter
 public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
 
     private final String device;
@@ -40,30 +42,6 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
     public static DeviceAuthenticationDetails create() {
         val request = GsvcContextHolder.getRequest();
         return request.map(DeviceAuthenticationDetails::new).orElse(null);
-    }
-
-    public String getDevice() {
-        return device;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public String getOsName() {
-        return osName;
-    }
-
-    public String getOsVer() {
-        return osVer;
-    }
-
-    public String getApp() {
-        return app;
-    }
-
-    public Map<String, String> getAppMeta() {
-        return appMeta;
     }
 
     @Override

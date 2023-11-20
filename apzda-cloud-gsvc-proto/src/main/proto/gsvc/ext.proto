@@ -42,7 +42,6 @@ message CurrentUser {
   optional string os = 4;
   optional string os_ver = 5;
   optional string  app = 6;
-  map<string, string > app_meta = 7;
 }
 
 message UploadFile {

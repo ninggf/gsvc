@@ -40,7 +40,10 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
         UserDetailsMeta.checkUserDetails(userDetails);
 
         if (passwordEncoder.matches((CharSequence) credentials, password)) {
-            return JwtAuthenticationToken.authenticated(userDetailsMetaRepository.create(userDetails), password);
+            val userDetailsMeta = userDetailsMetaRepository.create(userDetails);
+            // bookmark: Clear Authorities
+            userDetailsMeta.remove("Authorities");
+            return JwtAuthenticationToken.authenticated(userDetailsMeta, password);
         }
 
         throw new BadCredentialsException(String.format("%s's password does not match", username));

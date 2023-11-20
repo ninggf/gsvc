@@ -70,6 +70,9 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
                     .uid(jwtToken.getName())
                     .device(request.headers().firstHeader("X-Device"))
                     .deviceId(request.headers().firstHeader("X-Device-Id"))
+                    .os(request.headers().firstHeader("X-Os"))
+                    .osVer(request.headers().firstHeader("X-Os-Ver"))
+                    .app(request.headers().firstHeader("X-App"))
                     .build();
 
                 if (d instanceof ObjectNode objectNode) {

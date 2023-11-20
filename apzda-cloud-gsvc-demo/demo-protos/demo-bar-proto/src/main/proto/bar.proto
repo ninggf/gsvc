@@ -10,8 +10,8 @@ option java_multiple_files = true;
 option java_outer_classname = "BarProto";
 
 message BarReq {
-  optional string name = 1;
-  optional uint32 age = 2;
+  string name = 1;
+  uint32 age = 2;
   repeated gsvc.UploadFile files = 10;
 }
 
