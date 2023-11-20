@@ -16,7 +16,7 @@
         <!-- build skip -->
         <skipITs>true</skipITs>
         <!-- libraries version -->
-        <groovy.version>4.0.12</groovy.version>
+        <groovy.version>4.0.15</groovy.version>
         <!-- plugins version -->
         <gmavenplus-plugin.version>3.0.2</gmavenplus-plugin.version>
     </properties>
