@@ -35,12 +35,12 @@ jobs:
       - name: Install Gsvc Compiler
         run: mvn install -pl apzda-cloud-gsvc-compiler
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B package -Djava.version=${{ matrix.java }} --file pom.xml
       - name: Run AllInOne Application
         uses: JarvusInnovations/background-action@v1
         with:
           working-directory: apzda-cloud-gsvc-demo
-          wait-for: 3m
+          wait-for: 5m
           tail: true
           run: |-
             java -jar demo-math-service/target/demo-math-service-fat.jar &
