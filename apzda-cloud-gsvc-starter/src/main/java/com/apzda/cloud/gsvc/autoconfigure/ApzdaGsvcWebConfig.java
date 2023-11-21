@@ -6,6 +6,7 @@ import com.apzda.cloud.gsvc.error.GsvcErrorController;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.filter.GsvcServletFilter;
+import com.apzda.cloud.gsvc.i18n.I18nHelper;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
@@ -24,11 +26,15 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.boot.web.servlet.error.ErrorController;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author ninggf
@@ -74,9 +80,8 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
 
     @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
-    public BasicErrorController basicErrorController(ErrorAttributes errorAttributes,
-            ServiceConfigProperties properties, ObjectProvider<ErrorViewResolver> errorViewResolvers,
-            ServerProperties serverProperties) {
+    BasicErrorController basicErrorController(ErrorAttributes errorAttributes, ServiceConfigProperties properties,
+            ObjectProvider<ErrorViewResolver> errorViewResolvers, ServerProperties serverProperties) {
         return new GsvcErrorController(errorAttributes, serverProperties.getError(), properties,
                 errorViewResolvers.orderedStream().toList());
     }
@@ -90,6 +95,20 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
         registration.setOrder(1);
 
         return registration;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    LocaleResolver localeResolver() {
+        val cookieLocaleResolver = new CookieLocaleResolver("lang");
+        cookieLocaleResolver.setDefaultLocale(Locale.ENGLISH);
+        return cookieLocaleResolver;
+    }
+
+    @Bean
+    @ConditionalOnBean(MessageSource.class)
+    I18nHelper i18nHelper(MessageSource messageSource, LocaleResolver localeResolver) {
+        return new I18nHelper(messageSource, localeResolver);
     }
 
 }

@@ -1,0 +1,20 @@
+### Route - I18N(zh_CN) - /token/i18n/foo.hello
+GET http://{{barService}}/token/i18n/foo.hello
+Cookie: lang=zh_CN
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body === "你好Foo!", "出错啦: " + response.body + " != '你好Foo！'");
+    });
+%}
+
+### Route - I18N(default) - /token/i18n/foo.hello
+GET http://{{barService}}/token/i18n/foo.hello
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body === "Hello Foo!", "出错啦: " + response.body + " != 'Hello Foo！'");
+    });
+%}

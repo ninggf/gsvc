@@ -1,3 +1,24 @@
+### Route - I18N(zh_CN) - /token/i18n/bar.hello
+GET http://{{barService}}/token/i18n/bar.hello
+Cookie: lang=zh_CN
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body === "你好Bar!", "出错啦: " + response.body + " != '你好Bar!'");
+    });
+%}
+
+### Route - I18N(default) - /token/i18n/bar.hello
+GET http://{{barService}}/token/i18n/bar.hello
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body === "Hello Bar!", "出错啦: " + response.body + " != 'Hello Bar！'");
+    });
+%}
+
 ### Route - SaService - /sa/login
 POST http://{{barService}}/sa/login
 Content-Type: application/json
@@ -13,8 +34,8 @@ Content-Type: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.global.set("accessToken",response.body.data.accessToken)
-        client.global.set("refreshToken",response.body.data.refreshToken)
+        client.global.set("accessToken", response.body.data.accessToken)
+        client.global.set("refreshToken", response.body.data.refreshToken)
     });
 %}
 
@@ -56,13 +77,13 @@ X-Gsvc-Caller: gtw
     });
     var cnt = 0;
     response.body.onEachLine((line, unsubscribe) => {
-        if(line && line.indexOf("gsvc.bar@hello") > 0 ){
-            cnt = cnt +1;
+        if (line && line.indexOf("gsvc.bar@hello") > 0) {
+            cnt = cnt + 1;
         }
-    },()=>{
-         client.test("Got one data", function () {
-            client.assert(cnt===1,cnt + " != 1");
-         });
+    }, () => {
+        client.test("Got one data", function () {
+            client.assert(cnt === 1, cnt + " != 1");
+        });
     });
 
 %}
@@ -86,17 +107,17 @@ X-Gsvc-Caller: gtw
     var threeCnt = 0;
     var sevenCnt = 0;
     response.body.onEachLine((line, unsubscribe) => {
-        if(line && line.indexOf("\"fileCount\":3") > 0 ){
-            threeCnt = threeCnt +1;
-        }else if (line && line.indexOf("\"fileCount\":7") > 0){
-            sevenCnt = sevenCnt +1;
+        if (line && line.indexOf("\"fileCount\":3") > 0) {
+            threeCnt = threeCnt + 1;
+        } else if (line && line.indexOf("\"fileCount\":7") > 0) {
+            sevenCnt = sevenCnt + 1;
         }
-    },()=>{
+    }, () => {
         client.test("fileCount is 3", function () {
-            client.assert(threeCnt===1,threeCnt + " != 1");
+            client.assert(threeCnt === 1, threeCnt + " != 1");
         });
         client.test("fileCount is 7", function () {
-            client.assert(sevenCnt===1,sevenCnt + " != 1");
+            client.assert(sevenCnt === 1, sevenCnt + " != 1");
         });
     })
 %}
@@ -120,17 +141,17 @@ Authorization: Bearer {{accessToken}}
     var threeCnt = 0;
     var sevenCnt = 0;
     response.body.onEachLine((line, unsubscribe) => {
-        if(line && line.indexOf("\"fileCount\":3") > 0 ){
-            threeCnt = threeCnt +1;
-        }else if (line && line.indexOf("\"fileCount\":7") > 0){
-            sevenCnt = sevenCnt +1;
+        if (line && line.indexOf("\"fileCount\":3") > 0) {
+            threeCnt = threeCnt + 1;
+        } else if (line && line.indexOf("\"fileCount\":7") > 0) {
+            sevenCnt = sevenCnt + 1;
         }
-    },()=>{
+    }, () => {
         client.test("fileCount is 3", function () {
-            client.assert(threeCnt===1,threeCnt + " != 1");
+            client.assert(threeCnt === 1, threeCnt + " != 1");
         });
         client.test("fileCount is 7", function () {
-            client.assert(sevenCnt===1,sevenCnt + " != 1");
+            client.assert(sevenCnt === 1, sevenCnt + " != 1");
         });
     })
 %}
@@ -153,13 +174,13 @@ Content-Type: application/json
     });
     var cnt = 0;
     response.body.onEachLine((line, unsubscribe) => {
-        if(line && line.indexOf("gsvc.bar@hello") > 0 ){
-            cnt = cnt +1;
+        if (line && line.indexOf("gsvc.bar@hello") > 0) {
+            cnt = cnt + 1;
         }
-    },()=>{
-         client.test("Got one data", function () {
-            client.assert(cnt===1,cnt + " != 1");
-         });
+    }, () => {
+        client.test("Got one data", function () {
+            client.assert(cnt === 1, cnt + " != 1");
+        });
     });
 %}
 
@@ -193,18 +214,18 @@ Content-Type: application/json
 }
 
 > {%
-    response.body.onEachLine((line,unsubscribe)=>{
-        if (line){
-            client.test("Age is 20",function (){
-                client.assert(line.indexOf('"age":20')>0,"errCode is not 0");
+    response.body.onEachLine((line, unsubscribe) => {
+        if (line) {
+            client.test("Age is 20", function () {
+                client.assert(line.indexOf('"age":20') > 0, "errCode is not 0");
             })
         }
-    },()=>{
+    }, () => {
         client.test("Request executed successfully", function () {
             client.assert(response.status === 200, "Response status is not 200");
             const type = response.contentType.mimeType;
             client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
-         });
+        });
     });
 %}
 
@@ -263,7 +284,7 @@ Authorization: Bearer {{accessToken}}
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.data.userName === "gsvc, admin",response.body.userName + "!= gsvc, admin")
+        client.assert(response.body.data.userName === "gsvc, admin", response.body.userName + "!= gsvc, admin")
     });
 %}
 
@@ -284,8 +305,8 @@ Authorization: Bearer {{accessToken}}
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'text/plain' but received '" + type + "'");
-        client.global.set("accessToken",response.body.data.accessToken)
-        client.global.set("refreshToken",response.body.data.refreshToken)
+        client.global.set("accessToken", response.body.data.accessToken)
+        client.global.set("refreshToken", response.body.data.refreshToken)
     });
 %}
 
@@ -305,7 +326,7 @@ Authorization: Bearer {{accessToken}}
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.data.userName === "gsvc, admin",response.body.userName + "!= gsvc, admin")
+        client.assert(response.body.data.userName === "gsvc, admin", response.body.userName + "!= gsvc, admin")
     });
 %}
 
@@ -320,7 +341,7 @@ Authorization: Bearer {{accessToken}}
         client.assert(response.status === 302, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "text/html", "Expected 'text/plain' but received '" + type + "'");
-        client.assert(response.headers.valueOf("Location").endsWith("/home") ,"'"+response.headers.valueOf('Location')+" not end with /home")
+        client.assert(response.headers.valueOf("Location").endsWith("/home"), "'" + response.headers.valueOf('Location') + " not end with /home")
     });
 %}
 
@@ -338,7 +359,7 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401 || response.status === 500 , "Response status is not 500 or 401");
+        client.assert(response.status === 401 || response.status === 500, "Response status is not 500 or 401");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'text/plain' but received '" + type + "'");
         // client.assert(request.body.errCode === 500,"status != 500")
