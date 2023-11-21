@@ -10,10 +10,6 @@
 
     <artifactId>apzda-cloud-gsvc-starter</artifactId>
 
-    <properties>
-        <micrometer.context-propagation.version>1.0.4</micrometer.context-propagation.version>
-    </properties>
-
     <dependencies>
         <!-- modules -->
         <dependency>
