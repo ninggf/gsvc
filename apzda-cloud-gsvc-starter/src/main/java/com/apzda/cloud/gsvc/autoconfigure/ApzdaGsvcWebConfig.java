@@ -6,7 +6,7 @@ import com.apzda.cloud.gsvc.error.GsvcErrorController;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.filter.GsvcServletFilter;
-import com.apzda.cloud.gsvc.i18n.I18nHelper;
+import com.apzda.cloud.gsvc.utils.I18nHelper;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
@@ -80,9 +80,9 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
 
     @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
-    BasicErrorController basicErrorController(ErrorAttributes errorAttributes, ServiceConfigProperties properties,
+    BasicErrorController basicErrorController(ErrorAttributes errorAttributes,
             ObjectProvider<ErrorViewResolver> errorViewResolvers, ServerProperties serverProperties) {
-        return new GsvcErrorController(errorAttributes, serverProperties.getError(), properties,
+        return new GsvcErrorController(errorAttributes, serverProperties.getError(),
                 errorViewResolvers.orderedStream().toList());
     }
 

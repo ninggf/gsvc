@@ -1,8 +1,10 @@
 package com.apzda.cloud.gsvc.exception;
 
+import build.buf.validate.Violation;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
+import com.apzda.cloud.gsvc.utils.I18nHelper;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +16,16 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -27,6 +33,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -57,11 +64,40 @@ public class GsvcExceptionHandler {
         return handle(error, serverRequest, ResponseEntity.class);
     }
 
-    public Response<Void> handle(Throwable e) {
+    public Response<?> handle(Throwable e) {
         e = transform(e);
         if (e instanceof GsvcException gsvcException) {
             val error = gsvcException.getError();
             return Response.error(error);
+        }
+        else if (e instanceof MessageValidationException validationException) {
+            val violations = new HashMap<String, String>();
+            val fullName = validationException.getDescriptor().getFullName();
+            for (Violation violation : validationException.getViolations()) {
+                val field = violation.getFieldPath();
+                if (log.isDebugEnabled()) {
+                    log.debug("Add code: '{}' to message resource property file to support i18n", fullName + "." + field);
+                }
+                val message = I18nHelper.t(fullName + "." + field, violation.getMessage());
+                violations.put(field, message);
+            }
+
+            return Response.error(ServiceError.BIND_ERROR, violations);
+        }
+        else if (e instanceof BindException bindException) {
+            val violations = new HashMap<String, String>();
+            for (FieldError error : bindException.getFieldErrors()) {
+                violations.put(error.getField(), I18nHelper.t(error));
+            }
+            return Response.error(ServiceError.BIND_ERROR, violations);
+        }
+        else if (e instanceof HttpMessageConversionException readableException) {
+            return Response.error(ServiceError.INVALID_FORMAT, readableException.getMessage());
+        }
+        else if (e instanceof MethodArgumentTypeMismatchException typeMismatchException) {
+            val violations = new HashMap<String, String>();
+            violations.put(typeMismatchException.getName(), e.getMessage());
+            return Response.error(ServiceError.BIND_ERROR, violations);
         }
         else if (e instanceof HttpRequestMethodNotSupportedException) {
             return Response.error(ServiceError.METHOD_NOT_ALLOWED);
@@ -165,6 +201,14 @@ public class GsvcExceptionHandler {
             responseWrapper = ResponseWrapper.status(httpStatusCodeException.getStatusCode()).body(handle(error));
             responseWrapper.headers(httpStatusCodeException.getResponseHeaders());
         }
+        else if (error instanceof MessageValidationException || error instanceof BindException
+                || error instanceof HttpMessageConversionException
+                || error instanceof MethodArgumentTypeMismatchException) {
+            responseWrapper = ResponseWrapper.ok().body(handle(error));
+            log.warn("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
+                    error.getMessage());
+            return responseWrapper.unwrap(rClazz);
+        }
         else {
             responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
         }
@@ -200,6 +244,12 @@ public class GsvcExceptionHandler {
         static ResponseWrapper status(HttpStatusCode status) {
             val wrapper = new ResponseWrapper();
             wrapper.status = status;
+            return wrapper;
+        }
+
+        static ResponseWrapper ok() {
+            val wrapper = new ResponseWrapper();
+            wrapper.status = HttpStatus.OK;
             return wrapper;
         }
 

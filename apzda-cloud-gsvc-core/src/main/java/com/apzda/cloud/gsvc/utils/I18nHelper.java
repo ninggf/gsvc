@@ -14,13 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.i18n;
+package com.apzda.cloud.gsvc.utils;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;
+import org.springframework.context.MessageSourceResolvable;
 import org.springframework.web.servlet.LocaleResolver;
 
 import java.util.Locale;
@@ -100,6 +101,20 @@ public class I18nHelper {
             .orElseGet(() -> messageSource.getMessage(code, args, Locale.getDefault()));
     }
 
+    public static String t(String code, Object[] args, String defaultStr) {
+        if (messageSource == null) {
+            log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultStr);
+            return code;
+        }
+
+        val request = GsvcContextHolder.getRequest();
+
+        return request
+            .map(httpServletRequest -> messageSource.getMessage(code, args, defaultStr,
+                    localeResolver.resolveLocale(httpServletRequest)))
+            .orElseGet(() -> messageSource.getMessage(code, args, defaultStr, Locale.getDefault()));
+    }
+
     public static String t(String code, Object[] args, Locale locale) {
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use code as default: '{}'", code, code);
@@ -107,6 +122,21 @@ public class I18nHelper {
         }
 
         return messageSource.getMessage(code, args, locale);
+    }
+
+    public static String t(MessageSourceResolvable resolvable) {
+        val request = GsvcContextHolder.getRequest();
+        return request.map(httpServletRequest -> t(resolvable, localeResolver.resolveLocale(httpServletRequest)))
+            .orElseGet(() -> t(resolvable, Locale.getDefault()));
+    }
+
+    public static String t(MessageSourceResolvable resolvable, Locale locale) {
+        if (messageSource == null) {
+            log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", resolvable.getCodes(),
+                    resolvable.getDefaultMessage());
+            return resolvable.getDefaultMessage();
+        }
+        return messageSource.getMessage(resolvable, locale);
     }
 
 }

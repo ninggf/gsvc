@@ -84,6 +84,13 @@ public class Response<T> implements Serializable {
         return resp;
     }
 
+    public static <T> Response<T> error(IServiceError error, T data) {
+        Response<T> resp = error(error.code(), error.message());
+        resp.type = error.type();
+        resp.data = data;
+        return resp;
+    }
+
     public static <T> Response<T> error(int code, String errMsg) {
         val resp = new Response<T>();
         resp.errCode = code;

@@ -1,5 +1,7 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
+import build.buf.protovalidate.Config;
+import build.buf.protovalidate.Validator;
 import com.apzda.cloud.gsvc.client.DefaultServiceCaller;
 import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
@@ -62,6 +64,13 @@ public class ApzdaGsvcAutoConfiguration {
     @Bean
     BeanFactoryPostProcessor gsvcBeanFactoryPostProcessor() {
         return new GatewayServiceBeanFactoryPostProcessor();
+    }
+
+    @Bean
+    Validator protobufValidator() {
+        val config = Config.newBuilder();
+        config.setFailFast(false);
+        return new Validator(config.build());
     }
 
     @Configuration

@@ -33,14 +33,11 @@ import java.util.Map;
 @RequestMapping("${server.error.path:${error.path:/error}}")
 public class GsvcErrorController extends BasicErrorController {
 
-    private final ServiceConfigProperties properties;
-
     private final ErrorAttributes errorAttributes;
 
     public GsvcErrorController(ErrorAttributes errorAttributes, ErrorProperties errorProperties,
-            ServiceConfigProperties properties, List<ErrorViewResolver> errorViewResolvers) {
+            List<ErrorViewResolver> errorViewResolvers) {
         super(errorAttributes, errorProperties, errorViewResolvers);
-        this.properties = properties;
         this.errorAttributes = errorAttributes;
     }
 

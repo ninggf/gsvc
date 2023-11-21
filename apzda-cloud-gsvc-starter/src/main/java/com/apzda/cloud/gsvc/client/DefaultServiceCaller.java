@@ -1,15 +1,19 @@
 package com.apzda.cloud.gsvc.client;
 
+import build.buf.protovalidate.Validator;
+import build.buf.protovalidate.exceptions.ValidationException;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
+import com.apzda.cloud.gsvc.exception.MessageValidationException;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.IPostCall;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.Message;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
@@ -38,9 +42,12 @@ public class DefaultServiceCaller implements IServiceCaller {
 
     protected final GatewayServiceConfigure svcConfigure;
 
+    protected final Validator validator;
+
     public DefaultServiceCaller(ApplicationContext applicationContext, GatewayServiceConfigure svcConfigure) {
         this.applicationContext = applicationContext;
         this.svcConfigure = svcConfigure;
+        this.validator = applicationContext.getBean(Validator.class);
     }
 
     @Override
@@ -136,6 +143,11 @@ public class DefaultServiceCaller implements IServiceCaller {
         }
 
         try {
+            val result = validator.validate((Message) requestObj);
+            // Check if there are any validation violations
+            if (!result.isSuccess()) {
+                throw new MessageValidationException(result.getViolations(), ((Message) requestObj).getDescriptorForType());
+            }
             val requestBody = objectMapper.writeValueAsString(requestObj);
             val request = req.contentType(MediaType.APPLICATION_JSON)
                 .acceptCharset(StandardCharsets.UTF_8)
@@ -145,6 +157,9 @@ public class DefaultServiceCaller implements IServiceCaller {
         }
         catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e.getMessage(), e);
+        }
+        catch (ValidationException e) {
+            throw new RuntimeException(e);
         }
     }
 

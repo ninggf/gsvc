@@ -20,7 +20,8 @@ public enum ServiceError implements IServiceError {
     REMOTE_SERVICE_NO_INSTANCE(-502, "No Service instance(server) found"),
     SERVICE_UNAVAILABLE(-503, HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase()),
     SERVICE_TIMEOUT(-504, "Service Execution Timeout"), INVALID_PRINCIPAL_TYPE(-800, "Unknown Principal type"),
-    DEGRADE(-998, "Service Degrade"), JACKSON_ERROR(-999, "Invalid JSON data");
+    INVALID_FORMAT(-996, "Invalid Format"), BIND_ERROR(-997, "Data Is Invalid"), DEGRADE(-998, "Service Degrade"),
+    JACKSON_ERROR(-999, "Invalid JSON data");
 
     @JsonValue
     public final int code;
@@ -53,6 +54,21 @@ public enum ServiceError implements IServiceError {
 
     public static boolean isHttpError(int errCode) {
         return errCode >= -599 && errCode <= -400;
+    }
+
+    public static ServiceError valueOf(HttpStatus status) {
+        return switch (status) {
+            case BAD_REQUEST -> ServiceError.BAD_REQUEST;
+            case UNAUTHORIZED -> ServiceError.UNAUTHORIZED;
+            case FORBIDDEN -> ServiceError.FORBIDDEN;
+            case NOT_FOUND -> ServiceError.NOT_FOUND;
+            case METHOD_NOT_ALLOWED -> ServiceError.METHOD_NOT_ALLOWED;
+            case TOO_MANY_REQUESTS -> ServiceError.DEGRADE;
+            case BAD_GATEWAY -> ServiceError.REMOTE_SERVICE_NO_INSTANCE;
+            case SERVICE_UNAVAILABLE -> ServiceError.SERVICE_UNAVAILABLE;
+            case GATEWAY_TIMEOUT -> ServiceError.SERVICE_TIMEOUT;
+            default -> ServiceError.SERVICE_ERROR;
+        };
     }
 
     @Override

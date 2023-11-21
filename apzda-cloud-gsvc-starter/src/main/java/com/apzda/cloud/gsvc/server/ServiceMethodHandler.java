@@ -1,5 +1,7 @@
 package com.apzda.cloud.gsvc.server;
 
+import build.buf.protovalidate.Validator;
+import build.buf.protovalidate.exceptions.ValidationException;
 import cn.hutool.core.io.FileUtil;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
@@ -7,6 +9,7 @@ import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.dto.UploadFile;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.exception.MessageValidationException;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.IPostInvoke;
 import com.apzda.cloud.gsvc.plugin.IPreInvoke;
@@ -15,8 +18,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.protobuf.Message;
 import io.grpc.MethodDescriptor;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
@@ -31,7 +34,6 @@ import org.springframework.web.multipart.support.StandardMultipartHttpServletReq
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
-import org.springframework.web.util.ContentCachingRequestWrapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -59,6 +61,8 @@ public class ServiceMethodHandler {
 
     private final GsvcExceptionHandler exceptionHandler;
 
+    private final Validator validator;
+
     private String logId;
 
     private String caller;
@@ -70,6 +74,7 @@ public class ServiceMethodHandler {
         this.svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
         this.exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
         this.objectMapper = ResponseUtils.OBJECT_MAPPER;
+        this.validator = applicationContext.getBean(Validator.class);
     }
 
     public static ServerResponse handle(ServerRequest request, String caller, ServiceMethod serviceMethod,
@@ -111,8 +116,6 @@ public class ServiceMethodHandler {
                 e = ((InvocationTargetException) throwable).getTargetException();
             }
 
-            log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
-                    serviceMethod.getDmName(), e.getMessage());
             return exceptionHandler.handle(e, request);
         }
     }
@@ -131,10 +134,18 @@ public class ServiceMethodHandler {
 
         Mono<Object> realReqObj = requestObj.handle((req, sink) -> {
             try {
-                sink.next(objectMapper.readValue(req.toString(), serviceMethod.getRequestType()));
+                val reqObj = objectMapper.readValue(req.toString(), serviceMethod.getRequestType());
+                val result = validator.validate((Message) reqObj);
+                // Check if there are any validation violations
+                if (!result.isSuccess()) {
+                    sink.error(new MessageValidationException(result.getViolations(),
+                            ((Message) reqObj).getDescriptorForType()));
+                    return;
+                }
+                sink.next(reqObj);
                 sink.complete();
             }
-            catch (JsonProcessingException e) {
+            catch (Exception e) {
                 sink.error(e);
             }
         });
@@ -206,7 +217,7 @@ public class ServiceMethodHandler {
     }
 
     private ServerResponse doUnaryCall(Mono<JsonNode> requestObj)
-            throws InvocationTargetException, IllegalAccessException, JsonProcessingException {
+            throws InvocationTargetException, IllegalAccessException, JsonProcessingException, ValidationException {
         val plugins = serviceMethod.getPlugins();
         var size = plugins.size();
         for (IPlugin plugin : plugins) {
@@ -225,6 +236,11 @@ public class ServiceMethodHandler {
             }
         }).block();
 
+        val result = validator.validate((Message) realReqObj);
+        // Check if there are any validation violations
+        if (!result.isSuccess()) {
+            throw new MessageValidationException(result.getViolations(), ((Message) realReqObj).getDescriptorForType());
+        }
         Object returnObj = serviceMethod.call(realReqObj);
 
         while (--size >= 0) {
@@ -252,8 +268,6 @@ public class ServiceMethodHandler {
             return Mono.<JsonNode>create(sink -> {
                 try {
                     val requestBody = objectMapper.readTree(request.servletRequest().getReader());
-                    // val requestBody =
-                    // retrieveRequestBody(request.servletRequest());
                     if (log.isTraceEnabled()) {
                         log.trace("[{}] Request({}) resolved: {}", logId, contentType, requestBody);
                     }
@@ -379,23 +393,6 @@ public class ServiceMethodHandler {
                     respStr);
         }
         return respStr;
-    }
-
-    private String retrieveRequestBody(HttpServletRequest request) throws IOException {
-        val req = new ContentCachingRequestWrapper(request);
-        try (val reader = req.getReader()) {
-            val stringBuilder = new StringBuilder();
-            String line = reader.readLine();
-            while (line != null) {
-                stringBuilder.append(line);
-                line = reader.readLine();
-            }
-            return stringBuilder.toString();
-        }
-        catch (IOException e) {
-            log.error("[{}] Read Request body failed: {}", logId, e.getMessage());
-            throw e;
-        }
     }
 
 }
