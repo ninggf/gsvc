@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>apzda-cloud-gsvc-demo</artifactId>
         <groupId>com.apzda.cloud</groupId>
@@ -8,11 +9,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>demo-allinone-app</artifactId>
-
-    <properties>
-        <spring-boot-maven-plugin.layer>true</spring-boot-maven-plugin.layer>
-        <spring-boot-maven-plugin.classifier>layer</spring-boot-maven-plugin.classifier>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -54,6 +50,16 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>layer</id>
+            <properties>
+                <spring-boot-maven-plugin.layer>true</spring-boot-maven-plugin.layer>
+                <spring-boot-maven-plugin.classifier>layer</spring-boot-maven-plugin.classifier>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
