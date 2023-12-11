@@ -76,7 +76,8 @@ public class GsvcExceptionHandler {
             for (Violation violation : validationException.getViolations()) {
                 val field = violation.getFieldPath();
                 if (log.isDebugEnabled()) {
-                    log.debug("Add code: '{}' to message resource property file to support i18n", fullName + "." + field);
+                    log.debug("Add code: '{}' to message resource property file to support i18n",
+                            fullName + "." + field);
                 }
                 val message = I18nHelper.t(fullName + "." + field, violation.getMessage());
                 violations.put(field, message);
@@ -112,13 +113,7 @@ public class GsvcExceptionHandler {
             return Response.error(ServiceError.REMOTE_SERVICE_ERROR);
         }
         else if (e instanceof HttpStatusCodeException codeException) {
-            val statusCode = codeException.getStatusCode();
-            if (statusCode == HttpStatus.UNAUTHORIZED) {
-                return Response.error(ServiceError.UNAUTHORIZED);
-            }
-            else if (statusCode == HttpStatus.FORBIDDEN) {
-                return Response.error(ServiceError.FORBIDDEN);
-            }
+            return handleHttpStatusError(codeException.getStatusCode(), codeException.getMessage());
         }
         else if (e instanceof TimeoutException || e instanceof io.netty.handler.timeout.TimeoutException) {
             return Response.error(ServiceError.SERVICE_TIMEOUT);
@@ -127,13 +122,7 @@ public class GsvcExceptionHandler {
             return Response.error(ServiceError.DEGRADE);
         }
         else if (e instanceof ErrorResponseException codeException) {
-            val statusCode = codeException.getStatusCode();
-            if (statusCode == HttpStatus.UNAUTHORIZED) {
-                return Response.error(ServiceError.UNAUTHORIZED);
-            }
-            else if (statusCode == HttpStatus.FORBIDDEN) {
-                return Response.error(ServiceError.FORBIDDEN);
-            }
+            return handleHttpStatusError(codeException.getStatusCode(), codeException.getMessage());
         }
 
         return Response.error(ServiceError.SERVICE_ERROR);
@@ -212,7 +201,9 @@ public class GsvcExceptionHandler {
         else {
             responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
         }
-        log.error("[{}] Exception Resolved:", GsvcContextHolder.getRequestId(), error);
+        if (!(error instanceof NoStackLogError)) {
+            log.error("[{}] Exception Resolved:", GsvcContextHolder.getRequestId(), error);
+        }
         return responseWrapper.unwrap(rClazz);
     }
 
@@ -231,6 +222,16 @@ public class GsvcExceptionHandler {
             }
         }
         return throwable;
+    }
+
+    private Response<?> handleHttpStatusError(HttpStatusCode statusCode, String message) {
+        if (statusCode == HttpStatus.UNAUTHORIZED) {
+            return Response.error(ServiceError.UNAUTHORIZED);
+        }
+        else if (statusCode == HttpStatus.FORBIDDEN) {
+            return Response.error(ServiceError.FORBIDDEN);
+        }
+        return Response.error(-statusCode.value(), message);
     }
 
     final static class ResponseWrapper {
@@ -258,9 +259,8 @@ public class GsvcExceptionHandler {
             return this;
         }
 
-        ResponseWrapper headers(HttpHeaders headers) {
+        void headers(HttpHeaders headers) {
             this.headers = headers;
-            return this;
         }
 
         @SuppressWarnings("unchecked")

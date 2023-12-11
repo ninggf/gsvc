@@ -16,29 +16,11 @@
  */
 package com.apzda.cloud.gsvc.exception;
 
-import build.buf.validate.Violation;
-import com.apzda.cloud.gsvc.error.ServiceError;
-import com.google.protobuf.Descriptors;
-import lombok.Getter;
-
-import java.util.List;
-
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Getter
-public class MessageValidationException extends RuntimeException implements NoStackLogError {
-
-    private final List<Violation> violations;
-
-    private final Descriptors.Descriptor descriptor;
-
-    public MessageValidationException(List<Violation> violations, Descriptors.Descriptor descriptorForType) {
-        super(ServiceError.BIND_ERROR.message);
-        this.violations = violations;
-        this.descriptor = descriptorForType;
-    }
+public interface NoStackLogError {
 
 }

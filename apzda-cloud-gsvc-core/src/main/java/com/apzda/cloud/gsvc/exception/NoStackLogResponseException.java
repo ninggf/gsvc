@@ -16,29 +16,30 @@
  */
 package com.apzda.cloud.gsvc.exception;
 
-import build.buf.validate.Violation;
-import com.apzda.cloud.gsvc.error.ServiceError;
-import com.google.protobuf.Descriptors;
-import lombok.Getter;
-
-import java.util.List;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Getter
-public class MessageValidationException extends RuntimeException implements NoStackLogError {
+public class NoStackLogResponseException extends ResponseStatusException implements NoStackLogError {
 
-    private final List<Violation> violations;
+    public NoStackLogResponseException(HttpStatusCode status) {
+        super(status);
+    }
 
-    private final Descriptors.Descriptor descriptor;
+    public NoStackLogResponseException(HttpStatusCode status, String reason) {
+        super(status, reason);
+    }
 
-    public MessageValidationException(List<Violation> violations, Descriptors.Descriptor descriptorForType) {
-        super(ServiceError.BIND_ERROR.message);
-        this.violations = violations;
-        this.descriptor = descriptorForType;
+    public NoStackLogResponseException(int rawStatusCode, String reason, Throwable cause) {
+        super(rawStatusCode, reason, cause);
+    }
+
+    public NoStackLogResponseException(HttpStatusCode status, String reason, Throwable cause) {
+        super(status, reason, cause);
     }
 
 }
