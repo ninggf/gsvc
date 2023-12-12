@@ -108,13 +108,13 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 val gsvcStub = "gsvc" + cfgName + "Stub";
                 val grpcStub = "grpc" + cfgName + "Stub";
                 if (beanFactory.containsBeanDefinition(gsvcStub)) {
-                    val beanDefinition = beanFactory.getBeanDefinition(gsvcStub);
+                    beanFactory.getBeanDefinition(gsvcStub);
                     log.info("Found Gsvc Service(http): {} - {}", cfgName,
                             GatewayServiceRegistry.SERVICE_INTERFACES.get(cfgName));
                     registerWebclient(cfgName, bf);
                 }
                 else if (beanFactory.containsBeanDefinition(grpcStub)) {
-                    val beanDefinition = beanFactory.getBeanDefinition(grpcStub);
+                    beanFactory.getBeanDefinition(grpcStub);
                     log.info("Found Gsvc Service(grpc): {} - {}", cfgName,
                             GatewayServiceRegistry.SERVICE_INTERFACES.get(cfgName));
                 }
@@ -134,7 +134,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
         String[] qualifiers = new String[] { cfgName + "Webclient" };
         val beanDefinition = definition.getBeanDefinition();
-        beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, WebClient.class.getName());
+        beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, WebClient.class);
 
         BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, cfgName + "WebClient", qualifiers);
 
@@ -342,7 +342,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             BeanDefinitionBuilder definition) {
         String[] qualifiers = new String[] { appName + "_" + serviceName };
         val beanDefinition = definition.getBeanDefinition();
-        beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, RouterFunction.class.getName());
+        beanDefinition.setAttribute(FactoryBean.OBJECT_TYPE_ATTRIBUTE, RouterFunction.class);
         boolean primary = true;
         beanDefinition.setPrimary(primary);
 

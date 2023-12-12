@@ -4,11 +4,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>3.1.6</version>
+        <version>3.2.0</version>
     </parent>
     <groupId>com.apzda.cloud</groupId>
     <artifactId>gsvc</artifactId>
-    <version>1.0.8-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
     <modules>
         <module>apzda-cloud-gsvc-core</module>
         <module>apzda-cloud-gsvc-starter</module>
@@ -35,8 +35,8 @@
         <cs.check.skip>false</cs.check.skip>
         <!-- dependencies versions -->
         <javax.annotation.version>1.3.2</javax.annotation.version>
-        <spring-boot.version>3.1.4</spring-boot.version>
-        <spring-cloud.version>2022.0.4</spring-cloud.version>
+        <spring-boot.version>3.2.0</spring-boot.version>
+        <spring-cloud.version>2023.0.0</spring-cloud.version>
         <mybatis-plus.version>3.5.4.1</mybatis-plus.version>
         <hutool.version>5.8.22</hutool.version>
         <guava.version>32.1.3-jre</guava.version>
@@ -57,7 +57,7 @@
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <maven-assembly-plugin.version>3.6.0</maven-assembly-plugin.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
-        <gsvc.compiler.version>1.0.5</gsvc.compiler.version>
+        <gsvc.compiler.version>1.0.7</gsvc.compiler.version>
     </properties>
 
     <issueManagement>
@@ -118,37 +118,37 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-core</artifactId>
-                <version>1.0.8-SNAPSHOT</version>
+                <version>1.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-parent</artifactId>
-                <version>1.0.8-SNAPSHOT</version>
+                <version>1.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-proto</artifactId>
-                <version>1.0.8-SNAPSHOT</version>
+                <version>1.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-security</artifactId>
-                <version>1.0.8-SNAPSHOT</version>
+                <version>1.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
-                <version>1.0.8-SNAPSHOT</version>
+                <version>1.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-starter</artifactId>
-                <version>1.0.8-SNAPSHOT</version>
+                <version>1.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-tracing</artifactId>
-                <version>1.0.8-SNAPSHOT</version>
+                <version>1.1.0-SNAPSHOT</version>
             </dependency>
             <!-- javax -->
             <dependency>

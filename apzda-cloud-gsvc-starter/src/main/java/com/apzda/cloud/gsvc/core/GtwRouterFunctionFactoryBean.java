@@ -169,7 +169,7 @@ public class GtwRouterFunctionFactoryBean
         }
 
         // request
-        val request = ProtobufMsgHelper.create(serviceMethod.getRequestType());
+        ProtobufMsgHelper.create(serviceMethod.getRequestType());
         val requestBodyBuilder = org.springdoc.core.fn.builders.requestbody.Builder.requestBodyBuilder();
         requestBodyBuilder.required(true);
         requestBodyBuilder.content(newBuilder("Request", serviceMethod.getRequestType()));
