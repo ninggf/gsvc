@@ -19,12 +19,12 @@ package com.apzda.cloud.gsvc.utils;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.web.servlet.LocaleResolver;
 
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -46,7 +46,7 @@ public class I18nHelper {
     public static String t(String code, Object[] args, String defaultString, Locale locale) {
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultString);
-            return StringUtils.defaultString(defaultString, code);
+            return Objects.toString(defaultString, code);
         }
         return messageSource.getMessage(code, args, defaultString, locale);
     }
@@ -54,7 +54,7 @@ public class I18nHelper {
     public static String t(String code, String defaultString, Locale locale) {
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultString);
-            return StringUtils.defaultString(defaultString, code);
+            return Objects.toString(defaultString, code);
         }
         return messageSource.getMessage(code, null, defaultString, locale);
     }
@@ -62,7 +62,7 @@ public class I18nHelper {
     public static String t(String code, String defaultString) {
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultString);
-            return StringUtils.defaultString(defaultString, code);
+            return Objects.toString(defaultString, code);
         }
         val request = GsvcContextHolder.getRequest();
         if (request.isPresent()) {
