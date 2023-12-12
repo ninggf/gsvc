@@ -36,7 +36,7 @@ jobs:
         run: mvn install -pl apzda-cloud-gsvc-compiler
       - name: Build with Maven
         run: mvn -B package -Djava.version=${{ matrix.java }} --file pom.xml
-      - name: Run AllInOne Application
+      - name: Run All Services
         uses: JarvusInnovations/background-action@v1
         with:
           working-directory: apzda-cloud-gsvc-demo

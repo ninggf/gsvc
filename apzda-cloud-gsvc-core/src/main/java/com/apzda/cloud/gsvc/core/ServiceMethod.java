@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 @Getter
 public class ServiceMethod {
 
-    private static final Pattern SVC_NAME_PATTERN = Pattern.compile("^(https?|lb://).+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SVC_NAME_PATTERN = Pattern.compile("^https?://.+", Pattern.CASE_INSENSITIVE);
 
     private final Method method;
 
@@ -84,7 +84,7 @@ public class ServiceMethod {
             return svcLbName;
         }
         else {
-            return String.format("lb://%s", svcLbName);
+            return String.format("http://%s", svcLbName);
         }
     }
 
