@@ -20,11 +20,8 @@ A Toy Based on `Spring Boot` and `Grpc-Java`.
 
 | ArtifactId             | Version  |
 |:-----------------------|:---------|
-| Spring Boot            | 3.1.x    |
-| Spring Cloud           | 2022.0.4 |
-| grpc-java              | 1.58.x   |
-| protoc & protobuf-java | 3.24.x   |
-| protobuf-maven-plugin  | 0.6.1    |
+| Spring Boot            | 3.2.x    |
+| Spring Cloud           | 2023.0.0 |
 
 ## 使用
 
