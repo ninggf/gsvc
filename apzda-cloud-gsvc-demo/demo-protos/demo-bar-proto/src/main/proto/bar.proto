@@ -76,3 +76,30 @@ service SaService {
     };
   }
 }
+
+message FileReq {
+  optional string path = 1;
+  repeated gsvc.UploadFile files = 2;
+  gsvc.UploadFile file = 3;
+  repeated string names = 4;
+}
+
+message FileInfo {
+  uint32 index = 1; // 第几个文件
+  optional string url = 2; // 文件的URL
+  optional string path = 3; // 文件的绝对路径
+  int32 error = 4; // 0: 正常; 其它值出错
+  optional string message = 5; // 当error!=0时的错误提示
+}
+
+message UploadRes {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  repeated FileInfo files = 3; // 文件列表
+  repeated string names = 4;
+  uint32 count = 5;
+}
+
+service FileService {
+  rpc upload(FileReq) returns(UploadRes);
+}

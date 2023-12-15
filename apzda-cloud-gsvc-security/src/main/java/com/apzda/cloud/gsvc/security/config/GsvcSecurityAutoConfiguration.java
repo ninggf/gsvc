@@ -195,8 +195,8 @@ public class GsvcSecurityAutoConfiguration {
                 for (SecurityConfigProperties.ACL acl : aclLists) {
                     val path = acl.getPath();
                     val matcher = antMatcher(path);
-                    var access = acl.getAccess();
                     if (StringUtils.isNotBlank(path)) {
+                        var access = acl.getAccess();
                         if (StringUtils.isNotBlank(access)) {
                             access = access.replace("r(", "hasRole(")
                                 .replace("a(", "hasAuthority(")

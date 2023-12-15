@@ -2,30 +2,41 @@ package com.apzda.cloud.gsvc.client;
 
 import build.buf.protovalidate.Validator;
 import build.buf.protovalidate.exceptions.ValidationException;
+import cn.hutool.core.net.URLEncodeUtil;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.exception.MessageValidationException;
+import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.IPostCall;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author fengz
@@ -143,23 +154,89 @@ public class DefaultServiceCaller implements IServiceCaller {
         }
 
         try {
-            val result = validator.validate((Message) requestObj);
+            val requestMsg = (Message) requestObj;
+            val result = validator.validate(requestMsg);
             // Check if there are any validation violations
             if (!result.isSuccess()) {
-                throw new MessageValidationException(result.getViolations(), ((Message) requestObj).getDescriptorForType());
+                throw new MessageValidationException(result.getViolations(), requestMsg.getDescriptorForType());
             }
-            val requestBody = objectMapper.writeValueAsString(requestObj);
-            val request = req.contentType(MediaType.APPLICATION_JSON)
-                .acceptCharset(StandardCharsets.UTF_8)
-                .bodyValue(requestBody);
-
-            return request.retrieve();
+            return doHttpRequest(req, requestMsg).retrieve();
         }
         catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e.getMessage(), e);
         }
-        catch (ValidationException e) {
+        catch (ValidationException | IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private WebClient.RequestHeadersSpec<?> doHttpRequest(WebClient.RequestBodySpec request, Message body)
+            throws IOException {
+
+        val allFields = body.getAllFields();
+        val uploadFileFields = allFields.values()
+            .stream()
+            .filter(value -> (value instanceof List<?> && !((List<?>) value).isEmpty()
+                    && ((List<?>) value).get(0) instanceof GsvcExt.UploadFile) || value instanceof GsvcExt.UploadFile)
+            .toList();
+
+        WebClient.RequestHeadersSpec<?> response;
+        if (uploadFileFields.isEmpty()) {
+            val requestBody = objectMapper.writeValueAsString(body);
+            response = request.contentType(MediaType.APPLICATION_JSON)
+                .acceptCharset(StandardCharsets.UTF_8)
+                .contentLength(requestBody.length())
+                .bodyValue(requestBody);
+        }
+        else {
+            val multipartBodyBuilder = generateMultipartFormData(allFields, body);
+            response = request.contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(multipartBodyBuilder.build()));
+        }
+
+        return response;
+    }
+
+    private MultipartBodyBuilder generateMultipartFormData(Map<Descriptors.FieldDescriptor, Object> allFields,
+            Message body) throws IOException {
+        val builder = new MultipartBodyBuilder();
+        for (Descriptors.FieldDescriptor descriptor : allFields.keySet()) {
+            val value = allFields.get(descriptor);
+            val name = descriptor.getName();
+            val header = String.format("form-data; name=\"%s\"", name);
+            if (value instanceof GsvcExt.UploadFile uploadFile) {
+                addFile(name, uploadFile, builder);
+            }
+            else if (value instanceof List<?> files) {
+                if (files.isEmpty()) {
+                    continue;
+                }
+                if (files.get(0) instanceof GsvcExt.UploadFile) {
+                    for (Object file : files) {
+                        addFile(name, (GsvcExt.UploadFile) file, builder);
+                    }
+                }
+                else {
+                    for (Object file : files) {
+                        builder.part(name, file).header("Content-Disposition", header);
+                    }
+                }
+            }
+            else {
+                builder.part(name, value).header("Content-Disposition", header);
+            }
+        }
+        return builder;
+    }
+
+    private void addFile(String name, GsvcExt.UploadFile file, MultipartBodyBuilder builder) throws IOException {
+        val originalFile = file.getFile();
+        val of = new File(originalFile);
+        val contentType = URLConnection.guessContentTypeFromName(originalFile);
+        val header = String.format("form-data; name=\"%s\"; filename=\"%s\"", name, URLEncodeUtil.encode(of.getName()));
+        try (val input = new FileInputStream(of)) {
+            builder.part(name, new ByteArrayResource(input.readAllBytes()), MediaType.valueOf(contentType))
+                .header("Content-Disposition", header);
         }
     }
 

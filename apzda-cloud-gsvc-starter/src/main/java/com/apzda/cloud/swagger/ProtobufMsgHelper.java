@@ -44,7 +44,7 @@ public class ProtobufMsgHelper {
         return new Creator().create(messageType, extensionRegistry);
     }
 
-    private static class Creator {
+    private final static class Creator {
 
         private final Map<Class<?>, Message.Builder> partiallyBuilt = new HashMap<>();
 

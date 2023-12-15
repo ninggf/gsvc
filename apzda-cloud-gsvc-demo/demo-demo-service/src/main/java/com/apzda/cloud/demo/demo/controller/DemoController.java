@@ -3,9 +3,7 @@
  */
 package com.apzda.cloud.demo.demo.controller;
 
-import com.apzda.cloud.demo.bar.proto.BarReq;
-import com.apzda.cloud.demo.bar.proto.BarRes;
-import com.apzda.cloud.demo.bar.proto.BarService;
+import com.apzda.cloud.demo.bar.proto.*;
 import com.apzda.cloud.demo.demo.proto.DemoReq;
 import com.apzda.cloud.demo.demo.proto.DemoRes;
 import com.apzda.cloud.demo.demo.proto.DemoService;
@@ -15,15 +13,20 @@ import com.apzda.cloud.demo.foo.proto.FooService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.gsvc.dto.Response;
+import com.apzda.cloud.gsvc.ext.UploadFileCreator;
 import com.google.common.base.Joiner;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -44,6 +47,8 @@ public class DemoController {
     private final DemoService demoService;
 
     private final MathService mathService;
+
+    private final FileService fileService;
 
     @GetMapping("/bar/hi")
     public Response<BarRes> barHi(@RequestParam String name, @RequestParam int age) {
@@ -101,6 +106,38 @@ public class DemoController {
         }).blockLast();
 
         return Response.success(Joiner.on(",").join(nums), "square");
+    }
+
+    @GetMapping("/upload")
+    public Response<UploadRes> upload() throws IOException {
+        val builder = FileReq.newBuilder();
+        builder.setPath("abc");
+
+        builder.addNames("a");
+        builder.addNames("b");
+
+        val file = new File("./index.md");
+        FileCopyUtils.copy("# INDEX", new FileWriter(file));
+        val f1 = UploadFileCreator.create(file);
+        builder.addFiles(f1);
+
+        val file2 = new File("./index.xml");
+        FileCopyUtils.copy("<root>test</root>", new FileWriter(file2));
+        val f2 = UploadFileCreator.create(file2);
+        builder.addFiles(f2);
+
+        val file3 = new File("./index.txt");
+        FileCopyUtils.copy("<root>test</root>", new FileWriter(file3));
+        val f3 = UploadFileCreator.create(file3);
+        builder.setFile(f3);
+
+        val upload = fileService.upload(builder.build());
+
+        file.delete();
+        file2.delete();
+        file3.delete();
+
+        return Response.success(upload);
     }
 
 }

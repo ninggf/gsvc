@@ -18,10 +18,10 @@ A Toy Based on `Spring Boot` and `Grpc-Java`.
 
 ## 版本
 
-| ArtifactId             | Version  |
-|:-----------------------|:---------|
-| Spring Boot            | 3.2.x    |
-| Spring Cloud           | 2023.0.0 |
+| Version | Spring Boot | Spring Cloud |
+|:--------|:------------|:-------------|
+| 1.0.x   | 3.1.x       | 2022.0.4     |
+| 1.1.x   | 3.2.x       | 2023.0.0     |
 
 ## 使用
 

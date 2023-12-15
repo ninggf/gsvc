@@ -75,3 +75,21 @@ GET http://{{demoService}}/demo/square
         client.assert(response.body.data === "1,4,9", "响应不等于1,4,9")
     });
 %}
+
+### DemoService /demo/upload
+GET http://{{demoService}}/demo/upload
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.data.count === 3, "响应不等于3")
+        client.assert(response.body.data.names[0] === 'a', "names[0] != a")
+        client.assert(response.body.data.names[1] === 'b', "names[1] != b")
+        client.assert(response.body.data.files[0].path === 'index.md', "!=index.md")
+        client.assert(response.body.data.files[1].path === 'index.xml', "!=index.xml")
+        client.assert(response.body.data.files[2].path === 'index.txt', "!=index.txt")
+    });
+%}
