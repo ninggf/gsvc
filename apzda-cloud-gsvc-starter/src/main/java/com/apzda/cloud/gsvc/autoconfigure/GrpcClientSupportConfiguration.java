@@ -10,7 +10,6 @@ import com.apzda.cloud.gsvc.grpc.StubFactoryAdapter;
 import com.apzda.cloud.gsvc.security.config.GrpcClientSecurityConfiguration;
 import com.apzda.cloud.gsvc.security.grpc.HeaderMetas;
 import io.grpc.*;
-import io.grpc.internal.AbstractManagedChannelImplBuilder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
@@ -63,17 +62,14 @@ public class GrpcClientSupportConfiguration {
         }
 
         @Bean
-        @SuppressWarnings("rawtypes")
         GrpcChannelConfigurer gsvcClientConfigurer(GatewayServiceConfigure configure) {
             return ((channelBuilder, cfgName) -> {
-                if (channelBuilder instanceof AbstractManagedChannelImplBuilder nettyChannelBuilder) {
-                    val keepAliveTime = configure.getGrpcKeepAliveTime(cfgName, true);
-                    val keepAliveTimeout = configure.getGrpcKeepAliveTimeout(cfgName, true);
-                    log.debug("ChannelBuilder for {} Stub, keepAliveTime = {}, keepAliveTimeout = {}", cfgName,
-                            keepAliveTime, keepAliveTimeout);
-                    nettyChannelBuilder.keepAliveTime(keepAliveTime.toSeconds(), TimeUnit.SECONDS);
-                    nettyChannelBuilder.keepAliveTimeout(keepAliveTimeout.toSeconds(), TimeUnit.SECONDS);
-                }
+                val keepAliveTime = configure.getGrpcKeepAliveTime(cfgName, true);
+                val keepAliveTimeout = configure.getGrpcKeepAliveTimeout(cfgName, true);
+                log.debug("ChannelBuilder for {} Stub, keepAliveTime = {}, keepAliveTimeout = {}", cfgName,
+                        keepAliveTime, keepAliveTimeout);
+                channelBuilder.keepAliveTime(keepAliveTime.toSeconds(), TimeUnit.SECONDS);
+                channelBuilder.keepAliveTimeout(keepAliveTimeout.toSeconds(), TimeUnit.SECONDS);
             });
         }
 
@@ -86,7 +82,7 @@ public class GrpcClientSupportConfiguration {
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
                     CallOptions callOptions, Channel next) {
                 val requestId = GsvcContextHolder.getRequestId();
-                
+
                 return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                     @Override
                     public void start(Listener<RespT> responseListener, Metadata headers) {

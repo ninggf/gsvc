@@ -8,7 +8,6 @@ import com.apzda.cloud.gsvc.security.config.GrpcServerSecurityConfiguration;
 import com.apzda.cloud.gsvc.security.grpc.HeaderMetas;
 import com.google.common.collect.Lists;
 import io.grpc.*;
-import io.grpc.internal.AbstractServerImplBuilder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
@@ -84,17 +83,14 @@ public class GrpcServerSupportConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    @SuppressWarnings("rawtypes")
     GrpcServerConfigurer gsvcGrpcServerConfigurer(GatewayServiceConfigure configure) {
         return serverBuilder -> {
-            if (serverBuilder instanceof AbstractServerImplBuilder abstractServerImplBuilder) {
-                val keepAliveTime = configure.getGrpcKeepAliveTime("default", false);
-                val keepAliveTimeout = configure.getGrpcKeepAliveTimeout("default", false);
-                log.info("GrpcServer(keepAliveTime={}, keepAliveTimeout={})", keepAliveTime, keepAliveTimeout);
-                abstractServerImplBuilder.keepAliveTime(keepAliveTime.getSeconds(), TimeUnit.SECONDS)
-                    .keepAliveTimeout(keepAliveTimeout.getSeconds(), TimeUnit.SECONDS)
-                    .permitKeepAliveWithoutCalls(true);
-            }
+            val keepAliveTime = configure.getGrpcKeepAliveTime("default", false);
+            val keepAliveTimeout = configure.getGrpcKeepAliveTimeout("default", false);
+            log.info("GrpcServer(keepAliveTime={}, keepAliveTimeout={})", keepAliveTime, keepAliveTimeout);
+            serverBuilder.keepAliveTime(keepAliveTime.getSeconds(), TimeUnit.SECONDS)
+                .keepAliveTimeout(keepAliveTimeout.getSeconds(), TimeUnit.SECONDS)
+                .permitKeepAliveWithoutCalls(true);
         };
     }
 
