@@ -1,7 +1,5 @@
-package com.apzda.cloud.demo.allinone;
+package com.apzda.cloud.demo.bar.server;
 
-import com.apzda.cloud.demo.bar.server.EnableBarServer;
-import com.apzda.cloud.demo.foo.server.EnableFooServer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -11,11 +9,11 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
  */
 @SpringBootApplication
 @EnableBarServer
-@EnableFooServer
-public class AllInOneApplication {
+@EnableMethodSecurity
+public class BarApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(AllInOneApplication.class, args);
+        SpringApplication.run(BarApplication.class, args);
     }
 
 }

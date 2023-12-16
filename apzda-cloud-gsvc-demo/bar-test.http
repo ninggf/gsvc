@@ -100,7 +100,7 @@ X-Gsvc-Caller: gtw
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 200, "Response status is not 400");
+        client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
         client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
     });
