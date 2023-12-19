@@ -108,7 +108,7 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
     @Bean
     @ConditionalOnBean(MessageSource.class)
     I18nHelper i18nHelper(MessageSource messageSource, LocaleResolver localeResolver) {
-        return new I18nHelper(messageSource, localeResolver);
+        return new I18nHelper();
     }
 
 }

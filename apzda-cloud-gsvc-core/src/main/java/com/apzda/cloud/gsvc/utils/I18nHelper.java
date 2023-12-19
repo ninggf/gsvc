@@ -19,8 +19,13 @@ package com.apzda.cloud.gsvc.utils;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.MessageSource;
 import org.springframework.context.MessageSourceResolvable;
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.LocaleResolver;
 
 import java.util.Locale;
@@ -32,15 +37,24 @@ import java.util.Objects;
  * @since 1.0.0
  **/
 @Slf4j
-public class I18nHelper {
+public class I18nHelper implements InitializingBean, ApplicationContextAware {
 
     private static MessageSource messageSource;
 
     private static LocaleResolver localeResolver;
 
-    public I18nHelper(MessageSource messageSource, LocaleResolver localeResolver) {
-        I18nHelper.messageSource = messageSource;
-        I18nHelper.localeResolver = localeResolver;
+    private ApplicationContext applicationContext;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        I18nHelper.messageSource = applicationContext.getBean(MessageSource.class);
+        I18nHelper.localeResolver = applicationContext.getBean(LocaleResolver.class);
+        log.debug("I18nHelper initialized with [{}, {}]", I18nHelper.messageSource, I18nHelper.localeResolver);
+    }
+
+    @Override
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 
     public static String t(String code, Object[] args, String defaultString, Locale locale) {
