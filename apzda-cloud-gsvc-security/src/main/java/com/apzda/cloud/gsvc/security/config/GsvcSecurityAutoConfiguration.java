@@ -3,11 +3,13 @@ package com.apzda.cloud.gsvc.security.config;
 import cn.hutool.jwt.signers.JWTSigner;
 import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
+import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.PermissionChecker;
+import com.apzda.cloud.gsvc.security.context.SpringSecurityUserProvider;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
@@ -371,6 +373,12 @@ public class GsvcSecurityAutoConfiguration {
         static PermissionEvaluator asteriskPermissionEvaluator(
                 ObjectProvider<List<PermissionChecker>> checkerProvider) {
             return new AsteriskPermissionEvaluator(checkerProvider);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        CurrentUserProvider springSecurityCurrentUserProvider() {
+            return new SpringSecurityUserProvider();
         }
 
     }
