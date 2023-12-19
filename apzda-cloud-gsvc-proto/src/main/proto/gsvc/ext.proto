@@ -54,3 +54,34 @@ message UploadFile {
   optional string error = 7;
 }
 
+
+message Sorter {
+  enum Direction {
+    ASC = 0;
+    DESC = 1;
+  }
+  message Order {
+    string field = 1;
+    Direction direction = 2;
+    bool ignore_case = 3;
+  }
+  repeated Order order = 1;
+}
+
+message Pager {
+  uint32 page_number = 1;
+  optional uint32 page_size = 2;
+  optional uint32 offset = 3;
+  optional Sorter sort = 4;
+}
+
+message PageInfo {
+  uint32 page_number = 1;
+  uint32 page_size = 2;
+  uint32 total_pages = 3;
+  uint64 total_elements = 4;
+  uint32  number_of_elements = 5;
+  bool first = 6;
+  bool last = 7;
+  optional Sorter sort = 8;
+}
