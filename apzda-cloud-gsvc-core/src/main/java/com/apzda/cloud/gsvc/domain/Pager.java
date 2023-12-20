@@ -20,6 +20,7 @@ import com.apzda.cloud.gsvc.ext.GsvcExt;
 import lombok.val;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -32,6 +33,8 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  **/
 public class Pager extends PageRequest {
+
+    public static final int DEFAULT_PAGE_SIZE = 30;
 
     /**
      * Creates a new {@link PageRequest} with sort parameters applied.
@@ -46,10 +49,10 @@ public class Pager extends PageRequest {
     @NonNull
     public static PageRequest of(@Nullable GsvcExt.Pager pager) {
         if (pager == null) {
-            return of(0, 10);
+            return of(0, DEFAULT_PAGE_SIZE);
         }
         int pageNumber = pager.getPageNumber();
-        int pageSize = pager.hasPageSize() ? pager.getPageSize() : 30;
+        int pageSize = pager.hasPageSize() ? pager.getPageSize() : DEFAULT_PAGE_SIZE;
 
         if (pager.hasSort()) {
             val sort = pager.getSort();
@@ -68,6 +71,27 @@ public class Pager extends PageRequest {
     }
 
     @NonNull
+    public static GsvcExt.Pager to(@Nullable Pageable pager) {
+        val builder = GsvcExt.Pager.newBuilder();
+        if (pager == null) {
+            builder.setPageNumber(0);
+            builder.setPageSize(DEFAULT_PAGE_SIZE);
+        }
+        else {
+            builder.setPageNumber(pager.getPageNumber());
+            if (pager.getPageSize() > 0) {
+                builder.setPageSize(pager.getPageSize());
+            }
+            if (pager.getOffset() > 0) {
+                builder.setOffset(pager.getOffset());
+            }
+            builder.setSort(convertSort(pager.getSort()));
+        }
+
+        return builder.build();
+    }
+
+    @NonNull
     public static GsvcExt.PageInfo of(@NonNull Page<?> page) {
         val builder = GsvcExt.PageInfo.newBuilder();
         builder.setPageNumber(page.getNumber());
@@ -77,21 +101,25 @@ public class Pager extends PageRequest {
         builder.setPageSize(page.getSize());
         builder.setFirst(page.isFirst());
         builder.setLast(page.isLast());
-        val sort = page.getSort();
-        val sb = GsvcExt.Sorter.newBuilder();
-
-        sort.stream().forEach(order -> {
-            val ob = GsvcExt.Sorter.Order.newBuilder().setField(order.getProperty());
-            if (order.getDirection() == Sort.Direction.ASC) {
-                sb.addOrder(ob.setDirection(GsvcExt.Sorter.Direction.ASC));
-            }
-            else {
-                sb.addOrder(ob.setDirection(GsvcExt.Sorter.Direction.DESC));
-            }
-        });
-
-        builder.setSort(sb);
+        builder.setSort(convertSort(page.getSort()));
         return builder.build();
+    }
+
+    @NonNull
+    public static GsvcExt.Sorter.Builder convertSort(@Nullable Sort sort) {
+        val sb = GsvcExt.Sorter.newBuilder();
+        if (sort != null) {
+            sort.stream().forEach(order -> {
+                val ob = GsvcExt.Sorter.Order.newBuilder().setField(order.getProperty());
+                if (order.getDirection() == Sort.Direction.ASC) {
+                    sb.addOrder(ob.setDirection(GsvcExt.Sorter.Direction.ASC));
+                }
+                else {
+                    sb.addOrder(ob.setDirection(GsvcExt.Sorter.Direction.DESC));
+                }
+            });
+        }
+        return sb;
     }
 
 }

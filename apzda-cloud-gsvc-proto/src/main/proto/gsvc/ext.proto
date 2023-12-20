@@ -71,7 +71,7 @@ message Sorter {
 message Pager {
   uint32 page_number = 1;
   optional uint32 page_size = 2;
-  optional uint32 offset = 3;
+  optional uint64 offset = 3;
   optional Sorter sort = 4;
 }
 
