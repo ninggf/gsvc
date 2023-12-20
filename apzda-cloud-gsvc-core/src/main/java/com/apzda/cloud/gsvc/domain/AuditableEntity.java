@@ -17,6 +17,8 @@
 package com.apzda.cloud.gsvc.domain;
 
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 
@@ -47,6 +49,8 @@ public interface AuditableEntity {
 
     void setDeleted(boolean deleted);
 
+    @PrePersist
+    @PreUpdate
     default void fillAuditInfo() {
         val user = CurrentUserProvider.getCurrentUser();
         fillAuditInfo(user.getUid());

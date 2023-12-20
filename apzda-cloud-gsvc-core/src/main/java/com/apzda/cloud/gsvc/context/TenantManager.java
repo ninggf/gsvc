@@ -17,7 +17,10 @@
 package com.apzda.cloud.gsvc.context;
 
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -26,7 +29,7 @@ import org.springframework.beans.factory.InitializingBean;
  **/
 public abstract class TenantManager implements InitializingBean {
 
-    private static final String[] SYS_TENANT_IDS = new String[] { "0" };
+    private static final String[] SYS_TENANT_IDS = new String[] { null };
 
     private static TenantManager tenantManager;
 
@@ -35,20 +38,28 @@ public abstract class TenantManager implements InitializingBean {
         tenantManager = this;
     }
 
+    @NonNull
     public static String[] tenantIds() {
         if (tenantManager != null) {
             val tenantIds = tenantManager.getTenantIds();
-            if (tenantIds != null && tenantIds.length > 0) {
+            if (tenantIds.length > 0) {
                 return tenantIds;
             }
         }
         return SYS_TENANT_IDS;
     }
 
+    @Nullable
     public static String tenantId() {
         return tenantIds()[0];
     }
 
+    @Nullable
+    public static String tenantId(String defaultTenantId) {
+        return StringUtils.defaultIfBlank(tenantIds()[0], defaultTenantId);
+    }
+
+    @NonNull
     protected abstract String[] getTenantIds();
 
 }

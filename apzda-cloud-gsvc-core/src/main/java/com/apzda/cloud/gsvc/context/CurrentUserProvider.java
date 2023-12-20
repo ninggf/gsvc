@@ -19,13 +19,17 @@ package com.apzda.cloud.gsvc.context;
 import com.apzda.cloud.gsvc.dto.CurrentUser;
 import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.data.domain.AuditorAware;
+import org.springframework.lang.NonNull;
+
+import java.util.Optional;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public abstract class CurrentUserProvider implements InitializingBean {
+public abstract class CurrentUserProvider implements InitializingBean, AuditorAware<String> {
 
     private static final CurrentUser currentUser = CurrentUser.builder().uid("0").build();
 
@@ -42,6 +46,12 @@ public abstract class CurrentUserProvider implements InitializingBean {
             return user != null ? user : currentUser;
         }
         return currentUser;
+    }
+
+    @Override
+    @NonNull
+    public Optional<String> getCurrentAuditor() {
+        return Optional.of(getCurrentUser().getUid());
     }
 
     protected abstract CurrentUser currentUser();

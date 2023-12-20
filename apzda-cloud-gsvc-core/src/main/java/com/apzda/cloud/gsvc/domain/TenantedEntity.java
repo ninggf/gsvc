@@ -17,6 +17,8 @@
 package com.apzda.cloud.gsvc.domain;
 
 import com.apzda.cloud.gsvc.context.TenantManager;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -30,6 +32,8 @@ public interface TenantedEntity {
 
     void setTenantId(String tenantId);
 
+    @PrePersist
+    @PreUpdate
     default void fillTenantData() {
         if (StringUtils.isBlank(getTenantId())) {
             setTenantId(TenantManager.tenantId());
