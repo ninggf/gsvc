@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -54,8 +55,9 @@ public abstract class TenantManager implements InitializingBean {
         return tenantIds()[0];
     }
 
-    @Nullable
-    public static String tenantId(String defaultTenantId) {
+    @NonNull
+    public static String tenantId(@NonNull String defaultTenantId) {
+        Assert.notNull(defaultTenantId, "Default tenant ID cannot be null");
         return StringUtils.defaultIfBlank(tenantIds()[0], defaultTenantId);
     }
 
