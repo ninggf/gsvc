@@ -21,10 +21,22 @@ package com.apzda.cloud.gsvc.domain;
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface TenantedEntity {
+public interface AuditedEntity {
 
-    String getTenantId();
+    String getCreatedBy();
 
-    void setTenantId(String tenantId);
+    void setCreatedBy(String createdBy);
+
+    Long getCreatedAt();
+
+    void setCreatedAt(Long createdAt);
+
+    String getUpdatedBy();
+
+    void setUpdatedBy(String updatedBy);
+
+    Long getUpdatedAt();
+
+    void setUpdatedAt(Long updatedAt);
 
 }

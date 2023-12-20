@@ -17,6 +17,7 @@
 package com.apzda.cloud.gsvc.domain;
 
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
+import com.apzda.cloud.gsvc.context.TenantManager;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.val;
@@ -27,45 +28,29 @@ import org.apache.commons.lang3.StringUtils;
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface AuditableEntity {
-
-    String getCreatedBy();
-
-    void setCreatedBy(String createdBy);
-
-    Long getCreatedAt();
-
-    void setCreatedAt(Long createdAt);
-
-    String getUpdatedBy();
-
-    void setUpdatedBy(String updatedBy);
-
-    Long getUpdatedAt();
-
-    void setUpdatedAt(Long updatedAt);
-
-    boolean isDeleted();
-
-    void setDeleted(boolean deleted);
+public class AutoMetaListener {
 
     @PrePersist
     @PreUpdate
-    default void fillAuditInfo() {
-        val user = CurrentUserProvider.getCurrentUser();
-        fillAuditInfo(user.getUid());
-    }
+    void fillMetaData(Object o) {
+        if (o instanceof AuditedEntity auditedEntity) {
+            val userId = CurrentUserProvider.getCurrentUser().getUid();
+            val current = System.currentTimeMillis();
+            if (StringUtils.isBlank(auditedEntity.getCreatedBy())) {
+                auditedEntity.setCreatedBy(userId);
+            }
+            if (auditedEntity.getCreatedAt() == null) {
+                auditedEntity.setCreatedAt(current);
+            }
+            auditedEntity.setUpdatedBy(userId);
+            auditedEntity.setUpdatedAt(current);
+        }
 
-    default void fillAuditInfo(String userId) {
-        val current = System.currentTimeMillis();
-        if (StringUtils.isBlank(getCreatedBy())) {
-            setCreatedBy(userId);
+        if (o instanceof TenantedEntity tenantedEntity) {
+            if (StringUtils.isBlank(tenantedEntity.getTenantId())) {
+                tenantedEntity.setTenantId(TenantManager.tenantId());
+            }
         }
-        if (getCreatedAt() == null) {
-            setCreatedAt(current);
-        }
-        setUpdatedBy(userId);
-        setUpdatedAt(current);
     }
 
 }
