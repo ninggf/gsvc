@@ -28,6 +28,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
@@ -201,7 +202,7 @@ public class GsvcExceptionHandler {
         else {
             responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
         }
-        if (!(error instanceof NoStackLogError)) {
+        if (!(error instanceof NoStackLogError) || error instanceof NoHandlerFoundException) {
             log.error("[{}] Exception Resolved:", GsvcContextHolder.getRequestId(), error);
         }
         return responseWrapper.unwrap(rClazz);
