@@ -21,6 +21,7 @@ import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import java.util.Optional;
 
@@ -31,7 +32,7 @@ import java.util.Optional;
  **/
 public abstract class CurrentUserProvider implements InitializingBean, AuditorAware<String> {
 
-    private static final CurrentUser currentUser = CurrentUser.builder().uid("0").build();
+    private static final CurrentUser currentUser = CurrentUser.builder().build();
 
     private static CurrentUserProvider provider;
 
@@ -40,6 +41,7 @@ public abstract class CurrentUserProvider implements InitializingBean, AuditorAw
         provider = this;
     }
 
+    @NonNull
     public static CurrentUser getCurrentUser() {
         if (provider != null) {
             val user = provider.currentUser();
@@ -51,9 +53,10 @@ public abstract class CurrentUserProvider implements InitializingBean, AuditorAw
     @Override
     @NonNull
     public Optional<String> getCurrentAuditor() {
-        return Optional.of(getCurrentUser().getUid());
+        return Optional.ofNullable(getCurrentUser().getUid());
     }
 
+    @Nullable
     protected abstract CurrentUser currentUser();
 
 }
