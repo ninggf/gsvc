@@ -20,6 +20,7 @@ import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -28,7 +29,6 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
@@ -125,6 +125,9 @@ public class GsvcExceptionHandler {
         else if (e instanceof ErrorResponseException codeException) {
             return handleHttpStatusError(codeException.getStatusCode(), codeException.getMessage());
         }
+        else if (e instanceof ErrorResponse errorResponse) {
+            return Response.error(errorResponse.getBody().getStatus(), errorResponse.getBody().getDetail());
+        }
 
         return Response.error(ServiceError.SERVICE_ERROR);
     }
@@ -199,10 +202,14 @@ public class GsvcExceptionHandler {
                     error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
+        else if (error instanceof ErrorResponse errorResponse) {
+            responseWrapper = ResponseWrapper.status(errorResponse.getBody().getStatus()).body(handle(error));
+            return responseWrapper.unwrap(rClazz);
+        }
         else {
             responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
         }
-        if (!(error instanceof NoStackLogError) || error instanceof NoHandlerFoundException) {
+        if (!(error instanceof NoStackLogError)) {
             log.error("[{}] Exception Resolved:", GsvcContextHolder.getRequestId(), error);
         }
         return responseWrapper.unwrap(rClazz);
@@ -232,7 +239,7 @@ public class GsvcExceptionHandler {
         else if (statusCode == HttpStatus.FORBIDDEN) {
             return Response.error(ServiceError.FORBIDDEN);
         }
-        return Response.error(-statusCode.value(), message);
+        return Response.error(statusCode.value(), message);
     }
 
     final static class ResponseWrapper {
@@ -246,6 +253,12 @@ public class GsvcExceptionHandler {
         static ResponseWrapper status(HttpStatusCode status) {
             val wrapper = new ResponseWrapper();
             wrapper.status = status;
+            return wrapper;
+        }
+
+        static ResponseWrapper status(int status) {
+            val wrapper = new ResponseWrapper();
+            wrapper.status = HttpStatusCode.valueOf(status);
             return wrapper;
         }
 
