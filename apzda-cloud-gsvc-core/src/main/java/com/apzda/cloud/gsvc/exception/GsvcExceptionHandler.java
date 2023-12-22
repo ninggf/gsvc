@@ -280,7 +280,11 @@ public class GsvcExceptionHandler {
         @SuppressWarnings("unchecked")
         public <R> R unwrap(Class<R> rClazz) {
             if (rClazz.isAssignableFrom(ServerResponse.class)) {
-                return (R) ServerResponse.status(status).body(body);
+                return (R) ServerResponse.status(status).headers((httpHeaders -> {
+                    if (this.headers != null) {
+                        httpHeaders.putAll(this.headers);
+                    }
+                })).body(body);
             }
             else {
                 return (R) ResponseEntity.status(status).headers(headers).body(body);
