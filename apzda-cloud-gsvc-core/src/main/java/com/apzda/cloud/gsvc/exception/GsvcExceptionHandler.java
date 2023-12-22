@@ -22,7 +22,6 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.ErrorResponseException;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -100,9 +99,6 @@ public class GsvcExceptionHandler {
             val violations = new HashMap<String, String>();
             violations.put(typeMismatchException.getName(), e.getMessage());
             return Response.error(ServiceError.BIND_ERROR, violations);
-        }
-        else if (e instanceof HttpRequestMethodNotSupportedException) {
-            return Response.error(ServiceError.METHOD_NOT_ALLOWED);
         }
         else if (e instanceof WebClientRequestException) {
             return Response.error(ServiceError.REMOTE_SERVICE_NO_INSTANCE);
@@ -183,9 +179,6 @@ public class GsvcExceptionHandler {
             // rpc exception
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
         }
-        else if (error instanceof HttpRequestMethodNotSupportedException) {
-            responseWrapper = ResponseWrapper.status(HttpStatus.METHOD_NOT_ALLOWED).body(handle(error));
-        }
         else if (error instanceof ErrorResponseException responseException) {
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
             responseWrapper.headers(responseException.getHeaders());
@@ -204,6 +197,7 @@ public class GsvcExceptionHandler {
         }
         else if (error instanceof ErrorResponse errorResponse) {
             responseWrapper = ResponseWrapper.status(errorResponse.getBody().getStatus()).body(handle(error));
+            responseWrapper.headers(errorResponse.getHeaders());
             return responseWrapper.unwrap(rClazz);
         }
         else {
