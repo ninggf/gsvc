@@ -8,7 +8,7 @@
     </parent>
     <groupId>com.apzda.cloud</groupId>
     <artifactId>gsvc</artifactId>
-    <version>1.2.3-SNAPSHOT</version>
+    <version>1.2.3</version>
     <modules>
         <module>apzda-cloud-gsvc-core</module>
         <module>apzda-cloud-gsvc-starter</module>
@@ -92,7 +92,7 @@
         <url>https://github.com/ninggf/gsvc</url>
         <connection>scm:git@github.com:ninggf/gsvc.git</connection>
         <developerConnection>scm:git:git@github.com:ninggf/gsvc.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v1.2.3</tag>
     </scm>
 
     <distributionManagement>
@@ -118,37 +118,37 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-core</artifactId>
-                <version>1.2.3-SNAPSHOT</version>
+                <version>1.2.3</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-parent</artifactId>
-                <version>1.2.3-SNAPSHOT</version>
+                <version>1.2.3</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-proto</artifactId>
-                <version>1.2.3-SNAPSHOT</version>
+                <version>1.2.3</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-security</artifactId>
-                <version>1.2.3-SNAPSHOT</version>
+                <version>1.2.3</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
-                <version>1.2.3-SNAPSHOT</version>
+                <version>1.2.3</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-starter</artifactId>
-                <version>1.2.3-SNAPSHOT</version>
+                <version>1.2.3</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-tracing</artifactId>
-                <version>1.2.3-SNAPSHOT</version>
+                <version>1.2.3</version>
             </dependency>
             <!-- javax -->
             <dependency>
