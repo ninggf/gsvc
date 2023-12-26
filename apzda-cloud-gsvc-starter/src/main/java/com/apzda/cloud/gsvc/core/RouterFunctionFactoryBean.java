@@ -10,6 +10,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.lang.NonNull;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -47,7 +48,10 @@ public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<Ser
     public static RouterFunction<ServerResponse> createRouterFunction(String cfgName, String serviceName,
             ApplicationContext applicationContext) {
         val methods = GatewayServiceRegistry.getDeclaredServiceMethods(cfgName, serviceName);
-
+        if (CollectionUtils.isEmpty(methods)) {
+            log.warn("No method defined in {} - {}", cfgName, serviceName);
+            return null;
+        }
         val route = RouterFunctions.route();
         for (Map.Entry<String, ServiceMethod> method : methods.entrySet()) {
             val methodName = method.getKey();

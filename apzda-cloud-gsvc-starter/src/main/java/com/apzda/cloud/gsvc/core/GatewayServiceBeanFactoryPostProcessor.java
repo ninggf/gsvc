@@ -150,11 +150,6 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             return;
         }
         REGISTERED.put(serviceName, true);
-        val methods = GatewayServiceRegistry.getDeclaredServiceMethods(clazz);
-        if (CollectionUtils.isEmpty(methods)) {
-            log.warn("No method defined in {} - {}", cfgName, clazz.getCanonicalName());
-            return;
-        }
         BeanDefinitionBuilder definition = BeanDefinitionBuilder.genericBeanDefinition(RouterFunctionFactoryBean.class);
 
         definition.addConstructorArgValue(cfgName);
