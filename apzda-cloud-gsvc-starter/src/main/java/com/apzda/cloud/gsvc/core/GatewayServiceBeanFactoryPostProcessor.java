@@ -119,8 +119,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                             GatewayServiceRegistry.SERVICE_INTERFACES.get(cfgName));
                 }
                 else {
-                    log.info("Found Gsvc Service(impl): {} - {}", cfgName,
-                            GatewayServiceRegistry.SERVICE_INTERFACES.get(cfgName));
+                    log.info("Found Gsvc Service(impl): {} - {}", cfgName, interfaceName);
+                    log.warn("No routes exported, only accessed locally: {} - {}", cfgName, interfaceName);
                 }
             }
         }
