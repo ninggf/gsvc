@@ -107,6 +107,16 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>layer</id>
+            <properties>
+                <spring-boot-maven-plugin.classifier>layer</spring-boot-maven-plugin.classifier>
+                <spring-boot-maven-plugin.layer>true</spring-boot-maven-plugin.layer>
+            </properties>
+            <build>
+                <finalName>${project.name}</finalName>
+            </build>
+        </profile>
     </profiles>
 
     <build>
