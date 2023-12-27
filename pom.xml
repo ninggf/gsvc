@@ -48,16 +48,18 @@
         <jackson-protobuf.version>0.9.14</jackson-protobuf.version>
         <net-devh-grpc.version>2.15.0.RELEASE</net-devh-grpc.version>
         <sentinel.version>1.8.6</sentinel.version>
-        <protovalidate.version>0.1.8</protovalidate.version>
+        <protovalidate.version>0.1.9</protovalidate.version>
+        <micrometer-propagation.version>1.1.0</micrometer-propagation.version>
         <brave.version>5.16.0</brave.version>
         <springdoc.version>2.2.0</springdoc.version>
+        <swagger-annotations.version>2.2.19</swagger-annotations.version>
         <!-- plugins versions -->
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
         <spring-javaformat.version>0.0.40</spring-javaformat.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <maven-assembly-plugin.version>3.6.0</maven-assembly-plugin.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
-        <gsvc.compiler.version>1.1.0</gsvc.compiler.version>
+        <gsvc.compiler.version>1.2.3</gsvc.compiler.version>
     </properties>
 
     <issueManagement>
@@ -284,6 +286,16 @@
                 <artifactId>springdoc-openapi-starter-common</artifactId>
                 <groupId>org.springdoc</groupId>
                 <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>context-propagation</artifactId>
+                <version>${micrometer-propagation.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-annotations-jakarta</artifactId>
+                <version>${swagger-annotations.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
