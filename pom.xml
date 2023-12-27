@@ -51,7 +51,7 @@
         <protovalidate.version>0.1.9</protovalidate.version>
         <micrometer-propagation.version>1.1.0</micrometer-propagation.version>
         <brave.version>5.16.0</brave.version>
-        <springdoc.version>2.2.0</springdoc.version>
+        <springdoc.version>2.3.0</springdoc.version>
         <swagger-annotations.version>2.2.19</swagger-annotations.version>
         <!-- plugins versions -->
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
