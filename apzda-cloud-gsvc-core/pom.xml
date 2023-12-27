@@ -18,10 +18,6 @@
             <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>jakarta.persistence</groupId>
-            <artifactId>jakarta.persistence-api</artifactId>
-        </dependency>
         <!-- spring boot -->
         <dependency>
             <groupId>org.springframework.data</groupId>

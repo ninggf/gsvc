@@ -49,7 +49,7 @@ public class Pager extends PageRequest {
     @NonNull
     public static PageRequest of(@Nullable GsvcExt.Pager pager) {
         if (pager == null) {
-            return of(0, DEFAULT_PAGE_SIZE);
+            return PageRequest.of(0, DEFAULT_PAGE_SIZE);
         }
         int pageNumber = pager.getPageNumber();
         int pageSize = pager.hasPageSize() ? pager.getPageSize() : DEFAULT_PAGE_SIZE;
