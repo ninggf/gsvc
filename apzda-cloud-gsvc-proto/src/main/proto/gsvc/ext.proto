@@ -85,3 +85,8 @@ message PageInfo {
   bool last = 7;
   optional Sorter sort = 8;
 }
+
+message CommonRes {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+}
