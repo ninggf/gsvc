@@ -3,8 +3,6 @@
  */
 package com.apzda.cloud.gsvc.security.config;
 
-import com.apzda.cloud.gsvc.security.captcha.CaptchaProvider;
-import com.apzda.cloud.gsvc.security.captcha.CaptchaWidget;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -18,9 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author fengz windywany@gmail.com
@@ -37,15 +33,13 @@ public class SecurityConfigProperties {
 
     private CookieConfig cookie = new CookieConfig();
 
-    private CaptchaConfig captcha = new CaptchaConfig();
-
     private String argName;
 
     private String tokenName = "Authorization";
 
     private String bearer = "Bearer";
 
-    private String jwtKey;
+    private String jwtKey = "123456789";
 
     @DurationUnit(ChronoUnit.SECONDS)
     private Duration jwtLeeway = Duration.ofSeconds(30);
@@ -78,20 +72,6 @@ public class SecurityConfigProperties {
         private Cookie.SameSite sameSite = Cookie.SameSite.STRICT;
 
         private int maxAge = -1;
-
-    }
-
-    @Data
-    public static class CaptchaConfig {
-
-        private boolean enabled;
-
-        @DurationUnit(ChronoUnit.MINUTES)
-        private Duration timeout = Duration.ofMinutes(30);
-
-        private Class<? extends CaptchaProvider<? extends CaptchaWidget>> provider;
-
-        private Map<String, String> props = new HashMap<>();
 
     }
 
