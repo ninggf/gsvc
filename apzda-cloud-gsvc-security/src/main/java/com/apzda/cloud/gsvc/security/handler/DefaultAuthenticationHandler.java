@@ -5,6 +5,7 @@ import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
+import com.apzda.cloud.gsvc.security.token.JwtToken;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.ServletException;
@@ -48,15 +49,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
                 val cookieName = cookieCfg.getCookieName();
 
                 if (StringUtils.isNoneBlank(cookieName)) {
-                    val accessToken = jwtToken.getAccessToken();
-                    val cookie = new Cookie(cookieName, accessToken);
-                    cookie.setDomain(cookieCfg.getCookieDomain());
-                    cookie.setHttpOnly(true);
-                    cookie.setSecure(cookieCfg.isCookieSecurity());
-                    cookie.setPath(cookieCfg.getCookiePath());
-                    cookie.setMaxAge(cookieCfg.getMaxAge());
-                    cookie.setAttribute("SameSite", cookieCfg.getSameSite().attributeValue());
-                    response.addCookie(cookie);
+                    response.addCookie(cookieCfg.createCookie(jwtToken));
                 }
 
                 authenticationToken.login(jwtToken);
@@ -139,7 +132,8 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
         }
         catch (Exception e) {
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Token Manager cannot remove authentication data: {}", authentication, e);
+                log.trace("[{}] Token Manager cannot remove authentication data: {}", GsvcContextHolder.getRequestId(),
+                        authentication, e);
             }
         }
     }

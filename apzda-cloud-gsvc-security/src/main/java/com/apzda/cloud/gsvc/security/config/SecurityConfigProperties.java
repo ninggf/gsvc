@@ -3,8 +3,10 @@
  */
 package com.apzda.cloud.gsvc.security.config;
 
+import com.apzda.cloud.gsvc.security.token.JwtToken;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.convert.DurationUnit;
@@ -72,6 +74,19 @@ public class SecurityConfigProperties {
         private Cookie.SameSite sameSite = Cookie.SameSite.STRICT;
 
         private int maxAge = -1;
+
+        public jakarta.servlet.http.Cookie createCookie(JwtToken jwtToken) {
+            val cookieName = getCookieName();
+            val accessToken = jwtToken.getAccessToken();
+            val cookie = new jakarta.servlet.http.Cookie(cookieName, accessToken);
+            cookie.setDomain(this.getCookieDomain());
+            cookie.setHttpOnly(true);
+            cookie.setSecure(this.isCookieSecurity());
+            cookie.setPath(this.getCookiePath());
+            cookie.setMaxAge(this.getMaxAge());
+            cookie.setAttribute("SameSite", this.getSameSite().attributeValue());
+            return cookie;
+        }
 
     }
 
