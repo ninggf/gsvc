@@ -34,7 +34,8 @@ import java.lang.annotation.*;
  **/
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@PropertySource("classpath:bar.service.properties")
+@PropertySource({ "classpath:bar.service.properties", "classpath:BarService.gateway.properties",
+        "classpath:SaService.gateway.properties" })
 @Import({ BarConfiguration.class, BarServiceGsvc.class, SaServiceGsvc.class, FileServiceGsvc.class,
         MathServiceGsvc.class })
 @ComponentScan(basePackages = { "com.apzda.cloud.demo.bar.controller", "com.apzda.cloud.demo.bar.facade" })

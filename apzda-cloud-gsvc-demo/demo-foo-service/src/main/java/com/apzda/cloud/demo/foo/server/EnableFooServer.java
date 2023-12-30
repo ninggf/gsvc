@@ -35,7 +35,7 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Import({ BarServiceGsvc.class, SaServiceGsvc.class })
-@PropertySource("classpath:foo.service.properties")
+@PropertySource({ "classpath:foo.service.properties", "classpath:FooService.gateway.properties" })
 @ComponentScan(basePackages = { "com.apzda.cloud.demo.foo" },
         excludeFilters = @ComponentScan.Filter(classes = SpringBootApplication.class))
 @EnableMethodSecurity
