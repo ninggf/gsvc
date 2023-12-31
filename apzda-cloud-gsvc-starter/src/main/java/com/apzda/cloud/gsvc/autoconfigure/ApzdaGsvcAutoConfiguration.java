@@ -11,6 +11,9 @@ import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.ServiceInfo;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
+import com.apzda.cloud.gsvc.infra.Counter;
+import com.apzda.cloud.gsvc.infra.LocalLimitCounter;
+import com.apzda.cloud.gsvc.infra.TempStorage;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
@@ -22,6 +25,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
 import org.springframework.context.ApplicationContext;
@@ -39,7 +43,7 @@ import java.util.Map;
  */
 @AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
         GsvcSecurityAutoConfiguration.class })
-@Import({ ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class })
+@Import({ ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class, RedisInfraConfiguration.class })
 @Slf4j
 public class ApzdaGsvcAutoConfiguration {
 
@@ -71,6 +75,20 @@ public class ApzdaGsvcAutoConfiguration {
         val config = Config.newBuilder();
         config.setFailFast(false);
         return new Validator(config.build());
+    }
+
+    @Bean
+    @ConditionalOnMissingClass("org.springframework.data.redis.core.StringRedisTemplate")
+    @ConditionalOnMissingBean
+    Counter infraCounter() {
+        return new LocalLimitCounter();
+    }
+
+    @Bean
+    @ConditionalOnMissingClass("org.springframework.data.redis.core.StringRedisTemplate")
+    @ConditionalOnMissingBean
+    TempStorage infraTempStorage() {
+        return new LocalLimitCounter();
     }
 
     @Configuration

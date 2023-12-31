@@ -3,8 +3,11 @@ package com.apzda.cloud.gsvc.config;
 import lombok.Data;
 import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.convert.DurationUnit;
 import org.springframework.core.style.ToStringCreator;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -52,6 +55,9 @@ public class ServiceConfigProperties {
 
         private String homePage;
 
+        @DurationUnit(ChronoUnit.HOURS)
+        private Duration tempExpireTime = Duration.ofHours(24);
+
         private boolean acceptLiteralFieldNames = true;
 
         private boolean properUnsignedNumberSerialization = true;
@@ -70,4 +76,5 @@ public class ServiceConfigProperties {
         }
 
     }
+
 }
