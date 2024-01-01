@@ -19,6 +19,8 @@ package com.apzda.cloud.gsvc.infra;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
+import java.util.Optional;
+
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
@@ -27,10 +29,10 @@ import org.springframework.lang.Nullable;
 public interface TempStorage {
 
     @Nullable
-    <T extends TempData> T save(@NonNull String id, @NonNull T data) throws Exception;
+    <T extends ExpiredData> T save(@NonNull String id, @NonNull T data) throws Exception;
 
-    @Nullable
-    <T extends TempData> T load(@NonNull String id) throws Exception;
+    @NonNull
+    <T extends ExpiredData> Optional<T> load(@NonNull String id, @NonNull Class<T> tClass);
 
     void remove(@NonNull String id);
 

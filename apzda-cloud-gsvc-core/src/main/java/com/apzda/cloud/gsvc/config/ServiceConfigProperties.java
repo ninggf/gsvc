@@ -56,7 +56,7 @@ public class ServiceConfigProperties {
         private String homePage;
 
         @DurationUnit(ChronoUnit.HOURS)
-        private Duration tempExpireTime = Duration.ofHours(24);
+        private Duration tempExpireTime = Duration.ofHours(168);
 
         private boolean acceptLiteralFieldNames = true;
 

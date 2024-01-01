@@ -16,9 +16,8 @@
  */
 package com.apzda.cloud.gsvc.autoconfigure;
 
-import com.apzda.cloud.gsvc.infra.Counter;
-import com.apzda.cloud.gsvc.infra.RedisLimitCounter;
-import com.apzda.cloud.gsvc.infra.TempStorage;
+import com.apzda.cloud.gsvc.infra.RedisInfraImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -36,14 +35,8 @@ class RedisInfraConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    Counter infraCounter() {
-        return new RedisLimitCounter();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    TempStorage infraTempStorage() {
-        return new RedisLimitCounter();
+    RedisInfraImpl infraCounterAndStorage(StringRedisTemplate stringRedisTemplate, ObjectMapper objectMapper) {
+        return new RedisInfraImpl(stringRedisTemplate, objectMapper);
     }
 
 }

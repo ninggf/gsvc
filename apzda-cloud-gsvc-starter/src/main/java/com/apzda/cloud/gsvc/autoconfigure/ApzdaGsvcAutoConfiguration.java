@@ -11,9 +11,7 @@ import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.ServiceInfo;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
-import com.apzda.cloud.gsvc.infra.Counter;
-import com.apzda.cloud.gsvc.infra.LocalLimitCounter;
-import com.apzda.cloud.gsvc.infra.TempStorage;
+import com.apzda.cloud.gsvc.infra.LocalInfraImpl;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
@@ -80,15 +78,8 @@ public class ApzdaGsvcAutoConfiguration {
     @Bean
     @ConditionalOnMissingClass("org.springframework.data.redis.core.StringRedisTemplate")
     @ConditionalOnMissingBean
-    Counter infraCounter() {
-        return new LocalLimitCounter();
-    }
-
-    @Bean
-    @ConditionalOnMissingClass("org.springframework.data.redis.core.StringRedisTemplate")
-    @ConditionalOnMissingBean
-    TempStorage infraTempStorage() {
-        return new LocalLimitCounter();
+    LocalInfraImpl infraCounterAndStorage(ServiceConfigProperties properties) {
+        return new LocalInfraImpl(properties.getConfig().getTempExpireTime());
     }
 
     @Configuration

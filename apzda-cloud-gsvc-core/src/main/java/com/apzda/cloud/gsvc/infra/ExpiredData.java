@@ -16,37 +16,18 @@
  */
 package com.apzda.cloud.gsvc.infra;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
+
+import java.time.Duration;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@RequiredArgsConstructor
-@Slf4j
-public class RedisLimitCounter implements Counter, TempStorage {
+public interface ExpiredData {
 
-    @Override
-    public int count(@NonNull String key, long interval) {
-        return 0;
-    }
-
-    @Override
-    public <T extends TempData> T save(@NonNull String id, @NonNull T data) throws Exception {
-        return null;
-    }
-
-    @Override
-    public <T extends TempData> T load(@NonNull String id) throws Exception {
-        return null;
-    }
-
-    @Override
-    public void remove(@NonNull String id) {
-
-    }
+    @NonNull
+    Duration getExpireTime();
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,9 @@
  */
 package com.apzda.cloud.gsvc.infra;
 
+import lombok.Data;
+import org.springframework.lang.NonNull;
+
 import java.time.Duration;
 
 /**
@@ -23,8 +26,17 @@ import java.time.Duration;
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface TempData {
+@Data
+public class TestData implements ExpiredData {
 
-    Duration getExpireTime();
+    private String name;
+
+    private Integer age;
+
+    @Override
+    @NonNull
+    public Duration getExpireTime() {
+        return Duration.ofSeconds(5);
+    }
 
 }
