@@ -47,10 +47,10 @@ public class RedisInfraImpl implements Counter, TempStorage {
     public int count(@NonNull String key, long interval) {
         Assert.isTrue(interval > 0, "interval = " + interval + " <= 0");
         val a = DateUtil.currentSeconds() / interval;
-        val id = "counter." + key + a;
+        val id = "counter." + key + "." + a;
         try {
             val intExact = Math.toIntExact(Objects.requireNonNull(stringRedisTemplate.opsForValue().increment(id)));
-            stringRedisTemplate.expire(key, interval * 2, TimeUnit.SECONDS);
+            stringRedisTemplate.expire(id, interval + 1, TimeUnit.SECONDS);
             return intExact;
         }
         catch (Exception e) {
