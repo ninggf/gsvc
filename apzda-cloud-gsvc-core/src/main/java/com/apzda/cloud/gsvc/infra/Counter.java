@@ -27,4 +27,7 @@ public interface Counter {
 
     int count(@NonNull String key, long interval);
 
+    default void shutdown() {
+    }
+
 }

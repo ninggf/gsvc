@@ -38,7 +38,8 @@
         <javax.annotation.version>1.3.2</javax.annotation.version>
         <spring-boot.version>3.2.1</spring-boot.version>
         <spring-cloud.version>2023.0.0</spring-cloud.version>
-        <mybatis-plus.version>3.5.4.1</mybatis-plus.version>
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <mybatis-spring.version>3.0.3</mybatis-spring.version>
         <hutool.version>5.8.23</hutool.version>
         <guava.version>32.1.3-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
@@ -230,6 +231,12 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter-test</artifactId>
                 <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <dependency>
+                <artifactId>mybatis-spring</artifactId>
+                <groupId>org.mybatis</groupId>
+                <version>${mybatis-spring.version}</version>
             </dependency>
             <dependency>
                 <groupId>cn.hutool</groupId>

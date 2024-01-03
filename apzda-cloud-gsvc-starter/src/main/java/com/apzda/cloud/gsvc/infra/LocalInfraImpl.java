@@ -73,9 +73,10 @@ public class LocalInfraImpl implements Counter, TempStorage {
                 val ids = keys.remove(key);
                 counterCache.invalidateAll(ids);
                 storageCache.invalidateAll(ids);
+                log.debug("Removed: {}", ids);
                 key = keys.firstKey();
             }
-        }, 5, 5, TimeUnit.SECONDS);
+        }, 1, 5, TimeUnit.SECONDS);
     }
 
     @Override

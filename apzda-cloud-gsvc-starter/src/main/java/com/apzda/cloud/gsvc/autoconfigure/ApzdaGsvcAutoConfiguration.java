@@ -11,6 +11,7 @@ import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.ServiceInfo;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
+import com.apzda.cloud.gsvc.infra.Counter;
 import com.apzda.cloud.gsvc.infra.LocalInfraImpl;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
@@ -90,6 +91,8 @@ public class ApzdaGsvcAutoConfiguration {
 
         private final GatewayServiceConfigure gatewayServiceConfigure;
 
+        private final Counter counter;
+
         private volatile boolean running = false;
 
         @Override
@@ -121,7 +124,7 @@ public class ApzdaGsvcAutoConfiguration {
 
         @Override
         public void stop() {
-            // nothing to do
+            counter.shutdown();
         }
 
         @Override
