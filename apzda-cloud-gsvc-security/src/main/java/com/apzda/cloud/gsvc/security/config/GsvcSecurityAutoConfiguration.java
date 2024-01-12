@@ -45,6 +45,7 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -76,8 +77,10 @@ import java.util.List;
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 /**
- * @author fengz windywany@gmail.com
- */
+ * @author fengz (windywany@gmail.com)
+ * @version 1.0.0
+ * @since 1.0.0
+ **/
 @Slf4j
 @AutoConfiguration(before = { SecurityAutoConfiguration.class })
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
@@ -88,6 +91,7 @@ public class GsvcSecurityAutoConfiguration {
     @EnableWebSecurity
     @EnableConfigurationProperties(SecurityConfigProperties.class)
     @RequiredArgsConstructor
+    @EnableGlobalAuthentication
     static class SecurityConfig {
 
         private final SecurityConfigProperties properties;
