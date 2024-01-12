@@ -156,7 +156,7 @@ public class GsvcExceptionHandler {
 
     private <R> R handle(Throwable error, ServerRequest request, Class<R> rClazz) {
         error = transform(error);
-        if (error instanceof HttpStatusCodeException || error instanceof ErrorResponseException) {
+        if (error instanceof HttpStatusCodeException || error instanceof ErrorResponse) {
             // bookmark login
             val handled = checkLoginRedirect(request, error, rClazz);
             if (handled != null) {
@@ -182,10 +182,16 @@ public class GsvcExceptionHandler {
         else if (error instanceof ErrorResponseException responseException) {
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
             responseWrapper.headers(responseException.getHeaders());
+            log.warn("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
+                    error.getMessage());
+            return responseWrapper.unwrap(rClazz);
         }
         else if (error instanceof HttpStatusCodeException httpStatusCodeException) {
             responseWrapper = ResponseWrapper.status(httpStatusCodeException.getStatusCode()).body(handle(error));
             responseWrapper.headers(httpStatusCodeException.getResponseHeaders());
+            log.warn("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
+                    error.getMessage());
+            return responseWrapper.unwrap(rClazz);
         }
         else if (error instanceof MessageValidationException || error instanceof BindException
                 || error instanceof HttpMessageConversionException
@@ -198,6 +204,8 @@ public class GsvcExceptionHandler {
         else if (error instanceof ErrorResponse errorResponse) {
             responseWrapper = ResponseWrapper.status(errorResponse.getBody().getStatus()).body(handle(error));
             responseWrapper.headers(errorResponse.getHeaders());
+            log.warn("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
+                    error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
         else {
