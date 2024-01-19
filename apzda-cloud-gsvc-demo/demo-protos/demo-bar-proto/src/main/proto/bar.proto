@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "gsvc/ext.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 package bar;
 
@@ -29,6 +30,7 @@ service BarService {
   rpc hi(BarReq) returns(stream BarRes);
   rpc clientStreaming(stream BarReq) returns (BarRes);
   rpc bidiStreaming(stream BarReq) returns (stream BarRes);
+  rpc err(google.protobuf.Empty) returns(gsvc.CommonRes);
 }
 
 message LoginReq {

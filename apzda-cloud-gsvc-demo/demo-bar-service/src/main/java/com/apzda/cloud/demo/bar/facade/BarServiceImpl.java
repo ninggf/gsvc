@@ -6,12 +6,15 @@ import com.apzda.cloud.demo.bar.proto.BarService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import com.google.protobuf.Empty;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.ErrorResponseException;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
@@ -59,7 +62,7 @@ public class BarServiceImpl implements BarService {
     @Override
     public Flux<BarRes> hi(BarReq request) {
         val atomicInteger = new AtomicInteger();
-        return Flux.fromIterable(List.of(request, request)).map(barReq -> {
+        return Flux.fromIterable(List.of(request, request)).publishOn(Schedulers.boundedElastic()).map(barReq -> {
             try {
                 for (GsvcExt.UploadFile uploadFile : barReq.getFilesList()) {
                     if (uploadFile.getSize() > 0) {
@@ -98,6 +101,11 @@ public class BarServiceImpl implements BarService {
     @Override
     public Flux<BarRes> bidiStreaming(Flux<BarReq> request) {
         return null;
+    }
+
+    @Override
+    public GsvcExt.CommonRes err(Empty request) {
+        throw new ErrorResponseException(HttpStatus.UNAUTHORIZED);
     }
 
 }

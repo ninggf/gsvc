@@ -103,11 +103,8 @@ public class GsvcExceptionHandler {
         else if (e instanceof WebClientRequestException) {
             return Response.error(ServiceError.REMOTE_SERVICE_NO_INSTANCE);
         }
-        else if (e instanceof WebClientResponseException) {
-            if (e instanceof WebClientResponseException.TooManyRequests) {
-                return Response.error(ServiceError.TOO_MANY_REQUESTS);
-            }
-            return Response.error(ServiceError.REMOTE_SERVICE_ERROR);
+        else if (e instanceof WebClientResponseException responseException) {
+            return Response.error(responseException.getStatusCode().value(), responseException.getStatusText());
         }
         else if (e instanceof HttpStatusCodeException codeException) {
             return handleHttpStatusError(codeException.getStatusCode(), codeException.getMessage());
@@ -122,7 +119,8 @@ public class GsvcExceptionHandler {
             return handleHttpStatusError(codeException.getStatusCode(), codeException.getMessage());
         }
         else if (e instanceof ErrorResponse errorResponse) {
-            return Response.error(errorResponse.getBody().getStatus(), errorResponse.getBody().getDetail());
+            val body = errorResponse.getBody();
+            return Response.error(body.getStatus(), body.getDetail());
         }
 
         return Response.error(ServiceError.SERVICE_ERROR);

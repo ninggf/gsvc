@@ -2,8 +2,9 @@ syntax = "proto3";
 
 package foo;
 
-// import "gsvc/ext.proto";
+import "gsvc/ext.proto";
 import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
 
 option java_package = "com.apzda.cloud.demo.foo.proto";
 option java_multiple_files = true;
@@ -39,4 +40,5 @@ service FooService {
   rpc hello(FooReq) returns (stream FooRes);
   rpc hi(FooReq) returns(stream FooRes);
   rpc saInfo(FooReq) returns(FooRes);
+  rpc err(google.protobuf.Empty) returns(gsvc.CommonRes);
 }

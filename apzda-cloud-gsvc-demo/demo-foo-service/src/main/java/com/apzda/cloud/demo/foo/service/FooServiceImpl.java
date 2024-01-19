@@ -9,9 +9,10 @@ import com.apzda.cloud.demo.foo.proto.FooRes;
 import com.apzda.cloud.demo.foo.proto.FooService;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import com.google.protobuf.Empty;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -21,13 +22,12 @@ import reactor.core.publisher.Flux;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FooServiceImpl implements FooService {
 
-    @Autowired
-    private BarService barService;
+    private final BarService barService;
 
-    @Autowired
-    private SaService saService;
+    private final SaService saService;
 
     @Override
     public FooRes greeting(FooReq request) {
@@ -74,6 +74,11 @@ public class FooServiceImpl implements FooService {
             .setErrCode(info.getErrCode())
             .setName(info.getUserName())
             .buildPartial();
+    }
+
+    @Override
+    public GsvcExt.CommonRes err(Empty request) {
+        return barService.err(request);
     }
 
 }

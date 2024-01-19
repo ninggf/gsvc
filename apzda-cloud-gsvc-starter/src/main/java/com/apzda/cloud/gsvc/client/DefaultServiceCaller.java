@@ -124,9 +124,8 @@ public class DefaultServiceCaller implements IServiceCaller {
         val uri = method.getRpcAddr();
         val plugins = method.getPlugins();
         var size = plugins.size();
-
+        val requestId = GsvcContextHolder.getRequestId();
         reqBody = reqBody.doOnError(err -> {
-            val requestId = GsvcContextHolder.getRequestId();
             log.error("[{}] RPC({}) failed: {}", requestId, uri, err.getMessage());
         });
 
@@ -189,7 +188,7 @@ public class DefaultServiceCaller implements IServiceCaller {
                 .bodyValue(requestBody);
         }
         else {
-            val multipartBodyBuilder = generateMultipartFormData(allFields, body);
+            val multipartBodyBuilder = generateMultipartFormData(allFields);
             response = request.contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(multipartBodyBuilder.build()));
         }
@@ -197,8 +196,8 @@ public class DefaultServiceCaller implements IServiceCaller {
         return response;
     }
 
-    private MultipartBodyBuilder generateMultipartFormData(Map<Descriptors.FieldDescriptor, Object> allFields,
-            Message body) throws IOException {
+    private MultipartBodyBuilder generateMultipartFormData(Map<Descriptors.FieldDescriptor, Object> allFields)
+            throws IOException {
         val builder = new MultipartBodyBuilder();
         for (Descriptors.FieldDescriptor descriptor : allFields.keySet()) {
             val value = allFields.get(descriptor);

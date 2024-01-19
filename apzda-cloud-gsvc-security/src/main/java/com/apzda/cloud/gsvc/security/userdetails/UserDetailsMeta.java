@@ -15,10 +15,10 @@ import java.util.Optional;
  */
 public interface UserDetailsMeta extends UserDetails {
 
-    static String AUTHORITY_META_KEY = "Authorities";
-    static String ACCESS_TOKEN_META_KEY = "AccessToken";
+    String AUTHORITY_META_KEY = "Authorities";
+    String ACCESS_TOKEN_META_KEY = "AccessToken";
 
-    static String LOGIN_TIME_META_KEY = "loginTime";
+    String LOGIN_TIME_META_KEY = "loginTime";
 
     @NonNull
     UserDetails getUserDetails();
