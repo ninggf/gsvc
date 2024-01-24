@@ -21,14 +21,9 @@ import cn.hutool.core.net.NetUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.SystemPropsUtil;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
-import org.hibernate.service.ServiceRegistry;
-import org.hibernate.type.Type;
-
-import java.util.Properties;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -38,16 +33,18 @@ import java.util.Properties;
 @Slf4j
 public class SnowflakeIdGenerator implements IdentifierGenerator {
 
-    private Snowflake snowflake;
+    private static final String localhostStr = NetUtil.getLocalhostStr();
 
-    @Override
-    public void configure(Type type, Properties parameters, ServiceRegistry serviceRegistry) {
-        val localhostStr = NetUtil.getLocalhostStr();
-        val ipv4 = StringUtils.defaultIfBlank(localhostStr, NetUtil.LOCAL_IP);
-        long workerId = NetUtil.ipv4ToLong(ipv4) % 32;
-        long dc = SystemPropsUtil.getInt("snowflake.dc.id", 1) % 32;
-        log.debug("ipv4={}, Worker ID={}, DataCenter ID={}", ipv4, workerId, dc);
-        snowflake = IdUtil.getSnowflake(workerId, dc);
+    private static final String ipv4 = StringUtils.defaultIfBlank(localhostStr, NetUtil.LOCAL_IP);
+
+    private static final long workerId = NetUtil.ipv4ToLong(ipv4) % 32;
+
+    private static final long dc = SystemPropsUtil.getInt("snowflake.dc.id", 1) % 32;
+
+    private static final Snowflake snowflake = IdUtil.getSnowflake(workerId, dc);
+
+    static {
+        log.info("snowflake, ipv4={}, Worker ID={}, DataCenter ID={}", ipv4, workerId, dc);
     }
 
     @Override
