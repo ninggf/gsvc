@@ -7,6 +7,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -43,6 +44,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     }
 
     @Override
+    @NonNull
     public <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass) {
         try {
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
@@ -60,6 +62,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     }
 
     @Override
+    @NonNull
     @SuppressWarnings("unchecked")
     public <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass) {
         try {
@@ -78,6 +81,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     }
 
     @Override
+    @NonNull
     @SuppressWarnings("unchecked")
     public <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference) {
         try {

@@ -25,10 +25,18 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
 
     protected final Class<? extends GrantedAuthority> authorityClass;
 
+    protected final TypeReference<Collection<? extends GrantedAuthority>> typeReference;
+
     protected AbstractUserDetailsMetaRepository(UserDetailsService userDetailsService,
             Class<? extends GrantedAuthority> authorityClass) {
         this.userDetailsService = userDetailsService;
         this.authorityClass = authorityClass;
+        this.typeReference = new TypeReference<>() {
+            @Override
+            public Type getType() {
+                return new ParameterizedTypeImpl(new Type[] { authorityClass }, null, Collection.class);
+            }
+        };
     }
 
     @Override
@@ -39,13 +47,6 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails) {
-        var typeReference = new TypeReference<Collection<? extends GrantedAuthority>>() {
-            @Override
-            public Type getType() {
-                return new ParameterizedTypeImpl(new Type[] { authorityClass }, null, Collection.class);
-            }
-        };
-
         val authorityMeta = getMetaDataByHint(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, typeReference);
 
         if (authorityMeta.isPresent()) {

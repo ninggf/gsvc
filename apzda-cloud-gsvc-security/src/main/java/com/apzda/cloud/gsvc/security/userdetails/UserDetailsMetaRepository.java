@@ -18,10 +18,13 @@ public interface UserDetailsMetaRepository {
 
     void setMetaData(UserDetails userDetails, String key, Object value);
 
+    @NonNull
     <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass);
 
+    @NonNull
     <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass);
 
+    @NonNull
     <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference);
 
     @SuppressWarnings("unchecked")

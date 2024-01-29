@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -54,6 +55,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
     }
 
     @Override
+    @NonNull
     public <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
@@ -69,6 +71,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
     }
 
     @Override
+    @NonNull
     public <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass) {
         val typeReference = new TypeReference<Collection<R>>() {
             @Override
@@ -80,6 +83,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
     }
 
     @Override
+    @NonNull
     public <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
