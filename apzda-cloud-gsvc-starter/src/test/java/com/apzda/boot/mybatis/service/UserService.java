@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,25 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.domain;
+package com.apzda.boot.mybatis.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.id.IdentifierGenerator;
-
-import static com.apzda.cloud.gsvc.utils.SnowflakeUtil.SNOWFLAKE;
+import com.apzda.boot.entity.User;
+import com.apzda.module.test.abc.def.a.mapper.UserMapper;
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Slf4j
-public class SnowflakeIdGenerator implements IdentifierGenerator {
-
-    @Override
-    public Object generate(SharedSessionContractImplementor sharedSessionContractImplementor, Object o) {
-        return SNOWFLAKE.nextId();
-    }
+@Service
+public class UserService extends ServiceImpl<UserMapper, User> implements IService<User> {
 
 }

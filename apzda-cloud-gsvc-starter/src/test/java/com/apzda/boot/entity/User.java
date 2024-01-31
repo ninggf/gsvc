@@ -19,14 +19,31 @@ import java.util.List;
 @Data
 @TableName(value = "t_users", autoResultMap = true)
 public class User {
+
     @TableId(type = IdType.ASSIGN_ID)
     private String uid;
+
+    @TableField(fill = FieldFill.INSERT)
+    private String createdBy;
+
+    @TableField(fill = FieldFill.INSERT)
+    private Long createdAt;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private String updatedBy;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Long updatedAt;
+
     private String name;
+
     @Version
     private Long ver;
+
     @TableLogic
     private Integer del;
 
     @TableField(typeHandler = CommaFieldTypeHandler.class)
     private List<String> roles;
+
 }

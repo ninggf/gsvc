@@ -1,10 +1,14 @@
 create table if not exists t_users
 (
-    uid   varchar(32) not null primary key,
-    name  varchar(32) not null,
-    ver   bigint      not null default 0,
-    del   tinyint     not null default 0,
-    roles varchar(1023)
+    uid        varchar(32) not null primary key,
+    created_at BIGINT               DEFAULT 0,
+    created_by VARCHAR(32),
+    updated_at BIGINT               DEFAULT 0,
+    updated_by VARCHAR(32),
+    name       varchar(32) not null,
+    ver        bigint      not null default 0,
+    del        tinyint     not null default 0,
+    roles      varchar(1023)
 );
 
 

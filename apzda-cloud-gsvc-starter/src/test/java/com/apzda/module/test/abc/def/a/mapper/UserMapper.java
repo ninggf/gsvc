@@ -6,6 +6,7 @@ package com.apzda.module.test.abc.def.a.mapper;
 import com.apzda.boot.entity.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 /**
  * Created at 2023/7/7 13:06.
@@ -18,5 +19,8 @@ import org.apache.ibatis.annotations.Mapper;
 public interface UserMapper extends BaseMapper<User> {
 
     User getUserById(String id);
+
+    @Select("SELECT * from t_users WHERE name = #{name}")
+    User getUserByName(String name);
 
 }
