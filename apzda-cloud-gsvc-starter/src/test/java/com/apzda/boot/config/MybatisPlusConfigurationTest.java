@@ -7,9 +7,11 @@ import com.apzda.boot.entity.User;
 import com.apzda.boot.mybatis.service.UserService;
 import com.apzda.cloud.gsvc.autoconfigure.MyBatisPlusAutoConfiguration;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
+import com.apzda.cloud.gsvc.context.TenantManager;
 import com.apzda.module.test.abc.def.a.mapper.UserMapper;
 import com.apzda.neti.test.mapper.RoleMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.test.autoconfigure.MybatisPlusTest;
 import jakarta.annotation.Resource;
@@ -55,6 +57,9 @@ class MybatisPlusConfigurationTest {
     @MockBean
     private CurrentUserProvider currentUserProvider;
 
+    @Autowired
+    private TenantManager tenantManager;
+
     @Resource(type = UserMapper.class)
     private UserMapper userMapper;
 
@@ -97,6 +102,11 @@ class MybatisPlusConfigurationTest {
             user = new User();
             user.setName("6");
             userService.save(user);
+
+            user = new User();
+            user.setName("7");
+            user.setMerchantId("987654321");
+            userService.save(user);
         }
 
         {
@@ -121,6 +131,7 @@ class MybatisPlusConfigurationTest {
         assertThat(user1).isNotNull();
         assertThat(user1.getCreatedBy()).isEqualTo("1");
         assertThat(user1.getCreatedAt()).isNotNull();
+        assertThat(user1.getMerchantId()).isEqualTo("123456789");
         val user = userMapper.getUserById("1");
         assertThat(user).isNotNull();
         assertThat(user.getVer()).isEqualTo(0);
@@ -136,13 +147,23 @@ class MybatisPlusConfigurationTest {
 
         IPage<User> page = new Page<>();
         page.setSize(2);
-        userMapper.selectPage(page, null);
+        val con = Wrappers.lambdaQuery(User.class);
+        con.eq(User::getMerchantId, "123456789");
+        userMapper.selectPage(page, con);
         assertThat(page).isNotNull();
         assertThat(page.getTotal()).isEqualTo(6);
         assertThat(page.getPages()).isEqualTo(3);
 
         val user6 = userMapper.getUserByName("6");
         assertThat(user6.getUid().length()).isGreaterThan(9);
+
+        val user7 = userMapper.getUserByName("7");
+        if (tenantManager.disableTenantPlugin()) {
+            assertThat(user7.getMerchantId()).isEqualTo("987654321");
+        }
+        else {
+            assertThat(user7).isNull();
+        }
     }
 
     @Test

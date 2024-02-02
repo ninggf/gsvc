@@ -44,6 +44,11 @@ public class MyBatisPlusConfig {
                 packages.add("com.apzda.boot.mybatis");
                 packages.add("com.apzda.mybatis");
             }
+
+            @Override
+            public void addTenantIgnoreTable(@NonNull Set<String> tables) {
+                tables.add("t_roles");
+            }
         };
     }
 

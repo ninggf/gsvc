@@ -16,7 +16,10 @@
  */
 package com.apzda;
 
+import com.apzda.cloud.gsvc.context.TenantManager;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.lang.NonNull;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -25,5 +28,27 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  **/
 @SpringBootApplication
 public class TestApp {
+
+    @Bean
+    TenantManager tenantManager() {
+        return new TenantManager() {
+            @Override
+            @NonNull
+            protected String[] getTenantIds() {
+                return new String[] { "123456789" };
+            }
+
+            @Override
+            @NonNull
+            public String getTenantIdColumn() {
+                return "merchant_id";
+            }
+
+            @Override
+            public boolean disableTenantPlugin() {
+                return false;
+            }
+        };
+    }
 
 }

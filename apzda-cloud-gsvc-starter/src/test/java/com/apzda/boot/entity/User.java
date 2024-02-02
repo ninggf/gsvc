@@ -35,6 +35,9 @@ public class User {
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Long updatedAt;
 
+    @TableField(fill = FieldFill.INSERT)
+    private String merchantId;
+
     private String name;
 
     @Version

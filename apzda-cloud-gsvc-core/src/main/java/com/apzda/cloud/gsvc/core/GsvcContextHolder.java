@@ -152,7 +152,7 @@ public class GsvcContextHolder {
         if (StringUtils.hasText(requestId)) {
             return requestId;
         }
-        return org.apache.commons.lang3.StringUtils.defaultString(CONTEXT_BOX.get(), "");
+        return org.apache.commons.lang3.StringUtils.defaultIfBlank(CONTEXT_BOX.get(), "");
     }
 
     public static void setRequestId(String requestId) {

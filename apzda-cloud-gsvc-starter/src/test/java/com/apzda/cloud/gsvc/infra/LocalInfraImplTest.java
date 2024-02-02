@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,6 +18,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LocalInfraImplTest {
 
     private static final LocalInfraImpl LOCAL_INFRA_IMPL = new LocalInfraImpl(Duration.ofDays(1));
+
+    @Test
+    void underscore2camel() {
+        // given
+        String abc = "abc_def_ghi";
+        // when
+
+        val newStr = Pattern.compile("_([a-z])")
+            .matcher(abc)
+            .replaceAll((matchResult -> matchResult.group(1).toUpperCase()));
+
+        // then
+        assertThat(newStr).isEqualTo("abcDefGhi");
+
+        // given
+        String abc1 = "abcDefGhi_A";
+        // when
+
+        val newStr1 = Pattern.compile("_([a-z])")
+            .matcher(abc1)
+            .replaceAll((matchResult -> matchResult.group(1).toUpperCase()));
+
+        // then
+        assertThat(newStr1).isEqualTo("abcDefGhi_A");
+    }
 
     @Test
     void count() throws InterruptedException {

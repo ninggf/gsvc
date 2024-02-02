@@ -27,11 +27,16 @@ import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.google.common.base.Joiner;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.NullValue;
+import net.sf.jsqlparser.expression.StringValue;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -45,6 +50,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static com.apzda.cloud.gsvc.utils.SnowflakeUtil.SNOWFLAKE;
 
@@ -58,9 +64,20 @@ import static com.apzda.cloud.gsvc.utils.SnowflakeUtil.SNOWFLAKE;
 @ConditionalOnClass(MybatisConfiguration.class)
 public class MyBatisPlusAutoConfiguration {
 
+    private static final Pattern PATTERN = Pattern.compile("_([a-z])");
+
     // 增加的mybatis-plus配置
     @Bean
-    ConfigurationCustomizer apzdaMybatisPlusConfigurationCustomizer() {
+    ConfigurationCustomizer apzdaMybatisPlusConfigurationCustomizer(final ObjectProvider<TenantManager> tenantManager,
+            final ObjectProvider<List<MybatisCustomizer>> customizers) {
+        val ignoreTables = new HashSet<String>();
+
+        customizers.ifAvailable((customizersLst) -> {
+            for (MybatisCustomizer customizer : customizersLst) {
+                customizer.addTenantIgnoreTable(ignoreTables);
+            }
+        });
+
         return configuration -> {
             // 配置分页插件与乐观锁插件
             configuration.getInterceptors()
@@ -68,27 +85,46 @@ public class MyBatisPlusAutoConfiguration {
                 .filter(interceptor -> interceptor instanceof MybatisPlusInterceptor)
                 .findAny()
                 .ifPresentOrElse(interceptor -> {
-                    if (((MybatisPlusInterceptor) interceptor).getInterceptors()
+                    val mybatisPlusInterceptor = (MybatisPlusInterceptor) interceptor;
+                    tenantManager.ifAvailable(tm -> {
+                        if (tm.disableTenantPlugin()) {
+                            return;
+                        }
+                        val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(tm.getTenantIdColumn(),
+                                "tenant_id");
+                        mybatisPlusInterceptor.addInnerInterceptor(new TenantLineInnerInterceptor(
+                                new DefaultTenantLineHandler(tenantIdColumn, ignoreTables)));
+                    });
+
+                    if (mybatisPlusInterceptor.getInterceptors()
                         .stream()
                         .filter(innerInterceptor -> innerInterceptor instanceof PaginationInnerInterceptor)
                         .findAny()
                         .isEmpty()) {
                         // log.debug("添加分页插件");
-                        ((MybatisPlusInterceptor) interceptor).addInnerInterceptor(new PaginationInnerInterceptor());
+                        mybatisPlusInterceptor.addInnerInterceptor(new PaginationInnerInterceptor());
                     }
 
-                    if (((MybatisPlusInterceptor) interceptor).getInterceptors()
+                    if (mybatisPlusInterceptor.getInterceptors()
                         .stream()
                         .filter(innerInterceptor -> innerInterceptor instanceof OptimisticLockerInnerInterceptor)
                         .findAny()
                         .isEmpty()) {
                         // log.debug("添加乐观锁插件");
-                        ((MybatisPlusInterceptor) interceptor)
-                            .addInnerInterceptor(new OptimisticLockerInnerInterceptor());
+                        mybatisPlusInterceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
                     }
                 }, () -> {
                     // log.debug("配置分页与乐观锁插件");
                     val mybatisInterceptor = new MybatisPlusInterceptor();
+                    tenantManager.ifAvailable(tm -> {
+                        if (tm.disableTenantPlugin()) {
+                            return;
+                        }
+                        val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(tm.getTenantIdColumn(),
+                                "tenant_id");
+                        mybatisInterceptor.addInnerInterceptor(new TenantLineInnerInterceptor(
+                                new DefaultTenantLineHandler(tenantIdColumn, ignoreTables)));
+                    });
                     mybatisInterceptor.addInnerInterceptor(new PaginationInnerInterceptor());
                     mybatisInterceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
                     configuration.addInterceptor(mybatisInterceptor);
@@ -146,7 +182,15 @@ public class MyBatisPlusAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    MetaObjectHandler metaObjectHandler(CurrentUserProvider currentUserProvider) {
+    MetaObjectHandler metaObjectHandler(CurrentUserProvider currentUserProvider,
+            ObjectProvider<TenantManager> tenantManagers) {
+        val stringBuffer = new StringBuffer();
+        tenantManagers.ifAvailable(tenantManager -> {
+            val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(tenantManager.getTenantIdColumn(),
+                    "tenant_id");
+            stringBuffer.append(PATTERN.matcher(tenantIdColumn).replaceAll(m -> m.group(1).toUpperCase()));
+        });
+        val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(stringBuffer.toString(), "tenantId");
         return new MetaObjectHandler() {
             @Override
             public void insertFill(MetaObject metaObject) {
@@ -157,7 +201,7 @@ public class MyBatisPlusAutoConfiguration {
                 strictInsertFill(metaObject, "updatedAt", Long.class, DateUtil.current());
                 strictInsertFill(metaObject, "updatedBy", String.class, uid);
                 val tenantId = TenantManager.tenantId();
-                strictInsertFill(metaObject, "tenantId", String.class, tenantId);
+                strictInsertFill(metaObject, tenantIdColumn, String.class, tenantId);
             }
 
             @Override
@@ -168,6 +212,29 @@ public class MyBatisPlusAutoConfiguration {
                 strictUpdateFill(metaObject, "updatedBy", String.class, uid);
             }
         };
+    }
+
+    private record DefaultTenantLineHandler(String tenantIdColumn,
+            Set<String> ignoreTables) implements TenantLineHandler {
+        @Override
+        public Expression getTenantId() {
+            val tenantId = TenantManager.tenantId();
+            if (org.apache.commons.lang3.StringUtils.isBlank(tenantId)) {
+                return new NullValue();
+            }
+            return new StringValue(tenantId);
+        }
+
+        @Override
+        public boolean ignoreTable(String tableName) {
+            return ignoreTables.contains(tableName);
+        }
+
+        @Override
+        public String getTenantIdColumn() {
+            return tenantIdColumn;
+        }
+
     }
 
 }

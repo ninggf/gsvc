@@ -31,7 +31,9 @@ public interface MybatisCustomizer {
     }
 
     default void addTypeHandlersPackage(@NonNull Set<String> packages) {
+    }
 
+    default void addTenantIgnoreTable(@NonNull Set<String> tables) {
     }
 
 }

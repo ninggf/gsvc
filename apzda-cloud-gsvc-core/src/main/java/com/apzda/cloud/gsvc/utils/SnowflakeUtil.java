@@ -42,7 +42,7 @@ public class SnowflakeUtil {
     public static final Snowflake SNOWFLAKE = IdUtil.getSnowflake(workerId, dc);
 
     static {
-        log.info("snowflake, ipv4={}, Worker ID={}, DataCenter ID={}", ipv4, workerId, dc);
+        log.info("Snowflake initialized, ipv4={}, Worker ID={}, DataCenter ID={}", ipv4, workerId, dc);
     }
 
 }

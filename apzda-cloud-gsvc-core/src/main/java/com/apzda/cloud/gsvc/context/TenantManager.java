@@ -62,6 +62,15 @@ public abstract class TenantManager implements InitializingBean {
     }
 
     @NonNull
+    public String getTenantIdColumn() {
+        return "tenant_id";
+    }
+
+    public boolean disableTenantPlugin() {
+        return false;
+    }
+
+    @NonNull
     protected abstract String[] getTenantIds();
 
 }
