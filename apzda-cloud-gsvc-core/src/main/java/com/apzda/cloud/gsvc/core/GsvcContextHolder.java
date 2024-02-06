@@ -155,6 +155,15 @@ public class GsvcContextHolder {
         return org.apache.commons.lang3.StringUtils.defaultIfBlank(CONTEXT_BOX.get(), "");
     }
 
+    public static String getRemoteIp() {
+        val request = getRequest();
+        var ip = "127.0.0.1";
+        if (request.isPresent()) {
+            ip = request.get().getRemoteAddr();
+        }
+        return ip;
+    }
+
     public static void setRequestId(String requestId) {
         CONTEXT_BOX.set(requestId);
     }
