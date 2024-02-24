@@ -6,7 +6,6 @@ import com.apzda.boot.entity.Role;
 import com.apzda.boot.entity.User;
 import com.apzda.boot.mybatis.service.UserService;
 import com.apzda.cloud.gsvc.autoconfigure.MyBatisPlusAutoConfiguration;
-import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.context.TenantManager;
 import com.apzda.module.test.abc.def.a.mapper.UserMapper;
 import com.apzda.neti.test.mapper.RoleMapper;
@@ -21,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
@@ -29,10 +27,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
 
 /**
  * Created at 2023/7/7 13:45.
@@ -54,9 +50,6 @@ class MybatisPlusConfigurationTest {
     @Autowired
     private ApplicationContext context;
 
-    @MockBean
-    private CurrentUserProvider currentUserProvider;
-
     @Autowired
     private TenantManager tenantManager;
 
@@ -71,7 +64,7 @@ class MybatisPlusConfigurationTest {
 
     @BeforeEach
     void create() {
-        given(currentUserProvider.getCurrentAuditor()).willReturn(Optional.of("1"));
+
         {
             var user = new User();
             user.setName("1");

@@ -16,7 +16,9 @@
  */
 package com.apzda;
 
+import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.context.TenantManager;
+import com.apzda.cloud.gsvc.dto.CurrentUser;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.lang.NonNull;
@@ -47,6 +49,16 @@ public class TestApp {
             @Override
             public boolean disableTenantPlugin() {
                 return false;
+            }
+        };
+    }
+
+    @Bean
+    CurrentUserProvider currentUserProvider() {
+        return new CurrentUserProvider() {
+            @Override
+            protected CurrentUser currentUser() {
+                return CurrentUser.builder().uid("1").build();
             }
         };
     }
