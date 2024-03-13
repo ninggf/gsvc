@@ -5,7 +5,9 @@ import lombok.Data;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author fengz
@@ -13,9 +15,9 @@ import java.util.List;
 @Data
 @Validated
 public class GatewayRouteConfig {
-
-    private Class<?> interfaceName;
-
+    private String prefix;
+    private Boolean enabled = false;
+    private final Set<String> filters = new HashSet<>();
     /**
      * 南北流量路由。
      */

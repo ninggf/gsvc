@@ -51,11 +51,24 @@ public class Route {
     @Setter(AccessLevel.PRIVATE)
     String prefix;
 
+    @Getter(AccessLevel.PRIVATE)
+    @Setter(AccessLevel.PRIVATE)
+    String contextPath = "";
+
     public int index() {
         if (parent != null) {
             return (parent.index() + 1) * 100000 + this.index;
         }
         return this.index;
+    }
+
+    public Route contextPath(String contextPath) {
+        this.contextPath = StringUtils.stripEnd(StringUtils.defaultIfBlank(contextPath, ""), "/");
+        return this;
+    }
+
+    public String contextPath() {
+        return this.contextPath;
     }
 
     public Route prefix(String prefix) {
@@ -84,11 +97,9 @@ public class Route {
     public Route login(String login) {
         if (login != null) {
             this.login = Boolean.parseBoolean(login);
-        }
-        else if (this.parent != null) {
+        } else if (this.parent != null) {
             this.login = this.parent.login;
-        }
-        else {
+        } else {
             this.login = false;
         }
         return this;
@@ -97,8 +108,7 @@ public class Route {
     public Route access(String access) {
         if (access != null) {
             this.access = access;
-        }
-        else if (this.parent != null && this.parent.access != null) {
+        } else if (this.parent != null && this.parent.access != null) {
             this.access = this.parent.access;
         }
         if (StringUtils.isNotBlank(this.access)) {
@@ -110,14 +120,12 @@ public class Route {
     public Route interfaceName(Class<?> clazz) {
         if (clazz != null) {
             this.interfaceName = clazz;
-        }
-        else if (this.parent != null && this.parent.interfaceName != null) {
+        } else if (this.parent != null && this.parent.interfaceName != null) {
             this.interfaceName = this.parent.interfaceName;
-        }
-        else if (this.parent == null) {
+        } else if (this.parent == null) {
             // 一级路由interfaceName不能为空
             throw new IllegalArgumentException(
-                    String.format("interface-name of %s.routes[%d] is blank", prefix, index));
+                String.format("interface-name of %s.routes[%d] is blank", prefix, index));
         }
 
         return this;
@@ -126,11 +134,10 @@ public class Route {
     public Route method(String method) {
         if (StringUtils.isNotBlank(method)) {
             this.method = method;
-        }
-        else if (this.parent != null) {
+        } else if (this.parent != null) {
             // 子路由method不能为空
             throw new IllegalArgumentException(String.format("Method of %s.routes[%d].routes[%d] is blank", this.prefix,
-                    this.parent.index, index));
+                this.parent.index, index));
         }
         return this;
     }
@@ -147,11 +154,9 @@ public class Route {
             if (CollectionUtils.isEmpty(this.actions)) {
                 this.actions = List.of(HttpMethod.GET, HttpMethod.POST);
             }
-        }
-        else if (this.parent != null) {
+        } else if (this.parent != null) {
             this.actions = this.parent.actions;
-        }
-        else {
+        } else {
             this.actions = List.of(HttpMethod.POST);
         }
         return this;
@@ -189,21 +194,19 @@ public class Route {
             for (int i = 0; i < this.tags.length; i++) {
                 this.tags[i] = tagList.get(i);
             }
-        }
-        else if (this.parent != null) {
+        } else if (this.parent != null) {
             this.tags = this.parent.tags;
-        }
-        else {
-            this.tags = new String[] {};
+        } else {
+            this.tags = new String[]{};
         }
         return this;
     }
 
     public String absPath() {
         if (parent != null) {
-            return parent.getPath() + path;
+            return contextPath + parent.getPath() + path;
         }
-        return path;
+        return contextPath + path;
     }
 
     public RouteMeta meta() {

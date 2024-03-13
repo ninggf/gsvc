@@ -97,6 +97,7 @@ public class {{className}} {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc.enabled", havingValue = "true")
     {{interfaceClassName}} grpc{{interfaceClassName}}Stub (final StubFactoryAdapter adapter, final GatewayServiceConfigure serviceConfigure) {
+        GatewayServiceRegistry.registerProxy({{interfaceClassName}}.class);
         final String svcName = serviceConfigure.getSvcName("{{interfaceClassName}}");
         final {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub = adapter.createBlockingStub(svcName,
                 {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub.class);

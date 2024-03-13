@@ -3,6 +3,7 @@ package com.apzda.cloud.gsvc.autoconfigure;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.grpc.DefaultGrpcChannelFactoryAdapter;
 import com.apzda.cloud.gsvc.grpc.DefaultStubFactoryAdapter;
 import com.apzda.cloud.gsvc.grpc.GrpcChannelFactoryAdapter;
@@ -24,6 +25,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.ErrorResponseException;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,28 +41,28 @@ import java.util.concurrent.TimeUnit;
 public class GrpcClientSupportConfiguration {
 
     @Configuration
-    @ImportAutoConfiguration({ net.devh.boot.grpc.common.autoconfigure.GrpcCommonCodecAutoConfiguration.class,
-            net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration.class,
-            net.devh.boot.grpc.client.autoconfigure.GrpcClientMetricAutoConfiguration.class,
-            net.devh.boot.grpc.client.autoconfigure.GrpcClientHealthAutoConfiguration.class,
-            GrpcClientSecurityConfiguration.class,
-            net.devh.boot.grpc.client.autoconfigure.GrpcDiscoveryClientAutoConfiguration.class })
+    @ImportAutoConfiguration({net.devh.boot.grpc.common.autoconfigure.GrpcCommonCodecAutoConfiguration.class,
+        net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration.class,
+        net.devh.boot.grpc.client.autoconfigure.GrpcClientMetricAutoConfiguration.class,
+        net.devh.boot.grpc.client.autoconfigure.GrpcClientHealthAutoConfiguration.class,
+        GrpcClientSecurityConfiguration.class,
+        net.devh.boot.grpc.client.autoconfigure.GrpcDiscoveryClientAutoConfiguration.class})
     static class GrpcClientAutoImporter {
 
         @Bean
         @ConditionalOnMissingBean
         GrpcChannelFactoryAdapter grpcChannelFactoryAdapter(
-                net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory grpcChannelFactory,
-                ServiceConfigProperties properties, ApplicationContext applicationContext) {
+            net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory grpcChannelFactory,
+            ServiceConfigProperties properties, ApplicationContext applicationContext) {
             return new DefaultGrpcChannelFactoryAdapter(grpcChannelFactory, properties, applicationContext);
         }
 
         @Bean
         @ConditionalOnMissingBean
         StubFactoryAdapter stubFactoryAdapter(ApplicationContext applicationContext, AsyncStubFactory asyncStubFactory,
-                BlockingStubFactory blockingStubFactory, GrpcChannelFactoryAdapter grpcChannelFactoryAdapter) {
+                                              BlockingStubFactory blockingStubFactory, GrpcChannelFactoryAdapter grpcChannelFactoryAdapter) {
             return new DefaultStubFactoryAdapter(asyncStubFactory, blockingStubFactory, grpcChannelFactoryAdapter,
-                    applicationContext);
+                applicationContext);
         }
 
         @Bean
@@ -67,12 +71,36 @@ public class GrpcClientSupportConfiguration {
                 val keepAliveTime = configure.getGrpcKeepAliveTime(cfgName, true);
                 val keepAliveTimeout = configure.getGrpcKeepAliveTimeout(cfgName, true);
                 log.debug("ChannelBuilder for {} Stub, keepAliveTime = {}, keepAliveTimeout = {}", cfgName,
-                        keepAliveTime, keepAliveTimeout);
+                    keepAliveTime, keepAliveTimeout);
                 channelBuilder.keepAliveTime(keepAliveTime.toSeconds(), TimeUnit.SECONDS);
                 channelBuilder.keepAliveTimeout(keepAliveTimeout.toSeconds(), TimeUnit.SECONDS);
             });
         }
 
+        @Bean
+        ExceptionTransformer grpcClientExceptionTransformer() {
+            return new ExceptionTransformer() {
+                @Override
+                public ErrorResponseException transform(Throwable exception) {
+                    if (exception instanceof StatusRuntimeException se) {
+                        val status = se.getStatus();
+                        // log.debug("Grpc Call failed: {} - {}", status.getCode().name(), status.getDescription(), status.getCause());
+                        val pd = ProblemDetail.forStatus(502);
+                        pd.setTitle(status.getCode().name() + " - " + status.getDescription());
+                        if (status.getCause() != null) {
+                            pd.setDetail(status.getCause().getMessage());
+                        }
+                        return new ErrorResponseException(HttpStatus.BAD_GATEWAY, pd, exception);
+                    }
+                    return new ErrorResponseException(HttpStatus.BAD_GATEWAY);
+                }
+
+                @Override
+                public boolean supports(Class<? extends Throwable> eClass) {
+                    return StatusRuntimeException.class.isAssignableFrom(eClass);
+                }
+            };
+        }
     }
 
     @GrpcGlobalClientInterceptor
@@ -80,7 +108,7 @@ public class GrpcClientSupportConfiguration {
         return new ClientInterceptor() {
             @Override
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-                    CallOptions callOptions, Channel next) {
+                                                                       CallOptions callOptions, Channel next) {
                 val requestId = GsvcContextHolder.getRequestId();
 
                 return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {

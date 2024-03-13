@@ -1,5 +1,8 @@
 syntax = "proto3";
 package demo;
+
+import "google/api/annotations.proto";
+
 option java_package = "com.apzda.cloud.demo.demo.proto";
 option java_multiple_files = true;
 option java_outer_classname = "DemoProto";
@@ -18,5 +21,9 @@ message DemoRes {
 }
 
 service DemoService {
-  rpc greeting(DemoReq) returns (DemoRes);
+  rpc greeting(DemoReq) returns (DemoRes) {
+    option(google.api.http) = {
+      get: "/hello"
+    };
+  }
 }

@@ -93,3 +93,52 @@ GET http://{{demoService}}/demo/upload
         client.assert(response.body.data.files[2].path === 'index.txt', "!=index.txt")
     });
 %}
+
+### DemoService /d/hi
+GET http://{{demoService}}/demo/d/hi?name=gsvc&age=18
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.data.name === 'Hello gsvc', "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### DemoService /d/hi/greeting
+GET http://{{demoService}}/demo/d/hi/greeting?name=greeting&age=18
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.data.name === 'Hello greeting', "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### DemoService /d/hi/greeting
+GET http://{{demoService}}/demo/d/hello?name=hello&age=18
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.data.name === 'Hello hello', "出错啦: " + response.body.errMsg);
+    });
+%}
+
+
+### DemoService /m/add
+GET http://{{demoService}}/demo/m/add?num1=1&num2=18
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.data.result == 19, "出错啦: " + response.body.errMsg);
+    });
+%}

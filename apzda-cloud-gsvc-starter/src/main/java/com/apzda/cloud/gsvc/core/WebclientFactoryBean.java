@@ -49,12 +49,11 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
         ExchangeFilterFunction lbFunc = null;
         if (this.applicationContext.containsBean("retryableLoadBalancerExchangeFilterFunction")) {
             lbFunc = this.applicationContext.getBean("retryableLoadBalancerExchangeFilterFunction",
-                    ExchangeFilterFunction.class);
+                ExchangeFilterFunction.class);
             lb = "Retryable";
-        }
-        else if (this.applicationContext.containsBean("loadBalancerExchangeFilterFunction")) {
+        } else if (this.applicationContext.containsBean("loadBalancerExchangeFilterFunction")) {
             lbFunc = this.applicationContext.getBean("loadBalancerExchangeFilterFunction",
-                    ExchangeFilterFunction.class);
+                ExchangeFilterFunction.class);
             lb = "Simple";
         }
         if (lbFunc != null) {
@@ -80,7 +79,7 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
         val connector = new ReactorClientHttpConnector(httpClient);
 
         log.trace("[{}] Setup WebClient for {}: BASE={}, LB={}, ConnectTimeout={}, ReadTimeout={}, WriteTimeout={}",
-                GsvcContextHolder.getRequestId(), cfgName, baseUrl, lb, connectTimeout, readTimeout, writeTimeout);
+            GsvcContextHolder.getRequestId(), cfgName, baseUrl, lb, connectTimeout, readTimeout, writeTimeout);
 
         return builder.clientConnector(connector).build();
     }
