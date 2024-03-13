@@ -52,7 +52,7 @@
         <sentinel.version>1.8.7</sentinel.version>
         <protovalidate.version>0.1.9</protovalidate.version>
         <micrometer-propagation.version>1.1.1</micrometer-propagation.version>
-        <brave.version>5.17.0</brave.version>
+        <brave.version>6.0.2</brave.version>
         <springdoc.version>2.2.0</springdoc.version>
         <swagger-annotations.version>2.2.20</swagger-annotations.version>
         <!-- plugins versions -->
