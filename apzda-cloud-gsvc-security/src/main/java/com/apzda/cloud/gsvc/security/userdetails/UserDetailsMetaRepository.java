@@ -1,10 +1,13 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
+import cn.hutool.core.lang.ParameterizedTypeImpl;
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.val;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -22,7 +25,15 @@ public interface UserDetailsMetaRepository {
     <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass);
 
     @NonNull
-    <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass);
+    default <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass) {
+        val typeReference = new TypeReference<Collection<R>>() {
+            @Override
+            public Type getType() {
+                return new ParameterizedTypeImpl(new Type[]{rClass}, null, Collection.class);
+            }
+        };
+        return getMetaDataByHint(userDetails, key, typeReference);
+    }
 
     @NonNull
     <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference);

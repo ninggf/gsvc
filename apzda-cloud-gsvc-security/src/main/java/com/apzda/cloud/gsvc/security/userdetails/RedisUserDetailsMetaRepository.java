@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
-import cn.hutool.core.lang.ParameterizedTypeImpl;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.jackson.SimpleGrantedAuthorityDeserializer;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -13,10 +12,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 
-import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -31,9 +27,9 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     private final ObjectMapper objectMapper;
 
-    public RedisUserDetailsMetaRepository(UserDetailsService userDetailsService, StringRedisTemplate redisTemplate,
-            ObjectMapper objectMapper, Class<? extends GrantedAuthority> authorityClass) {
-        super(userDetailsService, authorityClass);
+    public RedisUserDetailsMetaRepository(UserDetailsMetaService userDetailsMetaService, StringRedisTemplate redisTemplate,
+                                          ObjectMapper objectMapper, Class<? extends GrantedAuthority> authorityClass) {
+        super(userDetailsMetaService, authorityClass);
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
 
@@ -47,10 +43,9 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
         try {
             redisTemplate.<String, String>opsForHash()
                 .put(thenMetaKey(userDetails), key, objectMapper.writeValueAsString(value));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("[{}] Cannot set user meta: {}.{} = {}", GsvcContextHolder.getRequestId(),
-                    thenMetaKey(userDetails), key, value, e);
+                thenMetaKey(userDetails), key, value, e);
         }
     }
 
@@ -62,24 +57,14 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
             if (value != null) {
                 return Optional.of(objectMapper.readValue(value, rClass));
             }
-        }
-        catch (Exception e) {
+            val metaData = userDetailsMetaService.getMetaData(userDetails, key, rClass);
+            metaData.ifPresent(r -> setMetaData(userDetails, key, r));
+            return metaData;
+        } catch (Exception e) {
             log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
-                    thenMetaKey(userDetails), key, e.getMessage());
+                thenMetaKey(userDetails), key, e.getMessage());
         }
         return Optional.empty();
-    }
-
-    @Override
-    @NonNull
-    public <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass) {
-        val typeReference = new TypeReference<Collection<R>>() {
-            @Override
-            public Type getType() {
-                return new ParameterizedTypeImpl(new Type[] { rClass }, null, Collection.class);
-            }
-        };
-        return getMetaDataByHint(userDetails, key, typeReference);
     }
 
     @Override
@@ -90,10 +75,12 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
             if (value != null) {
                 return Optional.of(objectMapper.readValue(value, typeReference));
             }
-        }
-        catch (Exception e) {
+            val metaData = userDetailsMetaService.getMetaData(userDetails, key, typeReference);
+            metaData.ifPresent(r -> setMetaData(userDetails, key, r));
+            return metaData;
+        } catch (Exception e) {
             log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
-                    thenMetaKey(userDetails), key, e.getMessage());
+                thenMetaKey(userDetails), key, e.getMessage());
         }
         return Optional.empty();
     }

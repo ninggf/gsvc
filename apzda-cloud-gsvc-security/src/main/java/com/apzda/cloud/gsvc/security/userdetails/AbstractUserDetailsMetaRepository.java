@@ -8,7 +8,6 @@ import lombok.val;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.CollectionUtils;
 
 import java.lang.reflect.Type;
@@ -21,20 +20,20 @@ import java.util.Collections;
 @Slf4j
 public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMetaRepository {
 
-    protected final UserDetailsService userDetailsService;
+    protected final UserDetailsMetaService userDetailsMetaService;
 
     protected final Class<? extends GrantedAuthority> authorityClass;
 
     protected final TypeReference<Collection<? extends GrantedAuthority>> typeReference;
 
-    protected AbstractUserDetailsMetaRepository(UserDetailsService userDetailsService,
-            Class<? extends GrantedAuthority> authorityClass) {
-        this.userDetailsService = userDetailsService;
+    protected AbstractUserDetailsMetaRepository(UserDetailsMetaService userDetailsMetaService,
+                                                Class<? extends GrantedAuthority> authorityClass) {
+        this.userDetailsMetaService = userDetailsMetaService;
         this.authorityClass = authorityClass;
         this.typeReference = new TypeReference<>() {
             @Override
             public Type getType() {
-                return new ParameterizedTypeImpl(new Type[] { authorityClass }, null, Collection.class);
+                return new ParameterizedTypeImpl(new Type[]{authorityClass}, null, Collection.class);
             }
         };
     }
@@ -52,29 +51,25 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
         if (authorityMeta.isPresent()) {
             if (log.isTraceEnabled()) {
                 log.trace("[{}] Load user's authorities from meta repository: {}", GsvcContextHolder.getRequestId(),
-                        userDetails.getUsername());
+                    userDetails.getUsername());
             }
             return authorityMeta.get();
         }
 
         try {
-            val ud = userDetailsService.loadUserByUsername(userDetails.getUsername());
-            UserDetailsMeta.checkUserDetails(ud);
-
-            var authorities = ud.getAuthorities();
+            var authorities = userDetailsMetaService.getAuthorities(userDetails);
             if (CollectionUtils.isEmpty(authorities)) {
                 authorities = Collections.emptyList();
             }
             setMetaData(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, authorities);
             if (log.isTraceEnabled()) {
                 log.trace("[{}] Load user's authorities from userDetailsService: {}", GsvcContextHolder.getRequestId(),
-                        userDetails.getUsername());
+                    userDetails.getUsername());
             }
             return authorities;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.warn("[{}] cannot load user's authorities: {} - {}", GsvcContextHolder.getRequestId(),
-                    userDetails.getUsername(), e.getMessage());
+                userDetails.getUsername(), e.getMessage());
         }
         return Collections.emptyList();
     }

@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
+import cn.hutool.core.lang.ParameterizedTypeImpl;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.cache.CacheBuilder;
@@ -10,8 +11,8 @@ import lombok.val;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,9 +26,9 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
 
     private final LoadingCache<String, UserMeta> userDetailsMetaCache;
 
-    public InMemoryUserDetailsMetaRepository(UserDetailsService userDetailsService,
-            Class<? extends GrantedAuthority> authorityClass) {
-        super(userDetailsService, authorityClass);
+    public InMemoryUserDetailsMetaRepository(UserDetailsMetaService userDetailsMetaService,
+                                             Class<? extends GrantedAuthority> authorityClass) {
+        super(userDetailsMetaService, authorityClass);
         this.userDetailsMetaCache = CacheBuilder.newBuilder().build(new UserMetaLoader());
     }
 
@@ -36,10 +37,9 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
         try {
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
             userMeta.put(key, value);
-        }
-        catch (ExecutionException e) {
+        } catch (ExecutionException e) {
             log.error("[{}] Cannot set user meta: {}.{} = {}", GsvcContextHolder.getRequestId(),
-                    userDetails.getUsername(), key, value, e);
+                userDetails.getUsername(), key, value, e);
         }
     }
 
@@ -52,29 +52,12 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
             if (meta != null) {
                 return Optional.of(rClass.cast(meta));
             }
-        }
-        catch (Exception e) {
+            val metaData = userDetailsMetaService.getMetaData(userDetails, key, rClass);
+            metaData.ifPresent(r -> setMetaData(userDetails, key, r));
+            return metaData;
+        } catch (Exception e) {
             log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
-                    userDetails.getUsername(), key, e.getMessage());
-
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    @NonNull
-    @SuppressWarnings("unchecked")
-    public <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass) {
-        try {
-            val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
-            val meta = userMeta.get(key);
-            if (meta != null) {
-                return Optional.of((Collection<R>) meta);
-            }
-        }
-        catch (Exception e) {
-            log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
-                    userDetails.getUsername(), key, e.getMessage());
+                userDetails.getUsername(), key, e.getMessage());
 
         }
         return Optional.empty();
@@ -90,10 +73,12 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
             if (meta != null) {
                 return Optional.of((R) meta);
             }
-        }
-        catch (Exception e) {
+            val metaData = userDetailsMetaService.getMetaData(userDetails, key, typeReference);
+            metaData.ifPresent(r -> setMetaData(userDetails, key, r));
+            return metaData;
+        } catch (Exception e) {
             log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
-                    userDetails.getUsername(), key, e.getMessage());
+                userDetails.getUsername(), key, e.getMessage());
 
         }
         return Optional.empty();
@@ -119,10 +104,10 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     static class UserMetaLoader extends CacheLoader<String, UserMeta> {
 
         @Override
-        public UserMeta load(String key) throws Exception {
+        @NonNull
+        public UserMeta load(@NonNull String key) throws Exception {
             return new UserMeta();
         }
-
     }
 
 }

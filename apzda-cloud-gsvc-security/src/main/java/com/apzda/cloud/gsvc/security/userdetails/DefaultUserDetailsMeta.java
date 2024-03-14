@@ -20,7 +20,7 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
     protected Collection<? extends GrantedAuthority> authorities;
 
     public DefaultUserDetailsMeta(@NonNull UserDetails userDetails,
-            @NonNull UserDetailsMetaRepository userDetailsMetaRepository) {
+                                  @NonNull UserDetailsMetaRepository userDetailsMetaRepository) {
         this.userDetails = userDetails;
         this.userDetailsMetaRepository = userDetailsMetaRepository;
     }
