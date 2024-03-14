@@ -17,7 +17,7 @@ import java.util.List;
  * @author ninggf
  */
 @RequiredArgsConstructor
-public class GatewayServiceConfigure {
+public class GatewayServiceConfigure implements IServiceConfigure {
 
     private final ServiceConfigProperties serviceConfig;
 
@@ -145,8 +145,7 @@ public class GatewayServiceConfigure {
         for (String plugin : config.getPlugins()) {
             if (StringUtils.startsWith(plugin, "-")) {
                 plugins.remove(plugin.substring(1));
-            }
-            else {
+            } else {
                 plugins.add(plugin);
             }
         }
@@ -156,8 +155,7 @@ public class GatewayServiceConfigure {
             for (String plugin : methodConfig.getPlugins()) {
                 if (StringUtils.startsWith(plugin, "-")) {
                     plugins.remove(plugin.substring(1));
-                }
-                else {
+                } else {
                     plugins.add(plugin);
                 }
             }

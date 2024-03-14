@@ -19,7 +19,6 @@ package com.apzda.cloud.gsvc.context;
 import com.apzda.cloud.gsvc.dto.CurrentUser;
 import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.data.domain.AuditorAware;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
@@ -30,7 +29,7 @@ import java.util.Optional;
  * @version 1.0.0
  * @since 1.0.0
  **/
-public abstract class CurrentUserProvider implements InitializingBean, AuditorAware<String> {
+public abstract class CurrentUserProvider implements InitializingBean {
 
     private static final CurrentUser currentUser = CurrentUser.builder().build();
 
@@ -50,7 +49,6 @@ public abstract class CurrentUserProvider implements InitializingBean, AuditorAw
         return currentUser;
     }
 
-    @Override
     @NonNull
     public Optional<String> getCurrentAuditor() {
         return Optional.ofNullable(getCurrentUser().getUid());

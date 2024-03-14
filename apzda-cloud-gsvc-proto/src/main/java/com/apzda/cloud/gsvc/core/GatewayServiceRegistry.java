@@ -17,7 +17,6 @@ import java.util.Map;
  */
 @Slf4j
 public class GatewayServiceRegistry {
-
     private static final Map<String, Map<String, ServiceMethod>> SERVICES = new HashMap<>();
 
     private static final Map<String, Map<String, ServiceMethod>> SERVICE_METHODS = new HashMap<>();

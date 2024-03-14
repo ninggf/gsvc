@@ -14,7 +14,12 @@
         <module>demo-math-proto</module>
     </modules>
     <artifactId>demo-protos</artifactId>
-
+    <dependencies>
+        <dependency>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>apzda-cloud-gsvc-proto</artifactId>
+        </dependency>
+    </dependencies>
     <build>
         <plugins>
             <plugin>

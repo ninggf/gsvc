@@ -24,13 +24,6 @@
         <spring-boot-maven-plugin.classifier>fat</spring-boot-maven-plugin.classifier>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.apzda.cloud</groupId>
-            <artifactId>apzda-cloud-gsvc-core</artifactId>
-        </dependency>
-    </dependencies>
-
     <profiles>
         <!-- its -->
         <profile>

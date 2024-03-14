@@ -3,7 +3,7 @@ package {{packageName}};
 {{/packageName}}
 
 import com.apzda.cloud.gsvc.client.IServiceCaller;
-import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
+import com.apzda.cloud.gsvc.config.IServiceConfigure;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.grpc.FluxObserver;
 import com.apzda.cloud.gsvc.grpc.StubFactoryAdapter;
@@ -96,7 +96,7 @@ public class {{className}} {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc.enabled", havingValue = "true")
-    {{interfaceClassName}} grpc{{interfaceClassName}}Stub (final StubFactoryAdapter adapter, final GatewayServiceConfigure serviceConfigure) {
+    {{interfaceClassName}} grpc{{interfaceClassName}}Stub (final StubFactoryAdapter adapter, final IServiceConfigure serviceConfigure) {
         GatewayServiceRegistry.registerProxy({{interfaceClassName}}.class);
         final String svcName = serviceConfigure.getSvcName("{{interfaceClassName}}");
         final {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub = adapter.createBlockingStub(svcName,
