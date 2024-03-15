@@ -46,11 +46,11 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails) {
-        val authorityMeta = getMetaDataByHint(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, typeReference);
+        val authorityMeta = getMultiMetaData(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, typeReference);
 
         if (authorityMeta.isPresent()) {
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Load user's authorities from meta repository: {}", GsvcContextHolder.getRequestId(),
+                log.trace("[{}] User's authorities loaded from meta repository: {}", GsvcContextHolder.getRequestId(),
                     userDetails.getUsername());
             }
             return authorityMeta.get();
@@ -63,12 +63,12 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
             }
             setMetaData(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, authorities);
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Load user's authorities from userDetailsService: {}", GsvcContextHolder.getRequestId(),
+                log.trace("[{}] User's authorities loaded by userDetailsMetaService: {}", GsvcContextHolder.getRequestId(),
                     userDetails.getUsername());
             }
             return authorities;
         } catch (Exception e) {
-            log.warn("[{}] cannot load user's authorities: {} - {}", GsvcContextHolder.getRequestId(),
+            log.warn("[{}] Cannot load user's authorities: {} - {}", GsvcContextHolder.getRequestId(),
                 userDetails.getUsername(), e.getMessage());
         }
         return Collections.emptyList();

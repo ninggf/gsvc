@@ -1,11 +1,13 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
+import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import lombok.val;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Optional;
@@ -25,6 +27,13 @@ public interface UserDetailsMeta extends UserDetails {
 
     void set(String key, Object value);
 
+    default void set(String key, @NonNull Authentication authentication, Object value) {
+        if (authentication instanceof JwtAuthenticationToken token) {
+            set(token.deviceAwareMetaKey(key), value);
+        }
+        set(key, value);
+    }
+
     <R> Optional<R> get(String key, Class<R> rClass);
 
     default String getString(String key) {
@@ -37,7 +46,21 @@ public interface UserDetailsMeta extends UserDetails {
         return meta.orElse(defaultValue);
     }
 
+    default <R> R get(@NonNull String key, @NonNull Authentication authentication, @NonNull R defaultValue) {
+        if (authentication instanceof JwtAuthenticationToken token) {
+            return get(token.deviceAwareMetaKey(key), defaultValue);
+        }
+        return get(key, defaultValue);
+    }
+
     void remove(String key);
+
+    default void remove(String key, @NonNull Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken token) {
+            remove(token.deviceAwareMetaKey(key));
+        }
+        remove(key);
+    }
 
     void clear();
 

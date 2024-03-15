@@ -21,6 +21,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author fengz windywany@gmail.com
@@ -47,7 +48,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     public JwtAuthenticationToken(UserDetails principal, Object credentials,
-            Collection<? extends GrantedAuthority> authorities) {
+                                  Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = checkPrincipal(principal);
         this.credentials = credentials;
@@ -83,7 +84,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     @Override
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
         Assert.isTrue(!isAuthenticated,
-                "Cannot set this token to trusted - use constructor which takes a GrantedAuthority list instead");
+            "Cannot set this token to trusted - use constructor which takes a GrantedAuthority list instead");
         super.setAuthenticated(false);
     }
 
@@ -104,7 +105,8 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     @Override
     @SuppressWarnings("unchecked")
     public Collection<GrantedAuthority> getAuthorities() {
-        if (this.getPrincipal() instanceof UserDetails userDetails) {
+        log.trace("[{}] Retrieving authentication's authorities: {}!!", GsvcContextHolder.getRequestId(), getName());
+        if (principal instanceof UserDetails userDetails) {
             val authorities = userDetails.getAuthorities();
             if (!CollectionUtils.isEmpty(authorities)) {
                 return (Collection<GrantedAuthority>) authorities;
@@ -126,11 +128,10 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
                     if (log.isTraceEnabled()) {
                         log.trace("[{}] accessToken({}) now is logout", GsvcContextHolder.getRequestId(), accessToken);
                     }
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     if (log.isTraceEnabled()) {
                         log.trace("[{}] accessToken({}) logout failed: ", GsvcContextHolder.getRequestId(), accessToken,
-                                e);
+                            e);
                     }
                 }
             }
@@ -145,27 +146,35 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     public void login() {
         if (jwtToken != null && StringUtils.isNotBlank(jwtToken.getAccessToken())
-                && principal instanceof UserDetailsMeta userDetailsMeta) {
+            && principal instanceof UserDetailsMeta userDetailsMeta) {
             val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
             userDetailsMeta.set(key, jwtToken.getAccessToken());
 
             val loginKey = deviceAwareMetaKey(UserDetailsMeta.LOGIN_TIME_META_KEY);
-            if (userDetailsMeta.get(loginKey, Long.valueOf("0")) == 0) {
+            if (userDetailsMeta.get(loginKey, 0L) == 0) {
                 userDetailsMeta.set(loginKey, System.currentTimeMillis());
             }
         }
     }
 
     public boolean isLogin() {
-        if (jwtToken == null || StringUtils.isBlank(jwtToken.getAccessToken())) {
+        if (!super.isAuthenticated() || jwtToken == null || StringUtils.isBlank(jwtToken.getAccessToken())) {
             return false;
         }
+
         if (principal instanceof UserDetailsMeta userDetailsMeta) {
             val accessToken = jwtToken.getAccessToken();
             val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
             return Objects.equals(accessToken, userDetailsMeta.getString(key));
         }
         return false;
+    }
+
+    public Optional<UserDetailsMeta> getUserDetails() {
+        if (principal instanceof UserDetailsMeta userDetails) {
+            return Optional.of(userDetails);
+        }
+        return Optional.empty();
     }
 
     protected Object checkPrincipal(Object principal) {

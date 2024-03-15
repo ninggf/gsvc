@@ -30,7 +30,7 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         log.warn("[{}] You are using a demo AuthenticationProvider, please use a real one!!!",
-                GsvcContextHolder.getRequestId());
+            GsvcContextHolder.getRequestId());
 
         val credentials = authentication.getCredentials();
         val username = authentication.getPrincipal();
@@ -41,9 +41,12 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
 
         if (passwordEncoder.matches((CharSequence) credentials, password)) {
             val userDetailsMeta = userDetailsMetaRepository.create(userDetails);
-            // bookmark: Clear Authorities
-            userDetailsMeta.remove("Authorities");
-            return JwtAuthenticationToken.authenticated(userDetailsMeta, password);
+            val authed = JwtAuthenticationToken.authenticated(userDetailsMeta, password);
+            // bookmark: Clear Authorities, cause to reload authorities from UserDetailsMetaService
+            log.trace("[{}] Clear user's authorities and last login time: {}", GsvcContextHolder.getRequestId(), username);
+            userDetailsMeta.remove(UserDetailsMeta.AUTHORITY_META_KEY);
+            userDetailsMeta.set(authed.deviceAwareMetaKey(UserDetailsMeta.LOGIN_TIME_META_KEY), 0L);
+            return authed;
         }
 
         throw new BadCredentialsException(String.format("%s's password does not match", username));

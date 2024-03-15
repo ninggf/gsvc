@@ -37,14 +37,14 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
     @Override
     public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Object data, ServiceMethod method) {
         val tokenName = properties.getTokenName();
-
+        val cookieName = properties.getCookie().getCookieName();
         if (StringUtils.isNotBlank(tokenName)) {
-            val tokenValue = GsvcContextHolder.header(tokenName);
+            val tokenValue = StringUtils.defaultIfBlank(GsvcContextHolder.header(tokenName), GsvcContextHolder.cookie(cookieName));
             if (StringUtils.isNotBlank(tokenValue)) {
                 request = request.headers(httpHeaders -> {
                     if (log.isTraceEnabled()) {
                         log.trace("[{}] Transit Header: {}: {}", GsvcContextHolder.getRequestId(), tokenName,
-                                tokenValue);
+                            tokenValue);
                     }
                     httpHeaders.put(tokenName, Collections.singletonList(tokenValue));
                 });

@@ -69,13 +69,13 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     @Override
     @NonNull
-    public <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference) {
+    public <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, TypeReference<R> typeReference) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
             if (value != null) {
                 return Optional.of(objectMapper.readValue(value, typeReference));
             }
-            val metaData = userDetailsMetaService.getMetaData(userDetails, key, typeReference);
+            val metaData = userDetailsMetaService.getMultiMetaData(userDetails, key, typeReference);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
         } catch (Exception e) {

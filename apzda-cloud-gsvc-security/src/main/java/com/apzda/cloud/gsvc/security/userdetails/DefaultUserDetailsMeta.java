@@ -1,5 +1,7 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,6 +13,7 @@ import java.util.Optional;
 /**
  * @author fengz
  */
+@Slf4j
 public class DefaultUserDetailsMeta implements UserDetailsMeta {
 
     protected final UserDetails userDetails;
@@ -21,7 +24,12 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
 
     public DefaultUserDetailsMeta(@NonNull UserDetails userDetails,
                                   @NonNull UserDetailsMetaRepository userDetailsMetaRepository) {
-        this.userDetails = userDetails;
+        if (userDetails instanceof UserDetailsMeta userDetailsMeta) {
+            this.userDetails = userDetailsMeta.getUserDetails();
+        } else {
+            this.userDetails = userDetails;
+        }
+
         this.userDetailsMetaRepository = userDetailsMetaRepository;
     }
 
@@ -84,7 +92,13 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.authorities != null) {
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] Load authorities from cache: {}", GsvcContextHolder.getRequestId(), this.getUsername());
+            }
             return this.authorities;
+        }
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] Load authorities from userDetailsMetaRepository: {}", GsvcContextHolder.getRequestId(), this.getUsername());
         }
         this.authorities = this.userDetailsMetaRepository.getAuthorities(this.userDetails);
         if (this.authorities == null) {

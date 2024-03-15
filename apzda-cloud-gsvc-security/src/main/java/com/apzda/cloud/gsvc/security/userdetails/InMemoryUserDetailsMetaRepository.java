@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
-import cn.hutool.core.lang.ParameterizedTypeImpl;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.cache.CacheBuilder;
@@ -12,8 +11,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -66,14 +63,14 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     @Override
     @NonNull
     @SuppressWarnings("unchecked")
-    public <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference) {
+    public <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, TypeReference<R> typeReference) {
         try {
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
             val meta = userMeta.get(key);
             if (meta != null) {
                 return Optional.of((R) meta);
             }
-            val metaData = userDetailsMetaService.getMetaData(userDetails, key, typeReference);
+            val metaData = userDetailsMetaService.getMultiMetaData(userDetails, key, typeReference);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
         } catch (Exception e) {

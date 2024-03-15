@@ -25,6 +25,7 @@ password = 123456
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.data.uid === "admin", "出错啦: admin!=" + response.body.data.uid);
         client.global.set("accessToken", response.body.data.accessToken)
     });
 %}

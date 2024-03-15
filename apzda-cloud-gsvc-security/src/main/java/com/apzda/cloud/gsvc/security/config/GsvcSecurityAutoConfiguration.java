@@ -5,6 +5,7 @@ import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
+import com.apzda.cloud.gsvc.security.authentication.AuthenticationCustomizer;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
@@ -111,8 +112,10 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @Order(-100)
-        SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager,
-                                                SecurityContextRepository securityContextRepository, AuthenticationHandler authenticationHandler)
+        SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                AuthenticationManager authenticationManager,
+                                                SecurityContextRepository securityContextRepository,
+                                                AuthenticationHandler authenticationHandler)
             throws Exception {
 
             val requestCache = new NullRequestCache();
@@ -237,10 +240,11 @@ public class GsvcSecurityAutoConfiguration {
             return new GatewayAuthorizeCustomizer();
         }
 
-        @Bean
-        @ConditionalOnMissingBean
-        AuthenticationProvider jwtAuthenticationProvider(UserDetailsService userDetailsService,
-                                                         UserDetailsMetaRepository userDetailsMetaRepository, PasswordEncoder passwordEncoder) {
+        @Bean("defaultAuthenticationProvider")
+        @ConditionalOnMissingBean(name = "defaultAuthenticationProvider")
+        AuthenticationProvider defaultAuthenticationProvider(UserDetailsService userDetailsService,
+                                                             UserDetailsMetaRepository userDetailsMetaRepository,
+                                                             PasswordEncoder passwordEncoder) {
             return new DefaultAuthenticationProvider(userDetailsService, userDetailsMetaRepository, passwordEncoder);
         }
 
@@ -261,8 +265,8 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        AuthenticationHandler authenticationHandler(TokenManager tokenManager) {
-            return new DefaultAuthenticationHandler(properties, tokenManager);
+        AuthenticationHandler authenticationHandler(TokenManager tokenManager, ObjectProvider<List<AuthenticationCustomizer>> customizers) {
+            return new DefaultAuthenticationHandler(properties, tokenManager, customizers);
         }
 
         @Bean

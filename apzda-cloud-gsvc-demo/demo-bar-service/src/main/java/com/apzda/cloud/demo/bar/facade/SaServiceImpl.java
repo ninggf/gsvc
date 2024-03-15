@@ -1,6 +1,7 @@
 package com.apzda.cloud.demo.bar.facade;
 
 import com.apzda.cloud.demo.bar.proto.*;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +11,7 @@ import lombok.val;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,6 +28,7 @@ public class SaServiceImpl implements SaService {
     private final AuthenticationManager authenticationManager;
 
     private final ObjectMapper objectMapper;
+    private final SecurityContextRepository securityContextRepository;
 
     @Override
     public LoginRes login(LoginReq request) {
@@ -47,6 +50,7 @@ public class SaServiceImpl implements SaService {
                 val context = SecurityContextHolder.getContextHolderStrategy().createEmptyContext();
                 context.setAuthentication(authenticate);
                 SecurityContextHolder.setContext(context);
+                securityContextRepository.saveContext(context, GsvcContextHolder.getRequest().get(), GsvcContextHolder.getResponse().get());
 
                 return LoginRes.newBuilder()
                     .setErrCode(0)
@@ -55,8 +59,7 @@ public class SaServiceImpl implements SaService {
                     .setName(jwtToken.getName())
                     .build();
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 

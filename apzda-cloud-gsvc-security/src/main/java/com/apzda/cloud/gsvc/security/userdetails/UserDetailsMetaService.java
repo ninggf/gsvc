@@ -38,7 +38,7 @@ public interface UserDetailsMetaService {
     }
 
     @NonNull
-    default <R> Optional<R> getMetaData(@NonNull UserDetails userDetails, @NonNull String key, @NonNull TypeReference<R> typeReference) {
+    default <R> Optional<R> getMultiMetaData(@NonNull UserDetails userDetails, @NonNull String key, @NonNull TypeReference<R> typeReference) {
         return Optional.empty();
     }
 }

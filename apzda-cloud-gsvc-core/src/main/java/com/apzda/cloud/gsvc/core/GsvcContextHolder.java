@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.core;
 
 import io.netty.handler.codec.http.DefaultHttpHeaders;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -87,6 +88,15 @@ public class GsvcContextHolder {
         return headers;
     }
 
+    @Nullable
+    public static String cookie(String name) {
+        val httpCookie = cookies(name).get(name);
+        if (httpCookie != null) {
+            return httpCookie.getValue();
+        }
+        return null;
+    }
+
     @SuppressWarnings("unchecked")
     public static Map<String, HttpCookie> cookies() {
         val request = getRequest();
@@ -128,9 +138,9 @@ public class GsvcContextHolder {
     private static MultiValueMap<String, String> createDefaultHttpHeaders(HttpServletRequest request) {
         final MultiValueMap<String, String> headers = CollectionUtils
             .toMultiValueMap(new LinkedCaseInsensitiveMap<>(8, Locale.ENGLISH));
-        for (Enumeration<?> names = request.getHeaderNames(); names.hasMoreElements();) {
+        for (Enumeration<?> names = request.getHeaderNames(); names.hasMoreElements(); ) {
             String name = (String) names.nextElement();
-            for (Enumeration<?> values = request.getHeaders(name); values.hasMoreElements();) {
+            for (Enumeration<?> values = request.getHeaders(name); values.hasMoreElements(); ) {
                 headers.add(name, (String) values.nextElement());
             }
         }
@@ -138,8 +148,7 @@ public class GsvcContextHolder {
             val rid = request.getAttribute("X-Request-Id");
             if (rid != null) {
                 headers.add("X-Request-Id", (String) rid);
-            }
-            else {
+            } else {
                 headers.add("X-Request-Id", UUID.randomUUID().toString());
                 request.setAttribute("X-Request-Id", headers.getFirst("X-Request-Id"));
             }
@@ -307,8 +316,7 @@ public class GsvcContextHolder {
                     String host = toHostHeader(uri);
                     write(updated, X_FORWARDED_HOST_HEADER, host, isHostAppend());
                 }
-            }
-            catch (URISyntaxException e) {
+            } catch (URISyntaxException e) {
                 // nothing to do
             }
 
@@ -325,8 +333,7 @@ public class GsvcContextHolder {
                 List<String> values = headers.get(name);
                 String delimitedValue = StringUtils.collectionToCommaDelimitedString(values);
                 headers.set(name, delimitedValue);
-            }
-            else {
+            } else {
                 headers.set(name, value);
             }
         }
@@ -340,10 +347,9 @@ public class GsvcContextHolder {
             String host = uri.getHost();
             String scheme = uri.getScheme();
             if (port < 0 || (port == HTTP_PORT && HTTP_SCHEME.equals(scheme))
-                    || (port == HTTPS_PORT && HTTPS_SCHEME.equals(scheme))) {
+                || (port == HTTPS_PORT && HTTPS_SCHEME.equals(scheme))) {
                 return host;
-            }
-            else {
+            } else {
                 return host + ":" + port;
             }
         }

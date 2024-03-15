@@ -25,18 +25,19 @@ public interface UserDetailsMetaRepository {
     <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass);
 
     @NonNull
-    default <R> Optional<Collection<R>> getMetaDataByHint(UserDetails userDetails, String key, Class<R> rClass) {
+    default <R> Optional<Collection<R>> getMultiMetaData(UserDetails userDetails, String key, Class<R> rClass) {
         val typeReference = new TypeReference<Collection<R>>() {
             @Override
             public Type getType() {
                 return new ParameterizedTypeImpl(new Type[]{rClass}, null, Collection.class);
             }
         };
-        return getMetaDataByHint(userDetails, key, typeReference);
+
+        return getMultiMetaData(userDetails, key, typeReference);
     }
 
     @NonNull
-    <R> Optional<R> getMetaDataByHint(UserDetails userDetails, String key, TypeReference<R> typeReference);
+    <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, TypeReference<R> typeReference);
 
     @SuppressWarnings("unchecked")
     default <R> R getMetaData(UserDetails userDetails, String key, @NonNull R defaultValue) {
