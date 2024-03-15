@@ -55,6 +55,9 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
             if (value != null) {
+                if (log.isTraceEnabled()) {
+                    log.trace("User meta '{}' of '{}' loaded from Redis", key, userDetails.getUsername());
+                }
                 return Optional.of(objectMapper.readValue(value, rClass));
             }
             val metaData = userDetailsMetaService.getMetaData(userDetails, key, rClass);
@@ -73,6 +76,9 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
             if (value != null) {
+                if (log.isTraceEnabled()) {
+                    log.trace("User metas '{}' of '{}' loaded from cache", key, userDetails.getUsername());
+                }
                 return Optional.of(objectMapper.readValue(value, typeReference));
             }
             val metaData = userDetailsMetaService.getMultiMetaData(userDetails, key, typeReference);

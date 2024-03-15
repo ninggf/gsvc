@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;

@@ -9,6 +9,7 @@ import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
+import com.apzda.cloud.gsvc.security.userdetails.CachedUserDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,12 +21,14 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author fengz
@@ -112,14 +115,31 @@ public class JwtTokenManager implements TokenManager {
                 .build();
             val username = jwtToken.getName();
 
-            //TODO: 从缓存中读取用户信息.
-            log.trace("[{}] Try loading userDetails from userDetailsService: {}", requestId, username);
+            val tmpUser = User.withUsername(username).password("").build();
 
-            val userDetails = userDetailsService.loadUserByUsername(username);
+            Optional<CachedUserDetails> cachedUserDetails = userDetailsMetaRepository.getMetaData(tmpUser,
+                UserDetailsMeta.CACHED_USER_DETAILS_KEY,
+                CachedUserDetails.class);
+
+            val userDetails = cachedUserDetails.orElseGet(() -> {
+                try {
+                    log.trace("[{}] Try loading userDetails from userDetailsService: {}", requestId, username);
+                    val ud = userDetailsService.loadUserByUsername(username);
+                    if (ud != null) {
+                        UserDetailsMeta.checkUserDetails(ud);
+                        return CachedUserDetails.from(ud);
+                    }
+                } catch (Exception e) {
+                    log.warn("[{}] Cannot load UserDetails from userDetailsService: {} - {}", requestId, username, e.getMessage());
+                }
+                return null;
+            });
+
             if (userDetails == null) {
-                log.trace("[{}] accessToken({}) of user details not found!", requestId, accessToken);
+                log.trace("[{}] UserDetails of accessToken({}) not found!", requestId, accessToken);
                 return null;
             }
+
             // 使用了空的authorities.
             val authentication = JwtAuthenticationToken.authenticated(userDetailsMetaRepository.create(userDetails),
                 userDetails.getPassword());
@@ -135,12 +155,13 @@ public class JwtTokenManager implements TokenManager {
 
     @Override
     public void save(Authentication authentication, HttpServletRequest request) {
-        log.debug("Authentication Saved: {}", authentication);
-    }
-
-    @Override
-    public void remove(Authentication authentication, HttpServletRequest request) {
-        log.debug("Authentication Removed: {}", authentication);
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
+            log.trace("[{}] Authentication Saved: {}", GsvcContextHolder.getRequestId(), authentication);
+            userDetailsMetaRepository.setMetaData(userDetails,
+                UserDetailsMeta.CACHED_USER_DETAILS_KEY,
+                CachedUserDetails.from(userDetails)
+            );
+        }
     }
 
     @Override
@@ -213,6 +234,7 @@ public class JwtTokenManager implements TokenManager {
 
                 val newJwtToken = createJwtToken(authentication);
                 authentication.login(newJwtToken);
+                save(authentication, GsvcContextHolder.getRequest().orElse(null));
 
                 JwtToken newToken = newJwtToken;
                 val cs = customizers.getIfAvailable();

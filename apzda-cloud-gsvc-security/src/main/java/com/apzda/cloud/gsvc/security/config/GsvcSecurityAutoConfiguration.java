@@ -5,7 +5,6 @@ import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
-import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
@@ -15,6 +14,7 @@ import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
 import com.apzda.cloud.gsvc.security.repository.JwtContextRepository;
+import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.token.JwtTokenManager;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.security.userdetails.InMemoryUserDetailsMetaRepository;
@@ -57,7 +57,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -330,9 +329,16 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        UserDetailsMetaService userDetailsMetaService() {
-            log.warn("Default UserDetailsMetaService is used!!!");
-            return UserDetails::getAuthorities;
+        UserDetailsMetaService userDetailsMetaService(final UserDetailsService userDetailsService) {
+            log.warn("Default UserDetailsMetaService is used, please use a real one!!!");
+
+            return (userDetails) -> {
+                if (userDetails.getAuthorities() != null) {
+                    return userDetails.getAuthorities();
+                }
+                val ud = userDetailsService.loadUserByUsername(userDetails.getUsername());
+                return ud.getAuthorities();
+            };
         }
 
         @Bean

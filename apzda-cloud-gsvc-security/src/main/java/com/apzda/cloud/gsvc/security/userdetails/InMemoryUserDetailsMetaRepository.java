@@ -47,6 +47,9 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
             val meta = userMeta.get(key);
             if (meta != null) {
+                if (log.isTraceEnabled()) {
+                    log.trace("[{}] User meta '{}' of '{}' loaded from Memory", GsvcContextHolder.getRequestId(), key, userDetails.getUsername());
+                }
                 return Optional.of(rClass.cast(meta));
             }
             val metaData = userDetailsMetaService.getMetaData(userDetails, key, rClass);
@@ -68,6 +71,9 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
             val meta = userMeta.get(key);
             if (meta != null) {
+                if (log.isTraceEnabled()) {
+                    log.trace("[{}] User metas '{}' of '{}' loaded from Memory", GsvcContextHolder.getRequestId(), key, userDetails.getUsername());
+                }
                 return Optional.of((R) meta);
             }
             val metaData = userDetailsMetaService.getMultiMetaData(userDetails, key, typeReference);
