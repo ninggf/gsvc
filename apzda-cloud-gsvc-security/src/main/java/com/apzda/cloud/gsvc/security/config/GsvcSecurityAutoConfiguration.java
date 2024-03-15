@@ -5,7 +5,7 @@ import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
-import com.apzda.cloud.gsvc.security.authentication.AuthenticationCustomizer;
+import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
@@ -265,7 +265,7 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        AuthenticationHandler authenticationHandler(TokenManager tokenManager, ObjectProvider<List<AuthenticationCustomizer>> customizers) {
+        AuthenticationHandler authenticationHandler(TokenManager tokenManager, ObjectProvider<List<JwtTokenCustomizer>> customizers) {
             return new DefaultAuthenticationHandler(properties, tokenManager, customizers);
         }
 
@@ -343,8 +343,10 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         TokenManager defaultTokenManager(UserDetailsService userDetailsService,
-                                         UserDetailsMetaRepository userDetailsMetaRepository, JWTSigner jwtSigner) {
-            return new JwtTokenManager(userDetailsService, userDetailsMetaRepository, properties, jwtSigner);
+                                         UserDetailsMetaRepository userDetailsMetaRepository,
+                                         JWTSigner jwtSigner,
+                                         ObjectProvider<List<JwtTokenCustomizer>> customizers) {
+            return new JwtTokenManager(userDetailsService, userDetailsMetaRepository, properties, jwtSigner, customizers);
         }
 
         @Bean

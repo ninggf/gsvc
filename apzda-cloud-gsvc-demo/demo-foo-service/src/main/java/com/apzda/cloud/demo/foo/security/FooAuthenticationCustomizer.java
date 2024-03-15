@@ -17,7 +17,7 @@
 package com.apzda.cloud.demo.foo.security;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.apzda.cloud.gsvc.security.authentication.AuthenticationCustomizer;
+import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.token.JwtToken;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,26 +35,25 @@ import java.io.Serializable;
  * @since 1.0.0
  **/
 @Component
-public class FooAuthenticationCustomizer implements AuthenticationCustomizer {
+public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
     @Override
-    public Object customize(Authentication authentication, Object object) {
+    public JwtToken customize(Authentication authentication, JwtToken object) {
         val authorities = authentication.getAuthorities();
-        if (object instanceof JwtToken) {
-            val data = BeanUtil.copyProperties(object, FooLoginData.class);
-            data.setUid(((JwtToken) object).getName());
-            if (authentication.getPrincipal() instanceof UserDetailsMeta udm) {
-                data.setLastLoginTime(udm.get(UserDetailsMeta.LOGIN_TIME_META_KEY, authentication, 0L));
-            }
-            authentication.getAuthorities();
-            return data;
+
+        val data = BeanUtil.copyProperties(object, FooLoginData.class);
+        data.setUid(((JwtToken) object).getName());
+        if (authentication.getPrincipal() instanceof UserDetailsMeta udm) {
+            data.setLastLoginTime(udm.get(UserDetailsMeta.LOGIN_TIME_META_KEY, authentication, 0L));
         }
-        return object;
+        authentication.getAuthorities();
+        return data;
+
     }
 
 
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class FooLoginData implements Serializable {
+    public static class FooLoginData implements JwtToken, Serializable {
         @Serial
         private static final long serialVersionUID = -2763131228048354173L;
 

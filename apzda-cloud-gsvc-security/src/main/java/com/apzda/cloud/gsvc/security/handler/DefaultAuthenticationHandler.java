@@ -3,9 +3,10 @@ package com.apzda.cloud.gsvc.security.handler;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
-import com.apzda.cloud.gsvc.security.authentication.AuthenticationCustomizer;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
+import com.apzda.cloud.gsvc.security.token.JwtToken;
+import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.ServletException;
@@ -36,7 +37,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
 
     private final TokenManager tokenManager;
 
-    private final ObjectProvider<List<AuthenticationCustomizer>> customizers;
+    private final ObjectProvider<List<JwtTokenCustomizer>> customizers;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -56,14 +57,14 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
                 }
 
                 authenticationToken.login(jwtToken);
-                Object resObj = jwtToken;
+                JwtToken newToken = jwtToken;
                 val cs = customizers.getIfAvailable();
                 if (cs != null) {
-                    for (AuthenticationCustomizer c : cs) {
-                        resObj = c.customize(authentication, resObj);
+                    for (JwtTokenCustomizer c : cs) {
+                        newToken = c.customize(authentication, newToken);
                     }
                 }
-                ResponseUtils.respond(request, response, Response.success(resObj));
+                ResponseUtils.respond(request, response, Response.success(newToken));
             } catch (Exception e) {
                 log.error("Create token failed: {}", e.getMessage(), e);
 
@@ -133,7 +134,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
             if (authentication instanceof JwtAuthenticationToken auth) {
                 auth.logout();
             }
-            this.tokenManager.remove(authentication, request);
+            tokenManager.remove(authentication, request);
         } catch (Exception e) {
             if (log.isTraceEnabled()) {
                 log.trace("[{}] Token Manager cannot remove authentication data: {}", GsvcContextHolder.getRequestId(),

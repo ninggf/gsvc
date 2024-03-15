@@ -2,6 +2,7 @@ package com.apzda.cloud.demo.bar.controller;
 
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.security.token.JwtToken;
+import com.apzda.cloud.gsvc.security.token.SimpleJwtToken;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.utils.I18nHelper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +35,7 @@ public class TokenController {
     private final MessageSource messageSource;
 
     @PostMapping("/refresh")
-    public ResponseEntity<Response<?>> refresh(@RequestBody JwtToken token) {
+    public ResponseEntity<Response<?>> refresh(@RequestBody SimpleJwtToken token) {
         val jwtToken = tokenManager.refreshAccessToken(token);
         if (jwtToken != null) {
             return ResponseEntity.ok(Response.success(jwtToken));

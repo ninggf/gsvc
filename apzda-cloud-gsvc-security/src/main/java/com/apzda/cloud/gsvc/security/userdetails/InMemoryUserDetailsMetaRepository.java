@@ -86,6 +86,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
         val meta = userDetailsMetaCache.getIfPresent(userDetails.getUsername());
         if (meta != null) {
             meta.remove(key);
+            log.trace("User meta '{}' of '{}' removed", key, userDetails.getUsername());
         }
     }
 

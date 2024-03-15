@@ -268,7 +268,7 @@ Authorization: Bearer {{accessToken}}
     });
 %}
 
-### Route - SaService - /sa/hi#after-login
+### Route - SaService - /sa/hi.after-login
 POST http://{{barService}}/sa/hi
 // @no-redirect
 Content-Type: application/json
@@ -304,13 +304,13 @@ Authorization: Bearer {{accessToken}}
     client.test("Request executed successfully", function () {
         client.assert(response.status === 200, "Response status is not 200");
         const type = response.contentType.mimeType;
-        client.assert(type === "application/json", "Expected 'text/plain' but received '" + type + "'");
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.global.set("accessToken", response.body.data.accessToken)
         client.global.set("refreshToken", response.body.data.refreshToken)
     });
 %}
 
-### Route - SaService - /sa/hi#after-refresh
+### Route - SaService - /sa/hi.after-refresh
 POST http://{{barService}}/sa/hi
 // @no-redirect
 Content-Type: application/json
@@ -323,7 +323,7 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.status === 200, "Response status is not " + response.status);
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.data.userName === "gsvc, admin", response.body.userName + "!= gsvc, admin")

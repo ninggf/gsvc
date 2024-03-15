@@ -9,12 +9,14 @@ import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
+import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
@@ -22,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -39,6 +42,7 @@ public class JwtTokenManager implements TokenManager {
 
     protected final JWTSigner jwtSigner;
 
+    private final ObjectProvider<List<JwtTokenCustomizer>> customizers;
     private String requestId;
 
     @Override
@@ -102,12 +106,16 @@ public class JwtTokenManager implements TokenManager {
                 return null;
             }
 
-            val jwtToken = JwtToken.builder()
+            val jwtToken = SimpleJwtToken.builder()
                 .accessToken(accessToken)
                 .name((String) jwt.getPayload(JWT.SUBJECT))
                 .build();
+            val username = jwtToken.getName();
 
-            val userDetails = userDetailsService.loadUserByUsername(jwtToken.getName());
+            //TODO: 从缓存中读取用户信息.
+            log.trace("[{}] Try loading userDetails from userDetailsService: {}", requestId, username);
+
+            val userDetails = userDetailsService.loadUserByUsername(username);
             if (userDetails == null) {
                 log.trace("[{}] accessToken({}) of user details not found!", requestId, accessToken);
                 return null;
@@ -126,6 +134,16 @@ public class JwtTokenManager implements TokenManager {
     }
 
     @Override
+    public void save(Authentication authentication, HttpServletRequest request) {
+        log.debug("Authentication Saved: {}", authentication);
+    }
+
+    @Override
+    public void remove(Authentication authentication, HttpServletRequest request) {
+        log.debug("Authentication Removed: {}", authentication);
+    }
+
+    @Override
     public JwtToken createJwtToken(Authentication authentication) {
         val token = JWT.create();
         val name = authentication.getName();
@@ -139,7 +157,7 @@ public class JwtTokenManager implements TokenManager {
         val accessToken = token.sign();
         var refreshToken = createRefreshToken(accessToken, authentication);
 
-        return JwtToken.builder().refreshToken(refreshToken).accessToken(accessToken).name(name).build();
+        return SimpleJwtToken.builder().refreshToken(refreshToken).accessToken(accessToken).name(name).build();
     }
 
     @Override
@@ -175,8 +193,8 @@ public class JwtTokenManager implements TokenManager {
             }
 
             val userDetails = userDetailsService.loadUserByUsername(name);
-            val authentication = JwtAuthenticationToken.unauthenticated(userDetailsMetaRepository.create(userDetails),
-                userDetails.getPassword());
+
+            UserDetailsMeta.checkUserDetails(userDetails);
 
             val accessToken = StringUtils.defaultString(jwtToken.getAccessToken());
             val password = userDetails.getPassword();
@@ -184,14 +202,27 @@ public class JwtTokenManager implements TokenManager {
             val sign = MD5.create().digestHex(accessToken + password);
 
             if (Objects.equals(oldSign, sign)) {
+                val authentication = JwtAuthenticationToken.unauthenticated(userDetailsMetaRepository.create(userDetails),
+                    userDetails.getPassword());
+
                 authentication.setJwtToken(jwtToken);
+
                 if (!authentication.isLogin()) {
                     throw new InvalidSessionException("[" + requestId + "] Not Login");
                 }
+
                 val newJwtToken = createJwtToken(authentication);
                 authentication.login(newJwtToken);
 
-                return newJwtToken;
+                JwtToken newToken = newJwtToken;
+                val cs = customizers.getIfAvailable();
+                if (cs != null) {
+                    for (JwtTokenCustomizer c : cs) {
+                        newToken = c.customize(authentication, newToken);
+                    }
+                }
+
+                return newToken;
             }
 
             log.error("[{}] refreshToken({}) is invalid: accessToken or password does not match", requestId,
@@ -231,14 +262,14 @@ public class JwtTokenManager implements TokenManager {
             if (log.isTraceEnabled()) {
                 log.trace("[{}] Current Session is not login", requestId);
             }
-            throw new InvalidSessionException("[" + requestId + "] Not Login");
+            throw new InvalidSessionException("Not login");
         }
 
         if (log.isTraceEnabled()) {
             log.trace("[{}] Current Token is not supported: {}", requestId, authentication);
         }
 
-        throw new InvalidSessionException("[" + requestId + "] Not Support");
+        throw new InvalidSessionException("Not Support");
     }
 
 }

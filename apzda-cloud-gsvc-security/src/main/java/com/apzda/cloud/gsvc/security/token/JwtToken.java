@@ -3,28 +3,20 @@
  */
 package com.apzda.cloud.gsvc.security.token;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
-import lombok.Data;
-
-import java.io.Serial;
-import java.io.Serializable;
-
 /**
  * @author fengz windywany@gmail.com
  **/
-@Data
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class JwtToken implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = -2763131228048354173L;
+public interface JwtToken {
+    String getName();
 
-    private String name;
+    void setName(String name);
 
-    private String accessToken;
+    String getAccessToken();
 
-    private String refreshToken;
+    void setAccessToken(String accessToken);
 
+    String getRefreshToken();
+
+    void setRefreshToken(String RefreshToken);
 }

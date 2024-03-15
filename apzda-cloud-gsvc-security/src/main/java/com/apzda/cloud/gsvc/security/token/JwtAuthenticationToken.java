@@ -7,7 +7,6 @@ import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +28,6 @@ import java.util.Optional;
 @Slf4j
 public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
-    @Setter
     @Getter
     protected JwtToken jwtToken;
 
@@ -102,6 +100,13 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         return new JwtAuthenticationToken(principal, credentials, Collections.emptyList());
     }
 
+    public void setJwtToken(JwtToken jwtToken) {
+        this.jwtToken = jwtToken;
+        if (jwtToken != null) {
+            super.setAuthenticated(true);
+        }
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public Collection<GrantedAuthority> getAuthorities() {
@@ -149,7 +154,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             && principal instanceof UserDetailsMeta userDetailsMeta) {
             val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
             userDetailsMeta.set(key, jwtToken.getAccessToken());
-
+            userDetailsMeta.remove(UserDetailsMeta.AUTHORITY_META_KEY);
             val loginKey = deviceAwareMetaKey(UserDetailsMeta.LOGIN_TIME_META_KEY);
             if (userDetailsMeta.get(loginKey, 0L) == 0) {
                 userDetailsMeta.set(loginKey, System.currentTimeMillis());
