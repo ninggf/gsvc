@@ -17,8 +17,9 @@
 package com.apzda.cloud.demo.foo.security;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
+import com.apzda.cloud.gsvc.security.mfa.MfaStatus;
 import com.apzda.cloud.gsvc.security.token.JwtToken;
+import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -37,17 +38,16 @@ import java.io.Serializable;
 @Component
 public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
     @Override
-    public JwtToken customize(Authentication authentication, JwtToken object) {
-        val authorities = authentication.getAuthorities();
-
-        val data = BeanUtil.copyProperties(object, FooLoginData.class);
-        data.setUid(((JwtToken) object).getName());
+    public JwtToken customize(Authentication authentication, JwtToken token) {
+        val data = BeanUtil.copyProperties(token, FooLoginData.class);
+        data.setUid(token.getName());
         if (authentication.getPrincipal() instanceof UserDetailsMeta udm) {
             data.setLastLoginTime(udm.get(UserDetailsMeta.LOGIN_TIME_META_KEY, authentication, 0L));
+            if (udm.getUsername().equals("user1")) {
+                udm.set(UserDetailsMeta.MFA_STATUS_KEY, authentication, MfaStatus.UNSET);
+            }
         }
-        authentication.getAuthorities();
         return data;
-
     }
 
 
@@ -62,6 +62,8 @@ public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
         private String accessToken;
 
         private String refreshToken;
+
+        private String mfa;
 
         private String uid;
 

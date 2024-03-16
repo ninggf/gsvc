@@ -16,7 +16,7 @@
  */
 package com.apzda.cloud.gsvc.security.token;
 
-import com.apzda.cloud.gsvc.security.token.JwtToken;
+import org.springframework.core.Ordered;
 import org.springframework.security.core.Authentication;
 
 /**
@@ -24,6 +24,10 @@ import org.springframework.security.core.Authentication;
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface JwtTokenCustomizer {
-    JwtToken customize(Authentication authentication, JwtToken object);
+public interface JwtTokenCustomizer extends Ordered {
+    JwtToken customize(Authentication authentication, JwtToken token);
+
+    default int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE;
+    }
 }

@@ -22,7 +22,9 @@ public class RedisMetaRepoConfiguration {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(name = "apzda.cloud.security.meta-repo", havingValue = "redis")
     UserDetailsMetaRepository redisUserDetailsMetaRepository(UserDetailsMetaService userDetailsMetaService,
-                                                             StringRedisTemplate redisTemplate, ObjectMapper objectMapper, SecurityConfigProperties properties) {
+                                                             StringRedisTemplate redisTemplate,
+                                                             ObjectMapper objectMapper,
+                                                             SecurityConfigProperties properties) {
         return new RedisUserDetailsMetaRepository(userDetailsMetaService, redisTemplate, objectMapper,
             properties.getAuthorityClass());
     }

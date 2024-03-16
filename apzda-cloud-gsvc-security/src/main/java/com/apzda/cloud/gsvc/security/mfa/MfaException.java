@@ -14,32 +14,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.token;
+package com.apzda.cloud.gsvc.security.mfa;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
-import lombok.Data;
-
-import java.io.Serial;
-import java.io.Serializable;
+import com.apzda.cloud.gsvc.IServiceError;
+import com.apzda.cloud.gsvc.error.ServiceError;
+import com.apzda.cloud.gsvc.exception.NoStackLogError;
+import lombok.Getter;
+import org.springframework.security.core.AuthenticationException;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Data
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class SimpleJwtToken implements JwtToken, Serializable {
-    @Serial
-    private static final long serialVersionUID = -2763131228048354173L;
+@Getter
+public class MfaException extends AuthenticationException implements NoStackLogError {
+    public final static MfaException UNSET = new MfaException(ServiceError.MFA_NOT_SETUP);
+    public final static MfaException NOT_VERIFIED = new MfaException(ServiceError.MFA_NOT_VERIFIED);
+    private final IServiceError error;
 
-    private String name;
-
-    private String accessToken;
-
-    private String refreshToken;
-
-    private String mfa;
+    MfaException(IServiceError error) {
+        super(error.message());
+        this.error = error;
+    }
 }

@@ -4,14 +4,18 @@ import cn.hutool.jwt.signers.JWTSigner;
 import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
+import com.apzda.cloud.gsvc.security.authorization.AuthorizationLogicCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.PermissionChecker;
 import com.apzda.cloud.gsvc.security.context.SpringSecurityUserProvider;
+import com.apzda.cloud.gsvc.security.filter.MfaAuthenticationFilter;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
+import com.apzda.cloud.gsvc.security.mfa.MfaTokenCustomizer;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
 import com.apzda.cloud.gsvc.security.repository.JwtContextRepository;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
@@ -47,10 +51,11 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.authentication.configuration.EnableGlobalAuthentication;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
@@ -62,6 +67,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
@@ -70,6 +76,7 @@ import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.ErrorResponseException;
 
 import java.util.ArrayList;
@@ -90,10 +97,10 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 public class GsvcSecurityAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
-    @EnableWebSecurity
     @EnableConfigurationProperties(SecurityConfigProperties.class)
+    @EnableMethodSecurity
+    @EnableWebSecurity
     @RequiredArgsConstructor
-    @EnableGlobalAuthentication
     static class SecurityConfig {
 
         private final SecurityConfigProperties properties;
@@ -108,6 +115,9 @@ public class GsvcSecurityAutoConfiguration {
 
         @Value("${server.error.path:/error}")
         private String errorPath;
+
+        @Value("${apzda.cloud.security.role-prefix:ROLE_}")
+        private String rolePrefix;
 
         @Bean
         @Order(-100)
@@ -187,6 +197,11 @@ public class GsvcSecurityAutoConfiguration {
                 }
             }
 
+            if (properties.isMfaEnabled()) {
+                val mfaAuthenticationFilter = new MfaAuthenticationFilter(properties.mfaExcludes());
+                http.addFilterAfter(mfaAuthenticationFilter, ExceptionTranslationFilter.class);
+            }
+
             http.exceptionHandling((exception) -> {
                 exception.accessDeniedHandler(authenticationHandler);
                 exception.authenticationEntryPoint(authenticationHandler);
@@ -230,8 +245,21 @@ public class GsvcSecurityAutoConfiguration {
                 authorize.requestMatchers(antMatcher(error)).permitAll();
                 authorize.anyRequest().permitAll();
             });
-            log.info("SecurityFilterChain Initialized");
+            log.debug("SecurityFilterChain Initialized");
             return http.build();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(GrantedAuthorityDefaults.class)
+        static GrantedAuthorityDefaults grantedAuthorityDefaults(SecurityConfigProperties properties) {
+            val rolePrefix = StringUtils.defaultIfBlank(properties.getRolePrefix(), "ROLE_");
+            return new GrantedAuthorityDefaults(rolePrefix);
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        AuthorizationLogicCustomizer authz() {
+            return new AuthorizationLogicCustomizer();
         }
 
         @Bean
@@ -264,7 +292,8 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        AuthenticationHandler authenticationHandler(TokenManager tokenManager, ObjectProvider<List<JwtTokenCustomizer>> customizers) {
+        AuthenticationHandler authenticationHandler(TokenManager tokenManager,
+                                                    ObjectProvider<List<JwtTokenCustomizer>> customizers) {
             return new DefaultAuthenticationHandler(properties, tokenManager, customizers);
         }
 
@@ -307,22 +336,29 @@ public class GsvcSecurityAutoConfiguration {
             authorities.add(new SimpleGrantedAuthority("view:/foo/info/user"));
 
             val password = "123456";
+            val encodedPwd = passwordEncoder.encode(password);
             val user = User.withUsername("user")
-                .password(passwordEncoder.encode(password))
+                .password(encodedPwd)
                 .authorities(authorities)
                 .build();
             manager.createUser(user);
 
-            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            authorities.add(new SimpleGrantedAuthority(rolePrefix + "ADMIN"));
             authorities.add(new SimpleGrantedAuthority("*:/foo/*"));
 
-            log.warn("Default User, username: {}, password: {}", "admin", password);
-
             val admin = User.withUsername("admin")
-                .password(passwordEncoder.encode(password))
+                .password(encodedPwd)
                 .authorities(authorities)
                 .build();
+
             manager.createUser(admin);
+            log.warn("Default User, username: {}, password: {}, authorities: {}", "admin", password, authorities);
+
+            val user1 = User.withUsername("user1")
+                .password(encodedPwd)
+                .authorities(authorities)
+                .build();
+            manager.createUser(user1);
 
             return manager;
         }
@@ -333,9 +369,11 @@ public class GsvcSecurityAutoConfiguration {
             log.warn("Default UserDetailsMetaService is used, please use a real one!!!");
 
             return (userDetails) -> {
-                if (userDetails.getAuthorities() != null) {
+                if (!CollectionUtils.isEmpty(userDetails.getAuthorities())) {
                     return userDetails.getAuthorities();
                 }
+                log.trace("[{}] Load Authorities by userDetailsService.loadUserByUsername: {}",
+                    GsvcContextHolder.getRequestId(), userDetails.getUsername());
                 val ud = userDetailsService.loadUserByUsername(userDetails.getUsername());
                 return ud.getAuthorities();
             };
@@ -348,11 +386,17 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        TokenManager defaultTokenManager(UserDetailsService userDetailsService,
-                                         UserDetailsMetaRepository userDetailsMetaRepository,
-                                         JWTSigner jwtSigner,
-                                         ObjectProvider<List<JwtTokenCustomizer>> customizers) {
+        TokenManager tokenManager(UserDetailsService userDetailsService,
+                                  UserDetailsMetaRepository userDetailsMetaRepository,
+                                  JWTSigner jwtSigner,
+                                  ObjectProvider<List<JwtTokenCustomizer>> customizers) {
             return new JwtTokenManager(userDetailsService, userDetailsMetaRepository, properties, jwtSigner, customizers);
+        }
+
+        @Bean
+        @ConditionalOnProperty(name = "apzda.cloud.security.mfa-enabled", havingValue = "true")
+        JwtTokenCustomizer mfaTokenCustomizer(SecurityConfigProperties properties) {
+            return new MfaTokenCustomizer(properties);
         }
 
         @Bean
@@ -364,7 +408,7 @@ public class GsvcSecurityAutoConfiguration {
                 val roleHierarchy = applicationContext.getBean(RoleHierarchy.class);
                 expressionHandler.setRoleHierarchy(roleHierarchy);
             } catch (Exception ignored) {
-
+                log.debug("No RoleHierarchy found");
             }
             expressionHandler.setPermissionEvaluator(permissionEvaluator);
             return expressionHandler;

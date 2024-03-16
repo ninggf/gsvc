@@ -11,6 +11,45 @@ X-Gsvc-Caller: gtw
     });
 %}
 
+### FooService Login - need mfa setup
+POST http://{{fooService}}/foobar/login
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+Accept: application/json
+
+username = user1 &
+password = 123456
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.data.mfa==='UNSET', "MFA状态 "+response.body.data.mfa +" != UNSET");
+        client.global.set("accessToken", response.body.data.accessToken)
+    });
+%}
+
+### FooService Hi - need mfa setup
+POST http://{{fooService}}/foo/hai
+Content-Type: application/json
+X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
+
+{
+    "name": "gsvc",
+    "age": 18
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -801, "出错啦: " + response.body.errCode + " != -801");
+    });
+%}
+
 ### FooService Login
 POST http://{{fooService}}/foobar/login
 Content-Type: application/x-www-form-urlencoded; charset=utf-8

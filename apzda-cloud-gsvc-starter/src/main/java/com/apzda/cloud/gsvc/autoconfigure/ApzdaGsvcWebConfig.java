@@ -68,7 +68,7 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
 
     @Bean
     GsvcExceptionHandler gsvcExceptionHandler(ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters,
-            ObjectProvider<List<ExceptionTransformer>> transformers) {
+                                              ObjectProvider<List<ExceptionTransformer>> transformers) {
         return new GsvcExceptionHandler(httpMessageConverters, transformers);
     }
 
@@ -81,9 +81,9 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
     @Bean
     @ConditionalOnMissingBean(value = ErrorController.class, search = SearchStrategy.CURRENT)
     BasicErrorController basicErrorController(ErrorAttributes errorAttributes,
-            ObjectProvider<ErrorViewResolver> errorViewResolvers, ServerProperties serverProperties) {
+                                              ObjectProvider<ErrorViewResolver> errorViewResolvers, ServerProperties serverProperties) {
         return new GsvcErrorController(errorAttributes, serverProperties.getError(),
-                errorViewResolvers.orderedStream().toList());
+            errorViewResolvers.orderedStream().toList());
     }
 
     @Bean

@@ -4,6 +4,7 @@ import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
+import com.apzda.cloud.gsvc.security.mfa.MfaException;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.apzda.cloud.gsvc.security.token.JwtToken;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
@@ -109,7 +110,13 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
             log.trace("[{}] on Unauthorized: {}", GsvcContextHolder.getRequestId(), authException.getMessage());
         }
         if (!response.isCommitted()) {
-            ResponseUtils.respond(request, response, Response.error(ServiceError.UNAUTHORIZED));
+            if (authException instanceof MfaException mfaException) {
+                val error = Response.error(mfaException.getError());
+                error.setHttpCode(401);
+                ResponseUtils.respond(request, response, error);
+            } else {
+                ResponseUtils.respond(request, response, Response.error(ServiceError.UNAUTHORIZED));
+            }
         } else {
             throw authException;
         }

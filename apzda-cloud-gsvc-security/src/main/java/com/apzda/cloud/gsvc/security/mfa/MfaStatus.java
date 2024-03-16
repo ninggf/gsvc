@@ -14,32 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.token;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
-import lombok.Data;
-
-import java.io.Serial;
-import java.io.Serializable;
+package com.apzda.cloud.gsvc.security.mfa;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Data
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class SimpleJwtToken implements JwtToken, Serializable {
-    @Serial
-    private static final long serialVersionUID = -2763131228048354173L;
-
-    private String name;
-
-    private String accessToken;
-
-    private String refreshToken;
-
-    private String mfa;
+public interface MfaStatus {
+    String DISABLED = "";// 未启用
+    String PENDING = "PENDING";// 等待验证
+    String UNSET = "UNSET";// 未配置MFA
+    String VERIFIED = "VERIFIED";// 已验证
 }

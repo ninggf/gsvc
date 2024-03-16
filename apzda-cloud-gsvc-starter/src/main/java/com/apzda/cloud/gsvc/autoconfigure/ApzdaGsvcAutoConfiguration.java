@@ -41,16 +41,16 @@ import java.util.Map;
 /**
  * @author fengz
  */
-@AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
-        GsvcSecurityAutoConfiguration.class })
-@Import({ ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class, RedisInfraConfiguration.class })
+@AutoConfiguration(before = {WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
+    GsvcSecurityAutoConfiguration.class})
+@Import({ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class, RedisInfraConfiguration.class})
 @Slf4j
 public class ApzdaGsvcAutoConfiguration {
 
     @Bean
     GatewayServiceConfigure gatewayServiceConfigure(ServiceConfigProperties properties,
-            ObjectProvider<List<IGtwGlobalFilter<ServerResponse, ServerResponse>>> globalFilters,
-            ObjectProvider<List<IGlobalPlugin>> globalPlugins) {
+                                                    ObjectProvider<List<IGtwGlobalFilter<ServerResponse, ServerResponse>>> globalFilters,
+                                                    ObjectProvider<List<IGlobalPlugin>> globalPlugins) {
         return new GatewayServiceConfigure(properties, globalFilters, globalPlugins);
     }
 

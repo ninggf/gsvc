@@ -14,32 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.token;
+package com.apzda.cloud.gsvc.security.authorization;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
-import lombok.Data;
-
-import java.io.Serial;
-import java.io.Serializable;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Data
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class SimpleJwtToken implements JwtToken, Serializable {
-    @Serial
-    private static final long serialVersionUID = -2763131228048354173L;
-
-    private String name;
-
-    private String accessToken;
-
-    private String refreshToken;
-
-    private String mfa;
+public class AuthorizationLogicCustomizer {
+    public boolean isSa(MethodSecurityExpressionOperations operations) {
+        return operations.hasRole("sa");
+    }
 }

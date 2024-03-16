@@ -19,4 +19,8 @@ public interface JwtToken {
     String getRefreshToken();
 
     void setRefreshToken(String RefreshToken);
+
+    String getMfa();
+
+    void setMfa(String mfa);
 }

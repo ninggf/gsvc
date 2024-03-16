@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.dto;
 
 import com.apzda.cloud.gsvc.IServiceError;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,8 @@ public class Response<T> implements Serializable {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "0 means success, others value mean error.")
     private int errCode;
+    @JsonIgnore
+    private Integer httpCode;
 
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, description = "The detail message of the error.")
     private String errMsg;

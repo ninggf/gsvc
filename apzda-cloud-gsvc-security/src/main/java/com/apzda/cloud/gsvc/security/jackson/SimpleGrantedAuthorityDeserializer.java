@@ -23,7 +23,7 @@ public class SimpleGrantedAuthorityDeserializer extends StdDeserializer<SimpleGr
     }
 
     @Override
-    public SimpleGrantedAuthority deserialize(JsonParser jp, DeserializationContext ctxt)
+    public SimpleGrantedAuthority deserialize(JsonParser jp, DeserializationContext ctx)
             throws IOException, JsonProcessingException {
         JsonNode node = jp.getCodec().readTree(jp);
         String authority = node.get("authority").asText();

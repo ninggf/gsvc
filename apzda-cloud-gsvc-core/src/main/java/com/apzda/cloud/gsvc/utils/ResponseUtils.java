@@ -60,15 +60,13 @@ public class ResponseUtils {
         // bookmark 解析响应
         try {
             return OBJECT_MAPPER.readValue(responseBody, tClass);
-        }
-        catch (JsonProcessingException e) {
+        } catch (JsonProcessingException e) {
             val requestId = GsvcContextHolder.getRequestId();
             log.error("[{}] Cannot convert 【{}】 to class: {}", requestId, responseBody, tClass);
             try {
                 // bookmark: fallback to jackson error
                 return OBJECT_MAPPER.readValue(ServiceError.JACKSON_ERROR.fallbackString, tClass);
-            }
-            catch (JsonProcessingException ex) {
+            } catch (JsonProcessingException ex) {
                 // cannot get here!!!
                 throw new RuntimeException(ex);
             }
@@ -78,20 +76,15 @@ public class ResponseUtils {
     public static <R> R fallback(Throwable e, String serviceName, Class<R> rClass) {
         if (e instanceof WebClientResponseException.Unauthorized) {
             return fallback(ServiceError.UNAUTHORIZED, serviceName, rClass);
-        }
-        else if (e instanceof WebClientResponseException.Forbidden) {
+        } else if (e instanceof WebClientResponseException.Forbidden) {
             return fallback(ServiceError.FORBIDDEN, serviceName, rClass);
-        }
-        else if (e instanceof WebClientResponseException.NotFound) {
+        } else if (e instanceof WebClientResponseException.NotFound) {
             return fallback(ServiceError.NOT_FOUND, serviceName, rClass);
-        }
-        else if (e instanceof WebClientResponseException.TooManyRequests) {
+        } else if (e instanceof WebClientResponseException.TooManyRequests) {
             return fallback(ServiceError.TOO_MANY_REQUESTS, serviceName, rClass);
-        }
-        else if (e instanceof WebClientResponseException.ServiceUnavailable || e instanceof WebClientRequestException) {
+        } else if (e instanceof WebClientResponseException.ServiceUnavailable || e instanceof WebClientRequestException) {
             return fallback(ServiceError.REMOTE_SERVICE_NO_INSTANCE, serviceName, rClass);
-        }
-        else if (e instanceof WebClientResponseException.GatewayTimeout || e instanceof TimeoutException) {
+        } else if (e instanceof WebClientResponseException.GatewayTimeout || e instanceof TimeoutException) {
             return fallback(ServiceError.SERVICE_TIMEOUT, serviceName, rClass);
         }
 
@@ -106,31 +99,30 @@ public class ResponseUtils {
     }
 
     public static void respond(HttpServletRequest request, HttpServletResponse response, Response<?> data)
-            throws IOException {
-        val errCode = data.getErrCode();
+        throws IOException {
+        val errCode = Math.abs(data.getHttpCode() != null ? data.getHttpCode() : data.getErrCode());
         val serverHttpRequest = new ServletServerHttpRequest(request);
         val mediaTypes = serverHttpRequest.getHeaders().getAccept();
         val compatibleWith = isCompatibleWith(TEXT_MASK, mediaTypes);
         if (compatibleWith != null) {
             response.setContentType(MediaType.TEXT_PLAIN_VALUE);
-            if (errCode == -401) {
+            if (errCode == 401) {
                 val loginUrl = getLoginUrl(mediaTypes);
                 if (StringUtils.isNotBlank(loginUrl)) {
                     response.sendRedirect(loginUrl);
                     return;
                 }
             }
-        }
-        else {
+        } else {
             response.setContentType(MediaType.APPLICATION_JSON_VALUE + "; charset=utf-8");
         }
 
         if (ServiceError.isHttpError(errCode)) {
-            response.setStatus(Math.abs(errCode));
-        }
-        else if (errCode != 0) {
+            response.setStatus(errCode);
+        } else if (errCode != 0) {
             response.setStatus(500);
         }
+
         // tbd contentNegotiation?
         val jsonStr = OBJECT_MAPPER.writeValueAsString(data);
         response.setContentLength(jsonStr.length());
