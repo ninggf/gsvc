@@ -4,7 +4,6 @@ import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
-import com.apzda.cloud.gsvc.security.mfa.MfaException;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.apzda.cloud.gsvc.security.token.JwtToken;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
@@ -83,17 +82,16 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
         if (log.isTraceEnabled()) {
-            log.trace("[{}] on Authentication Failure: {}", GsvcContextHolder.getRequestId(), exception.toString());
+            log.trace("[{}] Authentication Failure: {}", GsvcContextHolder.getRequestId(), exception.getMessage());
         }
-        ResponseUtils.respond(request, response,
-            Response.error(ServiceError.UNAUTHORIZED.code, exception.getMessage()));
+        AuthenticationHandler.handleAuthenticationException(request, response, exception);
     }
 
     @Override
     public void onAccessDenied(HttpServletRequest request, HttpServletResponse response,
                                AccessDeniedException accessDeniedException) throws IOException, ServletException {
         if (log.isTraceEnabled()) {
-            log.trace("[{}] on Access Denied: {}", GsvcContextHolder.getRequestId(),
+            log.trace("[{}] Access Denied: {}", GsvcContextHolder.getRequestId(),
                 accessDeniedException.getMessage());
         }
         if (!response.isCommitted()) {
@@ -105,28 +103,18 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
 
     @Override
     public void onUnauthorized(HttpServletRequest request, HttpServletResponse response,
-                               AuthenticationException authException) throws IOException, ServletException {
+                               AuthenticationException exception) throws IOException, ServletException {
         if (log.isTraceEnabled()) {
-            log.trace("[{}] on Unauthorized: {}", GsvcContextHolder.getRequestId(), authException.getMessage());
+            log.trace("[{}] Unauthorized: {}", GsvcContextHolder.getRequestId(), exception.getMessage());
         }
-        if (!response.isCommitted()) {
-            if (authException instanceof MfaException mfaException) {
-                val error = Response.error(mfaException.getError());
-                error.setHttpCode(401);
-                ResponseUtils.respond(request, response, error);
-            } else {
-                ResponseUtils.respond(request, response, Response.error(ServiceError.UNAUTHORIZED));
-            }
-        } else {
-            throw authException;
-        }
+        AuthenticationHandler.handleAuthenticationException(request, response, exception);
     }
 
     @Override
     public void onAuthentication(Authentication authentication, HttpServletRequest request,
                                  HttpServletResponse response) throws SessionAuthenticationException {
         if (log.isTraceEnabled()) {
-            log.trace("[{}] on Authentication Do Session check: {}", GsvcContextHolder.getRequestId(), authentication);
+            log.trace("[{}] Do Session check: {}", GsvcContextHolder.getRequestId(), authentication);
         }
         // note: run before onAuthenticationSuccess
         tokenManager.verify(authentication);
@@ -171,5 +159,4 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
             ResponseUtils.respond(request, response, Response.success("Logout"));
         }
     }
-
 }

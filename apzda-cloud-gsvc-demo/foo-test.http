@@ -1,13 +1,17 @@
 ### FooService err
-POST http://{{fooService}}/~fooService/err
+POST http://{{fooService}}/foo/hai
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Request-ID: 1234-4567-89AB
 
-{}
+{
+    "name": "gsvc",
+    "age": 18
+}
 
 > {%
     client.test("Request executed successfully", function () {
         client.assert(response.status === 401, "Response status is not 401");
+        client.assert(response.headers.valueOf("X-Request-ID") === "1234-4567-89AB", "Request ID is incorrect!")
     });
 %}
 

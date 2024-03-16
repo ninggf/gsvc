@@ -9,6 +9,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Optional;
 
@@ -66,6 +67,10 @@ public interface UserDetailsMeta extends UserDetails {
     void clear();
 
     static void checkUserDetails(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new UsernameNotFoundException("");
+        }
+
         val username = userDetails.getUsername();
         if (!userDetails.isEnabled()) {
             throw new DisabledException(String.format("%s is disabled", username));

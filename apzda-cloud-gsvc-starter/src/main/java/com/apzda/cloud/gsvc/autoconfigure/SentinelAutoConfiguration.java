@@ -10,7 +10,6 @@ import com.apzda.cloud.gsvc.plugin.SentinelPlugin;
 import com.apzda.cloud.gsvc.sentinel.DefaultRequestOriginParser;
 import com.apzda.cloud.gsvc.sentinel.DefaultUrlBlockHandler;
 import com.apzda.cloud.gsvc.sentinel.DefaultUrlCleaner;
-import jakarta.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -36,17 +35,17 @@ public class SentinelAutoConfiguration {
     }
 
     @Bean
-    public FilterRegistrationBean<Filter> sentinelFilterRegistration(UrlBlockHandler urlBlockHandler,
+    public FilterRegistrationBean<CommonFilter> sentinelFilterRegistration(UrlBlockHandler urlBlockHandler,
             RequestOriginParser originParser, UrlCleaner urlCleaner) {
         WebCallbackManager.setUrlBlockHandler(urlBlockHandler);
         WebCallbackManager.setRequestOriginParser(originParser);
         WebCallbackManager.setUrlCleaner(urlCleaner);
 
-        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>();
+        FilterRegistrationBean<CommonFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(new CommonFilter());
         registration.addUrlPatterns("/*");
         registration.setName("gsvcSentinelFilter");
-        registration.setOrder(2);
+        registration.setOrder(-2147483647);
 
         return registration;
     }

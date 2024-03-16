@@ -14,22 +14,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.mfa;
+package com.apzda.cloud.gsvc.security.exception;
 
 import com.apzda.cloud.gsvc.IServiceError;
 import com.apzda.cloud.gsvc.error.ServiceError;
-import com.apzda.cloud.gsvc.security.exception.AuthenticationError;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class MfaException extends AuthenticationError {
-    public final static AuthenticationError UNSET = new MfaException(ServiceError.MFA_NOT_SETUP);
-    public final static AuthenticationError NOT_VERIFIED = new MfaException(ServiceError.MFA_NOT_VERIFIED);
+public class TokenException extends AuthenticationError {
+    public final static AuthenticationError EXPIRED = new TokenException(ServiceError.TOKEN_EXPIRED);
+    public static final AuthenticationError INVALID_TOKEN = new TokenException(ServiceError.TOKEN_INVALID);
 
-    MfaException(IServiceError error) {
+    TokenException(IServiceError error) {
         super(error);
     }
 }

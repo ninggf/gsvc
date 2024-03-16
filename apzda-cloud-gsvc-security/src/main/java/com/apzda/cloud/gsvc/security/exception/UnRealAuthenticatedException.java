@@ -14,22 +14,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.mfa;
+package com.apzda.cloud.gsvc.security.exception;
 
-import com.apzda.cloud.gsvc.IServiceError;
-import com.apzda.cloud.gsvc.error.ServiceError;
-import com.apzda.cloud.gsvc.security.exception.AuthenticationError;
+import org.springframework.security.authentication.AccountStatusException;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class MfaException extends AuthenticationError {
-    public final static AuthenticationError UNSET = new MfaException(ServiceError.MFA_NOT_SETUP);
-    public final static AuthenticationError NOT_VERIFIED = new MfaException(ServiceError.MFA_NOT_VERIFIED);
+public class UnRealAuthenticatedException extends AccountStatusException {
+    public UnRealAuthenticatedException(String msg) {
+        super(msg);
+    }
 
-    MfaException(IServiceError error) {
-        super(error);
+    public UnRealAuthenticatedException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 }

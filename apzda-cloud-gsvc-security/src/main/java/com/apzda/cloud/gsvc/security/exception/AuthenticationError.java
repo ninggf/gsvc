@@ -14,22 +14,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.mfa;
+package com.apzda.cloud.gsvc.security.exception;
 
 import com.apzda.cloud.gsvc.IServiceError;
 import com.apzda.cloud.gsvc.error.ServiceError;
-import com.apzda.cloud.gsvc.security.exception.AuthenticationError;
+import com.apzda.cloud.gsvc.exception.NoStackLogError;
+import lombok.Getter;
+import org.springframework.security.core.AuthenticationException;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class MfaException extends AuthenticationError {
-    public final static AuthenticationError UNSET = new MfaException(ServiceError.MFA_NOT_SETUP);
-    public final static AuthenticationError NOT_VERIFIED = new MfaException(ServiceError.MFA_NOT_VERIFIED);
+@Getter
+public class AuthenticationError extends AuthenticationException implements NoStackLogError {
+    protected final IServiceError error;
 
-    MfaException(IServiceError error) {
-        super(error);
+    public AuthenticationError(IServiceError error) {
+        super(error.message());
+        this.error = error;
+    }
+
+    public AuthenticationError() {
+        super(ServiceError.UNAUTHORIZED.message());
+        this.error = ServiceError.UNAUTHORIZED;
     }
 }

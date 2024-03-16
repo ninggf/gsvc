@@ -87,12 +87,12 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
     }
 
     @Bean
-    FilterRegistrationBean<Filter> gsvcFilterRegistration() {
-        FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>();
+    FilterRegistrationBean<GsvcServletFilter> gsvcFilterRegistration() {
+        FilterRegistrationBean<GsvcServletFilter> registration = new FilterRegistrationBean<>();
         registration.setFilter(new GsvcServletFilter());
         registration.addUrlPatterns("/*");
         registration.setName("gsvcServletFilter");
-        registration.setOrder(1);
+        registration.setOrder(-2147483646);
 
         return registration;
     }

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
@@ -42,7 +43,7 @@ public class JwtContextRepository implements SecurityContextRepository {
 
         if (storedContext != null) {
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Loaded Context from request attribute", GsvcContextHolder.getRequestId());
+                log.trace("[{}] Context Loaded from request attribute", GsvcContextHolder.getRequestId());
             }
             return (SecurityContext) storedContext;
         }
@@ -54,15 +55,15 @@ public class JwtContextRepository implements SecurityContextRepository {
             if (authentication != null) {
                 context.setAuthentication(authentication);
                 if (log.isTraceEnabled()) {
-                    log.trace("[{}] Loading Context by {}", GsvcContextHolder.getRequestId(), tokenManager);
+                    log.trace("[{}] Context loaded from TokenManager: {}", GsvcContextHolder.getRequestId(), tokenManager);
                 }
+            } else if (log.isTraceEnabled()) {
+                log.trace("[{}] Cannot loaded Context", GsvcContextHolder.getRequestId());
             }
-            else if (log.isTraceEnabled()) {
-                log.trace("[{}] Cannot Restore Authentication", GsvcContextHolder.getRequestId());
-            }
-        }
-        catch (Exception e) {
-            log.error("[{}] Cannot Restore Authentication: {}", GsvcContextHolder.getRequestId(), e.getMessage());
+        } catch (AuthenticationException ae) {
+            throw ae;
+        } catch (Exception e) {
+            log.error("[{}] Cannot loaded Context: {}", GsvcContextHolder.getRequestId(), e.getMessage());
         }
         request.setAttribute(CONTEXT_ATTR_NAME, context);
         return context;
@@ -75,8 +76,7 @@ public class JwtContextRepository implements SecurityContextRepository {
             if (log.isTraceEnabled()) {
                 log.trace("[{}] Context saved: {}", GsvcContextHolder.getRequestId(), context);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("[{}]  Save Context failed: {} - {}", GsvcContextHolder.getRequestId(), e.getMessage(), context);
         }
     }

@@ -9,6 +9,7 @@ import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
+import com.apzda.cloud.gsvc.security.exception.TokenException;
 import com.apzda.cloud.gsvc.security.userdetails.CachedUserDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
@@ -24,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
 import java.util.List;
@@ -98,6 +100,7 @@ public class JwtTokenManager implements TokenManager {
             if (log.isTraceEnabled()) {
                 log.trace("[{}] accessToken({}) is invalid: {}", requestId, accessToken, e.getMessage());
             }
+            throw TokenException.INVALID_TOKEN;
         }
 
         if (verified) {
@@ -106,7 +109,7 @@ public class JwtTokenManager implements TokenManager {
             val jwtLeeway = properties.getJwtLeeway();
             if (!jwt.validate(jwtLeeway.toSeconds())) {
                 log.trace("[{}] accessToken({}) is expired!", requestId, accessToken);
-                return null;
+                throw TokenException.EXPIRED;
             }
 
             val jwtToken = SimpleJwtToken.builder()
@@ -137,7 +140,7 @@ public class JwtTokenManager implements TokenManager {
 
             if (userDetails == null) {
                 log.trace("[{}] UserDetails of accessToken({}) not found!", requestId, accessToken);
-                return null;
+                throw new UsernameNotFoundException(username + " not found!");
             }
 
             // 使用了空的authorities.
@@ -149,8 +152,8 @@ public class JwtTokenManager implements TokenManager {
             return authentication;
         } else {
             log.trace("[{}] accessToken({}) is invalid", requestId, accessToken);
+            throw TokenException.INVALID_TOKEN;
         }
-        return null;
     }
 
     @Override

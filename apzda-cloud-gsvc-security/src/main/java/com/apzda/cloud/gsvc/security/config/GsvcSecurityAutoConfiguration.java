@@ -12,6 +12,7 @@ import com.apzda.cloud.gsvc.security.authorization.AuthorizationLogicCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.PermissionChecker;
 import com.apzda.cloud.gsvc.security.context.SpringSecurityUserProvider;
+import com.apzda.cloud.gsvc.security.filter.AuthenticationExceptionFilter;
 import com.apzda.cloud.gsvc.security.filter.MfaAuthenticationFilter;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
@@ -196,6 +197,8 @@ public class GsvcSecurityAutoConfiguration {
                     http.addFilterBefore(filter, SessionManagementFilter.class);
                 }
             }
+            // 用于处理Session加载过程中的异常
+            http.addFilterBefore(new AuthenticationExceptionFilter(), SessionManagementFilter.class);
 
             if (properties.isMfaEnabled()) {
                 val mfaAuthenticationFilter = new MfaAuthenticationFilter(properties.mfaExcludes());

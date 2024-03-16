@@ -145,12 +145,12 @@ public class GsvcContextHolder {
             }
         }
         if (!headers.containsKey("x-request-id")) {
-            val rid = request.getAttribute("X-Request-Id");
+            val rid = request.getAttribute("X-Request-ID");
             if (rid != null) {
-                headers.add("X-Request-Id", (String) rid);
+                headers.add("X-Request-ID", (String) rid);
             } else {
-                headers.add("X-Request-Id", UUID.randomUUID().toString());
-                request.setAttribute("X-Request-Id", headers.getFirst("X-Request-Id"));
+                headers.add("X-Request-ID", UUID.randomUUID().toString());
+                request.setAttribute("X-Request-ID", headers.getFirst("X-Request-ID"));
             }
         }
         return headers;
