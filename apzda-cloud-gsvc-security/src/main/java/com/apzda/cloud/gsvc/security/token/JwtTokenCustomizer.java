@@ -28,6 +28,6 @@ public interface JwtTokenCustomizer extends Ordered {
     JwtToken customize(Authentication authentication, JwtToken token);
 
     default int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
+        return Ordered.LOWEST_PRECEDENCE;
     }
 }
