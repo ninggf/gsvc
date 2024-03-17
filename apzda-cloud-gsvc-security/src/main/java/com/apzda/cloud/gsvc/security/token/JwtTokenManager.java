@@ -7,6 +7,7 @@ import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
 import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
 import com.apzda.cloud.gsvc.security.exception.TokenException;
@@ -169,6 +170,11 @@ public class JwtTokenManager implements TokenManager {
 
     @Override
     public JwtToken createJwtToken(Authentication authentication) {
+        if (authentication.getDetails() instanceof DeviceAuthenticationDetails device
+            && !properties.deviceIsAllowed(device.getDevice())) {
+            throw TokenException.DEVICE_NOT_ALLOWED;
+        }
+
         val token = JWT.create();
         val name = authentication.getName();
         token.setSubject(name);
@@ -190,20 +196,20 @@ public class JwtTokenManager implements TokenManager {
             val requestId = GsvcContextHolder.getRequestId();
             val name = jwtToken.getName();
             if (StringUtils.isBlank(name)) {
-                throw new InsufficientAuthenticationException("[" + requestId + "] username is empty");
+                throw new InsufficientAuthenticationException("Username is blank");
             }
 
             val refreshToken = jwtToken.getRefreshToken();
             if (StringUtils.isBlank(refreshToken)) {
                 log.error("[{}] refreshToken is empty!", requestId);
-                return null;
+                throw TokenException.INVALID_TOKEN;
             }
 
             try {
                 JWTUtil.verify(refreshToken, jwtSigner);
             } catch (Exception e) {
                 log.error("[{}] refreshToken({}) is invalid: {}", requestId, refreshToken, e.getMessage());
-                return null;
+                throw TokenException.INVALID_TOKEN;
             }
 
             val jwt = JWTUtil.parseToken(refreshToken);
@@ -213,7 +219,7 @@ public class JwtTokenManager implements TokenManager {
             if (!jwt.validate(jwtLeeway.toSeconds())) {
                 log.trace("[{}] refreshToken({}) is expired!", requestId, refreshToken);
 
-                return null;
+                throw TokenException.EXPIRED;
             }
 
             val userDetails = userDetailsService.loadUserByUsername(name);
@@ -252,6 +258,7 @@ public class JwtTokenManager implements TokenManager {
 
             log.error("[{}] refreshToken({}) is invalid: accessToken or password does not match", requestId,
                 refreshToken);
+            throw TokenException.INVALID_TOKEN;
         } catch (Exception e) {
             log.warn("[{}] Cannot refresh accessToken: {}", GsvcContextHolder.getRequestId(), e.getMessage());
         }

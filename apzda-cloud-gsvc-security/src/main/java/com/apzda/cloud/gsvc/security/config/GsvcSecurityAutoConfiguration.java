@@ -19,6 +19,7 @@ import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
 import com.apzda.cloud.gsvc.security.mfa.MfaTokenCustomizer;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
 import com.apzda.cloud.gsvc.security.repository.JwtContextRepository;
+import com.apzda.cloud.gsvc.security.resolver.CurrentUserParamResolver;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.token.JwtTokenManager;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
@@ -44,6 +45,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
@@ -79,6 +81,8 @@ import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.ErrorResponseException;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -453,4 +457,11 @@ public class GsvcSecurityAutoConfiguration {
 
     }
 
+    @Configuration
+    static class WebMvcConfigure implements WebMvcConfigurer {
+        @Override
+        public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
+            resolvers.add(new CurrentUserParamResolver());
+        }
+    }
 }

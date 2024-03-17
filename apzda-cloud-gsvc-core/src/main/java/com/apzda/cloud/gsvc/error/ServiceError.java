@@ -32,6 +32,7 @@ public enum ServiceError implements IServiceError {
     ACCOUNT_LOCKED(-815,"Account is locked"),
     ACCOUNT_UN_AUTHENTICATED(-816,"Account is unAuthenticated"),
     ACCOUNT_DISABLED(-817,"Account is disabled"),
+    DEVICE_NOT_ALLOWED(-818,"Device is not allowed"),
     INVALID_FORMAT(-996, "Invalid Format"),
     BIND_ERROR(-997, "Data Is Invalid"),
     DEGRADE(-998, "Service Degrade"),

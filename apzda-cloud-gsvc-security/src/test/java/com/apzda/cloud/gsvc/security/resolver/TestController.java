@@ -14,23 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.exception;
+package com.apzda.cloud.gsvc.security.resolver;
 
-import com.apzda.cloud.gsvc.IServiceError;
-import com.apzda.cloud.gsvc.error.ServiceError;
+import com.apzda.cloud.gsvc.dto.CurrentUser;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class TokenException extends AuthenticationError {
-    public final static AuthenticationError EXPIRED = new TokenException(ServiceError.TOKEN_EXPIRED);
-    public static final AuthenticationError INVALID_TOKEN = new TokenException(ServiceError.TOKEN_INVALID);
-    public static final AuthenticationError DEVICE_NOT_ALLOWED = new TokenException(ServiceError.DEVICE_NOT_ALLOWED);
 
-
-    TokenException(IServiceError error) {
-        super(error);
+@RestController
+public class TestController {
+    @GetMapping("/test/ok")
+    public String ok(CurrentUser currentUser) {
+        return currentUser.getUid();
     }
 }

@@ -18,7 +18,7 @@ package com.apzda.cloud.gsvc.security.context;
 
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.dto.CurrentUser;
-import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
+import com.apzda.cloud.gsvc.security.resolver.CurrentUserParamResolver;
 import lombok.val;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -42,19 +42,7 @@ public class SpringSecurityUserProvider extends CurrentUserProvider {
             return null;
         }
 
-        val builder = CurrentUser.builder();
-
-        val uid = authentication.getName();
-        builder.uid(uid);
-
-        val details = authentication.getDetails();
-        if (details instanceof DeviceAuthenticationDetails device) {
-            builder.app(device.getApp());
-            builder.os(device.getOsName());
-            builder.osVer(device.getOsVer());
-            builder.device(device.getDevice());
-            builder.deviceId(device.getDeviceId());
-        }
+        val builder = CurrentUserParamResolver.getCurrentUserBuilder(authentication);
 
         return builder.build();
     }

@@ -16,10 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AccountExpiredException;
-import org.springframework.security.authentication.AccountStatusException;
-import org.springframework.security.authentication.CredentialsExpiredException;
-import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -99,6 +96,8 @@ public interface AuthenticationHandler extends
                 ResponseUtils.respond(request, response, error);
             } else if (exception instanceof AccountStatusException statusException) {
                 handleAccountStatusException(request, response, statusException);
+            } else if(exception instanceof InsufficientAuthenticationException) {
+                ResponseUtils.respond(request, response, Response.error(ServiceError.UNAUTHORIZED));
             } else {
                 ResponseUtils.respond(request, response, Response.error(ServiceError.UNAUTHORIZED));
             }

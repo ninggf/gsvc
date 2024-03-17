@@ -15,6 +15,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
@@ -50,6 +51,7 @@ public class SecurityConfigProperties {
     private List<String> exclude = new ArrayList<>();
     private List<String> mfaExclude = new ArrayList<>();
     private List<ACL> acl = new ArrayList<>();
+    private List<String> allowedDevices = new ArrayList<>();
 
     @DurationUnit(ChronoUnit.MINUTES)
     private Duration accessTokenTimeout = Duration.ofMinutes(5);
@@ -68,6 +70,19 @@ public class SecurityConfigProperties {
         excludes.addAll(mfaExcludeSet);
         excludes.addAll(excludeSet);
         return excludes;
+    }
+
+
+    public boolean deviceIsAllowed(String device) {
+        if (StringUtils.isBlank(device)) {
+            return false;
+        }
+
+        if (CollectionUtils.isEmpty(allowedDevices)) {
+            return true;
+        }
+
+        return allowedDevices.contains(device);
     }
 
     @Data

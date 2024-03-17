@@ -43,7 +43,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         if (log.isTraceEnabled()) {
-            log.trace("[{}] on Authentication Success: {}", GsvcContextHolder.getRequestId(), authentication);
+            log.trace("[{}] Authentication Success: {}", GsvcContextHolder.getRequestId(), authentication);
         }
 
         if (authentication instanceof JwtAuthenticationToken authenticationToken) {

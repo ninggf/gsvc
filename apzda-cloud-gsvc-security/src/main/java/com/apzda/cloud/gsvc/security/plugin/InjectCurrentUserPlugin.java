@@ -5,11 +5,11 @@ package com.apzda.cloud.gsvc.security.plugin;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
-import com.apzda.cloud.gsvc.dto.CurrentUser;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
 import com.apzda.cloud.gsvc.plugin.IPreInvoke;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
+import com.apzda.cloud.gsvc.security.resolver.CurrentUserParamResolver;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -62,18 +62,10 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
         }
         val authentication = context.getAuthentication();
 
-        if (authentication instanceof JwtAuthenticationToken authenticationToken && authentication.isAuthenticated()) {
-            val jwtToken = authenticationToken.getJwtToken();
+        if (authentication instanceof JwtAuthenticationToken && authentication.isAuthenticated()) {
 
             data = data.map(d -> {
-                val currentUser = CurrentUser.builder()
-                    .uid(jwtToken.getName())
-                    .device(request.headers().firstHeader("X-Device"))
-                    .deviceId(request.headers().firstHeader("X-Device-Id"))
-                    .os(request.headers().firstHeader("X-Os"))
-                    .osVer(request.headers().firstHeader("X-Os-Ver"))
-                    .app(request.headers().firstHeader("X-App"))
-                    .build();
+                val currentUser = CurrentUserParamResolver.getCurrentUserBuilder(authentication).build();
 
                 if (d instanceof ObjectNode objectNode) {
                     if (log.isTraceEnabled()) {

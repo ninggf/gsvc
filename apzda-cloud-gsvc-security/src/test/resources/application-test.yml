@@ -1,0 +1,9 @@
+logging:
+  level:
+    com.apzda.cloud: trace
+
+
+apzda:
+  cloud:
+    config:
+      login-page: /login

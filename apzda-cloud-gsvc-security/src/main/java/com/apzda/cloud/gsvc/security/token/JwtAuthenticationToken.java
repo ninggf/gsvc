@@ -35,7 +35,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     private Object credentials;
 
-    public JwtAuthenticationToken(Object principal, Object credentials) {
+    JwtAuthenticationToken(Object principal, Object credentials) {
         super(null);
         this.principal = checkPrincipal(principal);
         this.credentials = credentials;
@@ -45,8 +45,8 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         }
     }
 
-    public JwtAuthenticationToken(UserDetails principal, Object credentials,
-                                  Collection<? extends GrantedAuthority> authorities) {
+    JwtAuthenticationToken(UserDetails principal, Object credentials,
+                           Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = checkPrincipal(principal);
         this.credentials = credentials;
