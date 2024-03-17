@@ -33,19 +33,12 @@ public class TestApp {
 
     @Bean
     TenantManager<String> tenantManager() {
-        return new TenantManager<String>() {
+        return new TenantManager<>() {
             @Override
             @NonNull
             protected String[] getTenantIds() {
                 return new String[]{"123456789"};
             }
-
-            @Override
-            @NonNull
-            public String getTenantIdColumn() {
-                return "merchant_id";
-            }
-
         };
     }
 

@@ -31,8 +31,14 @@ public class ServiceConfigProperties {
 
     private Config config;
 
+    private MybatisPlus mybatisPlus;
+
     public Config getConfig() {
         return config == null ? new Config() : config;
+    }
+
+    public MybatisPlus getMybatisPlus() {
+        return mybatisPlus == null ? new MybatisPlus() : mybatisPlus;
     }
 
     public ServiceConfig svcConfig(String name) {
@@ -77,4 +83,9 @@ public class ServiceConfigProperties {
 
     }
 
+    @Data
+    public static class MybatisPlus {
+        private String tenantIdColumn;
+        private boolean disableTenantPlugin = true;
+    }
 }

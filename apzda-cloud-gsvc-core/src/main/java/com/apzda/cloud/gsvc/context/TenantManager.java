@@ -17,7 +17,10 @@
 package com.apzda.cloud.gsvc.context;
 
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.common.returnsreceiver.qual.This;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ResolvableType;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -36,6 +39,11 @@ public abstract class TenantManager<T> implements InitializingBean {
 
     private static TenantManager<?> tenantManager;
     private static Class<?> fieldType;
+
+    @Value("${apzda.cloud.mybatis-plus.tenant-id-column:tenant_id}")
+    protected String tenantIdColumn;
+    @Value("${apzda.cloud.mybatis-plus.disable-tenant-plugin:true}")
+    protected Boolean disableTenantPlugin;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -75,11 +83,12 @@ public abstract class TenantManager<T> implements InitializingBean {
 
     @NonNull
     public String getTenantIdColumn() {
-        return "tenant_id";
+        return StringUtils.defaultIfBlank(tenantIdColumn, "tenant_id");
     }
 
     public boolean disableTenantPlugin() {
-        return false;
+        // return disableTenantPlugin == null || Boolean.TRUE.equals(this.disableTenantPlugin);
+        return !Boolean.FALSE.equals(this.disableTenantPlugin);
     }
 
     @NonNull

@@ -24,6 +24,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.Arrays;
@@ -40,11 +41,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @MybatisPlusTest
 @ContextConfiguration(classes = TestApp.class)
-@ComponentScan({ "com.apzda.boot.mybatis.service" })
+@ComponentScan({"com.apzda.boot.mybatis.service"})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ImportAutoConfiguration(MyBatisPlusAutoConfiguration.class)
 @Import(MyBatisPlusConfig.class)
 @Sql("classpath:/schema.sql")
+@TestPropertySource(properties = {
+    "apzda.cloud.mybatis-plus.disable-tenant-plugin=false",
+    "apzda.cloud.mybatis-plus.tenant-id-column=merchant_id"
+})
 class MybatisPlusConfigurationTest {
 
     @Autowired
@@ -119,6 +124,8 @@ class MybatisPlusConfigurationTest {
 
     @Test
     void testUser() {
+        assertThat(tenantManager.getTenantIdColumn()).isEqualTo("merchant_id");
+        assertThat(tenantManager.disableTenantPlugin()).isFalse();
         assertThat(context).isNotNull();
         val user1 = userMapper.selectById("1");
         assertThat(user1).isNotNull();
@@ -153,8 +160,7 @@ class MybatisPlusConfigurationTest {
         val user7 = userMapper.getUserByName("7");
         if (tenantManager.disableTenantPlugin()) {
             assertThat(user7.getMerchantId()).isEqualTo("987654321");
-        }
-        else {
+        } else {
             assertThat(user7).isNull();
         }
     }
