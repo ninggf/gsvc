@@ -94,7 +94,7 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 @Slf4j
 @AutoConfiguration(before = {SecurityAutoConfiguration.class})
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
-@Import(RedisMetaRepoConfiguration.class)
+@Import({RedisMetaRepoConfiguration.class, AuditorAutoConfiguration.class})
 public class GsvcSecurityAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)

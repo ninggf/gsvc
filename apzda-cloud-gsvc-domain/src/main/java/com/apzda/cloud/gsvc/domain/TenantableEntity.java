@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,29 +16,34 @@
  */
 package com.apzda.cloud.gsvc.domain;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.apzda.cloud.gsvc.model.Auditable;
+import com.apzda.cloud.gsvc.model.Tenantable;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
+
+import static com.apzda.cloud.gsvc.domain.SnowflakeIdGenerator.NAME;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@GenericGenerator(name = "snowflake", type = SnowflakeIdGenerator.class)
+@GenericGenerator(name = NAME, type = SnowflakeIdGenerator.class)
 @Getter
 @Setter
 @MappedSuperclass
-public abstract class SnowflakeIdEntity {
+@EntityListeners(AuditingEntityListener.class)
+public abstract class TenantableEntity implements Auditable<Long, String, Long>, Tenantable<String> {
+    private String createdBy;
 
-    public static final String SNOWFLAKE = "snowflake";
+    private Long createdAt;
 
-    @Id
-    @GeneratedValue(generator = SNOWFLAKE, strategy = GenerationType.SEQUENCE)
-    private Long id;
+    private String updatedBy;
 
+    private Long updatedAt;
+
+    private String tenantId;
 }

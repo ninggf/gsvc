@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,17 +14,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.domain;
+package com.apzda.cloud.gsvc.security.config;
+
+import com.apzda.cloud.gsvc.security.context.SpringDataAuditor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.domain.AuditorAware;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface TenantedEntity {
+@Configuration
+@ConditionalOnClass(AuditorAware.class)
+public class AuditorAutoConfiguration {
 
-    String getTenantId();
-
-    void setTenantId(String tenantId);
-
+    @Bean
+    @ConditionalOnMissingBean
+    AuditorAware<String> securityAuditor() {
+        return new SpringDataAuditor();
+    }
 }

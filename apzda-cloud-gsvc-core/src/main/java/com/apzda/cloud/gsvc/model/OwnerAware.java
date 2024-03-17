@@ -14,39 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.domain;
-
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.GenericGenerator;
+package com.apzda.cloud.gsvc.model;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@GenericGenerator(name = "snowflake", type = SnowflakeIdGenerator.class)
-@Getter
-@Setter
-@MappedSuperclass
-@EntityListeners(AutoMetaListener.class)
-public abstract class AuditEntity implements AuditedEntity, SoftDeletedEntity {
-
-    public static final String SNOWFLAKE = "snowflake";
-
-    @Id
-    @GeneratedValue(generator = SNOWFLAKE, strategy = GenerationType.SEQUENCE)
-    private Long id;
-
-    private String createdBy;
-
-    private Long createdAt;
-
-    private String updatedBy;
-
-    private Long updatedAt;
-
-    private boolean deleted;
-
+public interface OwnerAware<ID> {
+    ID owner();
 }

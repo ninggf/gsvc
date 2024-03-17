@@ -14,26 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.domain;
-
-import lombok.extern.slf4j.Slf4j;
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.id.IdentifierGenerator;
-
-import static com.apzda.cloud.gsvc.utils.SnowflakeUtil.SNOWFLAKE;
+package com.apzda.cloud.gsvc.model;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Slf4j
-public class SnowflakeIdGenerator implements IdentifierGenerator {
-    public final static String NAME = "snowflake";
+public interface SoftDeletable {
 
-    @Override
-    public Object generate(SharedSessionContractImplementor sharedSessionContractImplementor, Object o) {
-        return SNOWFLAKE.nextId();
-    }
+    boolean isDeleted();
+
+    void setDeleted(boolean deleted);
 
 }

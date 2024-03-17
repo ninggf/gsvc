@@ -14,17 +14,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.domain;
+package com.apzda.cloud.gsvc.model;
+
+import org.springframework.lang.Nullable;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface SoftDeletedEntity {
+public interface Auditable<ID, U, T> {
 
-    boolean isDeleted();
+    @Nullable
+    ID getId();
 
-    void setDeleted(boolean deleted);
+    @Nullable
+    U getCreatedBy();
+
+    void setCreatedBy(U createdBy);
+
+    @Nullable
+    Long getCreatedAt();
+
+    void setCreatedAt(T createdAt);
+
+    @Nullable
+    U getUpdatedBy();
+
+    void setUpdatedBy(U updatedBy);
+
+    @Nullable
+    T getUpdatedAt();
+
+    void setUpdatedAt(T updatedAt);
 
 }

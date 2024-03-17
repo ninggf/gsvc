@@ -14,29 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.domain;
+package com.apzda.cloud.db;
+
+import org.springframework.lang.NonNull;
+
+import java.util.Set;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface AuditedEntity {
+public interface MybatisCustomizer {
 
-    String getCreatedBy();
+    default void addLocation(@NonNull Set<String> locations) {
+    }
 
-    void setCreatedBy(String createdBy);
+    default void addTypeHandlersPackage(@NonNull Set<String> packages) {
+    }
 
-    Long getCreatedAt();
-
-    void setCreatedAt(Long createdAt);
-
-    String getUpdatedBy();
-
-    void setUpdatedBy(String updatedBy);
-
-    Long getUpdatedAt();
-
-    void setUpdatedAt(Long updatedAt);
+    default void addTenantIgnoreTable(@NonNull Set<String> tables) {
+    }
 
 }

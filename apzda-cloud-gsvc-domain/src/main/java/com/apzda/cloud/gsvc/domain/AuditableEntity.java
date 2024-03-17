@@ -16,29 +16,27 @@
  */
 package com.apzda.cloud.gsvc.domain;
 
-import jakarta.persistence.*;
+import com.apzda.cloud.gsvc.model.Auditable;
+import com.apzda.cloud.gsvc.model.SoftDeletable;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
+
+import static com.apzda.cloud.gsvc.domain.SnowflakeIdGenerator.NAME;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@GenericGenerator(name = "snowflake", type = SnowflakeIdGenerator.class)
+@GenericGenerator(name = NAME, type = SnowflakeIdGenerator.class)
 @Getter
 @Setter
 @MappedSuperclass
-@EntityListeners(AutoMetaListener.class)
-public abstract class TenantEntity implements AuditedEntity, SoftDeletedEntity, TenantedEntity {
-
-    public static final String SNOWFLAKE = "snowflake";
-
-    @Id
-    @GeneratedValue(generator = SNOWFLAKE, strategy = GenerationType.SEQUENCE)
-    private Long id;
-
+@EntityListeners({AuditingEntityListener.class})
+public abstract class AuditableEntity implements Auditable<Long, String, Long> {
     private String createdBy;
 
     private Long createdAt;
@@ -46,9 +44,4 @@ public abstract class TenantEntity implements AuditedEntity, SoftDeletedEntity, 
     private String updatedBy;
 
     private Long updatedAt;
-
-    private String tenantId;
-
-    private boolean deleted;
-
 }

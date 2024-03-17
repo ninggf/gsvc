@@ -34,6 +34,11 @@
             <artifactId>spring-boot-starter-security</artifactId>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+            <optional>true</optional>
+        </dependency>
         <!-- grpc -->
         <dependency>
             <groupId>net.devh</groupId>

@@ -16,7 +16,7 @@
  */
 package com.apzda.boot;
 
-import com.apzda.mybatis.plus.configure.MybatisCustomizer;
+import com.apzda.cloud.db.MybatisCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;

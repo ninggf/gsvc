@@ -51,7 +51,7 @@ class MybatisPlusConfigurationTest {
     private ApplicationContext context;
 
     @Autowired
-    private TenantManager tenantManager;
+    private TenantManager<String> tenantManager;
 
     @Resource(type = UserMapper.class)
     private UserMapper userMapper;

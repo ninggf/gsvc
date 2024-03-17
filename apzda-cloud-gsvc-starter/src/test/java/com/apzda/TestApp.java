@@ -32,12 +32,12 @@ import org.springframework.lang.NonNull;
 public class TestApp {
 
     @Bean
-    TenantManager tenantManager() {
-        return new TenantManager() {
+    TenantManager<String> tenantManager() {
+        return new TenantManager<String>() {
             @Override
             @NonNull
             protected String[] getTenantIds() {
-                return new String[] { "123456789" };
+                return new String[]{"123456789"};
             }
 
             @Override
@@ -46,10 +46,6 @@ public class TestApp {
                 return "merchant_id";
             }
 
-            @Override
-            public boolean disableTenantPlugin() {
-                return false;
-            }
         };
     }
 

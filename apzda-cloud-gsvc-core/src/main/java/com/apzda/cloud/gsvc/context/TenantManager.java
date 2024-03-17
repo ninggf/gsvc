@@ -17,22 +17,25 @@
 package com.apzda.cloud.gsvc.context;
 
 import lombok.val;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.ResolvableType;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.util.Objects;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public abstract class TenantManager implements InitializingBean {
+public abstract class TenantManager<T> implements InitializingBean {
 
-    private static final String[] SYS_TENANT_IDS = new String[] { null };
+    private static final Object[] SYS_TENANT_IDS = new Object[]{null};
 
-    private static TenantManager tenantManager;
+    private static TenantManager<?> tenantManager;
+    private static Class<?> fieldType;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -40,25 +43,34 @@ public abstract class TenantManager implements InitializingBean {
     }
 
     @NonNull
-    public static String[] tenantIds() {
+    @SuppressWarnings("unchecked")
+    public static <T> T[] tenantIds() {
         if (tenantManager != null) {
             val tenantIds = tenantManager.getTenantIds();
             if (tenantIds.length > 0) {
-                return tenantIds;
+                return (T[]) tenantIds;
             }
         }
-        return SYS_TENANT_IDS;
+        return (T[]) SYS_TENANT_IDS;
     }
 
     @Nullable
-    public static String tenantId() {
-        return tenantIds()[0];
+    @SuppressWarnings("unchecked")
+    public static <T> T tenantId() {
+        if (Objects.isNull(tenantIds()[0])) {
+            return null;
+        }
+        return (T) tenantIds()[0];
     }
 
     @NonNull
-    public static String tenantId(@NonNull String defaultTenantId) {
+    @SuppressWarnings("unchecked")
+    public static <T> T tenantId(@NonNull T defaultTenantId) {
         Assert.notNull(defaultTenantId, "Default tenant ID cannot be null");
-        return StringUtils.defaultIfBlank(tenantIds()[0], defaultTenantId);
+        if (Objects.isNull(tenantIds()[0])) {
+            return defaultTenantId;
+        }
+        return (T) tenantIds()[0];
     }
 
     @NonNull
@@ -71,6 +83,12 @@ public abstract class TenantManager implements InitializingBean {
     }
 
     @NonNull
-    protected abstract String[] getTenantIds();
+    protected abstract T[] getTenantIds();
 
+    public static Class<?> getIdType() {
+        if (fieldType == null && tenantManager != null) {
+            fieldType = ResolvableType.forClass(TenantManager.class, tenantManager.getClass()).getGeneric(0).resolve();
+        }
+        return fieldType;
+    }
 }

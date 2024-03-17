@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class Pager extends PageRequest {
+public class PagerUtils extends PageRequest {
 
     public static final int DEFAULT_PAGE_SIZE = 30;
 
@@ -42,7 +42,7 @@ public class Pager extends PageRequest {
      * @param pageSize the size of the page to be returned, must be greater than 0.
      * @param sort must not be {@literal null}, use {@link Sort#unsorted()} instead.
      */
-    protected Pager(int pageNumber, int pageSize, Sort sort) {
+    protected PagerUtils(int pageNumber, int pageSize, Sort sort) {
         super(pageNumber, pageSize, sort);
     }
 

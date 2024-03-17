@@ -14,26 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.mybatis.plus.configure;
-
-import org.springframework.lang.NonNull;
-
-import java.util.Set;
+package com.apzda.cloud.gsvc.model;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface MybatisCustomizer {
+public interface Tenantable<T> {
 
-    default void addLocation(@NonNull Set<String> locations) {
-    }
+    T getTenantId();
 
-    default void addTypeHandlersPackage(@NonNull Set<String> packages) {
-    }
-
-    default void addTenantIgnoreTable(@NonNull Set<String> tables) {
-    }
+    void setTenantId(T tenantId);
 
 }
