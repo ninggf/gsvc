@@ -34,7 +34,7 @@ public interface Auditable<ID, U, T> {
     void setCreatedBy(U createdBy);
 
     @Nullable
-    Long getCreatedAt();
+    T getCreatedAt();
 
     void setCreatedAt(T createdAt);
 

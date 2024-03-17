@@ -21,10 +21,10 @@ package com.apzda.cloud.gsvc.model;
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface Tenantable<T> {
+public interface Tenantable<TID> {
 
-    T getTenantId();
+    TID getTenantId();
 
-    void setTenantId(T tenantId);
+    void setTenantId(TID tenantId);
 
 }
