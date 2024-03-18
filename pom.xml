@@ -47,7 +47,7 @@
         <protobuf.java.version>3.25.3</protobuf.java.version>
         <grpc-java.version>1.62.2</grpc-java.version>
         <jprotoc.version>1.2.2</jprotoc.version>
-        <jackson-protobuf.version>0.9.14</jackson-protobuf.version>
+        <jackson-protobuf.version>0.9.15</jackson-protobuf.version>
         <net-devh-grpc.version>2.15.0.RELEASE</net-devh-grpc.version>
         <sentinel.version>1.8.7</sentinel.version>
         <protovalidate.version>0.1.9</protovalidate.version>
