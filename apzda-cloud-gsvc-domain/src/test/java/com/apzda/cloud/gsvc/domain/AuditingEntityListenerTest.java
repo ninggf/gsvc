@@ -76,14 +76,14 @@ class AuditingEntityListenerTest {
 
     @EqualsAndHashCode(callSuper = true)
     @Data
-    static class TestEntity extends AuditableEntity implements Tenantable<Long> {
+    static class TestEntity extends AuditableEntity<Long, String, Long> implements Tenantable<Long> {
         private Long id;
         private Long tenantId;
     }
 
     @EqualsAndHashCode(callSuper = true)
     @Data
-    static class TestEntity2 extends AuditableEntity implements Tenantable<String> {
+    static class TestEntity2 extends AuditableEntity<Long, String, Long> implements Tenantable<String> {
         private Long id;
         private String tenantId;
     }

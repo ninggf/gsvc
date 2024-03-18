@@ -17,7 +17,6 @@
 package com.apzda.cloud.gsvc.domain;
 
 import com.apzda.cloud.gsvc.model.Auditable;
-import com.apzda.cloud.gsvc.model.SoftDeletable;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
@@ -36,12 +35,12 @@ import static com.apzda.cloud.gsvc.domain.SnowflakeIdGenerator.NAME;
 @Setter
 @MappedSuperclass
 @EntityListeners({AuditingEntityListener.class})
-public abstract class AuditableEntity implements Auditable<Long, String, Long> {
-    private String createdBy;
+public abstract class AuditableEntity<ID, U, T> implements Auditable<ID, U, T> {
+    private U createdBy;
 
-    private Long createdAt;
+    private T createdAt;
 
-    private String updatedBy;
+    private U updatedBy;
 
-    private Long updatedAt;
+    private T updatedAt;
 }

@@ -25,18 +25,12 @@ public class GsvcContextThreadLocalAccessor implements ThreadLocalAccessor<Reque
 
     @Override
     public RequestAttributes getValue() {
-        if (log.isTraceEnabled()) {
-            log.trace("gsvc.context.getValue: {}", RequestContextHolder.getRequestAttributes());
-        }
         return RequestContextHolder.getRequestAttributes();
     }
 
     @Override
     public void setValue(@NonNull RequestAttributes value) {
-        if (log.isTraceEnabled()) {
-            log.trace("gsvc.context.setValue: {}", value);
-        }
-        RequestContextHolder.setRequestAttributes(value, true);
+        RequestContextHolder.setRequestAttributes(value);
         val requestId = GsvcContextHolder.getRequestId();
         if (StringUtils.isNotBlank(requestId)) {
             GsvcContextHolder.setRequestId(requestId);
@@ -45,7 +39,6 @@ public class GsvcContextThreadLocalAccessor implements ThreadLocalAccessor<Reque
 
     @Override
     public void setValue() {
-        log.trace("gsvc.context.setValue: null");
         RequestContextHolder.setRequestAttributes(null);
         GsvcContextHolder.setRequestId(null);
     }

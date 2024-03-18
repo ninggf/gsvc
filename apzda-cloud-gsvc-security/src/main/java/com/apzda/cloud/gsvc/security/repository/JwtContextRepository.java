@@ -58,12 +58,12 @@ public class JwtContextRepository implements SecurityContextRepository {
                     log.trace("[{}] Context loaded from TokenManager: {}", GsvcContextHolder.getRequestId(), tokenManager);
                 }
             } else if (log.isTraceEnabled()) {
-                log.trace("[{}] Cannot loaded Context", GsvcContextHolder.getRequestId());
+                log.trace("[{}] Cannot loaded Context. the empty context is used", GsvcContextHolder.getRequestId());
             }
         } catch (AuthenticationException ae) {
             throw ae;
         } catch (Exception e) {
-            log.error("[{}] Cannot loaded Context: {}", GsvcContextHolder.getRequestId(), e.getMessage());
+            log.error("[{}] Error happened while loading Context: {}", GsvcContextHolder.getRequestId(), e.getMessage());
         }
         request.setAttribute(CONTEXT_ATTR_NAME, context);
         return context;

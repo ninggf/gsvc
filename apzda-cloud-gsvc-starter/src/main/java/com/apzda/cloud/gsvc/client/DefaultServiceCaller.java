@@ -28,6 +28,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -55,10 +56,25 @@ public class DefaultServiceCaller implements IServiceCaller {
 
     protected final Validator validator;
 
+    private final ThreadLocal<RpcError> rpcErrorThreadLocal = new InheritableThreadLocal<>();
+
     public DefaultServiceCaller(ApplicationContext applicationContext, GatewayServiceConfigure svcConfigure) {
         this.applicationContext = applicationContext;
         this.svcConfigure = svcConfigure;
         this.validator = applicationContext.getBean(Validator.class);
+        // bookmark: https://github.com/reactive-streams/reactive-streams-jvm/blob/master/README.md#1.7
+        Hooks.onErrorDropped(error -> {
+            if (log.isTraceEnabled()) {
+                val rpcError = rpcErrorThreadLocal.get();
+                if (rpcError == null) {
+                    log.trace("Error({}) dropped while doing RPC: {}", error.getClass(), error.getMessage());
+                } else {
+                    log.trace("[{}] Error dropped while doing RPC({}): {}", rpcError.requestId,
+                        rpcError.uri,
+                        error.getMessage());
+                }
+            }
+        });
     }
 
     @Override
@@ -86,13 +102,13 @@ public class DefaultServiceCaller implements IServiceCaller {
 
     @Override
     public <T, R> Flux<R> serverStreamingCall(Class<?> clazz, String method, T request, Class<T> reqClazz,
-            Class<R> resClazz) {
+                                              Class<R> resClazz) {
         val serviceMethod = GatewayServiceRegistry.getServiceMethod(clazz, method);
         val url = serviceMethod.getRpcAddr();
 
-        if (log.isDebugEnabled()) {
+        if (log.isTraceEnabled()) {
             val requestId = GsvcContextHolder.getRequestId();
-            log.debug("[{}] Start Async RPC: {}", requestId, url);
+            log.trace("[{}] Start Async RPC: {}", requestId, url);
         }
         val reqBody = prepareRequestBody(request, serviceMethod);
 
@@ -100,7 +116,7 @@ public class DefaultServiceCaller implements IServiceCaller {
     }
 
     protected <R> Flux<R> doAsyncCall(Flux<ServerSentEvent<String>> reqBody, ServiceMethod serviceMethod, String uri,
-            Class<R> rClass) {
+                                      Class<R> rClass) {
         // bookmark: async rpc
         val requestId = GsvcContextHolder.getRequestId();
         var reqMono = reqBody.map(res -> {
@@ -110,8 +126,8 @@ public class DefaultServiceCaller implements IServiceCaller {
             try {
                 val data = res.data();
                 return ResponseUtils.parseResponse(data, rClass);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
+                log.trace("[{}] Cannot parse response from {}: {}", requestId, uri, res);
                 return ResponseUtils.fallback(e, serviceMethod.getServiceName(), rClass);
             }
         });
@@ -125,8 +141,10 @@ public class DefaultServiceCaller implements IServiceCaller {
         val plugins = method.getPlugins();
         var size = plugins.size();
         val requestId = GsvcContextHolder.getRequestId();
+
         reqBody = reqBody.doOnError(err -> {
             log.error("[{}] RPC({}) failed: {}", requestId, uri, err.getMessage());
+            rpcErrorThreadLocal.set(new RpcError(requestId, method, uri));
         });
 
         while (--size >= 0) {
@@ -160,23 +178,21 @@ public class DefaultServiceCaller implements IServiceCaller {
                 throw new MessageValidationException(result.getViolations(), requestMsg.getDescriptorForType());
             }
             return doHttpRequest(req, requestMsg).retrieve();
-        }
-        catch (JsonProcessingException e) {
+        } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e.getMessage(), e);
-        }
-        catch (ValidationException | IOException e) {
+        } catch (ValidationException | IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     private WebClient.RequestHeadersSpec<?> doHttpRequest(WebClient.RequestBodySpec request, Message body)
-            throws IOException {
+        throws IOException {
 
         val allFields = body.getAllFields();
         val uploadFileFields = allFields.values()
             .stream()
             .filter(value -> (value instanceof List<?> && !((List<?>) value).isEmpty()
-                    && ((List<?>) value).get(0) instanceof GsvcExt.UploadFile) || value instanceof GsvcExt.UploadFile)
+                && ((List<?>) value).get(0) instanceof GsvcExt.UploadFile) || value instanceof GsvcExt.UploadFile)
             .toList();
 
         WebClient.RequestHeadersSpec<?> response;
@@ -186,8 +202,7 @@ public class DefaultServiceCaller implements IServiceCaller {
                 .acceptCharset(StandardCharsets.UTF_8)
                 .contentLength(requestBody.length())
                 .bodyValue(requestBody);
-        }
-        else {
+        } else {
             val multipartBodyBuilder = generateMultipartFormData(allFields);
             response = request.contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(multipartBodyBuilder.build()));
@@ -197,7 +212,7 @@ public class DefaultServiceCaller implements IServiceCaller {
     }
 
     private MultipartBodyBuilder generateMultipartFormData(Map<Descriptors.FieldDescriptor, Object> allFields)
-            throws IOException {
+        throws IOException {
         val builder = new MultipartBodyBuilder();
         for (Descriptors.FieldDescriptor descriptor : allFields.keySet()) {
             val value = allFields.get(descriptor);
@@ -205,8 +220,7 @@ public class DefaultServiceCaller implements IServiceCaller {
             val header = String.format("form-data; name=\"%s\"", name);
             if (value instanceof GsvcExt.UploadFile uploadFile) {
                 addFile(name, uploadFile, builder);
-            }
-            else if (value instanceof List<?> files) {
+            } else if (value instanceof List<?> files) {
                 if (files.isEmpty()) {
                     continue;
                 }
@@ -214,14 +228,12 @@ public class DefaultServiceCaller implements IServiceCaller {
                     for (Object file : files) {
                         addFile(name, (GsvcExt.UploadFile) file, builder);
                     }
-                }
-                else {
+                } else {
                     for (Object file : files) {
                         builder.part(name, file).header("Content-Disposition", header);
                     }
                 }
-            }
-            else {
+            } else {
                 builder.part(name, value).header("Content-Disposition", header);
             }
         }
@@ -239,4 +251,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         }
     }
 
+    record RpcError(String requestId, ServiceMethod method, String uri) {
+
+    }
 }

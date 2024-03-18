@@ -70,6 +70,8 @@ public class ServiceConfigProperties {
 
         private boolean serializeLongsAsString = true;
 
+        private boolean contextCapture = false;
+
         @Override
         public String toString() {
             return new ToStringCreator(this).append("Login", loginPage)

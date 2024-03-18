@@ -64,7 +64,6 @@ public class CurrentUserParamResolver implements HandlerMethodArgumentResolver {
     }
 
     public static CurrentUser.CurrentUserBuilder getCurrentUserBuilder(Authentication authentication) {
-        log.error("开始构建当前用户");
         val builder = CurrentUser.builder();
         val uid = authentication.getName();
         builder.uid(uid);

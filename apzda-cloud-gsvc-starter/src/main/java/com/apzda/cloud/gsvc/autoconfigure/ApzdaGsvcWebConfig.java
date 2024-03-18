@@ -11,7 +11,6 @@ import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
-import jakarta.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
@@ -32,6 +31,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
+import reactor.core.publisher.Hooks;
 
 import java.util.List;
 import java.util.Locale;
@@ -63,6 +63,11 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
             .build();
         ResponseUtils.config(pbConfig, config);
         objectMapper.registerModule(new ProtobufModule(pbConfig));
+
+        if (config.isContextCapture()) {
+            Hooks.enableAutomaticContextPropagation();
+        }
+
         log.debug("ResponseUtils and ObjectMapper configured: {}", config);
     }
 

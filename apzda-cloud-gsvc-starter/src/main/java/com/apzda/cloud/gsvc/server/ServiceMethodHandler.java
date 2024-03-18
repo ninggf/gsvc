@@ -163,8 +163,15 @@ public class ServiceMethodHandler {
         }
 
         final Flux<Object> responseFlux = returnObj.contextCapture();
+
         // server-streaming method will respond text/event-stream
         return ServerResponse.sse(sseBuilder -> {
+            sseBuilder.onError(err -> {
+
+            }).onTimeout(() -> {
+
+            });
+
             responseFlux
                 .doOnComplete(sseBuilder::complete)
                 .doOnError(err -> {
@@ -172,8 +179,11 @@ public class ServiceMethodHandler {
                         serviceMethod.getDmName(), err.getMessage());
                     try {
                         sseBuilder.data(ResponseUtils.fallback(err, serviceMethod.getServiceName(), String.class));
-                    } catch (Exception ie) {
-                        sseBuilder.error(ie);
+                        sseBuilder.complete();
+                    } catch (IOException ie) {
+                        log.warn("[{}] Cannot send data to client: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                            serviceMethod.getDmName(), ie.getMessage());
+                        sseBuilder.complete();
                     }
                 })
                 .subscribe(resp -> {
@@ -181,14 +191,14 @@ public class ServiceMethodHandler {
                         val response = createResponse(resp);
                         sseBuilder.data(response);
                     } catch (Exception e) {
-                        log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                        log.error("[{}] Call method failed on subscribe: {}.{} - {}", logId, serviceMethod.getServiceName(),
                             serviceMethod.getDmName(), e.getMessage());
                         try {
                             sseBuilder.data(ResponseUtils.fallback(e, serviceMethod.getServiceName(), String.class));
-                        } catch (Exception ie) {
-                            log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                        } catch (IOException ie) {
+                            log.error("[{}] Cannot send data to client: {}.{} - {}", logId, serviceMethod.getServiceName(),
                                 serviceMethod.getDmName(), ie.getMessage());
-                            sseBuilder.error(ie);
+                            sseBuilder.complete();
                         }
                     }
                 });

@@ -38,7 +38,7 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
         headers.put("x-gsvc-caller", appName);
 
         val requestId = GsvcContextHolder.getRequestId();
-        headers.put("X-Request-Id", requestId);
+        headers.put("X-Request-ID", requestId);
 
         request = request.headers(httpHeaders -> {
             for (Map.Entry<String, String> kv : headers.entrySet()) {
@@ -51,6 +51,7 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
         }
 
         val cookies = GsvcContextHolder.cookies("xgh_");
+
         if (!cookies.isEmpty()) {
             request = request.cookies(cookie -> {
                 for (Map.Entry<String, HttpCookie> kv : cookies.entrySet()) {

@@ -37,18 +37,18 @@ import static com.apzda.cloud.gsvc.domain.SnowflakeIdGenerator.NAME;
 @MappedSuperclass
 @Getter
 @Setter
-public abstract class SimpleEntity<ID, U, T, TID> implements Auditable<ID, U, T>, Tenantable<TID>, SoftDeletable {
+public abstract class SimpleEntity implements Auditable<Long, String, Long>, Tenantable<Long>, SoftDeletable {
     public static final String SNOWFLAKE = NAME;
 
-    private U createdBy;
+    private String createdBy;
 
-    private T createdAt;
+    private Long createdAt;
 
-    private U updatedBy;
+    private String updatedBy;
 
-    private T updatedAt;
+    private Long updatedAt;
 
-    private TID tenantId;
+    private Long tenantId;
 
     private boolean deleted;
 }

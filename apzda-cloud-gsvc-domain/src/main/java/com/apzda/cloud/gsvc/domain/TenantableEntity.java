@@ -36,14 +36,14 @@ import static com.apzda.cloud.gsvc.domain.SnowflakeIdGenerator.NAME;
 @Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public abstract class TenantableEntity implements Auditable<Long, String, Long>, Tenantable<String> {
-    private String createdBy;
+public abstract class TenantableEntity<ID, U, T, TID> implements Auditable<ID, U, T>, Tenantable<TID> {
+    private U createdBy;
 
-    private Long createdAt;
+    private T createdAt;
 
-    private String updatedBy;
+    private U updatedBy;
 
-    private Long updatedAt;
+    private T updatedAt;
 
-    private String tenantId;
+    private TID tenantId;
 }
