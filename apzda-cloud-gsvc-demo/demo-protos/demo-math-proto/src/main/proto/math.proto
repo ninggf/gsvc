@@ -23,6 +23,10 @@ service MathService {
    * 返回 num1+num2.
    */
   rpc add(OpNum) returns(Result);
+  /*
+   * 返回 num1/num2
+   */
+  rpc divide(OpNum) returns(Result);
   /**
    * 将所有的num1相加.
    */

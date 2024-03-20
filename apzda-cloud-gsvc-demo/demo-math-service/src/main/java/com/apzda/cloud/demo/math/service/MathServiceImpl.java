@@ -74,4 +74,9 @@ public class MathServiceImpl implements MathService {
         return request.map(opNum -> Result.newBuilder().setResult((long) opNum.getNum1() * opNum.getNum1()).build());
     }
 
+    @Override
+    public Result divide(OpNum request) {
+        return Result.newBuilder().setResult(request.getNum1() / request.getNum2()).build();
+    }
+
 }

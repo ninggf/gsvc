@@ -382,3 +382,36 @@ Authorization: Bearer {{accessToken}}
     });
 %}
 
+### BarService err
+POST http://{{barService}}/~barService/err
+Content-Type: application/json
+X-Gsvc-Caller: gtw
+
+{
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService rpcErr
+POST http://{{barService}}/~barService/rpcErr
+Content-Type: application/json
+X-Gsvc-Caller: gtw
+
+{
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 503, "Response status is not 503");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 503, "出错啦: " + response.body.errMsg);
+    });
+%}

@@ -108,4 +108,10 @@ public class BarServiceImpl implements BarService {
         throw new ErrorResponseException(HttpStatus.UNAUTHORIZED);
     }
 
+    @Override
+    public GsvcExt.CommonRes rpcErr(Empty request) {
+        mathService.divide(OpNum.newBuilder().setNum1(1).setNum2(0).build());
+        return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
+    }
+
 }

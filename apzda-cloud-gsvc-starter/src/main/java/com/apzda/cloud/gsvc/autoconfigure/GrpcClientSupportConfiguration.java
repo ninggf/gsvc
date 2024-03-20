@@ -26,9 +26,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,28 +43,28 @@ import java.util.concurrent.TimeUnit;
 public class GrpcClientSupportConfiguration {
 
     @Configuration
-    @ImportAutoConfiguration({net.devh.boot.grpc.common.autoconfigure.GrpcCommonCodecAutoConfiguration.class,
-        net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration.class,
-        net.devh.boot.grpc.client.autoconfigure.GrpcClientMetricAutoConfiguration.class,
-        net.devh.boot.grpc.client.autoconfigure.GrpcClientHealthAutoConfiguration.class,
-        GrpcClientSecurityConfiguration.class,
-        net.devh.boot.grpc.client.autoconfigure.GrpcDiscoveryClientAutoConfiguration.class})
+    @ImportAutoConfiguration({ net.devh.boot.grpc.common.autoconfigure.GrpcCommonCodecAutoConfiguration.class,
+            net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration.class,
+            net.devh.boot.grpc.client.autoconfigure.GrpcClientMetricAutoConfiguration.class,
+            net.devh.boot.grpc.client.autoconfigure.GrpcClientHealthAutoConfiguration.class,
+            GrpcClientSecurityConfiguration.class,
+            net.devh.boot.grpc.client.autoconfigure.GrpcDiscoveryClientAutoConfiguration.class })
     static class GrpcClientAutoImporter {
 
         @Bean
         @ConditionalOnMissingBean
         GrpcChannelFactoryAdapter grpcChannelFactoryAdapter(
-            net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory grpcChannelFactory,
-            ServiceConfigProperties properties, ApplicationContext applicationContext) {
+                net.devh.boot.grpc.client.channelfactory.GrpcChannelFactory grpcChannelFactory,
+                ServiceConfigProperties properties, ApplicationContext applicationContext) {
             return new DefaultGrpcChannelFactoryAdapter(grpcChannelFactory, properties, applicationContext);
         }
 
         @Bean
         @ConditionalOnMissingBean
         StubFactoryAdapter stubFactoryAdapter(ApplicationContext applicationContext, AsyncStubFactory asyncStubFactory,
-                                              BlockingStubFactory blockingStubFactory, GrpcChannelFactoryAdapter grpcChannelFactoryAdapter) {
+                BlockingStubFactory blockingStubFactory, GrpcChannelFactoryAdapter grpcChannelFactoryAdapter) {
             return new DefaultStubFactoryAdapter(asyncStubFactory, blockingStubFactory, grpcChannelFactoryAdapter,
-                applicationContext);
+                    applicationContext);
         }
 
         @Bean
@@ -71,7 +73,7 @@ public class GrpcClientSupportConfiguration {
                 val keepAliveTime = configure.getGrpcKeepAliveTime(cfgName, true);
                 val keepAliveTimeout = configure.getGrpcKeepAliveTimeout(cfgName, true);
                 log.debug("ChannelBuilder for {} Stub, keepAliveTime = {}, keepAliveTimeout = {}", cfgName,
-                    keepAliveTime, keepAliveTimeout);
+                        keepAliveTime, keepAliveTimeout);
                 channelBuilder.keepAliveTime(keepAliveTime.toSeconds(), TimeUnit.SECONDS);
                 channelBuilder.keepAliveTimeout(keepAliveTimeout.toSeconds(), TimeUnit.SECONDS);
             });
@@ -84,15 +86,25 @@ public class GrpcClientSupportConfiguration {
                 public ErrorResponseException transform(Throwable exception) {
                     if (exception instanceof StatusRuntimeException se) {
                         val status = se.getStatus();
-                        // log.debug("Grpc Call failed: {} - {}", status.getCode().name(), status.getDescription(), status.getCause());
-                        val pd = ProblemDetail.forStatus(502);
+                        log.trace("Grpc Call failed: {} - {}", status.getCode(), status.getDescription(),
+                                status.getCause());
+                        HttpStatusCode code;
+                        ProblemDetail pd;
+                        if (status.getCause() instanceof IOException) {
+                            pd = ProblemDetail.forStatus(502);
+                            code = HttpStatus.BAD_GATEWAY;
+                        }
+                        else {
+                            pd = ProblemDetail.forStatus(503);
+                            code = HttpStatus.SERVICE_UNAVAILABLE;
+                        }
                         pd.setTitle(status.getCode().name() + " - " + status.getDescription());
                         if (status.getCause() != null) {
                             pd.setDetail(status.getCause().getMessage());
                         }
-                        return new ErrorResponseException(HttpStatus.BAD_GATEWAY, pd, exception);
+                        return new ErrorResponseException(code, pd, exception);
                     }
-                    return new ErrorResponseException(HttpStatus.BAD_GATEWAY);
+                    return new ErrorResponseException(HttpStatus.INTERNAL_SERVER_ERROR);
                 }
 
                 @Override
@@ -101,6 +113,7 @@ public class GrpcClientSupportConfiguration {
                 }
             };
         }
+
     }
 
     @GrpcGlobalClientInterceptor
@@ -108,7 +121,7 @@ public class GrpcClientSupportConfiguration {
         return new ClientInterceptor() {
             @Override
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
-                                                                       CallOptions callOptions, Channel next) {
+                    CallOptions callOptions, Channel next) {
                 val requestId = GsvcContextHolder.getRequestId();
 
                 return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {

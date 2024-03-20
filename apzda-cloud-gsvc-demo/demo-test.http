@@ -142,3 +142,20 @@ GET http://{{demoService}}/demo/m/add?num1=1&num2=18
         client.assert(response.body.data.result == 19, "出错啦: " + response.body.errMsg);
     });
 %}
+
+### DemoService Err
+POST http://{{demoService}}/demo/~demoService/err
+Content-Type: application/json
+X-Gsvc-Caller: gtw
+
+{
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 401, "错误的响应码" + response.body.errCode);
+    });
+%}
