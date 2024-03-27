@@ -2,6 +2,7 @@ package com.apzda.cloud.gsvc.config;
 
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
+import com.apzda.cloud.gsvc.resolver.NoneResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +26,12 @@ public class GatewayServiceConfigure implements IServiceConfigure {
 
     private final ObjectProvider<List<IGlobalPlugin>> globalPlugins;
 
+    /**
+     * 仅供GRPC stub使用.
+     * @param cfgName 服务配置名
+     * @return 服务发现名称
+     * @deprecated
+     */
     public String getSvcName(String cfgName) {
         return StringUtils.defaultIfBlank(serviceConfig.refConfig(cfgName).getSvcName(), cfgName);
     }
@@ -133,7 +140,11 @@ public class GatewayServiceConfigure implements IServiceConfigure {
         var svcLbName = serviceConfig.refConfig(cfgName).getSvcName();
         svcLbName = StringUtils.defaultIfBlank(svcLbName, cfgName);
 
-        return Character.toLowerCase(svcLbName.charAt(0)) + svcLbName.substring(1);
+        val registry = serviceConfig.getRegistry();
+        val type = registry.getType();
+        val resolver = ServiceConfigProperties.RESOLVERS.getOrDefault(type, new NoneResolver());
+
+        return resolver.resolve(svcLbName, registry);
     }
 
     public List<String> getPlugins(String svcName, String methodName, boolean isRef) {
@@ -145,7 +156,8 @@ public class GatewayServiceConfigure implements IServiceConfigure {
         for (String plugin : config.getPlugins()) {
             if (StringUtils.startsWith(plugin, "-")) {
                 plugins.remove(plugin.substring(1));
-            } else {
+            }
+            else {
                 plugins.add(plugin);
             }
         }
@@ -155,7 +167,8 @@ public class GatewayServiceConfigure implements IServiceConfigure {
             for (String plugin : methodConfig.getPlugins()) {
                 if (StringUtils.startsWith(plugin, "-")) {
                     plugins.remove(plugin.substring(1));
-                } else {
+                }
+                else {
                     plugins.add(plugin);
                 }
             }

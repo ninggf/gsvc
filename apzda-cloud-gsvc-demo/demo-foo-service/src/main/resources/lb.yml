@@ -4,7 +4,7 @@ spring:
       client:
         simple:
           instances:
-            barService:
+            BARSERVICE:
               - instanceId: '0'
                 host: localhost
                 port: 12562

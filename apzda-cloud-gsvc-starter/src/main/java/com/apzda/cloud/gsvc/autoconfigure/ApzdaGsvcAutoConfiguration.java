@@ -25,13 +25,19 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
+import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
+import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
+import org.springframework.cloud.client.loadbalancer.reactive.DeferringLoadBalancerExchangeFilterFunction;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Scope;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.time.Clock;
@@ -41,16 +47,35 @@ import java.util.Map;
 /**
  * @author fengz
  */
-@AutoConfiguration(before = {WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
-    GsvcSecurityAutoConfiguration.class})
-@Import({ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class, RedisInfraConfiguration.class})
+@AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
+        GsvcSecurityAutoConfiguration.class, WebClientAutoConfiguration.class })
+@Import({ ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class, RedisInfraConfiguration.class })
 @Slf4j
 public class ApzdaGsvcAutoConfiguration {
 
     @Bean
+    // @LoadBalanced
+    @Scope("prototype")
+    @ConditionalOnMissingBean
+    public WebClient.Builder webClientBuilder(ObjectProvider<WebClientCustomizer> customizerProvider,
+            ObjectProvider<DeferringLoadBalancerExchangeFilterFunction<? extends ExchangeFilterFunction>> filterFunctionObjectProvider) {
+        val builder = WebClient.builder();
+        customizerProvider.orderedStream().forEach((customizer) -> customizer.customize(builder));
+
+        filterFunctionObjectProvider.orderedStream().forEach(filter -> {
+            if (log.isTraceEnabled()) {
+                log.trace("{} is used by WebClient.builder", filter.getClass().getCanonicalName());
+            }
+            builder.filter(filter);
+        });
+
+        return builder;
+    }
+
+    @Bean
     GatewayServiceConfigure gatewayServiceConfigure(ServiceConfigProperties properties,
-                                                    ObjectProvider<List<IGtwGlobalFilter<ServerResponse, ServerResponse>>> globalFilters,
-                                                    ObjectProvider<List<IGlobalPlugin>> globalPlugins) {
+            ObjectProvider<List<IGtwGlobalFilter<ServerResponse, ServerResponse>>> globalFilters,
+            ObjectProvider<List<IGlobalPlugin>> globalPlugins) {
         return new GatewayServiceConfigure(properties, globalFilters, globalPlugins);
     }
 
@@ -90,7 +115,7 @@ public class ApzdaGsvcAutoConfiguration {
         return Clock.systemDefaultZone();
     }
 
-    @Configuration
+    @Configuration(proxyBeanMethods = false)
     @RequiredArgsConstructor
     static class GsvcServer implements SmartLifecycle {
 
