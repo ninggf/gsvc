@@ -57,7 +57,7 @@
         <springdoc.version>2.2.0</springdoc.version>
         <swagger-annotations.version>2.2.21</swagger-annotations.version>
         <!-- plugins versions -->
-        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
+        <maven-gpg-plugin.version>3.2.1</maven-gpg-plugin.version>
         <spring-javaformat.version>0.0.41</spring-javaformat.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
