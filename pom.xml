@@ -42,7 +42,7 @@
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <mybatis-spring.version>3.0.3</mybatis-spring.version>
         <hutool.version>5.8.26</hutool.version>
-        <guava.version>33.0.0-jre</guava.version>
+        <guava.version>33.1.0-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <protoc.version>3.25.2</protoc.version>
         <protobuf.java.version>3.25.3</protobuf.java.version>
