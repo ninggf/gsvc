@@ -77,19 +77,18 @@ public class CommonFilter implements Filter {
             throws IOException, ServletException {
         HttpServletRequest sRequest = (HttpServletRequest) request;
         Entry urlEntry = null;
+
         try {
             String target = FilterUtil.filterTarget(sRequest);
             // Clean and unify the URL.
-            // For REST APIs, you have to clean the URL (e.g. `/foo/1` and `/foo/2` ->
-            // `/foo/:id`), or
+            // For REST APIs, you have to clean the URL (e.g. `/foo/1` and `/foo/2` -> `/foo/:id`), or
             // the amount of context and resources will exceed the threshold.
             UrlCleaner urlCleaner = WebCallbackManager.getUrlCleaner();
             if (urlCleaner != null) {
                 target = urlCleaner.clean(target);
             }
 
-            // If you intend to exclude some URLs, you can convert the URLs to the empty
-            // string ""
+            // If you intend to exclude some URLs, you can convert the URLs to the empty string ""
             // in the UrlCleaner implementation.
             if (!StringUtil.isEmpty(target)) {
                 // Parse the request origin using registered origin parser.

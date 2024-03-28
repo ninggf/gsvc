@@ -9,7 +9,7 @@
 
     <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
     <description>
-        Adapt to Sentinel 1.8.6. This artifact should be deprecated after sentinel-web-servlet supports jakarta.
+        Adapt to Sentinel 1.8.7. This artifact should be deprecated after sentinel-web-servlet supports jakarta.
     </description>
 
     <dependencies>
@@ -30,6 +30,16 @@
         <dependency>
             <groupId>com.alibaba.csp</groupId>
             <artifactId>sentinel-grpc-adapter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-apache-httpclient-adapter</artifactId>
+            <version>${sentinel.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-okhttp-adapter</artifactId>
+            <version>${sentinel.version}</version>
         </dependency>
         <dependency>
             <groupId>com.alibaba.csp</groupId>

@@ -80,6 +80,7 @@ public final class WebServletConfig {
 
     /**
      * Set the HTTP status of the default block page.
+     *
      * @param httpStatus the HTTP status of the default block page
      * @since 1.7.0
      */

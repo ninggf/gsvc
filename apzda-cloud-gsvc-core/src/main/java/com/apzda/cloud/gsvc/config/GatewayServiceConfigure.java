@@ -32,6 +32,7 @@ public class GatewayServiceConfigure implements IServiceConfigure {
      * @return 服务发现名称
      * @deprecated
      */
+    @Deprecated
     public String getSvcName(String cfgName) {
         return StringUtils.defaultIfBlank(serviceConfig.refConfig(cfgName).getSvcName(), cfgName);
     }
