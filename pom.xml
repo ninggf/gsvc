@@ -65,7 +65,7 @@
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
-        <gsvc.compiler.version>1.2.11-SNAPSHOT</gsvc.compiler.version>
+        <gsvc.compiler.version>1.2.12</gsvc.compiler.version>
     </properties>
 
     <issueManagement>
