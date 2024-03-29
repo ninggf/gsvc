@@ -18,6 +18,7 @@ import net.devh.boot.grpc.client.channelfactory.GrpcChannelConfigurer;
 import net.devh.boot.grpc.client.interceptor.GrpcGlobalClientInterceptor;
 import net.devh.boot.grpc.client.stubfactory.AsyncStubFactory;
 import net.devh.boot.grpc.client.stubfactory.BlockingStubFactory;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -36,19 +37,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author fengz
  */
-@Configuration(proxyBeanMethods = false)
+@AutoConfiguration(before = GrpcClientAutoConfiguration.class)
 @EnableConfigurationProperties
 @ConditionalOnClass(GrpcClientAutoConfiguration.class)
 @Slf4j
 public class GrpcClientSupportConfiguration {
 
     @Configuration
-    @ImportAutoConfiguration({ net.devh.boot.grpc.common.autoconfigure.GrpcCommonCodecAutoConfiguration.class,
-            net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration.class,
-            net.devh.boot.grpc.client.autoconfigure.GrpcClientMetricAutoConfiguration.class,
-            net.devh.boot.grpc.client.autoconfigure.GrpcClientHealthAutoConfiguration.class,
-            GrpcClientSecurityConfiguration.class,
-            net.devh.boot.grpc.client.autoconfigure.GrpcDiscoveryClientAutoConfiguration.class })
+    @ImportAutoConfiguration({ GrpcClientSecurityConfiguration.class })
     static class GrpcClientAutoImporter {
 
         @Bean

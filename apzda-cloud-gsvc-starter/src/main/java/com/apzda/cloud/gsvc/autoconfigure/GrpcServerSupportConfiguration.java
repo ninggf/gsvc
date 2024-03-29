@@ -25,7 +25,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
 
@@ -38,25 +37,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author fengz
  */
-@AutoConfiguration
+@AutoConfiguration(before = GrpcServerAutoConfiguration.class)
 @ConditionalOnClass(GrpcServerAutoConfiguration.class)
-@Import(GlobalGrpcExceptionAdvice.class)
 @Slf4j
 public class GrpcServerSupportConfiguration {
 
     @Configuration
-    @ImportAutoConfiguration({ net.devh.boot.grpc.common.autoconfigure.GrpcCommonCodecAutoConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcAdviceAutoConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcHealthServiceAutoConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcMetadataConsulConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcMetadataEurekaConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcMetadataNacosConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcMetadataZookeeperConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcReflectionServiceAutoConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcServerFactoryAutoConfiguration.class,
-            net.devh.boot.grpc.server.autoconfigure.GrpcServerMetricAutoConfiguration.class,
-            GrpcServerSecurityConfiguration.class })
+    @ImportAutoConfiguration({ GrpcServerSecurityConfiguration.class })
     static class GrpcServerAutoImporter {
 
         @GrpcGlobalServerInterceptor
@@ -92,6 +79,11 @@ public class GrpcServerSupportConfiguration {
                 .keepAliveTimeout(keepAliveTimeout.getSeconds(), TimeUnit.SECONDS)
                 .permitKeepAliveWithoutCalls(true);
         };
+    }
+
+    @Bean
+    GlobalGrpcExceptionAdvice globalGrpcExceptionAdvice() {
+        return new GlobalGrpcExceptionAdvice();
     }
 
     @Slf4j
