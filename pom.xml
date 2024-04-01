@@ -39,7 +39,7 @@
         <!-- dependencies versions -->
         <javax.annotation.version>1.3.2</javax.annotation.version>
         <spring-boot.version>3.2.4</spring-boot.version>
-        <spring-cloud.version>2023.0.0</spring-cloud.version>
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <mybatis-spring.version>3.0.3</mybatis-spring.version>
         <hutool.version>5.8.26</hutool.version>
