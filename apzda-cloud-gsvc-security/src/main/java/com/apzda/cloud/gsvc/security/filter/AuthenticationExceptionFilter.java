@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.gsvc.security.filter;
 
+import com.apzda.cloud.gsvc.exception.GsvcException;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,14 +34,16 @@ import java.io.IOException;
  * @since 1.0.0
  **/
 public class AuthenticationExceptionFilter extends OncePerRequestFilter {
+
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
             filterChain.doFilter(request, response);
-        } catch (AuthenticationException ae) {
+        }
+        catch (AuthenticationException | GsvcException ae) {
             AuthenticationHandler.handleAuthenticationException(request, response, ae);
         }
     }
+
 }
