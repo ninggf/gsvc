@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.filter;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,15 +17,17 @@ import java.util.UUID;
  * @author fengz
  */
 public class GsvcServletFilter extends OncePerRequestFilter {
+
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         val requestId = StringUtils.defaultIfBlank(request.getHeader("X-Request-ID"), UUID.randomUUID().toString());
         request.setAttribute("X-Request-ID", requestId);
         response.setHeader("X-Request-ID", requestId);
-
+        // bookmark: 初始化
+        GsvcContextHolder.CONTEXT_BOX.set(new GsvcContextHolder.GsvcContext(requestId, null, null));
         filterChain.doFilter(request, response);
     }
+
 }

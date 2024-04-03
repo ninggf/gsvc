@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.config;
 
+import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.resolver.NoneResolver;
@@ -138,8 +139,12 @@ public class GatewayServiceConfigure implements IServiceConfigure {
     }
 
     public String svcLbName(String cfgName) {
-        var svcLbName = serviceConfig.refConfig(cfgName).getSvcName();
-        svcLbName = StringUtils.defaultIfBlank(svcLbName, cfgName);
+        String serviceName = cfgName;
+        if (GatewayServiceRegistry.SERVICE_ALIAS.containsKey(cfgName)) {
+            serviceName = GatewayServiceRegistry.SERVICE_ALIAS.get(cfgName);
+        }
+        var svcLbName = serviceConfig.refConfig(serviceName).getSvcName();
+        svcLbName = StringUtils.defaultIfBlank(svcLbName, serviceName);
 
         val registry = serviceConfig.getRegistry();
         val type = registry.getType();

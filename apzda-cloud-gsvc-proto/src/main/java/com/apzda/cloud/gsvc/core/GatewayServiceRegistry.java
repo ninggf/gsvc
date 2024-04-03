@@ -1,10 +1,13 @@
 package com.apzda.cloud.gsvc.core;
 
+import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.apzda.cloud.gsvc.gtw.RouteMeta;
 import com.google.common.base.Splitter;
 import io.grpc.ServiceDescriptor;
+import io.grpc.protobuf.ProtoFileDescriptorSupplier;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
 
 import java.lang.reflect.Method;
@@ -17,6 +20,7 @@ import java.util.Map;
  */
 @Slf4j
 public class GatewayServiceRegistry {
+
     private static final Map<String, Map<String, ServiceMethod>> SERVICES = new HashMap<>();
 
     private static final Map<String, Map<String, ServiceMethod>> SERVICE_METHODS = new HashMap<>();
@@ -26,6 +30,8 @@ public class GatewayServiceRegistry {
     public static final Map<String, Class<?>> SERVICE_INTERFACES = new HashMap<>();
 
     public static final Map<Class<?>, ServiceDescriptor> SERVICE_DESCRIPTOR = new HashMap<>();
+
+    public static final Map<String, String> SERVICE_ALIAS = new HashMap<>();
 
     public static final Map<String, RouteMeta> AUTHED_ROUTES = new HashMap<>();
 
@@ -56,7 +62,18 @@ public class GatewayServiceRegistry {
 
     public static void register(Class<?> interfaceName, ServiceDescriptor descriptor) {
         register(interfaceName);
-        SERVICE_DESCRIPTOR.putIfAbsent(interfaceName, descriptor);
+        SERVICE_DESCRIPTOR.computeIfAbsent(interfaceName, key -> {
+            val schemaDescriptor = descriptor.getSchemaDescriptor();
+            if (schemaDescriptor instanceof ProtoFileDescriptorSupplier serviceDescriptor) {
+                val options = serviceDescriptor.getFileDescriptor().getOptions();
+                val svcName = options.getExtension(GsvcExt.serviceName);
+                if (StringUtils.isNotBlank(svcName)) {
+                    val configName = cfgName(interfaceName);
+                    SERVICE_ALIAS.put(configName, svcName);
+                }
+            }
+            return descriptor;
+        });
     }
 
     public static void setBean(Class<?> interfaceName, Object bean, boolean local) {

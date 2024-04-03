@@ -53,7 +53,7 @@ public class GrpcServerSupportConfiguration {
                 public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
                         Metadata headers, ServerCallHandler<ReqT, RespT> next) {
                     val requestId = headers.get(HeaderMetas.REQUEST_ID);
-                    GsvcContextHolder.setRequestId(requestId);
+                    GsvcContextHolder.CONTEXT_BOX.set(new GsvcContextHolder.GsvcContext(requestId, null, null));
 
                     return next.startCall(call, headers);
                 }

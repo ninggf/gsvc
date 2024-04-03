@@ -8,7 +8,7 @@ option java_package = "com.apzda.cloud.gsvc.ext";
 option java_outer_classname = "GsvcExt";
 option optimize_for = SPEED;
 
-extend google.protobuf.ServiceOptions {string serviceName = 50001;}
+extend google.protobuf.FileOptions{string serviceName = 50001;}
 
 message Valid {
   repeated ValidRule rules = 1;

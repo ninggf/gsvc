@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.config;
 
 import com.apzda.cloud.gsvc.resolver.*;
+import com.apzda.cloud.gsvc.utils.StringUtils;
 import lombok.Data;
 import lombok.ToString;
 import lombok.val;
@@ -78,8 +79,14 @@ public class ServiceConfigProperties {
     }
 
     private ServiceConfig svcConfig(String name, Map<String, ServiceConfig> source, ServiceConfig defCfg) {
+        // BarService > bar-service > barService
         if (!source.containsKey(name)) {
-            val lName = Character.toLowerCase(name.charAt(0)) + name.substring(1);
+            val dName = StringUtils.toDashed(name);
+            if (source.containsKey(dName)) {
+                source.put(name, source.get(dName));
+                return source.get(name);
+            }
+            val lName = StringUtils.lowerFirst(name);
             if (source.containsKey(lName)) {
                 source.put(name, source.get(lName));
                 return source.get(name);
@@ -88,7 +95,7 @@ public class ServiceConfigProperties {
                 source.put(name, defCfg);
             }
         }
-        return source.getOrDefault(name, defCfg);
+        return source.get(name);
     }
 
     /**
