@@ -105,7 +105,7 @@ X-Gsvc-Caller: gtw
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.status === 400, "Response status is not 400");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === -997, "错误的响应码" + response.body.errCode);

@@ -69,45 +69,56 @@ public class GsvcExceptionHandler {
         if (e instanceof GsvcException gsvcException) {
             val error = gsvcException.getError();
             return Response.error(error);
-        } else if (e instanceof MessageValidationException validationException) {
+        }
+        else if (e instanceof MessageValidationException validationException) {
             val violations = new HashMap<String, String>();
             val fullName = validationException.getDescriptor().getFullName();
             for (Violation violation : validationException.getViolations()) {
                 val field = violation.getFieldPath();
                 if (log.isDebugEnabled()) {
                     log.debug("Add code: '{}' to message resource property file to support i18n",
-                        fullName + "." + field);
+                            fullName + "." + field);
                 }
                 val message = I18nHelper.t(fullName + "." + field, violation.getMessage());
                 violations.put(field, message);
             }
 
             return Response.error(ServiceError.BIND_ERROR, violations);
-        } else if (e instanceof BindException bindException) {
+        }
+        else if (e instanceof BindException bindException) {
             val violations = new HashMap<String, String>();
             for (FieldError error : bindException.getFieldErrors()) {
                 violations.put(error.getField(), I18nHelper.t(error));
             }
             return Response.error(ServiceError.BIND_ERROR, violations);
-        } else if (e instanceof HttpMessageConversionException readableException) {
+        }
+        else if (e instanceof HttpMessageConversionException readableException) {
             return Response.error(ServiceError.INVALID_FORMAT, readableException.getMessage());
-        } else if (e instanceof MethodArgumentTypeMismatchException typeMismatchException) {
+        }
+        else if (e instanceof MethodArgumentTypeMismatchException typeMismatchException) {
             val violations = new HashMap<String, String>();
             violations.put(typeMismatchException.getName(), e.getMessage());
             return Response.error(ServiceError.BIND_ERROR, violations);
-        } else if (e instanceof WebClientRequestException) {
+        }
+        else if (e instanceof WebClientRequestException) {
             return Response.error(ServiceError.REMOTE_SERVICE_NO_INSTANCE);
-        } else if (e instanceof WebClientResponseException responseException) {
+        }
+        else if (e instanceof WebClientResponseException responseException) {
             return Response.error(responseException.getStatusCode().value(), responseException.getStatusText());
-        } else if (e instanceof HttpStatusCodeException codeException) {
+        }
+        else if (e instanceof HttpStatusCodeException codeException) {
             return handleHttpStatusError(codeException.getStatusCode(), codeException.getMessage());
-        } else if (e instanceof TimeoutException || e instanceof io.netty.handler.timeout.TimeoutException) {
+        }
+        else if (e instanceof TimeoutException || e instanceof io.netty.handler.timeout.TimeoutException) {
             return Response.error(ServiceError.SERVICE_TIMEOUT);
-        } else if (e instanceof DegradedException) {
+        }
+        else if (e instanceof DegradedException) {
             return Response.error(ServiceError.DEGRADE);
-        } else if (e instanceof ErrorResponseException codeException) {
+        }
+        else if (e instanceof ErrorResponseException codeException) {
             return handleHttpStatusError(codeException.getStatusCode(), codeException.getBody().getDetail());
-        } else if (e instanceof ErrorResponse errorResponse) {
+        }
+        else if (e instanceof ErrorResponse errorResponse) {
             val body = errorResponse.getBody();
             return Response.error(body.getStatus(), body.getDetail());
         }
@@ -121,7 +132,8 @@ public class GsvcExceptionHandler {
         HttpStatusCode status = HttpStatusCode.valueOf(500);
         if (e instanceof ErrorResponseException statusException) {
             status = statusException.getStatusCode();
-        } else if (e instanceof HttpStatusCodeException statusCodeException) {
+        }
+        else if (e instanceof HttpStatusCodeException statusCodeException) {
             status = statusCodeException.getStatusCode();
         }
 
@@ -130,7 +142,8 @@ public class GsvcExceptionHandler {
             if (StringUtils.isNotBlank(loginUrl)) {
                 if (rClass.isAssignableFrom(ServerResponse.class)) {
                     return (R) ServerResponse.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
-                } else {
+                }
+                else {
                     return (R) ResponseEntity.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
                 }
             }
@@ -152,49 +165,57 @@ public class GsvcExceptionHandler {
         if (error instanceof GsvcException gsvcException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.SERVICE_UNAVAILABLE).body(handle(error));
             responseWrapper.headers(gsvcException.getHeaders());
-        } else if (error instanceof TimeoutException || error instanceof io.netty.handler.timeout.TimeoutException) {
+        }
+        else if (error instanceof TimeoutException || error instanceof io.netty.handler.timeout.TimeoutException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.GATEWAY_TIMEOUT).body(handle(error));
             log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                error.getMessage());
+                    error.getMessage());
             return responseWrapper.unwrap(rClazz);
-        } else if (error instanceof WebClientRequestException cle) {
+        }
+        else if (error instanceof WebClientRequestException cle) {
             // rpc exception
-            responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
+            responseWrapper = ResponseWrapper.status(HttpStatus.BAD_GATEWAY).body(handle(error));
             log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                error.getMessage());
+                    error.getMessage());
             return responseWrapper.unwrap(rClazz);
-        } else if (error instanceof WebClientResponseException responseException) {
+        }
+        else if (error instanceof WebClientResponseException responseException) {
             // rpc exception
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
             log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                error.getMessage());
+                    error.getMessage());
             return responseWrapper.unwrap(rClazz);
-        } else if (error instanceof ErrorResponseException responseException) {
+        }
+        else if (error instanceof ErrorResponseException responseException) {
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
             responseWrapper.headers(responseException.getHeaders());
             log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                error.getMessage());
+                    error.getMessage());
             return responseWrapper.unwrap(rClazz);
-        } else if (error instanceof HttpStatusCodeException httpStatusCodeException) {
+        }
+        else if (error instanceof HttpStatusCodeException httpStatusCodeException) {
             responseWrapper = ResponseWrapper.status(httpStatusCodeException.getStatusCode()).body(handle(error));
             responseWrapper.headers(httpStatusCodeException.getResponseHeaders());
             log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                error.getMessage());
+                    error.getMessage());
             return responseWrapper.unwrap(rClazz);
-        } else if (error instanceof MessageValidationException || error instanceof BindException
-            || error instanceof HttpMessageConversionException
-            || error instanceof MethodArgumentTypeMismatchException) {
-            responseWrapper = ResponseWrapper.ok().body(handle(error));
+        }
+        else if (error instanceof MessageValidationException || error instanceof BindException
+                || error instanceof HttpMessageConversionException
+                || error instanceof MethodArgumentTypeMismatchException) {
+            responseWrapper = ResponseWrapper.status(HttpStatus.BAD_REQUEST).body(handle(error));
             log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                error.getMessage());
+                    error.getMessage());
             return responseWrapper.unwrap(rClazz);
-        } else if (error instanceof ErrorResponse errorResponse) {
+        }
+        else if (error instanceof ErrorResponse errorResponse) {
             responseWrapper = ResponseWrapper.status(errorResponse.getBody().getStatus()).body(handle(error));
             responseWrapper.headers(errorResponse.getHeaders());
             log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                error.getMessage());
+                    error.getMessage());
             return responseWrapper.unwrap(rClazz);
-        } else {
+        }
+        else {
             responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
         }
         if (!(error instanceof NoStackLogError)) {
@@ -223,9 +244,11 @@ public class GsvcExceptionHandler {
     private Response<?> handleHttpStatusError(HttpStatusCode statusCode, String message) {
         if (statusCode == HttpStatus.UNAUTHORIZED) {
             return Response.error(ServiceError.UNAUTHORIZED);
-        } else if (statusCode == HttpStatus.FORBIDDEN) {
+        }
+        else if (statusCode == HttpStatus.FORBIDDEN) {
             return Response.error(ServiceError.FORBIDDEN);
-        } else if (statusCode == HttpStatus.BAD_GATEWAY) {
+        }
+        else if (statusCode == HttpStatus.BAD_GATEWAY) {
             return Response.error(ServiceError.REMOTE_SERVICE_NO_INSTANCE);
         }
         return Response.error(statusCode.value(), message);
@@ -274,7 +297,8 @@ public class GsvcExceptionHandler {
                         httpHeaders.putAll(this.headers);
                     }
                 })).body(body);
-            } else {
+            }
+            else {
                 return (R) ResponseEntity.status(status).headers(headers).body(body);
             }
         }

@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.val;
 import org.springframework.http.HttpCookie;
@@ -13,6 +14,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -31,7 +33,7 @@ public class GsvcContextHolder {
 
     private static final String HTTP_COOKIES = "FILTERED_HTTP_COOKIES";
 
-    private static final ThreadLocal<String> CONTEXT_BOX = new InheritableThreadLocal<>();
+    public static final ThreadLocal<GsvcContext> CONTEXT_BOX = new ThreadLocal<>();
 
     public static Optional<HttpServletRequest> getRequest() {
         val requestAttributes = RequestContextHolder.getRequestAttributes();
@@ -138,9 +140,9 @@ public class GsvcContextHolder {
     private static MultiValueMap<String, String> createDefaultHttpHeaders(HttpServletRequest request) {
         final MultiValueMap<String, String> headers = CollectionUtils
             .toMultiValueMap(new LinkedCaseInsensitiveMap<>(8, Locale.ENGLISH));
-        for (Enumeration<?> names = request.getHeaderNames(); names.hasMoreElements(); ) {
+        for (Enumeration<?> names = request.getHeaderNames(); names.hasMoreElements();) {
             String name = (String) names.nextElement();
-            for (Enumeration<?> values = request.getHeaders(name); values.hasMoreElements(); ) {
+            for (Enumeration<?> values = request.getHeaders(name); values.hasMoreElements();) {
                 headers.add(name, (String) values.nextElement());
             }
         }
@@ -148,7 +150,8 @@ public class GsvcContextHolder {
             val rid = request.getAttribute("X-Request-ID");
             if (rid != null) {
                 headers.add("X-Request-ID", (String) rid);
-            } else {
+            }
+            else {
                 headers.add("X-Request-ID", UUID.randomUUID().toString());
                 request.setAttribute("X-Request-ID", headers.getFirst("X-Request-ID"));
             }
@@ -161,7 +164,13 @@ public class GsvcContextHolder {
         if (StringUtils.hasText(requestId)) {
             return requestId;
         }
-        return org.apache.commons.lang3.StringUtils.defaultIfBlank(CONTEXT_BOX.get(), "");
+        val context = CONTEXT_BOX.get();
+        if (context != null) {
+            return org.apache.commons.lang3.StringUtils.defaultIfBlank(context.requestId, "");
+        }
+        else {
+            return "";
+        }
     }
 
     public static String getRemoteIp() {
@@ -171,10 +180,6 @@ public class GsvcContextHolder {
             ip = request.get().getRemoteAddr();
         }
         return ip;
-    }
-
-    public static void setRequestId(String requestId) {
-        CONTEXT_BOX.set(requestId);
     }
 
     @Data
@@ -316,7 +321,8 @@ public class GsvcContextHolder {
                     String host = toHostHeader(uri);
                     write(updated, X_FORWARDED_HOST_HEADER, host, isHostAppend());
                 }
-            } catch (URISyntaxException e) {
+            }
+            catch (URISyntaxException e) {
                 // nothing to do
             }
 
@@ -333,7 +339,8 @@ public class GsvcContextHolder {
                 List<String> values = headers.get(name);
                 String delimitedValue = StringUtils.collectionToCommaDelimitedString(values);
                 headers.set(name, delimitedValue);
-            } else {
+            }
+            else {
                 headers.set(name, value);
             }
         }
@@ -347,12 +354,25 @@ public class GsvcContextHolder {
             String host = uri.getHost();
             String scheme = uri.getScheme();
             if (port < 0 || (port == HTTP_PORT && HTTP_SCHEME.equals(scheme))
-                || (port == HTTPS_PORT && HTTPS_SCHEME.equals(scheme))) {
+                    || (port == HTTPS_PORT && HTTPS_SCHEME.equals(scheme))) {
                 return host;
-            } else {
+            }
+            else {
                 return host + ":" + port;
             }
         }
+
+    }
+
+    @Data
+    @AllArgsConstructor
+    public final static class GsvcContext {
+
+        private String requestId;
+
+        private RequestAttributes attributes;
+
+        private ServiceMethod method;
 
     }
 

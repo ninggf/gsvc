@@ -88,14 +88,20 @@ public class ResponseUtils {
         else if (e instanceof WebClientResponseException.TooManyRequests) {
             return fallback(ServiceError.TOO_MANY_REQUESTS, serviceName, rClass);
         }
-        else if (e instanceof WebClientResponseException.ServiceUnavailable || e instanceof WebClientRequestException) {
+        else if (e instanceof WebClientResponseException.ServiceUnavailable) {
+            return fallback(ServiceError.SERVICE_UNAVAILABLE, serviceName, rClass);
+        }
+        else if (e instanceof WebClientResponseException.BadGateway || e instanceof WebClientRequestException) {
             return fallback(ServiceError.REMOTE_SERVICE_NO_INSTANCE, serviceName, rClass);
         }
         else if (e instanceof WebClientResponseException.GatewayTimeout || e instanceof TimeoutException) {
             return fallback(ServiceError.SERVICE_TIMEOUT, serviceName, rClass);
         }
+        else if (e instanceof WebClientResponseException.BadRequest) {
+            return fallback(ServiceError.BAD_REQUEST, serviceName, rClass);
+        }
 
-        return fallback(ServiceError.REMOTE_SERVICE_ERROR, serviceName, rClass);
+        return fallback(ServiceError.REMOTE_SERVICE_ERROR, serviceName, e, rClass);
     }
 
     public static <R> R fallback(ServiceError error, String serviceName, Class<R> tClass) {
@@ -103,6 +109,13 @@ public class ResponseUtils {
             return tClass.cast(error.fallbackString(serviceName));
         }
         return parseResponse(error.fallbackString(serviceName), tClass);
+    }
+
+    public static <R> R fallback(ServiceError error, String serviceName, Throwable throwable, Class<R> tClass) {
+        if (String.class.isAssignableFrom(tClass)) {
+            return tClass.cast(error.fallbackString(serviceName, throwable.getMessage()));
+        }
+        return parseResponse(error.fallbackString(serviceName, throwable.getMessage()), tClass);
     }
 
     public static void respond(HttpServletRequest request, HttpServletResponse response, Response<?> data)

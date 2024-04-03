@@ -1,7 +1,10 @@
 package com.apzda.cloud.gsvc.error;
 
 import com.apzda.cloud.gsvc.IServiceError;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -9,6 +12,7 @@ import org.springframework.http.HttpStatus;
  */
 
 public enum ServiceError implements IServiceError {
+
     //@formatter:off
     BAD_REQUEST(-400, HttpStatus.BAD_REQUEST.getReasonPhrase()),
     UNAUTHORIZED(-401, HttpStatus.UNAUTHORIZED.getReasonPhrase()),
@@ -17,10 +21,10 @@ public enum ServiceError implements IServiceError {
     METHOD_NOT_ALLOWED(-405, HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase()),
     TOO_MANY_REQUESTS(-429, HttpStatus.TOO_MANY_REQUESTS.getReasonPhrase()),
     SERVICE_ERROR(-500, HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase()),
-    REMOTE_SERVICE_ERROR(-501, "Remote Service error"),
-    REMOTE_SERVICE_NO_INSTANCE(-502, "No Service instance(server) found"),
+    REMOTE_SERVICE_ERROR(-501, "Service RPC Error"),
+    REMOTE_SERVICE_NO_INSTANCE(-502, "No Service instance found"),
     SERVICE_UNAVAILABLE(-503, HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase()),
-    SERVICE_TIMEOUT(-504, "Service Execution Timeout"),
+    SERVICE_TIMEOUT(-504, "Service RPC Timeout"),
     INVALID_PRINCIPAL_TYPE(-800, "Unknown Principal type"),
     MFA_NOT_SETUP(-801,"Mfa not setup"),
     MFA_NOT_VERIFIED(-802,"Mfa not verified"),
@@ -35,7 +39,7 @@ public enum ServiceError implements IServiceError {
     DEVICE_NOT_ALLOWED(-818,"Device is not allowed"),
     INVALID_FORMAT(-996, "Invalid Format"),
     BIND_ERROR(-997, "Data Is Invalid"),
-    DEGRADE(-998, "Service Degrade"),
+    DEGRADE(-998, "Service has been Degraded"),
     JACKSON_ERROR(-999, "Invalid JSON data");
     //@formatter:on
     @JsonValue
@@ -49,14 +53,21 @@ public enum ServiceError implements IServiceError {
         this.code = code;
         this.message = message;
         this.fallbackString = """
-            {"errCode":%d,"errMsg":"[fallback] %s"}
-            """.formatted(code, message);
+                {"errCode":%d,"errMsg":"%s"}
+                """.formatted(code, message());
     }
 
     public String fallbackString(String service) {
         return """
-            {"errCode":%d,"errMsg":"%s [%s]"}
-            """.formatted(code, message, service);
+                {"errCode":%d,"errMsg":"%s"}
+                """.formatted(code, message.replace("Service ", "Service(" + service + ") "));
+    }
+
+    public String fallbackString(String service, String error) {
+        val detail = StringUtils.defaultIfBlank(error, "").replace("\"", "\\\"");
+        return """
+                {"errCode":%d,"errMsg":"%s(%s)"}
+                """.formatted(code, message.replace("Service ", "Service(" + service + ") "), detail);
     }
 
     public static boolean isInternalError(ServiceError error) {
@@ -93,6 +104,13 @@ public enum ServiceError implements IServiceError {
 
     @Override
     public String message() {
+        val context = GsvcContextHolder.CONTEXT_BOX.get();
+        if (context != null) {
+            val method = context.getMethod();
+            if (method != null) {
+                return message.replace("Service ", "Service(" + method.getServiceName() + ") ");
+            }
+        }
         return message;
     }
 
