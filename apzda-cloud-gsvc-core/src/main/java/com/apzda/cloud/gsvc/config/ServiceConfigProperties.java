@@ -148,9 +148,11 @@ public class ServiceConfigProperties {
 
         private RegistryType type = RegistryType.NONE;
 
-        private String namespace = "";
-
         private NameStyle nameStyle = NameStyle.CAMEL;
+
+        private int port = 8080;
+
+        private boolean ssl = false;
 
     }
 

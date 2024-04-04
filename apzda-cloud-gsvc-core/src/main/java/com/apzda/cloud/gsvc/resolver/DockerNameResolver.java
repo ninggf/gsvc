@@ -9,10 +9,14 @@ public class DockerNameResolver implements ServiceNameResolver {
     @Override
     public String resolve(String serviceName, ServiceConfigProperties.Registry registry) {
         val nameStyle = registry.getNameStyle();
+        val port = registry.getPort();
+        val schema = (registry.isSsl() ? "https" : "http") + "://";
+
         if (nameStyle == ServiceConfigProperties.NameStyle.CAMEL) {
-            return StringUtils.lowerFirst(serviceName);
+            return schema + StringUtils.lowerFirst(serviceName) + ":" + port;
         }
-        return StringUtils.toDashed(serviceName).toLowerCase();
+
+        return schema + StringUtils.toDashed(serviceName).toLowerCase() + ":" + port;
     }
 
 }
