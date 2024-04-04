@@ -17,10 +17,12 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
+import com.apzda.cloud.gsvc.utils.I18nHelper;
 import lombok.val;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
@@ -50,12 +52,12 @@ public class I18nAutoConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "spring.messages")
-    public MessageSourceProperties messageSourceProperties() {
+    MessageSourceProperties messageSourceProperties() {
         return new MessageSourceProperties();
     }
 
     @Bean
-    public MessageSource messageSource(MessageSourceProperties properties,
+    MessageSource messageSource(MessageSourceProperties properties,
             ObjectProvider<List<MessageSourceNameResolver>> resolvers) {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
 
@@ -85,6 +87,12 @@ public class I18nAutoConfiguration {
         messageSource.setAlwaysUseMessageFormat(properties.isAlwaysUseMessageFormat());
         messageSource.setUseCodeAsDefaultMessage(properties.isUseCodeAsDefaultMessage());
         return messageSource;
+    }
+
+    @Bean
+    @ConditionalOnBean({ MessageSource.class })
+    I18nHelper i18nHelper() {
+        return new I18nHelper();
     }
 
 }

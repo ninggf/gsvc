@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.dto;
 
 import com.apzda.cloud.gsvc.IServiceError;
+import com.apzda.cloud.gsvc.utils.I18nHelper;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.Assert;
 
@@ -29,6 +31,7 @@ public class Response<T> implements Serializable {
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "0 means success, others value mean error.")
     private int errCode;
+
     @JsonIgnore
     private Integer httpCode;
 
@@ -44,6 +47,16 @@ public class Response<T> implements Serializable {
     @Schema(description = "The business data")
     private T data;
 
+    void setMessage(String message) {
+        this.message = message;
+        if (StringUtils.startsWith(message, "{") && StringUtils.endsWith(message, "}")) {
+            val msg = I18nHelper.t(message.substring(1, message.length() - 1), "");
+            if (StringUtils.isNotBlank(msg)) {
+                this.message = msg;
+            }
+        }
+    }
+
     public Response<T> type(MessageType type) {
         this.type = type;
         return this;
@@ -51,25 +64,25 @@ public class Response<T> implements Serializable {
 
     public Response<T> alert(String message) {
         this.type = MessageType.ALERT;
-        this.errMsg = message;
+        setMessage(message);
         return this;
     }
 
     public Response<T> notify(String message) {
         this.type = MessageType.NOTIFY;
-        this.errMsg = message;
+        setMessage(message);
         return this;
     }
 
     public Response<T> toast(String message) {
         this.type = MessageType.TOAST;
-        this.errMsg = message;
+        setMessage(message);
         return this;
     }
 
     public Response<T> none(String message) {
         this.type = MessageType.NONE;
-        this.errMsg = message;
+        setMessage(message);
         return this;
     }
 
@@ -98,6 +111,19 @@ public class Response<T> implements Serializable {
         val resp = new Response<T>();
         resp.errCode = code;
         resp.errMsg = errMsg;
+        if (StringUtils.startsWith(errMsg, "{") && StringUtils.endsWith(errMsg, "}")) {
+            val msg = I18nHelper.t(errMsg.substring(1, errMsg.length() - 1), "");
+            if (StringUtils.isNotBlank(msg)) {
+                resp.errMsg = msg;
+            }
+        }
+        else {
+            val msg = I18nHelper.t("error." + Math.abs(code), "");
+            if (StringUtils.isNotBlank(msg)) {
+                resp.errMsg = msg;
+            }
+        }
+
         return resp;
     }
 
