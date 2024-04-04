@@ -3,11 +3,14 @@
  */
 package com.apzda.cloud.gsvc.security.token;
 
+import org.springframework.lang.Nullable;
+
 /**
  * @author fengz windywany@gmail.com
  **/
 
 public interface JwtToken {
+
     String getName();
 
     void setName(String name);
@@ -23,4 +26,10 @@ public interface JwtToken {
     String getMfa();
 
     void setMfa(String mfa);
+
+    @Nullable
+    String getStatus();
+
+    void setStatus(String status);
+
 }

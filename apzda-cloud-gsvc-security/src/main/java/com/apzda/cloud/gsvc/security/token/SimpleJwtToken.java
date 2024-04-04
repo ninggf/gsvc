@@ -32,6 +32,7 @@ import java.io.Serializable;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SimpleJwtToken implements JwtToken, Serializable {
+
     @Serial
     private static final long serialVersionUID = -2763131228048354173L;
 
@@ -42,4 +43,7 @@ public class SimpleJwtToken implements JwtToken, Serializable {
     private String refreshToken;
 
     private String mfa;
+
+    private String status;
+
 }

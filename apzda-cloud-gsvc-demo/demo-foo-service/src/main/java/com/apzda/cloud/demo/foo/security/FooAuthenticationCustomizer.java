@@ -37,6 +37,7 @@ import java.io.Serializable;
  **/
 @Component
 public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
+
     @Override
     public JwtToken customize(Authentication authentication, JwtToken token) {
         val data = BeanUtil.copyProperties(token, FooLoginData.class);
@@ -50,10 +51,10 @@ public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
         return data;
     }
 
-
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class FooLoginData implements JwtToken, Serializable {
+
         @Serial
         private static final long serialVersionUID = -2763131228048354173L;
 
@@ -68,5 +69,9 @@ public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
         private String uid;
 
         private Long lastLoginTime;
+
+        private String status;
+
     }
+
 }
