@@ -32,7 +32,7 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
     @Override
     public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Object data, ServiceMethod method) {
         val headers = GsvcContextHolder.headers("X-");
-
+        headers.putAll(GsvcContextHolder.headers("Accept-"));
         val appName = context.getEnvironment().getProperty("spring.application.name");
         headers.remove("x-gsvc-caller");
         headers.put("x-gsvc-caller", appName);
