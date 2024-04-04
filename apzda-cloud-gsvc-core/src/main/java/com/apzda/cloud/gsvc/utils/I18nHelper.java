@@ -58,6 +58,7 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
     }
 
     public static String t(String code, Object[] args, String defaultString, Locale locale) {
+        code = code.replace(" ", "_");
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultString);
             return Objects.toString(defaultString, code);
@@ -66,6 +67,7 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
     }
 
     public static String t(String code, String defaultString, Locale locale) {
+        code = code.replace(" ", "_");
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultString);
             return Objects.toString(defaultString, code);
@@ -76,8 +78,9 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
     public static String t(String code, String defaultString) {
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultString);
-            return Objects.toString(defaultString, code);
+            return Objects.toString(defaultString, code.replace("_", " "));
         }
+        code = code.replace(" ", "_");
         val request = GsvcContextHolder.getRequest();
         if (request.isPresent()) {
             return messageSource.getMessage(code, null, defaultString, localeResolver.resolveLocale(request.get()));
@@ -88,37 +91,39 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
     }
 
     public static String t(String code) {
+        code = code.replace(" ", "_");
+        val defaultStr = code.replace("_", " ");
         if (messageSource == null) {
-            log.warn("Use I18nHelper too early to translate: '{}'. Use code as default: '{}'", code, code);
-            return code;
+            log.warn("Use I18nHelper too early to translate: '{}'. Use code as default: '{}'", code, defaultStr);
+            return defaultStr;
         }
         val request = GsvcContextHolder.getRequest();
         if (request.isPresent()) {
-            return messageSource.getMessage(code, null, null, localeResolver.resolveLocale(request.get()));
+            return messageSource.getMessage(code, null, defaultStr, localeResolver.resolveLocale(request.get()));
         }
         else {
-            return messageSource.getMessage(code, null, null, Locale.getDefault());
+            return messageSource.getMessage(code, null, defaultStr, Locale.getDefault());
         }
     }
 
     public static String t(String code, Object[] args) {
         if (messageSource == null) {
-            log.warn("Use I18nHelper too early to translate: '{}'. Use code as default: '{}'", code, code);
-            return code;
+            val defaultStr = code.replace("_", " ");
+            log.warn("Use I18nHelper too early to translate: '{}'. Use code as default: '{}'", code, defaultStr);
+            return defaultStr;
         }
-
+        val codeId = code.replace(" ", "_");
         val request = GsvcContextHolder.getRequest();
-
         return request
-            .map(httpServletRequest -> messageSource.getMessage(code, args,
+            .map(httpServletRequest -> messageSource.getMessage(codeId, args,
                     localeResolver.resolveLocale(httpServletRequest)))
-            .orElseGet(() -> messageSource.getMessage(code, args, Locale.getDefault()));
+            .orElseGet(() -> messageSource.getMessage(codeId, args, Locale.getDefault()));
     }
 
     public static String t(String code, Object[] args, String defaultStr) {
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultStr);
-            return code;
+            return defaultStr;
         }
 
         val request = GsvcContextHolder.getRequest();
@@ -131,11 +136,12 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
 
     public static String t(String code, Object[] args, Locale locale) {
         if (messageSource == null) {
-            log.warn("Use I18nHelper too early to translate: '{}'. Use code as default: '{}'", code, code);
-            return code;
+            val defaultStr = code.replace("_", " ");
+            log.warn("Use I18nHelper too early to translate: '{}'. Use code as default: '{}'", code, defaultStr);
+            return defaultStr;
         }
 
-        return messageSource.getMessage(code, args, locale);
+        return messageSource.getMessage(code.replace(" ", "_"), args, locale);
     }
 
     public static String t(MessageSourceResolvable resolvable) {
