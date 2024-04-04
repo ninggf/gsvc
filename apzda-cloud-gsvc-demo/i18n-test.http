@@ -9,6 +9,17 @@ Cookie: lang=zh_CN
     });
 %}
 
+### Route - Accept - I18N(zh_CN) - /token/i18n/bar.hello
+GET http://{{barService}}/token/i18n/bar.hello
+Accept-Language: zh-CN
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body === "你好Bar!", "出错啦: " + response.body + " != '你好Bar!'");
+    });
+%}
+
 ### Route - I18N(default) - /token/i18n/foo.hello
 GET http://{{barService}}/token/i18n/foo.hello
 

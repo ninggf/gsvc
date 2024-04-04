@@ -5,9 +5,7 @@ import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.servlet.LocaleResolver;
 
 import java.util.Locale;
 
@@ -22,9 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ImportAutoConfiguration(I18nAutoConfiguration.class)
 @TestPropertySource(properties = "spring.messages.basename=messages-core")
 class I18nHelperTest {
-
-    @MockBean
-    private LocaleResolver localeResolver;
 
     @Test
     void trans_with_args_should_be_correct() {

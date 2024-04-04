@@ -51,7 +51,10 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
         }
 
         val cookies = GsvcContextHolder.cookies("xgh_");
-
+        val lang = GsvcContextHolder.cookies().get("lang");
+        if (lang != null) {
+            cookies.put("lang", lang);
+        }
         if (!cookies.isEmpty()) {
             request = request.cookies(cookie -> {
                 for (Map.Entry<String, HttpCookie> kv : cookies.entrySet()) {

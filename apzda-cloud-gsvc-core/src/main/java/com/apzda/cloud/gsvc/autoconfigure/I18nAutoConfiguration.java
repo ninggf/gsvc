@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.gsvc.autoconfigure;
 
+import com.apzda.cloud.gsvc.i18n.LocaleResolverImpl;
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
 import com.apzda.cloud.gsvc.utils.I18nHelper;
 import lombok.val;
@@ -24,20 +25,21 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.MessageSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.Ordered;
 import org.springframework.util.StringUtils;
+import org.springframework.web.servlet.LocaleResolver;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -45,7 +47,6 @@ import java.util.List;
  * @since 1.0.0
  **/
 @AutoConfiguration(before = MessageSourceAutoConfiguration.class)
-@ConditionalOnMissingBean(name = AbstractApplicationContext.MESSAGE_SOURCE_BEAN_NAME, search = SearchStrategy.CURRENT)
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @EnableConfigurationProperties
 public class I18nAutoConfiguration {
@@ -57,6 +58,7 @@ public class I18nAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     MessageSource messageSource(MessageSourceProperties properties,
             ObjectProvider<List<MessageSourceNameResolver>> resolvers) {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
@@ -93,6 +95,24 @@ public class I18nAutoConfiguration {
     @ConditionalOnBean({ MessageSource.class })
     I18nHelper i18nHelper() {
         return new I18nHelper();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    LocaleResolver localeResolver(Locale defaultLocale) {
+        return new LocaleResolverImpl("lang", defaultLocale);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    Locale defaultLocale() {
+        return Locale.ENGLISH;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    Clock appClock() {
+        return Clock.systemDefaultZone();
     }
 
 }

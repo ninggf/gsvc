@@ -99,12 +99,4 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
         return registration;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    LocaleResolver localeResolver() {
-        val cookieLocaleResolver = new CookieLocaleResolver("lang");
-        cookieLocaleResolver.setDefaultLocale(Locale.ENGLISH);
-        return cookieLocaleResolver;
-    }
-
 }

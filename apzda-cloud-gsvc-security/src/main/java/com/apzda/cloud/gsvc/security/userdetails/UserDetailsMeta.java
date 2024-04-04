@@ -19,10 +19,16 @@ import java.util.Optional;
 public interface UserDetailsMeta extends UserDetails {
 
     String AUTHORITY_META_KEY = "Authorities";
+
     String ACCESS_TOKEN_META_KEY = "AccessToken";
+
     String LOGIN_TIME_META_KEY = "LoginTime";
+
     String CACHED_USER_DETAILS_KEY = "CachedUserDetails";
+
     String MFA_STATUS_KEY = "MfaStatus";
+
+    String LANGUAGE_KEY = "Language";
 
     @NonNull
     UserDetails getUserDetails();

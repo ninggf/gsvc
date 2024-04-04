@@ -16,7 +16,9 @@
  */
 package com.apzda.cloud.gsvc.utils;
 
+import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.i18n.LocaleResolverImpl;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.slf4j.helpers.MessageFormatter;
@@ -31,6 +33,7 @@ import org.springframework.web.servlet.LocaleResolver;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -44,6 +47,8 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
 
     private static LocaleResolver localeResolver;
 
+    private static Locale defaultLocale;
+
     private ApplicationContext applicationContext;
 
     @Override
@@ -54,6 +59,7 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
         }
         catch (Exception ignored) {
         }
+        I18nHelper.defaultLocale = applicationContext.getBean(Locale.class);
         log.debug("I18nHelper initialized with [{}, {}]", I18nHelper.messageSource, I18nHelper.localeResolver);
     }
 
@@ -62,17 +68,30 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
+    @SuppressWarnings("")
     public static String t(String code, Object[] args, String defaultStr, Locale locale) {
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultStr);
             return Objects.toString(defaultStr, code);
         }
+        //@formatter:off
         val codeId = code.replace("{}", "0")
             .replace(".", "DOTTOD")
             .replaceAll("\\W+", "_")
             .replace("DOTTOD", ".");
-
+        //@formatter:on
         try {
+            if (locale == null) {
+                val request = GsvcContextHolder.getRequest();
+                if (localeResolver instanceof LocaleResolverImpl localeResolver1) {
+                    locale = localeResolver1.resolveLocale(request.orElse(null));
+                }
+                else {
+                    locale = request.map(httpServletRequest -> localeResolver.resolveLocale(httpServletRequest))
+                        .orElse(Optional.ofNullable(CurrentUserProvider.getCurrentUser().getLocale())
+                            .orElse(defaultLocale));
+                }
+            }
             return messageSource.getMessage(codeId, args, defaultStr, locale);
         }
         catch (Exception e) {
@@ -86,16 +105,12 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
     }
 
     public static String t(String code, String defaultStr) {
-        val request = GsvcContextHolder.getRequest();
-        return t(code, null, defaultStr,
-                request.map(req -> localeResolver.resolveLocale(req)).orElseGet(Locale::getDefault));
+        return t(code, null, defaultStr, null);
     }
 
     public static String t(String code) {
         val defaultStr = code.replace("_", " ");
-        val request = GsvcContextHolder.getRequest();
-        return t(code, null, defaultStr,
-                request.map(req -> localeResolver.resolveLocale(req)).orElseGet(Locale::getDefault));
+        return t(code, null, defaultStr, null);
     }
 
     public static String t(String code, Object[] args) {
@@ -109,15 +124,11 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
     }
 
     public static String t(String code, Object[] args, String defaultStr) {
-        val request = GsvcContextHolder.getRequest();
-        return t(code, args, defaultStr,
-                request.map(req -> localeResolver.resolveLocale(req)).orElseGet(Locale::getDefault));
+        return t(code, args, defaultStr, null);
     }
 
     public static String t(MessageSourceResolvable resolvable) {
-        val request = GsvcContextHolder.getRequest();
-        return request.map(httpServletRequest -> t(resolvable, localeResolver.resolveLocale(httpServletRequest)))
-            .orElseGet(() -> t(resolvable, Locale.getDefault()));
+        return t(resolvable, null);
     }
 
     public static String t(MessageSourceResolvable resolvable, Locale locale) {

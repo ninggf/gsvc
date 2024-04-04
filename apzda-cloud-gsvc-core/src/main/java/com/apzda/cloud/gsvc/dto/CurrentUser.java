@@ -6,6 +6,7 @@ import lombok.Data;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -30,10 +31,13 @@ public class CurrentUser {
 
     private Map<String, String> meta;
 
+    private Locale locale;
+
     public Map<String, String> getMeta() {
         if (CollectionUtils.isEmpty(meta)) {
             return Collections.emptyMap();
         }
         return meta;
     }
+
 }

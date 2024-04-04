@@ -40,7 +40,6 @@ import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerResponse;
 
-import java.time.Clock;
 import java.util.List;
 import java.util.Map;
 
@@ -107,12 +106,6 @@ public class ApzdaGsvcAutoConfiguration {
     @ConditionalOnMissingBean
     LocalInfraImpl infraCounterAndStorage(ServiceConfigProperties properties) {
         return new LocalInfraImpl(properties.getConfig().getTempExpireTime());
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    Clock appClock() {
-        return Clock.systemDefaultZone();
     }
 
     @Configuration(proxyBeanMethods = false)

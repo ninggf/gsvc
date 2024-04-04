@@ -18,8 +18,12 @@ package com.apzda.cloud.gsvc.security.resolver;
 
 import com.apzda.cloud.gsvc.dto.CurrentUser;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
+import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
+import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.LocaleUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -39,16 +43,15 @@ import org.springframework.web.method.support.ModelAndViewContainer;
  **/
 @Slf4j
 public class CurrentUserParamResolver implements HandlerMethodArgumentResolver {
+
     @Override
     public boolean supportsParameter(@NonNull MethodParameter parameter) {
         return parameter.getParameter().getType().isAssignableFrom(CurrentUser.class);
     }
 
     @Override
-    public Object resolveArgument(@NonNull MethodParameter parameter,
-                                  @Nullable ModelAndViewContainer mavContainer,
-                                  @NonNull NativeWebRequest webRequest,
-                                  WebDataBinderFactory binderFactory) throws Exception {
+    public Object resolveArgument(@NonNull MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
+            @NonNull NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         val context = SecurityContextHolder.getContext();
         if (context == null) {
             throw new HttpClientErrorException(HttpStatus.UNAUTHORIZED);
@@ -76,6 +79,26 @@ public class CurrentUserParamResolver implements HandlerMethodArgumentResolver {
             builder.deviceId(device.getDeviceId());
             builder.meta(device.getAppMeta());
         }
+
+        if (authentication instanceof JwtAuthenticationToken token) {
+            val locale = token.getLocale();
+            if (locale != null) {
+                builder.locale(locale);
+                return builder;
+            }
+        }
+
+        if (authentication.getPrincipal() instanceof UserDetailsMeta userDetailsMeta) {
+            val lang = userDetailsMeta.get(UserDetailsMeta.LANGUAGE_KEY, authentication, "");
+            if (StringUtils.isNotBlank(lang)) {
+                val locale = LocaleUtils.toLocale(lang);
+                builder.locale(locale);
+                if (authentication instanceof JwtAuthenticationToken token) {
+                    token.setLocale(locale);
+                }
+            }
+        }
         return builder;
     }
+
 }

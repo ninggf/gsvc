@@ -7,6 +7,7 @@ import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -17,10 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author fengz windywany@gmail.com
@@ -35,6 +33,10 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     private Object credentials;
 
+    @Getter
+    @Setter
+    private Locale locale;
+
     JwtAuthenticationToken(Object principal, Object credentials) {
         super(null);
         this.principal = checkPrincipal(principal);
@@ -46,7 +48,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     JwtAuthenticationToken(UserDetails principal, Object credentials,
-                           Collection<? extends GrantedAuthority> authorities) {
+            Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.principal = checkPrincipal(principal);
         this.credentials = credentials;
@@ -82,7 +84,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     @Override
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
         Assert.isTrue(!isAuthenticated,
-            "Cannot set this token to trusted - use constructor which takes a GrantedAuthority list instead");
+                "Cannot set this token to trusted - use constructor which takes a GrantedAuthority list instead");
         super.setAuthenticated(false);
     }
 
@@ -133,10 +135,11 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
                     if (log.isTraceEnabled()) {
                         log.trace("[{}] accessToken({}) now is logout", GsvcContextHolder.getRequestId(), accessToken);
                     }
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     if (log.isTraceEnabled()) {
                         log.trace("[{}] accessToken({}) logout failed: ", GsvcContextHolder.getRequestId(), accessToken,
-                            e);
+                                e);
                     }
                 }
             }
@@ -151,7 +154,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     public void login() {
         if (jwtToken != null && StringUtils.isNotBlank(jwtToken.getAccessToken())
-            && principal instanceof UserDetailsMeta userDetailsMeta) {
+                && principal instanceof UserDetailsMeta userDetailsMeta) {
             val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
             userDetailsMeta.set(key, jwtToken.getAccessToken());
             userDetailsMeta.remove(UserDetailsMeta.AUTHORITY_META_KEY);
