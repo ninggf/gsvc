@@ -96,9 +96,9 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
  * @since 1.0.0
  **/
 @Slf4j
-@AutoConfiguration(before = {SecurityAutoConfiguration.class})
+@AutoConfiguration(before = { SecurityAutoConfiguration.class })
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
-@Import({RedisMetaRepoConfiguration.class, AuditorAutoConfiguration.class})
+@Import({ RedisMetaRepoConfiguration.class, AuditorAutoConfiguration.class })
 public class GsvcSecurityAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
@@ -126,11 +126,9 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @Order(-100)
-        SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                AuthenticationManager authenticationManager,
-                                                SecurityContextRepository securityContextRepository,
-                                                AuthenticationHandler authenticationHandler)
-            throws Exception {
+        SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager,
+                SecurityContextRepository securityContextRepository, AuthenticationHandler authenticationHandler)
+                throws Exception {
 
             val requestCache = new NullRequestCache();
             http.requestCache(cache -> cache.requestCache(requestCache));
@@ -168,7 +166,7 @@ public class GsvcSecurityAutoConfiguration {
 
                     logout.addLogoutHandler(authenticationHandler);
                     logout.addLogoutHandler(new HeaderWriterLogoutHandler(
-                        new ClearSiteDataHeaderWriter(ClearSiteDataHeaderWriter.Directive.ALL)));
+                            new ClearSiteDataHeaderWriter(ClearSiteDataHeaderWriter.Directive.ALL)));
                     logout.logoutSuccessHandler(authenticationHandler);
                     logout.clearAuthentication(true);
                     val cookie = properties.getCookie();
@@ -176,7 +174,8 @@ public class GsvcSecurityAutoConfiguration {
                         logout.deleteCookies(cookie.getCookieName());
                     }
                 });
-            } else {
+            }
+            else {
                 http.logout(AbstractHttpConfigurer::disable);
             }
 
@@ -234,7 +233,8 @@ public class GsvcSecurityAutoConfiguration {
                                 .replace("p(", "hasPermission(");
                             log.debug("ACL: {}(access={})", path, access);
                             authorize.requestMatchers(matcher).access(new WebExpressionAuthorizationManager(access));
-                        } else {
+                        }
+                        else {
                             log.debug("ACL: {}", path);
                             authorize.requestMatchers(matcher).authenticated();
                         }
@@ -265,7 +265,7 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        AuthorizationLogicCustomizer authz() {
+        static AuthorizationLogicCustomizer authz() {
             return new AuthorizationLogicCustomizer();
         }
 
@@ -277,15 +277,13 @@ public class GsvcSecurityAutoConfiguration {
         @Bean("defaultAuthenticationProvider")
         @ConditionalOnMissingBean(name = "defaultAuthenticationProvider")
         AuthenticationProvider defaultAuthenticationProvider(UserDetailsService userDetailsService,
-                                                             UserDetailsMetaRepository userDetailsMetaRepository,
-                                                             PasswordEncoder passwordEncoder) {
+                UserDetailsMetaRepository userDetailsMetaRepository, PasswordEncoder passwordEncoder) {
             return new DefaultAuthenticationProvider(userDetailsService, userDetailsMetaRepository, passwordEncoder);
         }
 
         @Bean
         AuthenticationManager authenticationManager(ObjectPostProcessor<Object> objectPostProcessor,
-                                                    ObjectProvider<List<AuthenticationProvider>> providers) throws
-                                                                                                            Exception {
+                ObjectProvider<List<AuthenticationProvider>> providers) throws Exception {
             // bookmark: 自定义认证管理器
             val builder = new AuthenticationManagerBuilder(objectPostProcessor);
             if (providers.getIfAvailable() != null) {
@@ -300,7 +298,7 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         AuthenticationHandler authenticationHandler(TokenManager tokenManager,
-                                                    ObjectProvider<List<JwtTokenCustomizer>> customizers) {
+                ObjectProvider<List<JwtTokenCustomizer>> customizers) {
             return new DefaultAuthenticationHandler(properties, tokenManager, customizers);
         }
 
@@ -329,7 +327,7 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnMissingBean
         @ConditionalOnProperty(name = "apzda.cloud.security.meta-repo", havingValue = "mem", matchIfMissing = true)
         UserDetailsMetaRepository userDetailsWrapper(UserDetailsMetaService userDetailsMetaService,
-                                                     SecurityConfigProperties properties) {
+                SecurityConfigProperties properties) {
             return new InMemoryUserDetailsMetaRepository(userDetailsMetaService, properties.getAuthorityClass());
         }
 
@@ -344,27 +342,18 @@ public class GsvcSecurityAutoConfiguration {
 
             val password = "123456";
             val encodedPwd = passwordEncoder.encode(password);
-            val user = User.withUsername("user")
-                .password(encodedPwd)
-                .authorities(authorities)
-                .build();
+            val user = User.withUsername("user").password(encodedPwd).authorities(authorities).build();
             manager.createUser(user);
 
             authorities.add(new SimpleGrantedAuthority(rolePrefix + "ADMIN"));
             authorities.add(new SimpleGrantedAuthority("*:/foo/*"));
 
-            val admin = User.withUsername("admin")
-                .password(encodedPwd)
-                .authorities(authorities)
-                .build();
+            val admin = User.withUsername("admin").password(encodedPwd).authorities(authorities).build();
 
             manager.createUser(admin);
             log.warn("Default User, username: {}, password: {}, authorities: {}", "admin", password, authorities);
 
-            val user1 = User.withUsername("user1")
-                .password(encodedPwd)
-                .authorities(authorities)
-                .build();
+            val user1 = User.withUsername("user1").password(encodedPwd).authorities(authorities).build();
             manager.createUser(user1);
 
             return manager;
@@ -380,7 +369,7 @@ public class GsvcSecurityAutoConfiguration {
                     return userDetails.getAuthorities();
                 }
                 log.trace("[{}] Load Authorities by userDetailsService.loadUserByUsername: {}",
-                    GsvcContextHolder.getRequestId(), userDetails.getUsername());
+                        GsvcContextHolder.getRequestId(), userDetails.getUsername());
                 val ud = userDetailsService.loadUserByUsername(userDetails.getUsername());
                 return ud.getAuthorities();
             };
@@ -394,10 +383,10 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         TokenManager tokenManager(UserDetailsService userDetailsService,
-                                  UserDetailsMetaRepository userDetailsMetaRepository,
-                                  JWTSigner jwtSigner,
-                                  ObjectProvider<List<JwtTokenCustomizer>> customizers) {
-            return new JwtTokenManager(userDetailsService, userDetailsMetaRepository, properties, jwtSigner, customizers);
+                UserDetailsMetaRepository userDetailsMetaRepository, JWTSigner jwtSigner,
+                ObjectProvider<List<JwtTokenCustomizer>> customizers) {
+            return new JwtTokenManager(userDetailsService, userDetailsMetaRepository, properties, jwtSigner,
+                    customizers);
         }
 
         @Bean
@@ -409,15 +398,17 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         static MethodSecurityExpressionHandler methodSecurityExpressionHandler(ApplicationContext applicationContext,
-                                                                               PermissionEvaluator permissionEvaluator) {
+                PermissionEvaluator permissionEvaluator, GrantedAuthorityDefaults grantedAuthorityDefaults) {
             DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
             try {
                 val roleHierarchy = applicationContext.getBean(RoleHierarchy.class);
                 expressionHandler.setRoleHierarchy(roleHierarchy);
-            } catch (Exception ignored) {
+            }
+            catch (Exception ignored) {
                 log.debug("No RoleHierarchy found");
             }
             expressionHandler.setPermissionEvaluator(permissionEvaluator);
+            expressionHandler.setDefaultRolePrefix(grantedAuthorityDefaults.getRolePrefix());
             return expressionHandler;
         }
 
@@ -427,8 +418,8 @@ public class GsvcSecurityAutoConfiguration {
                 @Override
                 public ErrorResponseException transform(Throwable exception) {
                     if (exception instanceof AccessDeniedException || exception instanceof LockedException
-                        || exception instanceof AccountExpiredException
-                        || exception instanceof CredentialsExpiredException) {
+                            || exception instanceof AccountExpiredException
+                            || exception instanceof CredentialsExpiredException) {
                         return new ErrorResponseException(HttpStatus.FORBIDDEN, exception);
                     }
                     return new ErrorResponseException(HttpStatus.UNAUTHORIZED, exception);
@@ -437,7 +428,7 @@ public class GsvcSecurityAutoConfiguration {
                 @Override
                 public boolean supports(Class<? extends Throwable> eClass) {
                     return AuthenticationException.class.isAssignableFrom(eClass)
-                        || AccessDeniedException.class.isAssignableFrom(eClass);
+                            || AccessDeniedException.class.isAssignableFrom(eClass);
                 }
             };
         }
@@ -445,7 +436,7 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         static PermissionEvaluator asteriskPermissionEvaluator(
-            ObjectProvider<List<PermissionChecker>> checkerProvider) {
+                ObjectProvider<List<PermissionChecker>> checkerProvider) {
             return new AsteriskPermissionEvaluator(checkerProvider);
         }
 
@@ -459,9 +450,12 @@ public class GsvcSecurityAutoConfiguration {
 
     @Configuration
     static class WebMvcConfigure implements WebMvcConfigurer {
+
         @Override
         public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
             resolvers.add(new CurrentUserParamResolver());
         }
+
     }
+
 }
