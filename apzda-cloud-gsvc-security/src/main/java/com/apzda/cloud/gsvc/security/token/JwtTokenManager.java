@@ -49,6 +49,7 @@ public class JwtTokenManager implements TokenManager {
     protected final JWTSigner jwtSigner;
 
     private final ObjectProvider<List<JwtTokenCustomizer>> customizers;
+
     private String requestId;
 
     @Override
@@ -94,10 +95,11 @@ public class JwtTokenManager implements TokenManager {
 
     @Override
     public Authentication restoreAuthentication(String accessToken) {
-        boolean verified = false;
+        boolean verified;
         try {
             verified = JWTUtil.verify(accessToken, jwtSigner);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             if (log.isTraceEnabled()) {
                 log.trace("[{}] accessToken({}) is invalid: {}", requestId, accessToken, e.getMessage());
             }
@@ -122,8 +124,7 @@ public class JwtTokenManager implements TokenManager {
             val tmpUser = User.withUsername(username).password("").build();
 
             Optional<CachedUserDetails> cachedUserDetails = userDetailsMetaRepository.getMetaData(tmpUser,
-                UserDetailsMeta.CACHED_USER_DETAILS_KEY,
-                CachedUserDetails.class);
+                    UserDetailsMeta.CACHED_USER_DETAILS_KEY, CachedUserDetails.class);
 
             val userDetails = cachedUserDetails.orElseGet(() -> {
                 try {
@@ -133,8 +134,10 @@ public class JwtTokenManager implements TokenManager {
                         UserDetailsMeta.checkUserDetails(ud);
                         return CachedUserDetails.from(ud);
                     }
-                } catch (Exception e) {
-                    log.warn("[{}] Cannot load UserDetails from userDetailsService: {} - {}", requestId, username, e.getMessage());
+                }
+                catch (Exception e) {
+                    log.warn("[{}] Cannot load UserDetails from userDetailsService: {} - {}", requestId, username,
+                            e.getMessage());
                 }
                 return null;
             });
@@ -144,14 +147,15 @@ public class JwtTokenManager implements TokenManager {
                 throw new UsernameNotFoundException(username + " not found!");
             }
 
-            // 使用了空的authorities.
+            // 使用空的authorities.
             val authentication = JwtAuthenticationToken.authenticated(userDetailsMetaRepository.create(userDetails),
-                userDetails.getPassword());
+                    userDetails.getPassword());
 
             authentication.setJwtToken(jwtToken);
             log.trace("[{}] authentication is restored from accessToken({})", requestId, accessToken);
             return authentication;
-        } else {
+        }
+        else {
             log.trace("[{}] accessToken({}) is invalid", requestId, accessToken);
             throw TokenException.INVALID_TOKEN;
         }
@@ -161,17 +165,15 @@ public class JwtTokenManager implements TokenManager {
     public void save(Authentication authentication, HttpServletRequest request) {
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
             log.trace("[{}] Authentication Saved: {}", GsvcContextHolder.getRequestId(), authentication);
-            userDetailsMetaRepository.setMetaData(userDetails,
-                UserDetailsMeta.CACHED_USER_DETAILS_KEY,
-                CachedUserDetails.from(userDetails)
-            );
+            userDetailsMetaRepository.setMetaData(userDetails, UserDetailsMeta.CACHED_USER_DETAILS_KEY,
+                    CachedUserDetails.from(userDetails));
         }
     }
 
     @Override
     public JwtToken createJwtToken(Authentication authentication) {
         if (authentication.getDetails() instanceof DeviceAuthenticationDetails device
-            && !properties.deviceIsAllowed(device.getDevice())) {
+                && !properties.deviceIsAllowed(device.getDevice())) {
             throw TokenException.DEVICE_NOT_ALLOWED;
         }
 
@@ -207,7 +209,8 @@ public class JwtTokenManager implements TokenManager {
 
             try {
                 JWTUtil.verify(refreshToken, jwtSigner);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 log.error("[{}] refreshToken({}) is invalid: {}", requestId, refreshToken, e.getMessage());
                 throw TokenException.INVALID_TOKEN;
             }
@@ -232,8 +235,8 @@ public class JwtTokenManager implements TokenManager {
             val sign = MD5.create().digestHex(accessToken + password);
 
             if (Objects.equals(oldSign, sign)) {
-                val authentication = JwtAuthenticationToken.unauthenticated(userDetailsMetaRepository.create(userDetails),
-                    userDetails.getPassword());
+                val authentication = JwtAuthenticationToken
+                    .unauthenticated(userDetailsMetaRepository.create(userDetails), userDetails.getPassword());
 
                 authentication.setJwtToken(jwtToken);
 
@@ -257,9 +260,10 @@ public class JwtTokenManager implements TokenManager {
             }
 
             log.error("[{}] refreshToken({}) is invalid: accessToken or password does not match", requestId,
-                refreshToken);
+                    refreshToken);
             throw TokenException.INVALID_TOKEN;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.warn("[{}] Cannot refresh accessToken: {}", GsvcContextHolder.getRequestId(), e.getMessage());
         }
 
