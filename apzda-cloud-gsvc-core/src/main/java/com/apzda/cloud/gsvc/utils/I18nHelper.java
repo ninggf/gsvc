@@ -98,7 +98,7 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
                 }
                 context.setLocale(locale);
             }
-            else if (context.getLocale() != null) {
+            else if (locale == null) {
                 locale = context.getLocale();
             }
             return messageSource.getMessage(codeId, args, defaultStr, locale);

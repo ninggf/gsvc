@@ -51,10 +51,10 @@ jobs:
             http-get://localhost:${{ env.SERVER_PORT_NO }}/actuator/health
             tcp:localhost:9090
       - name: Download ijhttp tools
-        run: |-
-          curl -f -L -o ijhttp.zip "https://jb.gg/ijhttp/latest"
-          unzip ijhttp.zip
-          ./ijhttp/ijhttp --version
+        run: docker pull jetbrains/intellij-http-client:233.11799.241
       - name: Execute HTTP requests
         run: |-
-          ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env sit apzda-cloud-gsvc-demo/bar-test.http apzda-cloud-gsvc-demo/foo-test.http apzda-cloud-gsvc-demo/i18n-test.http
+          docker run -it --rm -v ./apzda-cloud-gsvc-demo:/workdir jetbrains/intellij-http-client:233.11799.241 \
+          --env-file http-docker.env.json \
+          --env sit \
+          bar-test.http foo-test.http i18n-test.http
