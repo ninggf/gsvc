@@ -68,17 +68,15 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
-    @SuppressWarnings("")
     public static String t(String code, Object[] args, String defaultStr, Locale locale) {
         if (messageSource == null) {
             log.warn("Use I18nHelper too early to translate: '{}'. Use default: '{}'", code, defaultStr);
             return Objects.toString(defaultStr, code);
         }
         //@formatter:off
-        val codeId = code.replace("{}", "0")
-            .replace(".", "DOTTOD")
-            .replaceAll("\\W+", "_")
-            .replace("DOTTOD", ".");
+        val codeId = code.toLowerCase()
+            .replace("{}", "0")
+            .replaceAll("\\W+", ".");
         //@formatter:on
         try {
             if (locale == null) {

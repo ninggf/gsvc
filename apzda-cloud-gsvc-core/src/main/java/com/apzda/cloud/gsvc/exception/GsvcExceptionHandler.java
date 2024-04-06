@@ -75,11 +75,11 @@ public class GsvcExceptionHandler {
             val fullName = validationException.getDescriptor().getFullName();
             for (Violation violation : validationException.getViolations()) {
                 val field = violation.getFieldPath();
+                val i8nKey = "valid." + fullName + "." + field;
                 if (log.isDebugEnabled()) {
-                    log.debug("Add code: '{}' to message resource property file to support i18n",
-                            fullName + "." + field);
+                    log.debug("Add code: '{}' to message resource property file to support i18n", i8nKey);
                 }
-                val message = I18nHelper.t(fullName + "." + field, violation.getMessage());
+                val message = I18nHelper.t(i8nKey, violation.getMessage());
                 violations.put(field, message);
             }
 

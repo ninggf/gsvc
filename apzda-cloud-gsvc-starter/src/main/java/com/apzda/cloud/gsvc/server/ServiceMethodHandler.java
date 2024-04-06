@@ -68,7 +68,7 @@ public class ServiceMethodHandler {
     private String caller;
 
     public ServiceMethodHandler(ServerRequest request, ServiceMethod serviceMethod,
-                                ApplicationContext applicationContext) {
+            ApplicationContext applicationContext) {
         this.request = request;
         this.serviceMethod = serviceMethod;
         this.svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
@@ -78,7 +78,7 @@ public class ServiceMethodHandler {
     }
 
     public static ServerResponse handle(ServerRequest request, String caller, ServiceMethod serviceMethod,
-                                        ApplicationContext applicationContext) {
+            ApplicationContext applicationContext) {
 
         if (!StringUtils.hasText(caller)) {
             caller = request.headers().firstHeader("X-Gsvc-Caller");
@@ -97,7 +97,7 @@ public class ServiceMethodHandler {
             val type = serviceMethod.getType();
             if (log.isTraceEnabled()) {
                 log.trace("[{}] Start to call method[{}]: {}.{}", logId, type, serviceMethod.getServiceName(),
-                    serviceMethod.getDmName());
+                        serviceMethod.getDmName());
             }
             // 1. 解析请求体
             Mono<JsonNode> requestObj = deserializeRequest(type);
@@ -108,7 +108,8 @@ public class ServiceMethodHandler {
                 case SERVER_STREAMING -> doStreamingCall(requestObj);
                 default -> exceptionHandler.handle(new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED), request);
             };
-        } catch (Throwable throwable) {
+        }
+        catch (Throwable throwable) {
             Throwable e = throwable;
 
             if (throwable instanceof InvocationTargetException) {
@@ -121,7 +122,7 @@ public class ServiceMethodHandler {
 
     @SuppressWarnings("unchecked")
     private ServerResponse doStreamingCall(Mono<JsonNode> requestObj)
-        throws InvocationTargetException, IllegalAccessException {
+            throws InvocationTargetException, IllegalAccessException {
         val plugins = serviceMethod.getPlugins();
         var size = plugins.size();
 
@@ -138,12 +139,13 @@ public class ServiceMethodHandler {
                 // Check if there are any validation violations
                 if (!result.isSuccess()) {
                     sink.error(new MessageValidationException(result.getViolations(),
-                        ((Message) reqObj).getDescriptorForType()));
+                            ((Message) reqObj).getDescriptorForType()));
                     return;
                 }
                 sink.next(reqObj);
                 sink.complete();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 sink.error(e);
             }
         });
@@ -172,41 +174,41 @@ public class ServiceMethodHandler {
 
             });
 
-            responseFlux
-                .doOnComplete(sseBuilder::complete)
-                .doOnError(err -> {
-                    log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
+            responseFlux.doOnComplete(sseBuilder::complete).doOnError(err -> {
+                log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
                         serviceMethod.getDmName(), err.getMessage());
-                    try {
-                        sseBuilder.data(ResponseUtils.fallback(err, serviceMethod.getServiceName(), String.class));
-                        sseBuilder.complete();
-                    } catch (IOException ie) {
-                        log.warn("[{}] Cannot send data to client: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                try {
+                    sseBuilder.data(ResponseUtils.fallback(err, serviceMethod.getServiceName(), String.class));
+                    sseBuilder.complete();
+                }
+                catch (IOException ie) {
+                    log.warn("[{}] Cannot send data to client: {}.{} - {}", logId, serviceMethod.getServiceName(),
                             serviceMethod.getDmName(), ie.getMessage());
+                    sseBuilder.complete();
+                }
+            }).subscribe(resp -> {
+                try {
+                    val response = createResponse(resp);
+                    sseBuilder.data(response);
+                }
+                catch (Exception e) {
+                    log.error("[{}] Call method failed on subscribe: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                            serviceMethod.getDmName(), e.getMessage());
+                    try {
+                        sseBuilder.data(ResponseUtils.fallback(e, serviceMethod.getServiceName(), String.class));
+                    }
+                    catch (IOException ie) {
+                        log.error("[{}] Cannot send data to client: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                                serviceMethod.getDmName(), ie.getMessage());
                         sseBuilder.complete();
                     }
-                })
-                .subscribe(resp -> {
-                    try {
-                        val response = createResponse(resp);
-                        sseBuilder.data(response);
-                    } catch (Exception e) {
-                        log.error("[{}] Call method failed on subscribe: {}.{} - {}", logId, serviceMethod.getServiceName(),
-                            serviceMethod.getDmName(), e.getMessage());
-                        try {
-                            sseBuilder.data(ResponseUtils.fallback(e, serviceMethod.getServiceName(), String.class));
-                        } catch (IOException ie) {
-                            log.error("[{}] Cannot send data to client: {}.{} - {}", logId, serviceMethod.getServiceName(),
-                                serviceMethod.getDmName(), ie.getMessage());
-                            sseBuilder.complete();
-                        }
-                    }
-                });
+                }
+            });
         });
     }
 
     private ServerResponse doUnaryCall(Mono<JsonNode> requestObj)
-        throws InvocationTargetException, IllegalAccessException, JsonProcessingException, ValidationException {
+            throws InvocationTargetException, IllegalAccessException, JsonProcessingException, ValidationException {
         val plugins = serviceMethod.getPlugins();
         var size = plugins.size();
         for (IPlugin plugin : plugins) {
@@ -219,7 +221,8 @@ public class ServiceMethodHandler {
             try {
                 sink.next(objectMapper.readValue(req.toString(), serviceMethod.getRequestType()));
                 sink.complete();
-            } catch (JsonProcessingException e) {
+            }
+            catch (JsonProcessingException e) {
                 sink.error(e);
             }
         }).block();
@@ -260,12 +263,14 @@ public class ServiceMethodHandler {
                         log.trace("[{}] Request({}) resolved: {}", logId, contentType, requestBody);
                     }
                     sink.success(requestBody);
-                } catch (IOException e) {
+                }
+                catch (IOException e) {
                     sink.error(e);
                 }
             }).timeout(readTimeout);
-        } else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA)
-            || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
+        }
+        else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA)
+                || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
             val queryParams = request.params();
             val servletRequest = request.servletRequest();
 
@@ -278,10 +283,12 @@ public class ServiceMethodHandler {
                     tuple.getT2().forEach((key, values) -> addBindValue(result, key, values));
                     return result;
                 });
-            } else {
+            }
+            else {
                 args = Mono.error(new ResponseStatusException(HttpStatus.NO_CONTENT));
             }
-        } else {
+        }
+        else {
             MultiValueMap<String, String> queryParams = request.params();
             args = Mono.just(queryParams).map(params -> {
                 Map<String, Object> result = new HashMap<>();
@@ -297,11 +304,12 @@ public class ServiceMethodHandler {
                 val reqObj = objectMapper.convertValue(arg, JsonNode.class);
                 if (log.isTraceEnabled()) {
                     log.trace("[{}] Request({}) resolved: {}", logId, contentType,
-                        objectMapper.writeValueAsString(arg));
+                            objectMapper.writeValueAsString(arg));
                 }
                 sink.next(reqObj);
                 sink.complete();
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 log.error("[{}] Request({}) resolved failed: {}", logId, contentType, e.getMessage());
                 sink.error(e);
             }
@@ -328,18 +336,21 @@ public class ServiceMethodHandler {
 
                         if (log.isTraceEnabled()) {
                             log.trace("[{}] File '{}' uploaded to '{}'", logId, filePart.getOriginalFilename(),
-                                tmpFile.getAbsoluteFile());
+                                    tmpFile.getAbsoluteFile());
                         }
 
                         return file.build();
-                    } catch (IOException e) {
+                    }
+                    catch (IOException e) {
                         log.error("[{}] Upload file '{}' failed: {}", logId, filePart.getOriginalFilename(),
-                            e.getMessage());
+                                e.getMessage());
                         return file.size(-1).error(e.getMessage()).build();
                     }
-                } else if (value instanceof FormFieldPart formFieldPart) {
+                }
+                else if (value instanceof FormFieldPart formFieldPart) {
                     return formFieldPart.value();
-                } else {
+                }
+                else {
                     return value;
                 }
             }).toList();
@@ -370,7 +381,7 @@ public class ServiceMethodHandler {
         val respStr = objectMapper.writeValueAsString(resp);
         if (log.isTraceEnabled()) {
             log.trace("[{}] Response of {}.{}: {}", logId, serviceMethod.getServiceName(), serviceMethod.getDmName(),
-                respStr);
+                    respStr);
         }
         return respStr;
     }
