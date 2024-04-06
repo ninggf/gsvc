@@ -29,7 +29,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
-import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.servlet.LocaleResolver;
 
 import java.io.IOException;
@@ -85,8 +84,8 @@ public class GrpcClientSupportConfiguration {
                         val status = se.getStatus();
                         val statusCode = status.getCode();
                         val cause = status.getCause();
-                        log.debug("gRPC({}) Call failed: {} - {}", context.getSvcName(),
-                                statusCode, status.getDescription(), cause);
+                        log.debug("gRPC({}) Call failed: {} - {}", context.getSvcName(), statusCode,
+                                status.getDescription(), cause);
                         HttpStatusCode code;
                         ProblemDetail pd;
                         if (cause instanceof TimeoutException
@@ -141,17 +140,19 @@ public class GrpcClientSupportConfiguration {
             @Override
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
                     CallOptions callOptions, Channel next) {
-                val requestId = GsvcContextHolder.getRequestId();
+                val context = GsvcContextHolder.current();
                 val serviceName = method.getServiceName();
-                val requestAttributes = RequestContextHolder.getRequestAttributes();
+                context.setSvcName(serviceName);
+                var locale = context.getLocale();
+                if (locale == null) {
+                    context.setLocale(localeResolver.resolveLocale(GsvcContextHolder.getRequest().orElse(null)));
+                }
                 return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                     @Override
                     public void start(Listener<RespT> responseListener, Metadata headers) {
-                        headers.put(HeaderMetas.REQUEST_ID, requestId);
-                        val context = GsvcContextHolder.current();
-                        context.setRequestId(requestId);
-                        context.setAttributes(requestAttributes);
-                        context.setSvcName(serviceName);
+                        context.restore();
+                        headers.put(HeaderMetas.REQUEST_ID, context.getRequestId());
+                        headers.put(HeaderMetas.LANGUAGE, context.getLocale().toLanguageTag());
                         // bookmark: ClientInterceptor
                         super.start(responseListener, headers);
                     }

@@ -18,8 +18,10 @@ package com.apzda.cloud.demo.math.service;
 
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
+import com.apzda.cloud.demo.math.proto.Request;
 import com.apzda.cloud.demo.math.proto.Result;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.utils.I18nHelper;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -87,13 +89,21 @@ public class MathServiceImpl implements MathService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public Result auth(OpNum request) {
-        return null;
+        val context = GsvcContextHolder.current();
+        log.debug("GsvcContext: {}", context);
+        return Result.newBuilder().setMessage(I18nHelper.t("math.hello")).build();
     }
 
     @Override
     @PreAuthorize("@authz.isSa(#root)")
     public Result authz(OpNum request) {
-        return null;
+        return Result.newBuilder().setMessage(I18nHelper.t("math.hello")).build();
+    }
+
+    @Override
+    public Result translate(Request request) {
+        val str = I18nHelper.t(request.getKey(), "");
+        return Result.newBuilder().setMessage(str).build();
     }
 
 }

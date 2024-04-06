@@ -4,6 +4,7 @@ import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.error.GlobalGrpcExceptionAdvice;
 import com.apzda.cloud.gsvc.grpc.GrpcService;
+import com.apzda.cloud.gsvc.grpc.GsvcContextServerCallListener;
 import com.apzda.cloud.gsvc.security.grpc.HeaderMetas;
 import com.google.common.collect.Lists;
 import io.grpc.*;
@@ -15,6 +16,8 @@ import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import net.devh.boot.grpc.server.serverfactory.GrpcServerConfigurer;
 import net.devh.boot.grpc.server.service.GrpcServiceDefinition;
 import net.devh.boot.grpc.server.service.GrpcServiceDiscoverer;
+import org.apache.commons.lang3.LocaleUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -41,6 +44,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class GrpcServerSupportConfiguration {
 
+    public static final Context.Key<GsvcContextHolder.GsvcContext> GSVC_CONTEXT_KEY = Context.key("gsvc-context");
+
     @Configuration
     static class GrpcServerAutoImporter {
 
@@ -51,16 +56,31 @@ public class GrpcServerSupportConfiguration {
                 @Override
                 public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
                         Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-                    val requestId = headers.get(HeaderMetas.REQUEST_ID);
-                    val serviceName = call.getMethodDescriptor().getFullMethodName();
                     val context = GsvcContextHolder.current();
+                    val requestId = headers.get(HeaderMetas.REQUEST_ID);
+                    val language = headers.get(HeaderMetas.LANGUAGE);
+
+                    if (StringUtils.isNotBlank(language)) {
+                        try {
+                            val locale = LocaleUtils.toLocale(language);
+                            context.setLocale(locale);
+                        }
+                        catch (Exception ignored) {
+                        }
+                    }
+                    val serviceName = call.getMethodDescriptor().getFullMethodName();
                     context.setRequestId(requestId);
                     context.setSvcName(serviceName);
+
+                    val grpcContext = Context.current().withValue(GSVC_CONTEXT_KEY, context);
+                    val previousContext = grpcContext.attach();
+
                     try {
-                        return next.startCall(call, headers);
+                        return new GsvcContextServerCallListener<>(next.startCall(call, headers), grpcContext, context);
                     }
                     finally {
                         GsvcContextHolder.clear();
+                        grpcContext.detach(previousContext);
                     }
                 }
             };

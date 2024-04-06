@@ -2,11 +2,11 @@ package com.apzda.cloud.demo.bar.controller;
 
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
+import com.apzda.cloud.demo.math.proto.Request;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.security.token.SimpleJwtToken;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.utils.I18nHelper;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -46,8 +46,14 @@ public class TokenController {
     }
 
     @GetMapping("/i18n/{key}")
-    public String i18n(@PathVariable String key, HttpServletRequest request) {
+    public String i18n(@PathVariable String key) {
         return I18nHelper.t(key);
+    }
+
+    @GetMapping("/gi18n/{key}")
+    public String gi18n(@PathVariable String key) {
+        val resp = mathService.translate(Request.newBuilder().setKey(key).build());
+        return resp.getMessage();
     }
 
     @GetMapping("/add")
@@ -64,8 +70,8 @@ public class TokenController {
 
     @GetMapping("/authz")
     public Response<String> auth() {
-        mathService.auth(OpNum.newBuilder().setNum1(1).setNum2(1).build());
-        return Response.success("ok");
+        val resp = mathService.auth(OpNum.newBuilder().setNum1(1).setNum2(1).build());
+        return Response.success(resp.getMessage());
     }
 
     @GetMapping("/authx")

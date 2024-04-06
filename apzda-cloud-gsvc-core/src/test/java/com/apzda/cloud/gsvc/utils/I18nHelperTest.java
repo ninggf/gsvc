@@ -25,6 +25,7 @@ class I18nHelperTest {
     void trans_with_args_should_be_correct() {
         // given
         val zhCn = Locale.SIMPLIFIED_CHINESE;
+        System.out.println("zhCn = " + zhCn.toLanguageTag());
         // when
         val msg = I18nHelper.t("{} login successfully", new Object[] { "admin" });
         val msgZhCN = I18nHelper.t("{} login successfully", new Object[] { "admin" }, zhCn);

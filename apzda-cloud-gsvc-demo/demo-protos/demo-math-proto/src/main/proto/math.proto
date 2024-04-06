@@ -7,6 +7,10 @@ option java_multiple_files = true;
 option java_outer_classname = "MathProto";
 
 
+message Request {
+  string key = 1;
+}
+
 message OpNum {
   int32 num1 = 1;
   int32 num2 = 2;
@@ -16,6 +20,7 @@ message Result {
   int32 err_code = 1;
   optional string err_msg = 2;
   int64 result = 3;
+  optional string message = 4;
 }
 
 service MathService {
@@ -47,4 +52,6 @@ service MathService {
    * 返回 403
    */
   rpc authz(OpNum) returns(Result);
+
+  rpc translate(Request) returns(Result);
 }
