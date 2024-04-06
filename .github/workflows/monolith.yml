@@ -54,7 +54,7 @@ jobs:
         run: docker pull jetbrains/intellij-http-client:233.11799.241
       - name: Execute HTTP requests
         run: |-
-          docker run -it --rm -v ./apzda-cloud-gsvc-demo:/workdir jetbrains/intellij-http-client:233.11799.241 \
+          docker run --rm -v ./apzda-cloud-gsvc-demo:/workdir jetbrains/intellij-http-client:233.11799.241 \
           --env-file http-docker.env.json \
           --env sit \
           bar-test.http foo-test.http i18n-test.http
