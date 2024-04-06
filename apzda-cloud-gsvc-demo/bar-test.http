@@ -375,6 +375,7 @@ Authorization: Bearer {{accessToken}}
 %}
 
 ### Auth - API - /token/refresh#after-login
+//@no-redirect
 POST http://{{barService}}/token/refresh
 Content-Type: application/json
 Accept: application/json
@@ -412,12 +413,13 @@ Authorization: Bearer {{accessToken}}
 %}
 
 ### BarService err
+//@no-redirect
 POST http://{{barService}}/~barService/err
 Content-Type: application/json
 X-Gsvc-Caller: gtw
+Accept: application/json
 
 {
-    "a": 1
 }
 
 > {%
@@ -430,12 +432,13 @@ X-Gsvc-Caller: gtw
 %}
 
 ### BarService rpcErr
+//@no-redirect
 POST http://{{barService}}/~barService/rpcErr
 Content-Type: application/json
 X-Gsvc-Caller: gtw
+Accept: application/json
 
 {
-    "a": 1
 }
 
 > {%
@@ -448,7 +451,9 @@ X-Gsvc-Caller: gtw
 %}
 
 ### BarService authz - unauthed
+//@no-redirect
 GET http://{{barService}}/token/authz
+Accept: application/json
 
 > {%
     client.test("Request executed successfully", function () {

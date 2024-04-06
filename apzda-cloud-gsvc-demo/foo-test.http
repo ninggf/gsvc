@@ -1,4 +1,5 @@
 ### FooService err
+//@no-redirect
 POST http://{{fooService}}/foo/hai
 Content-Type: application/json
 X-Request-ID: 1234-4567-89AB
@@ -35,6 +36,7 @@ password = 123456
 %}
 
 ### FooService Hi - need mfa setup
+//@no-redirect
 POST http://{{fooService}}/foo/hai
 Content-Type: application/json
 X-Gsvc-Caller: gtw
@@ -338,9 +340,11 @@ age = 18
 %}
 
 ### FooService Err
+//@no-redirect
 POST http://{{fooService}}/~fooService/err
 Content-Type: application/json
 X-Gsvc-Caller: gtw
+Accept: application/json
 
 {
 }
