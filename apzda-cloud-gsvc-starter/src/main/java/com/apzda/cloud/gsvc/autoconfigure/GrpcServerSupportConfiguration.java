@@ -56,8 +56,12 @@ public class GrpcServerSupportConfiguration {
                     val context = GsvcContextHolder.current();
                     context.setRequestId(requestId);
                     context.setSvcName(serviceName);
-
-                    return next.startCall(call, headers);
+                    try {
+                        return next.startCall(call, headers);
+                    }
+                    finally {
+                        GsvcContextHolder.clear();
+                    }
                 }
             };
         }

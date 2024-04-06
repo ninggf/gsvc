@@ -28,7 +28,12 @@ public class GsvcServletFilter extends OncePerRequestFilter {
         // bookmark: 初始化
         val context = GsvcContextHolder.current();
         context.setRequestId(requestId);
-        filterChain.doFilter(request, response);
+        try {
+            filterChain.doFilter(request, response);
+        }
+        finally {
+            GsvcContextHolder.clear();
+        }
     }
 
 }

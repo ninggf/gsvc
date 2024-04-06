@@ -17,13 +17,14 @@
 package com.apzda.cloud.gsvc.i18n;
 
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.val;
+import org.apache.commons.lang3.LocaleUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
-import org.springframework.web.util.WebUtils;
 
 import java.util.Locale;
 
@@ -52,6 +53,7 @@ public class LocaleResolverImpl extends CookieLocaleResolver {
     @Override
     @NonNull
     public Locale resolveLocale(@Nullable HttpServletRequest request) {
+
         if (request == null) {
             val currentUser = CurrentUserProvider.getCurrentUser();
             val locale = currentUser.getLocale();
@@ -60,11 +62,12 @@ public class LocaleResolverImpl extends CookieLocaleResolver {
             }
             return locale;
         }
-        val cookie = WebUtils.getCookie(request, language);
+        val cookie = GsvcContextHolder.cookie(language);
         if (cookie != null) {
-            val attribute = request.getAttribute(LOCALE_REQUEST_ATTRIBUTE_NAME);
-            if (attribute != null) {
-                return (Locale) attribute;
+            try {
+                return LocaleUtils.toLocale(cookie);
+            }
+            catch (Exception ignored) {
             }
         }
         if (request.getHeader("Accept-Language") != null) {

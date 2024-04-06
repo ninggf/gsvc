@@ -3,6 +3,7 @@
 POST http://{{fooService}}/foo/hai
 Content-Type: application/json
 X-Request-ID: 1234-4567-89AB
+Accept: application/json
 
 {
     "name": "gsvc",
@@ -30,7 +31,7 @@ password = 123456
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.data.mfa==='UNSET', "MFA状态 "+response.body.data.mfa +" != UNSET");
+        client.assert(response.body.data.mfa === 'UNSET', "MFA状态 " + response.body.data.mfa + " != UNSET");
         client.global.set("accessToken", response.body.data.accessToken)
     });
 %}
@@ -41,6 +42,7 @@ POST http://{{fooService}}/foo/hai
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 Authorization: Bearer {{accessToken}}
+Accept: application/json
 
 {
     "name": "gsvc",
@@ -79,6 +81,7 @@ password = 123456
 POST http://{{fooService}}/~fooService/greeting
 Content-Type: application/json
 X-Gsvc-Caller: gtw
+Accept: application/json
 
 {
     "name": "gsvc",
@@ -87,7 +90,7 @@ X-Gsvc-Caller: gtw
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.status === 200, "Response status is " + response.status);
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
@@ -100,6 +103,7 @@ POST http://{{fooService}}/~fooService/greeting
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 Cookie: lang=zh_CN
+Accept: application/json
 
 {
     "name": "gsvc",
@@ -120,6 +124,7 @@ Cookie: lang=zh_CN
 POST http://{{fooService}}/~fooService/hello
 Content-Type: application/json
 X-Gsvc-Caller: gtw
+Accept: text/event-stream
 
 {
     "name": "gsvc",
@@ -149,6 +154,7 @@ POST http://{{fooService}}/~fooService/hi
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 Authorization: Bearer {{accessToken}}
+Accept: text/event-stream
 
 {
     "name": "gsvc",
@@ -178,6 +184,7 @@ POST http://{{fooService}}/~fooService/hi?a=1
 Content-Type: application/x-www-form-urlencoded
 X-Gsvc-Caller: gtw
 Authorization: Bearer {{accessToken}}
+Accept: text/event-stream
 
 name = gsvc &
 age = 18
@@ -205,6 +212,7 @@ POST http://{{fooService}}/~fooService/saInfo
 Content-Type: application/x-www-form-urlencoded
 X-Gsvc-Caller: gtw
 Authorization: Bearer {{accessToken}}
+Accept: application/json
 
 name = gsvc &
 age = 18
@@ -222,6 +230,7 @@ age = 18
 ### Route - FooService Greeting
 POST http://{{fooService}}/foo/greeting
 Content-Type: application/json
+Accept: application/json
 
 {
     "name": "gsvc",
@@ -230,7 +239,7 @@ Content-Type: application/json
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.status === 200, "Response status is not 200, " + response.status);
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
@@ -241,6 +250,7 @@ Content-Type: application/json
 ### Route - FooService Hello
 POST http://{{fooService}}/foo/hello
 Content-Type: application/json
+Accept: text/event-stream
 
 {
     "name": "gsvc",
@@ -268,6 +278,7 @@ Content-Type: application/json
 ### Route - FooService hey - GET
 GET http://{{fooService}}/foo/hey?name=gsvc&age=18
 X-Gsvc-Caller: gtw
+Accept: text/event-stream
 
 > {%
     client.test("Request executed successfully", function () {
@@ -340,8 +351,8 @@ age = 18
 %}
 
 ### FooService Err
-//@no-redirect
 POST http://{{fooService}}/~fooService/err
+//@no-redirect
 Content-Type: application/json
 X-Gsvc-Caller: gtw
 Accept: application/json
@@ -351,7 +362,7 @@ Accept: application/json
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401, "Response status is not 200");
+        client.assert(response.status === 401, "Response status is " + response.status);
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(Math.abs(response.body.errCode) === 401, "错误的响应码" + response.body.errCode);

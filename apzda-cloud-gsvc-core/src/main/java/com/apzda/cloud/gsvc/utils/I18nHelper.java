@@ -79,16 +79,27 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
             .replaceAll("\\W+", ".");
         //@formatter:on
         try {
-            if (locale == null) {
-                val request = GsvcContextHolder.getRequest();
-                if (localeResolver instanceof LocaleResolverImpl localeResolver1) {
-                    locale = localeResolver1.resolveLocale(request.orElse(null));
+            val context = GsvcContextHolder.current();
+            if (locale == null && context.getLocale() == null) {
+                val userLocale = CurrentUserProvider.getCurrentUser().getLocale();
+                locale = Optional.ofNullable(userLocale).orElse(defaultLocale);
+                try {
+                    val request = GsvcContextHolder.getRequest();
+                    if (localeResolver instanceof LocaleResolverImpl localeResolver1) {
+                        locale = localeResolver1.resolveLocale(request.orElse(null));
+                    }
+                    else {
+                        locale = request.map(httpServletRequest -> localeResolver.resolveLocale(httpServletRequest))
+                            .orElse(locale);
+                    }
                 }
-                else {
-                    locale = request.map(httpServletRequest -> localeResolver.resolveLocale(httpServletRequest))
-                        .orElse(Optional.ofNullable(CurrentUserProvider.getCurrentUser().getLocale())
-                            .orElse(defaultLocale));
+                catch (Exception e) {
+                    log.warn("Cannot detect Locale when translate: {} - {} - {}", codeId, args, e.getMessage());
                 }
+                context.setLocale(locale);
+            }
+            else if (context.getLocale() != null) {
+                locale = context.getLocale();
             }
             return messageSource.getMessage(codeId, args, defaultStr, locale);
         }

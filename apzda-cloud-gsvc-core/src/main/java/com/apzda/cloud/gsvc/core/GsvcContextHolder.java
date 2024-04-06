@@ -53,6 +53,12 @@ public class GsvcContextHolder {
     }
 
     public static DefaultHttpHeaders headers() {
+        val context = current();
+        val headers = context.getHeaders();
+        if (headers != null) {
+            return headers;
+        }
+
         val request = getRequest();
         if (request.isPresent()) {
             HttpServletRequest httpServletRequest = request.get();
@@ -67,6 +73,7 @@ public class GsvcContextHolder {
                         filtered1.forEach(defaultHttpHeaders::set);
                         httpServletRequest.setAttribute(FILTERED_HTTP_HEADERS, defaultHttpHeaders);
                         filtered = defaultHttpHeaders;
+                        context.setHeaders(defaultHttpHeaders);
                     }
                 }
             }
@@ -81,6 +88,7 @@ public class GsvcContextHolder {
         return headers().get(name);
     }
 
+    @NonNull
     public static Map<String, String> headers(String prefix) {
         val headers = new HashMap<String, String>();
         headers().forEach(header -> {
@@ -101,7 +109,13 @@ public class GsvcContextHolder {
     }
 
     @SuppressWarnings("unchecked")
+    @NonNull
     public static Map<String, HttpCookie> cookies() {
+        val context = current();
+        val cachedCookie = context.getCookies();
+        if (cachedCookie != null) {
+            return cachedCookie;
+        }
         val request = getRequest();
         if (request.isPresent()) {
             final HttpServletRequest httpServletRequest = request.get();
@@ -122,6 +136,7 @@ public class GsvcContextHolder {
                     }
                 }
                 httpServletRequest.setAttribute(HTTP_COOKIES, cookies);
+                context.setCookies(cookies);
                 return cookies;
             }
         }
@@ -164,7 +179,7 @@ public class GsvcContextHolder {
     public static GsvcContext current() {
         var context = CONTEXT_BOX.get();
         if (context == null) {
-            context = new GsvcContext(GsvcContextHolder.getRequestId(), null, "main");
+            context = new GsvcContext("", null, "main");
             CONTEXT_BOX.set(context);
         }
         return context;
@@ -392,6 +407,12 @@ public class GsvcContextHolder {
         private RequestAttributes attributes;
 
         private String svcName;
+
+        private DefaultHttpHeaders headers;
+
+        private Map<String, HttpCookie> cookies;
+
+        private Locale locale;
 
         GsvcContext(String requestId, RequestAttributes attributes, String svcName) {
             this.attributes = attributes;
