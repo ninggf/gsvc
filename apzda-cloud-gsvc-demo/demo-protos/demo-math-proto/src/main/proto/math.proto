@@ -39,4 +39,12 @@ service MathService {
    * 返回 num1的平方.
    */
   rpc square(stream OpNum) returns(stream Result);
+  /*
+   * 返回 401
+   */
+  rpc auth(OpNum) returns(Result);
+  /*
+   * 返回 403
+   */
+  rpc authz(OpNum) returns(Result);
 }

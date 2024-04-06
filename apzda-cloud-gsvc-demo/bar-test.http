@@ -288,6 +288,35 @@ Authorization: Bearer {{accessToken}}
     });
 %}
 
+### BarService authz - authed
+GET http://{{barService}}/token/authz
+// @no-redirect
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService authx - forbidden
+GET http://{{barService}}/token/authx
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 403, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -403, "出错啦: " + response.body.errMsg);
+    });
+%}
+
 ### Auth - API - /token/refresh
 POST http://{{barService}}/token/refresh
 Content-Type: application/json
@@ -388,6 +417,7 @@ Content-Type: application/json
 X-Gsvc-Caller: gtw
 
 {
+    "a": 1
 }
 
 > {%
@@ -405,13 +435,26 @@ Content-Type: application/json
 X-Gsvc-Caller: gtw
 
 {
+    "a": 1
 }
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 503, "Response status is not 503");
+        client.assert(response.status === 500, "Response status is not 500");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.errCode === 503, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.errCode === -500, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService authz - unauthed
+GET http://{{barService}}/token/authz
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
     });
 %}

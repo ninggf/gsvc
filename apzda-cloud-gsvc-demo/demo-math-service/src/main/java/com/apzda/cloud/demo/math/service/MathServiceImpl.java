@@ -22,6 +22,7 @@ import com.apzda.cloud.demo.math.proto.Result;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
@@ -76,7 +77,20 @@ public class MathServiceImpl implements MathService {
 
     @Override
     public Result divide(OpNum request) {
+        log.info("[{}] Calculate {}/{}", GsvcContextHolder.getRequestId(), request.getNum1(), request.getNum2());
         return Result.newBuilder().setResult(request.getNum1() / request.getNum2()).build();
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public Result auth(OpNum request) {
+        return null;
+    }
+
+    @Override
+    @PreAuthorize("@authz.isSa(#root)")
+    public Result authz(OpNum request) {
+        return null;
     }
 
 }

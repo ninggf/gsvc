@@ -70,8 +70,8 @@ public class DefaultServiceCaller implements IServiceCaller {
                     log.trace("Error({}) dropped while doing RPC: {}", error.getClass(), error.getMessage());
                 }
                 else {
-                    log.trace("[{}] Error dropped while doing RPC({}): {}", context.getRequestId(),
-                            context.getMethod().getRpcAddr(), error.getMessage());
+                    log.trace("[{}] Error dropped while doing RPC({}): {}", context.getRequestId(), context.getSvcName(),
+                            error.getMessage());
                 }
             }
         });
@@ -161,11 +161,11 @@ public class DefaultServiceCaller implements IServiceCaller {
         var context = GsvcContextHolder.CONTEXT_BOX.get();
         if (context == null) {
             context = new GsvcContextHolder.GsvcContext(GsvcContextHolder.getRequestId(),
-                    RequestContextHolder.getRequestAttributes(), method);
+                    RequestContextHolder.getRequestAttributes(), method.getCfgName());
             GsvcContextHolder.CONTEXT_BOX.set(context);
         }
         else {
-            context.setMethod(method);
+            context.setSvcName(method.getCfgName());
         }
 
         val url = method.getRpcAddr();

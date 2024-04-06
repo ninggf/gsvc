@@ -1,7 +1,8 @@
 package com.apzda.cloud.demo.bar.controller;
 
+import com.apzda.cloud.demo.math.proto.MathService;
+import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.gsvc.dto.Response;
-import com.apzda.cloud.gsvc.security.token.JwtToken;
 import com.apzda.cloud.gsvc.security.token.SimpleJwtToken;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.utils.I18nHelper;
@@ -14,7 +15,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.springframework.context.MessageSource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -32,7 +32,7 @@ public class TokenController {
 
     private final TokenManager tokenManager;
 
-    private final MessageSource messageSource;
+    private final MathService mathService;
 
     @PostMapping("/refresh")
     public ResponseEntity<Response<?>> refresh(@RequestBody SimpleJwtToken token) {
@@ -60,6 +60,18 @@ public class TokenController {
     @Validated
     public Response<DemoDto> demo(@Valid @RequestBody DemoDto demoDto) {
         return Response.success(demoDto);
+    }
+
+    @GetMapping("/authz")
+    public Response<String> auth() {
+        mathService.auth(OpNum.newBuilder().setNum1(1).setNum2(1).build());
+        return Response.success("ok");
+    }
+
+    @GetMapping("/authx")
+    public Response<String> authx() {
+        mathService.authz(OpNum.newBuilder().setNum1(1).setNum2(1).build());
+        return Response.success("ok");
     }
 
     @Data

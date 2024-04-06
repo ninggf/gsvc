@@ -20,7 +20,7 @@ public enum ServiceError implements IServiceError {
     NOT_FOUND(-404, HttpStatus.NOT_FOUND.getReasonPhrase()),
     METHOD_NOT_ALLOWED(-405, HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase()),
     TOO_MANY_REQUESTS(-429, HttpStatus.TOO_MANY_REQUESTS.getReasonPhrase()),
-    SERVICE_ERROR(-500, HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase()),
+    SERVICE_ERROR(-500, "Service Internal Error"),
     REMOTE_SERVICE_ERROR(-501, "Service RPC Error"),
     REMOTE_SERVICE_NO_INSTANCE(-502, "No Service instance found"),
     SERVICE_UNAVAILABLE(-503, HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase()),
@@ -106,9 +106,9 @@ public enum ServiceError implements IServiceError {
     public String message() {
         val context = GsvcContextHolder.CONTEXT_BOX.get();
         if (context != null) {
-            val method = context.getMethod();
-            if (method != null) {
-                return message.replace("Service ", "Service(" + method.getServiceName() + ") ");
+            val svcName = context.getSvcName();
+            if (svcName != null) {
+                return message.replace("Service ", "Service(" + svcName + ") ");
             }
         }
         return message;

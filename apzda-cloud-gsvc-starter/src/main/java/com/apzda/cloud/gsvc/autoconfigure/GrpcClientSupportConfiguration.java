@@ -8,9 +8,9 @@ import com.apzda.cloud.gsvc.grpc.DefaultGrpcChannelFactoryAdapter;
 import com.apzda.cloud.gsvc.grpc.DefaultStubFactoryAdapter;
 import com.apzda.cloud.gsvc.grpc.GrpcChannelFactoryAdapter;
 import com.apzda.cloud.gsvc.grpc.StubFactoryAdapter;
-import com.apzda.cloud.gsvc.security.config.GrpcClientSecurityConfiguration;
 import com.apzda.cloud.gsvc.security.grpc.HeaderMetas;
 import io.grpc.*;
+import io.grpc.netty.shaded.io.netty.handler.timeout.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
@@ -19,7 +19,6 @@ import net.devh.boot.grpc.client.interceptor.GrpcGlobalClientInterceptor;
 import net.devh.boot.grpc.client.stubfactory.AsyncStubFactory;
 import net.devh.boot.grpc.client.stubfactory.BlockingStubFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -30,6 +29,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponseException;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.servlet.LocaleResolver;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +45,6 @@ import java.util.concurrent.TimeUnit;
 public class GrpcClientSupportConfiguration {
 
     @Configuration
-    @ImportAutoConfiguration({ GrpcClientSecurityConfiguration.class })
     static class GrpcClientAutoImporter {
 
         @Bean
@@ -81,22 +81,45 @@ public class GrpcClientSupportConfiguration {
                 @Override
                 public ErrorResponseException transform(Throwable exception) {
                     if (exception instanceof StatusRuntimeException se) {
+                        val context = GsvcContextHolder.CONTEXT_BOX.get();
                         val status = se.getStatus();
-                        log.trace("Grpc Call failed: {} - {}", status.getCode(), status.getDescription(),
-                                status.getCause());
+                        val statusCode = status.getCode();
+                        val cause = status.getCause();
+                        log.debug("[{}] Grpc({}) Call failed: {} - {}", context.getRequestId(), context.getSvcName(),
+                                statusCode, status.getDescription(), cause);
                         HttpStatusCode code;
                         ProblemDetail pd;
-                        if (status.getCause() instanceof IOException) {
+                        if (cause instanceof TimeoutException
+                                || cause instanceof io.netty.handler.timeout.TimeoutException) {
+                            pd = ProblemDetail.forStatus(504);
+                            code = HttpStatus.GATEWAY_TIMEOUT;
+                        }
+                        else if (cause instanceof IOException) {
                             pd = ProblemDetail.forStatus(502);
                             code = HttpStatus.BAD_GATEWAY;
                         }
-                        else {
+                        else if (statusCode == Status.UNAVAILABLE.getCode()) {
                             pd = ProblemDetail.forStatus(503);
                             code = HttpStatus.SERVICE_UNAVAILABLE;
                         }
-                        pd.setTitle(status.getCode().name() + " - " + status.getDescription());
-                        if (status.getCause() != null) {
-                            pd.setDetail(status.getCause().getMessage());
+                        else if (statusCode == Status.UNAUTHENTICATED.getCode()) {
+                            pd = ProblemDetail.forStatus(401);
+                            code = HttpStatus.UNAUTHORIZED;
+                        }
+                        else if (statusCode == Status.PERMISSION_DENIED.getCode()) {
+                            pd = ProblemDetail.forStatus(403);
+                            code = HttpStatus.FORBIDDEN;
+                        }
+                        else {
+                            pd = ProblemDetail.forStatus(500);
+                            code = HttpStatus.INTERNAL_SERVER_ERROR;
+                        }
+                        pd.setTitle(statusCode.name() + " - " + status.getDescription());
+                        if (cause != null) {
+                            pd.setDetail(cause.getMessage());
+                        }
+                        else {
+                            pd.setDetail(status.getDescription());
                         }
                         return new ErrorResponseException(code, pd, exception);
                     }
@@ -113,17 +136,20 @@ public class GrpcClientSupportConfiguration {
     }
 
     @GrpcGlobalClientInterceptor
-    ClientInterceptor requestIdInterceptor() {
+    ClientInterceptor requestIdInterceptor(LocaleResolver localeResolver) {
         return new ClientInterceptor() {
             @Override
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
                     CallOptions callOptions, Channel next) {
                 val requestId = GsvcContextHolder.getRequestId();
-
+                val serviceName = method.getServiceName();
                 return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                     @Override
                     public void start(Listener<RespT> responseListener, Metadata headers) {
                         headers.put(HeaderMetas.REQUEST_ID, requestId);
+                        GsvcContextHolder.CONTEXT_BOX.set(new GsvcContextHolder.GsvcContext(requestId,
+                                RequestContextHolder.getRequestAttributes(), serviceName));
+                        // bookmark: ClientInterceptor
                         super.start(responseListener, headers);
                     }
                 };

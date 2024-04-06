@@ -28,4 +28,6 @@ public final class HeaderMetas {
     public static final Metadata.Key<String> REQUEST_ID = Metadata.Key.of("X-Request-Id",
             Metadata.ASCII_STRING_MARSHALLER);
 
+    public static final Metadata.Key<String> LANGUAGE = Metadata.Key.of("X-Language", Metadata.ASCII_STRING_MARSHALLER);
+
 }

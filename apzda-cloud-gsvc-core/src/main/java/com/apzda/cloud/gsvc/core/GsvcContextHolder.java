@@ -372,7 +372,7 @@ public class GsvcContextHolder {
 
         private RequestAttributes attributes;
 
-        private ServiceMethod method;
+        private String svcName;
 
     }
 

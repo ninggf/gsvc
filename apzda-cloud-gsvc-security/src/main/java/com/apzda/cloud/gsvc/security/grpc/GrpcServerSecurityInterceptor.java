@@ -17,17 +17,19 @@
 package com.apzda.cloud.gsvc.security.grpc;
 
 import com.apzda.cloud.gsvc.security.token.TokenManager;
-import io.grpc.Metadata;
-import io.grpc.ServerCall;
-import io.grpc.ServerCallHandler;
-import io.grpc.ServerInterceptor;
+import io.grpc.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import net.devh.boot.grpc.common.security.SecurityConstants;
+import net.devh.boot.grpc.server.security.interceptors.AbstractAuthenticatingServerCallListener;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
+
+import static net.devh.boot.grpc.server.security.interceptors.AuthenticatingServerInterceptor.AUTHENTICATION_CONTEXT_KEY;
+import static net.devh.boot.grpc.server.security.interceptors.AuthenticatingServerInterceptor.SECURITY_CONTEXT_KEY;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -56,8 +58,20 @@ public class GrpcServerSecurityInterceptor implements ServerInterceptor {
                 if (authentication != null) {
                     context.setAuthentication(authentication);
                     SecurityContextHolder.setContext(context);
-                    if (log.isTraceEnabled()) {
-                        log.trace("[{}] Loading Context by {}", requestId, tokenManager);
+                    log.debug("[{}] Authentication successful: {} ({})", requestId, authentication.getName(),
+                            authentication.getAuthorities());
+                    @SuppressWarnings("deprecation")
+                    val grpcContext = Context.current()
+                        .withValues(SECURITY_CONTEXT_KEY, context, AUTHENTICATION_CONTEXT_KEY, authentication);
+                    val previousContext = grpcContext.attach();
+
+                    try {
+                        return new AuthenticatingServerCallListener<>(next.startCall(call, headers), grpcContext,
+                                context);
+                    }
+                    finally {
+                        SecurityContextHolder.clearContext();
+                        grpcContext.detach(previousContext);
                     }
                 }
                 else if (log.isTraceEnabled()) {
@@ -70,6 +84,28 @@ public class GrpcServerSecurityInterceptor implements ServerInterceptor {
         }
 
         return next.startCall(call, headers);
+    }
+
+    private static class AuthenticatingServerCallListener<ReqT> extends AbstractAuthenticatingServerCallListener<ReqT> {
+
+        private final SecurityContext securityContext;
+
+        public AuthenticatingServerCallListener(final ServerCall.Listener<ReqT> delegate, final Context grpcContext,
+                final SecurityContext securityContext) {
+            super(delegate, grpcContext);
+            this.securityContext = securityContext;
+        }
+
+        @Override
+        protected void attachAuthenticationContext() {
+            SecurityContextHolder.setContext(this.securityContext);
+        }
+
+        @Override
+        protected void detachAuthenticationContext() {
+            SecurityContextHolder.clearContext();
+        }
+
     }
 
 }

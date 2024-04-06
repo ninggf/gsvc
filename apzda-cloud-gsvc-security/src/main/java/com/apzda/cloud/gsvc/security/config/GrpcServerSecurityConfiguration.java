@@ -17,12 +17,18 @@
 package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.security.grpc.GrpcServerSecurityInterceptor;
+import com.apzda.cloud.gsvc.security.grpc.SecurityAdvice;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import io.grpc.ServerInterceptor;
+import net.devh.boot.grpc.common.util.InterceptorOrder;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
+import net.devh.boot.grpc.server.security.authentication.GrpcAuthenticationReader;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -31,12 +37,24 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * @since 1.0.0
  **/
 @AutoConfiguration(before = GrpcServerAutoConfiguration.class, after = GsvcSecurityAutoConfiguration.class)
-@ConditionalOnClass({ SecurityContextHolder.class, TokenManager.class })
+@ConditionalOnClass({ GrpcServerAutoConfiguration.class, SecurityContextHolder.class, TokenManager.class })
 public class GrpcServerSecurityConfiguration {
 
     @GrpcGlobalServerInterceptor
+    @Order(InterceptorOrder.ORDER_SECURITY_AUTHENTICATION + 1)
     ServerInterceptor grpcServerSecurityInterceptor(TokenManager tokenManager) {
         return new GrpcServerSecurityInterceptor(tokenManager);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    GrpcAuthenticationReader gsvcGrpcAuthenticationReader(TokenManager tokenManager) {
+        return (serverCall, headers) -> null;
+    }
+
+    @Bean
+    SecurityAdvice securityAdvice() {
+        return new SecurityAdvice();
     }
 
 }

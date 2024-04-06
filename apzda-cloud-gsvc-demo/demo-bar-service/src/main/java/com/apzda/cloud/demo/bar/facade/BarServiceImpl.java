@@ -5,6 +5,7 @@ import com.apzda.cloud.demo.bar.proto.BarRes;
 import com.apzda.cloud.demo.bar.proto.BarService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.google.protobuf.Empty;
 import io.swagger.v3.oas.annotations.Operation;
@@ -84,13 +85,13 @@ public class BarServiceImpl implements BarService {
             val result = mathService.square(Flux.just(1, 2).map(n -> OpNum.newBuilder().setNum1(n).build()))
                 .publishOn(Schedulers.boundedElastic())
                 .blockLast();
-            log.info("处理请求: {}, 最后一个数的平方: {}", barReq, result.getResult());
+            log.info("[{}] 处理请求: {}, 最后一个数的平方: {}", GsvcContextHolder.getRequestId(), barReq, result.getResult());
             return BarRes.newBuilder()
                 .setAge(barReq.getAge() + 3)
                 .setFileCount((int) rst.getResult())
                 .setName(barReq.getName() + ".bar@hi")
                 .build();
-        });
+        }).contextCapture();
     }
 
     @Override

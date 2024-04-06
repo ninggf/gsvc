@@ -251,6 +251,16 @@ public class GsvcExceptionHandler {
         else if (statusCode == HttpStatus.BAD_GATEWAY) {
             return Response.error(ServiceError.REMOTE_SERVICE_NO_INSTANCE);
         }
+        else if (statusCode == HttpStatus.SERVICE_UNAVAILABLE) {
+            return Response.error(ServiceError.SERVICE_UNAVAILABLE);
+        }
+        else if (statusCode == HttpStatus.GATEWAY_TIMEOUT) {
+            return Response.error(ServiceError.SERVICE_TIMEOUT);
+        }
+        else if (statusCode == HttpStatus.INTERNAL_SERVER_ERROR) {
+            return Response.error(-500, ServiceError.SERVICE_ERROR.message() + " - " + message);
+        }
+
         return Response.error(statusCode.value(), message);
     }
 

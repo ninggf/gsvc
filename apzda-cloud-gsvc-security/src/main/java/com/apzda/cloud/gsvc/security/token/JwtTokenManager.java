@@ -50,8 +50,6 @@ public class JwtTokenManager implements TokenManager {
 
     private final ObjectProvider<List<JwtTokenCustomizer>> customizers;
 
-    private String requestId;
-
     @Override
     public Authentication restoreAuthentication(HttpServletRequest request) {
         val argName = properties.getArgName();
@@ -59,7 +57,7 @@ public class JwtTokenManager implements TokenManager {
         val cookieConfig = properties.getCookie();
         val cookieName = cookieConfig.getCookieName();
         val bearer = properties.getBearer();
-        requestId = GsvcContextHolder.getRequestId();
+        val requestId = GsvcContextHolder.getRequestId();
 
         String accessToken = null;
         if (StringUtils.isNotBlank(argName)) {
@@ -96,6 +94,7 @@ public class JwtTokenManager implements TokenManager {
     @Override
     public Authentication restoreAuthentication(String accessToken) {
         boolean verified;
+        val requestId = GsvcContextHolder.getRequestId();
         try {
             verified = JWTUtil.verify(accessToken, jwtSigner);
         }

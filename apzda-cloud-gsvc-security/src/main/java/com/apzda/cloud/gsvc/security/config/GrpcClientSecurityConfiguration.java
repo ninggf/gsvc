@@ -31,7 +31,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * @since 1.0.0
  **/
 @AutoConfiguration(before = GrpcClientAutoConfiguration.class)
-@ConditionalOnClass({ SecurityContextHolder.class, TokenManager.class })
+@ConditionalOnClass({ GrpcClientAutoConfiguration.class, SecurityContextHolder.class, TokenManager.class })
 public class GrpcClientSecurityConfiguration {
 
     @GrpcGlobalClientInterceptor

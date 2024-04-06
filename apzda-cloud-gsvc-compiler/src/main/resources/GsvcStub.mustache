@@ -169,7 +169,7 @@ public class {{className}} {
                 }
                 catch (Exception e) {
                     responseObserver.onError(e);
-                    throw e;
+                    // throw e;
                 }
             }
         {{/unaryMethods}}
@@ -185,7 +185,7 @@ public class {{className}} {
                 }
                 catch (Exception e) {
                     responseObserver.onError(e);
-                    throw e;
+                    // throw e;
                 }
             }
         {{/serverStreamingMethods}}

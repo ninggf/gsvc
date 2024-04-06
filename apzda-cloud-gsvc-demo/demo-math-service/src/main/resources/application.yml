@@ -22,6 +22,9 @@ apzda:
       MathService:
         grpc:
           enabled: true
+    security:
+      meta-repo: redis
+      jwt-key: abc12345678
 
 management:
   tracing:

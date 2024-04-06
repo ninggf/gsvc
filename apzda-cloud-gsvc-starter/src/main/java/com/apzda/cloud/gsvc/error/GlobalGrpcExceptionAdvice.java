@@ -16,7 +16,8 @@
  */
 package com.apzda.cloud.gsvc.error;
 
-import com.apzda.cloud.gsvc.exception.GsvcException;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.exception.NoStackLogError;
 import io.grpc.Status;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -32,16 +33,15 @@ import net.devh.boot.grpc.server.advice.GrpcExceptionHandler;
 @Slf4j
 public class GlobalGrpcExceptionAdvice {
 
-    @GrpcExceptionHandler(GsvcException.class)
-    public Status handleGsvcException(GsvcException e) {
-        log.error("{}", e.toString(), e);
-        val error = e.getError();
-        return Status.INTERNAL.withDescription(error.toString()).withCause(e);
-    }
-
     @GrpcExceptionHandler
     public Status handleException(Exception e) {
-        log.error("{}", e.getMessage(), e);
+        val context = GsvcContextHolder.CONTEXT_BOX.get();
+        if (e instanceof NoStackLogError) {
+            log.error("[{}] gRPC({}) error: {}", context.getRequestId(), context.getSvcName(), e.getMessage());
+        }
+        else {
+            log.error("[{}] gRPC({}) error: {}", context.getRequestId(), context.getSvcName(), e.getMessage(), e);
+        }
         return Status.INTERNAL.withDescription(e.getMessage()).withCause(e);
     }
 

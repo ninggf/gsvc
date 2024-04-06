@@ -4,7 +4,6 @@ import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.error.GlobalGrpcExceptionAdvice;
 import com.apzda.cloud.gsvc.grpc.GrpcService;
-import com.apzda.cloud.gsvc.security.config.GrpcServerSecurityConfiguration;
 import com.apzda.cloud.gsvc.security.grpc.HeaderMetas;
 import com.google.common.collect.Lists;
 import io.grpc.*;
@@ -18,7 +17,6 @@ import net.devh.boot.grpc.server.service.GrpcServiceDefinition;
 import net.devh.boot.grpc.server.service.GrpcServiceDiscoverer;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationContext;
@@ -26,6 +24,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 
 import java.util.Arrays;
@@ -43,17 +42,18 @@ import java.util.concurrent.TimeUnit;
 public class GrpcServerSupportConfiguration {
 
     @Configuration
-    @ImportAutoConfiguration({ GrpcServerSecurityConfiguration.class })
     static class GrpcServerAutoImporter {
 
         @GrpcGlobalServerInterceptor
+        @Order(-1)
         ServerInterceptor requestIdServerInterceptor() {
             return new ServerInterceptor() {
                 @Override
                 public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
                         Metadata headers, ServerCallHandler<ReqT, RespT> next) {
                     val requestId = headers.get(HeaderMetas.REQUEST_ID);
-                    GsvcContextHolder.CONTEXT_BOX.set(new GsvcContextHolder.GsvcContext(requestId, null, null));
+                    val serviceName = call.getMethodDescriptor().getFullMethodName();
+                    GsvcContextHolder.CONTEXT_BOX.set(new GsvcContextHolder.GsvcContext(requestId, null, serviceName));
 
                     return next.startCall(call, headers);
                 }
@@ -82,6 +82,7 @@ public class GrpcServerSupportConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     GlobalGrpcExceptionAdvice globalGrpcExceptionAdvice() {
         return new GlobalGrpcExceptionAdvice();
     }
