@@ -96,7 +96,6 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
                 catch (Exception e) {
                     log.warn("Cannot detect Locale when translate: {} - {} - {}", codeId, args, e.getMessage());
                 }
-                context.setLocale(locale);
             }
             else if (locale == null) {
                 locale = context.getLocale();

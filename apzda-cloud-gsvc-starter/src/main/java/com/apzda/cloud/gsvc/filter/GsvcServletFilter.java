@@ -5,10 +5,12 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.LocaleResolver;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -16,7 +18,10 @@ import java.util.UUID;
 /**
  * @author fengz
  */
+@RequiredArgsConstructor
 public class GsvcServletFilter extends OncePerRequestFilter {
+
+    private final LocaleResolver localeResolver;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
@@ -28,6 +33,11 @@ public class GsvcServletFilter extends OncePerRequestFilter {
         // bookmark: 初始化
         val context = GsvcContextHolder.current();
         context.setRequestId(requestId);
+        try {
+            context.setLocale(localeResolver.resolveLocale(request));
+        }
+        catch (Exception ignored) {
+        }
         try {
             filterChain.doFilter(request, response);
         }

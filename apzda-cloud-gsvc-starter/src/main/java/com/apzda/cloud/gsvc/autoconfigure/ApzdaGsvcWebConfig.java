@@ -89,9 +89,9 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
     }
 
     @Bean
-    FilterRegistrationBean<GsvcServletFilter> gsvcFilterRegistration() {
+    FilterRegistrationBean<GsvcServletFilter> gsvcFilterRegistration(LocaleResolver localeResolver) {
         FilterRegistrationBean<GsvcServletFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new GsvcServletFilter());
+        registration.setFilter(new GsvcServletFilter(localeResolver));
         registration.addUrlPatterns("/*");
         registration.setName("gsvcServletFilter");
         registration.setOrder(-2147483646);
