@@ -164,7 +164,7 @@ public class ServiceConfigProperties {
 
     public enum NameStyle {
 
-        CAMEL, DASHED;
+        CAMEL, DASHED, KEBAB;
 
     }
 
