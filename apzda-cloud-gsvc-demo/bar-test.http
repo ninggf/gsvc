@@ -392,7 +392,7 @@ X-Gsvc-Caller: gtw
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401, "Response status is not 401");
+        client.assert(response.status === 401, "Response status is '" + response.status + "' not 401");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
