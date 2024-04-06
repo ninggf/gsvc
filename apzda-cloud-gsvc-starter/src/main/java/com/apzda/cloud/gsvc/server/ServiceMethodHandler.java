@@ -63,7 +63,7 @@ public class ServiceMethodHandler {
 
     private final Validator validator;
 
-    private String logId;
+    private GsvcContextHolder.GsvcContext context;
 
     private String caller;
 
@@ -88,15 +88,15 @@ public class ServiceMethodHandler {
     }
 
     private ServerResponse run(String caller) {
+        context = GsvcContextHolder.current();
         try {
             if (!StringUtils.hasText(caller)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND);
             }
             this.caller = caller;
-            logId = GsvcContextHolder.getRequestId();
             val type = serviceMethod.getType();
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Start to call method[{}]: {}.{}", logId, type, serviceMethod.getServiceName(),
+                log.trace("Start to call method[{}]: {}.{}", type, serviceMethod.getServiceName(),
                         serviceMethod.getDmName());
             }
             // 1. 解析请求体
@@ -165,40 +165,36 @@ public class ServiceMethodHandler {
         }
 
         final Flux<Object> responseFlux = returnObj.contextCapture();
-
+        val context = GsvcContextHolder.current();
         // server-streaming method will respond text/event-stream
         return ServerResponse.sse(sseBuilder -> {
-            sseBuilder.onError(err -> {
-
-            }).onTimeout(() -> {
-
-            });
-
             responseFlux.doOnComplete(sseBuilder::complete).doOnError(err -> {
-                log.error("[{}] Call method failed: {}.{} - {}", logId, serviceMethod.getServiceName(),
-                        serviceMethod.getDmName(), err.getMessage());
+                context.restore();
+                log.error("Call method failed: {}.{} - {}", serviceMethod.getServiceName(), serviceMethod.getDmName(),
+                        err.getMessage());
                 try {
                     sseBuilder.data(ResponseUtils.fallback(err, serviceMethod.getServiceName(), String.class));
                     sseBuilder.complete();
                 }
                 catch (IOException ie) {
-                    log.warn("[{}] Cannot send data to client: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                    log.warn("Cannot send data to client: {}.{} - {}", serviceMethod.getServiceName(),
                             serviceMethod.getDmName(), ie.getMessage());
                     sseBuilder.complete();
                 }
             }).subscribe(resp -> {
+                context.restore();
                 try {
                     val response = createResponse(resp);
                     sseBuilder.data(response);
                 }
                 catch (Exception e) {
-                    log.error("[{}] Call method failed on subscribe: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                    log.error("Call method failed on subscribe: {}.{} - {}", serviceMethod.getServiceName(),
                             serviceMethod.getDmName(), e.getMessage());
                     try {
                         sseBuilder.data(ResponseUtils.fallback(e, serviceMethod.getServiceName(), String.class));
                     }
                     catch (IOException ie) {
-                        log.error("[{}] Cannot send data to client: {}.{} - {}", logId, serviceMethod.getServiceName(),
+                        log.error("Cannot send data to client: {}.{} - {}", serviceMethod.getServiceName(),
                                 serviceMethod.getDmName(), ie.getMessage());
                         sseBuilder.complete();
                     }
@@ -260,7 +256,8 @@ public class ServiceMethodHandler {
                 try {
                     val requestBody = objectMapper.readTree(request.servletRequest().getReader());
                     if (log.isTraceEnabled()) {
-                        log.trace("[{}] Request({}) resolved: {}", logId, contentType, requestBody);
+                        context.restore();
+                        log.trace("Request({}) resolved: {}", contentType, requestBody);
                     }
                     sink.success(requestBody);
                 }
@@ -301,16 +298,16 @@ public class ServiceMethodHandler {
 
         return args.<JsonNode>handle((arg, sink) -> {
             try {
+                context.restore();
                 val reqObj = objectMapper.convertValue(arg, JsonNode.class);
                 if (log.isTraceEnabled()) {
-                    log.trace("[{}] Request({}) resolved: {}", logId, contentType,
-                            objectMapper.writeValueAsString(arg));
+                    log.trace("Request({}) resolved: {}", contentType, objectMapper.writeValueAsString(arg));
                 }
                 sink.next(reqObj);
                 sink.complete();
             }
             catch (IOException e) {
-                log.error("[{}] Request({}) resolved failed: {}", logId, contentType, e.getMessage());
+                log.error("Request({}) resolved failed: {}", contentType, e.getMessage());
                 sink.error(e);
             }
         }).timeout(readTimeout);
@@ -323,6 +320,7 @@ public class ServiceMethodHandler {
 
         if (!CollectionUtils.isEmpty(values)) {
             List<?> args = values.stream().map(value -> {
+                context.restore();
                 if (value instanceof MultipartFile filePart) {
                     val file = UploadFile.builder()
                         .name(filePart.getName())
@@ -335,15 +333,14 @@ public class ServiceMethodHandler {
                         filePart.transferTo(tmpFile);
 
                         if (log.isTraceEnabled()) {
-                            log.trace("[{}] File '{}' uploaded to '{}'", logId, filePart.getOriginalFilename(),
+                            log.trace("File '{}' uploaded to '{}'", filePart.getOriginalFilename(),
                                     tmpFile.getAbsoluteFile());
                         }
 
                         return file.build();
                     }
                     catch (IOException e) {
-                        log.error("[{}] Upload file '{}' failed: {}", logId, filePart.getOriginalFilename(),
-                                e.getMessage());
+                        log.error("Upload file '{}' failed: {}", filePart.getOriginalFilename(), e.getMessage());
                         return file.size(-1).error(e.getMessage()).build();
                     }
                 }
@@ -380,8 +377,7 @@ public class ServiceMethodHandler {
 
         val respStr = objectMapper.writeValueAsString(resp);
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Response of {}.{}: {}", logId, serviceMethod.getServiceName(), serviceMethod.getDmName(),
-                    respStr);
+            log.trace("Response of {}.{}: {}", serviceMethod.getServiceName(), serviceMethod.getDmName(), respStr);
         }
         return respStr;
     }

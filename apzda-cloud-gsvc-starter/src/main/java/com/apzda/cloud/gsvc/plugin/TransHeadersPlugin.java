@@ -47,7 +47,7 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
         });
 
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Transit Headers: {}", requestId, headers);
+            log.trace("Transit Headers: {}", headers);
         }
 
         val cookies = GsvcContextHolder.cookies("xgh_");
@@ -63,7 +63,7 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
             });
 
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Transit Cookies: {}", requestId, cookies);
+                log.trace("Transit Cookies: {}", cookies);
             }
         }
 

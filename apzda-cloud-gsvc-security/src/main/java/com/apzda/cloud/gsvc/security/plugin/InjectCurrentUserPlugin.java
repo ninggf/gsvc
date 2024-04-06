@@ -39,12 +39,12 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
         val tokenName = properties.getTokenName();
         val cookieName = properties.getCookie().getCookieName();
         if (StringUtils.isNotBlank(tokenName)) {
-            val tokenValue = StringUtils.defaultIfBlank(GsvcContextHolder.header(tokenName), GsvcContextHolder.cookie(cookieName));
+            val tokenValue = StringUtils.defaultIfBlank(GsvcContextHolder.header(tokenName),
+                    GsvcContextHolder.cookie(cookieName));
             if (StringUtils.isNotBlank(tokenValue)) {
                 request = request.headers(httpHeaders -> {
                     if (log.isTraceEnabled()) {
-                        log.trace("[{}] Transit Header: {}: {}", GsvcContextHolder.getRequestId(), tokenName,
-                            tokenValue);
+                        log.trace("Transit Header: {}: {}", tokenName, tokenValue);
                     }
                     httpHeaders.put(tokenName, Collections.singletonList(tokenValue));
                 });
@@ -69,7 +69,7 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
 
                 if (d instanceof ObjectNode objectNode) {
                     if (log.isTraceEnabled()) {
-                        log.trace("[{}] Inject CurrentUser: {}", GsvcContextHolder.getRequestId(), currentUser);
+                        log.trace("Inject CurrentUser: {}", currentUser);
                     }
                     objectNode.set("currentUser", new POJONode(currentUser));
                 }

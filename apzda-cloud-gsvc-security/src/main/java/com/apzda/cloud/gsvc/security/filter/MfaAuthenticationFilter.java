@@ -72,7 +72,7 @@ public class MfaAuthenticationFilter extends OncePerRequestFilter {
         if (authentication.getPrincipal() instanceof UserDetailsMeta userDetailsMeta) {
             val mfaStatus = userDetailsMeta.get(UserDetailsMeta.MFA_STATUS_KEY, authentication, MfaStatus.DISABLED);
 
-            log.trace("[{}] Mfa Status of '{}' is: {}", GsvcContextHolder.getRequestId(), userDetailsMeta.getUsername(), mfaStatus);
+            log.trace("Mfa Status of '{}' is: {}", userDetailsMeta.getUsername(), mfaStatus);
 
             switch (mfaStatus) {
                 case MfaStatus.UNSET -> throw MfaException.UNSET;

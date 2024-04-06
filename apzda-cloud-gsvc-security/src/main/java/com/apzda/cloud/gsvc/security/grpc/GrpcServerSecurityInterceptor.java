@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.gsvc.security.grpc;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import io.grpc.*;
 import lombok.RequiredArgsConstructor;
@@ -52,13 +53,14 @@ public class GrpcServerSecurityInterceptor implements ServerInterceptor {
 
         if (StringUtils.isNotBlank(accessToken)) {
             val requestId = headers.get(HeaderMetas.REQUEST_ID);
+            GsvcContextHolder.current().setRequestId(requestId);
             val context = securityContextHolderStrategy.createEmptyContext();
             try {
                 val authentication = tokenManager.restoreAuthentication(accessToken);
                 if (authentication != null) {
                     context.setAuthentication(authentication);
                     SecurityContextHolder.setContext(context);
-                    log.debug("[{}] Authentication successful: {} ({})", requestId, authentication.getName(),
+                    log.trace("Authentication successful: {} ({})", authentication.getName(),
                             authentication.getAuthorities());
                     @SuppressWarnings("deprecation")
                     val grpcContext = Context.current()
@@ -75,11 +77,11 @@ public class GrpcServerSecurityInterceptor implements ServerInterceptor {
                     }
                 }
                 else if (log.isTraceEnabled()) {
-                    log.trace("[{}] Cannot Restore Authentication", requestId);
+                    log.trace("Cannot Restore Authentication");
                 }
             }
             catch (Exception e) {
-                log.error("[{}] Cannot Restore Authentication: {}", requestId, e.getMessage());
+                log.error("Cannot Restore Authentication: {}", e.getMessage());
             }
         }
 

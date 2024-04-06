@@ -53,7 +53,9 @@ public class GrpcServerSupportConfiguration {
                         Metadata headers, ServerCallHandler<ReqT, RespT> next) {
                     val requestId = headers.get(HeaderMetas.REQUEST_ID);
                     val serviceName = call.getMethodDescriptor().getFullMethodName();
-                    GsvcContextHolder.CONTEXT_BOX.set(new GsvcContextHolder.GsvcContext(requestId, null, serviceName));
+                    val context = GsvcContextHolder.current();
+                    context.setRequestId(requestId);
+                    context.setSvcName(serviceName);
 
                     return next.startCall(call, headers);
                 }

@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.security.authentication;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -24,19 +23,21 @@ import java.io.IOException;
  */
 @Slf4j
 public abstract class DeviceAwareAuthenticationProcessingFilter extends AbstractAuthenticationProcessingFilter
-    implements Ordered, ApplicationContextAware {
+        implements Ordered, ApplicationContextAware {
 
     protected AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new DeviceAuthenticationDetailsSource();
+
     protected ApplicationContext applicationContext;
+
     protected ObjectMapper objectMapper;
 
     protected DeviceAwareAuthenticationProcessingFilter(String defaultFilterProcessesUrl,
-                                                        AuthenticationManager authenticationManager) {
+            AuthenticationManager authenticationManager) {
         super(defaultFilterProcessesUrl, authenticationManager);
     }
 
     protected DeviceAwareAuthenticationProcessingFilter(RequestMatcher requiresAuthenticationRequestMatcher,
-                                                        AuthenticationManager authenticationManager) {
+            AuthenticationManager authenticationManager) {
         super(requiresAuthenticationRequestMatcher, authenticationManager);
     }
 
@@ -68,9 +69,11 @@ public abstract class DeviceAwareAuthenticationProcessingFilter extends Abstract
                 line = reader.readLine();
             }
             return objectMapper.readValue(stringBuilder.toString(), rClass);
-        } catch (IOException e) {
-            log.error("[{}] Cannot read the request body from: {}", GsvcContextHolder.getRequest(), request.getRequestURI());
+        }
+        catch (IOException e) {
+            log.error("Cannot read the request body from: {}", request.getRequestURI());
             return null;
         }
     }
+
 }

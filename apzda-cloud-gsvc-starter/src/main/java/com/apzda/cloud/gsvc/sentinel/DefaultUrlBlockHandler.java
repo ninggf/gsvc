@@ -2,6 +2,7 @@ package com.apzda.cloud.gsvc.sentinel;
 
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.apzda.cloud.adapter.servlet.callback.UrlBlockHandler;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,10 +30,12 @@ public class DefaultUrlBlockHandler implements UrlBlockHandler {
 
         val requestId = StringUtils.defaultIfBlank((String) request.getAttribute("X-Request-Id"),
                 UUID.randomUUID().toString());
+        val context = GsvcContextHolder.current();
+        context.setRequestId(requestId);
 
         if (log.isDebugEnabled()) {
             val caller = request.getHeader("x-gsvc-caller");
-            log.debug("[{}] visit {} from {} is blocked by Sentinel", requestId, request.getRequestURI(), caller);
+            log.debug("Visit {} from {} is blocked by Sentinel", request.getRequestURI(), caller);
         }
 
         val fallback = ResponseUtils.fallback(ServiceError.TOO_MANY_REQUESTS, "", String.class);

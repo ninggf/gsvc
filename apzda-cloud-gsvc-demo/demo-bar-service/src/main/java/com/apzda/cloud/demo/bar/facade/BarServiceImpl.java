@@ -63,7 +63,9 @@ public class BarServiceImpl implements BarService {
     @Override
     public Flux<BarRes> hi(BarReq request) {
         val atomicInteger = new AtomicInteger();
+        val context = GsvcContextHolder.current();
         return Flux.fromIterable(List.of(request, request)).publishOn(Schedulers.boundedElastic()).map(barReq -> {
+            context.restore();
             try {
                 for (GsvcExt.UploadFile uploadFile : barReq.getFilesList()) {
                     if (uploadFile.getSize() > 0) {

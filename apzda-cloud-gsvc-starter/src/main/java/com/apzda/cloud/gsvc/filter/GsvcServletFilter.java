@@ -26,7 +26,8 @@ public class GsvcServletFilter extends OncePerRequestFilter {
         request.setAttribute("X-Request-ID", requestId);
         response.setHeader("X-Request-ID", requestId);
         // bookmark: 初始化
-        GsvcContextHolder.CONTEXT_BOX.set(new GsvcContextHolder.GsvcContext(requestId, null, "main"));
+        val context = GsvcContextHolder.current();
+        context.setRequestId(requestId);
         filterChain.doFilter(request, response);
     }
 

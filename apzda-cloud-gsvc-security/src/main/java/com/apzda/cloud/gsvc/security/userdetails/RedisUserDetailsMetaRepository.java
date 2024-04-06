@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.jackson.SimpleGrantedAuthorityDeserializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,8 +26,9 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     private final ObjectMapper objectMapper;
 
-    public RedisUserDetailsMetaRepository(UserDetailsMetaService userDetailsMetaService, StringRedisTemplate redisTemplate,
-                                          ObjectMapper objectMapper, Class<? extends GrantedAuthority> authorityClass) {
+    public RedisUserDetailsMetaRepository(UserDetailsMetaService userDetailsMetaService,
+            StringRedisTemplate redisTemplate, ObjectMapper objectMapper,
+            Class<? extends GrantedAuthority> authorityClass) {
         super(userDetailsMetaService, authorityClass);
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
@@ -43,9 +43,9 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
         try {
             redisTemplate.<String, String>opsForHash()
                 .put(thenMetaKey(userDetails), key, objectMapper.writeValueAsString(value));
-        } catch (Exception e) {
-            log.error("[{}] Cannot set user meta: {}.{} = {}", GsvcContextHolder.getRequestId(),
-                thenMetaKey(userDetails), key, value, e);
+        }
+        catch (Exception e) {
+            log.error("Cannot set user meta: {}.{} = {}", thenMetaKey(userDetails), key, value, e);
         }
     }
 
@@ -63,9 +63,9 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
             val metaData = userDetailsMetaService.getMetaData(userDetails, key, rClass);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
-        } catch (Exception e) {
-            log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
-                thenMetaKey(userDetails), key, e.getMessage());
+        }
+        catch (Exception e) {
+            log.error("Cannot load user meta for {}.{} - {}", thenMetaKey(userDetails), key, e.getMessage());
         }
         return Optional.empty();
     }
@@ -84,9 +84,9 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
             val metaData = userDetailsMetaService.getMultiMetaData(userDetails, key, typeReference);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
-        } catch (Exception e) {
-            log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
-                thenMetaKey(userDetails), key, e.getMessage());
+        }
+        catch (Exception e) {
+            log.error("Cannot load user meta for {}.{} - {}", thenMetaKey(userDetails), key, e.getMessage());
         }
         return Optional.empty();
     }

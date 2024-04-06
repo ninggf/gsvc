@@ -29,8 +29,7 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        log.warn("[{}] You are using a demo AuthenticationProvider, please use a real one!!!",
-            GsvcContextHolder.getRequestId());
+        log.warn("You are using a demo AuthenticationProvider, please use a real one!!!");
 
         val credentials = authentication.getCredentials();
         val username = authentication.getPrincipal();
@@ -43,7 +42,7 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
             val userDetailsMeta = userDetailsMetaRepository.create(userDetails);
             val authed = JwtAuthenticationToken.authenticated(userDetailsMeta, password);
             // bookmark: Clear Authorities, cause to reload authorities from UserDetailsMetaService
-            log.trace("[{}] Clear user's authorities and last login time: {}", GsvcContextHolder.getRequestId(), username);
+            log.trace("Clear user's authorities and last login time: {}", username);
             userDetailsMeta.remove(UserDetailsMeta.AUTHORITY_META_KEY);
             userDetailsMeta.set(authed.deviceAwareMetaKey(UserDetailsMeta.LOGIN_TIME_META_KEY), 0L);
             return authed;

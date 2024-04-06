@@ -63,7 +63,7 @@ public class JwtTokenManager implements TokenManager {
         if (StringUtils.isNotBlank(argName)) {
             accessToken = StringUtils.defaultIfBlank(request.getParameter(argName), null);
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Try token from parameter({}): {}", requestId, argName, accessToken);
+                log.trace("Try token from parameter({}): {}", argName, accessToken);
             }
         }
 
@@ -72,7 +72,7 @@ public class JwtTokenManager implements TokenManager {
             if (StringUtils.isNotBlank(bearer) && token.startsWith(bearer)) {
                 accessToken = token.substring(bearer.length() + 1);
                 if (log.isTraceEnabled()) {
-                    log.trace("[{}] Try token from header({}: {}): {}", requestId, headerName, bearer, accessToken);
+                    log.trace("Try token from header({}: {}): {}", headerName, bearer, accessToken);
                 }
             }
         }
@@ -80,14 +80,14 @@ public class JwtTokenManager implements TokenManager {
         if (StringUtils.isBlank(accessToken) && StringUtils.isNotBlank(cookieName)) {
             accessToken = GsvcContextHolder.cookies().get(cookieName).getValue();
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Try token from cookie({}): {}", requestId, cookieName, accessToken);
+                log.trace("Try token from cookie({}): {}", cookieName, accessToken);
             }
         }
 
         if (StringUtils.isNotBlank(accessToken)) {
             return restoreAuthentication(accessToken);
         }
-        log.trace("[{}] No token found of request", requestId);
+        log.trace("No token found of request!");
         return null;
     }
 
@@ -100,7 +100,7 @@ public class JwtTokenManager implements TokenManager {
         }
         catch (Exception e) {
             if (log.isTraceEnabled()) {
-                log.trace("[{}] accessToken({}) is invalid: {}", requestId, accessToken, e.getMessage());
+                log.trace("accessToken({}) is invalid: {}", accessToken, e.getMessage());
             }
             throw TokenException.INVALID_TOKEN;
         }
@@ -110,7 +110,7 @@ public class JwtTokenManager implements TokenManager {
             jwt.setSigner(jwtSigner);
             val jwtLeeway = properties.getJwtLeeway();
             if (!jwt.validate(jwtLeeway.toSeconds())) {
-                log.trace("[{}] accessToken({}) is expired!", requestId, accessToken);
+                log.trace("accessToken({}) is expired!", accessToken);
                 throw TokenException.EXPIRED;
             }
 
@@ -127,7 +127,7 @@ public class JwtTokenManager implements TokenManager {
 
             val userDetails = cachedUserDetails.orElseGet(() -> {
                 try {
-                    log.trace("[{}] Try loading userDetails from userDetailsService: {}", requestId, username);
+                    log.trace("Try loading userDetails from userDetailsService: {}", username);
                     val ud = userDetailsService.loadUserByUsername(username);
                     if (ud != null) {
                         UserDetailsMeta.checkUserDetails(ud);
@@ -135,14 +135,13 @@ public class JwtTokenManager implements TokenManager {
                     }
                 }
                 catch (Exception e) {
-                    log.warn("[{}] Cannot load UserDetails from userDetailsService: {} - {}", requestId, username,
-                            e.getMessage());
+                    log.warn("Cannot load UserDetails from userDetailsService: {} - {}", username, e.getMessage());
                 }
                 return null;
             });
 
             if (userDetails == null) {
-                log.trace("[{}] UserDetails of accessToken({}) not found!", requestId, accessToken);
+                log.trace("UserDetails of accessToken({}) not found!", accessToken);
                 throw new UsernameNotFoundException(username + " not found!");
             }
 
@@ -151,11 +150,11 @@ public class JwtTokenManager implements TokenManager {
                     userDetails.getPassword());
 
             authentication.setJwtToken(jwtToken);
-            log.trace("[{}] authentication is restored from accessToken({})", requestId, accessToken);
+            log.trace("Authentication is restored from accessToken({})", accessToken);
             return authentication;
         }
         else {
-            log.trace("[{}] accessToken({}) is invalid", requestId, accessToken);
+            log.trace("accessToken({}) is invalid", accessToken);
             throw TokenException.INVALID_TOKEN;
         }
     }
@@ -163,7 +162,7 @@ public class JwtTokenManager implements TokenManager {
     @Override
     public void save(Authentication authentication, HttpServletRequest request) {
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
-            log.trace("[{}] Authentication Saved: {}", GsvcContextHolder.getRequestId(), authentication);
+            log.trace("Authentication Saved: {}", authentication);
             userDetailsMetaRepository.setMetaData(userDetails, UserDetailsMeta.CACHED_USER_DETAILS_KEY,
                     CachedUserDetails.from(userDetails));
         }
@@ -202,7 +201,7 @@ public class JwtTokenManager implements TokenManager {
 
             val refreshToken = jwtToken.getRefreshToken();
             if (StringUtils.isBlank(refreshToken)) {
-                log.error("[{}] refreshToken is empty!", requestId);
+                log.error("refreshToken is empty!");
                 throw TokenException.INVALID_TOKEN;
             }
 
@@ -210,7 +209,7 @@ public class JwtTokenManager implements TokenManager {
                 JWTUtil.verify(refreshToken, jwtSigner);
             }
             catch (Exception e) {
-                log.error("[{}] refreshToken({}) is invalid: {}", requestId, refreshToken, e.getMessage());
+                log.error("refreshToken({}) is invalid: {}", refreshToken, e.getMessage());
                 throw TokenException.INVALID_TOKEN;
             }
 
@@ -219,7 +218,7 @@ public class JwtTokenManager implements TokenManager {
 
             val jwtLeeway = properties.getJwtLeeway();
             if (!jwt.validate(jwtLeeway.toSeconds())) {
-                log.trace("[{}] refreshToken({}) is expired!", requestId, refreshToken);
+                log.trace("refreshToken({}) is expired!", refreshToken);
 
                 throw TokenException.EXPIRED;
             }
@@ -258,12 +257,11 @@ public class JwtTokenManager implements TokenManager {
                 return newToken;
             }
 
-            log.error("[{}] refreshToken({}) is invalid: accessToken or password does not match", requestId,
-                    refreshToken);
+            log.error("refreshToken({}) is invalid: accessToken or password does not match", refreshToken);
             throw TokenException.INVALID_TOKEN;
         }
         catch (Exception e) {
-            log.warn("[{}] Cannot refresh accessToken: {}", GsvcContextHolder.getRequestId(), e.getMessage());
+            log.warn("Cannot refresh accessToken: {}", e.getMessage());
         }
 
         return null;
@@ -295,13 +293,13 @@ public class JwtTokenManager implements TokenManager {
                 return;
             }
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Current Session is not login", requestId);
+                log.trace("Current Session is not login");
             }
             throw new InvalidSessionException("Not login");
         }
 
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Current Token is not supported: {}", requestId, authentication);
+            log.trace("Current Token is not supported: {}", authentication);
         }
 
         throw new InvalidSessionException("Not Support");

@@ -35,12 +35,12 @@ public class GlobalGrpcExceptionAdvice {
 
     @GrpcExceptionHandler
     public Status handleException(Exception e) {
-        val context = GsvcContextHolder.CONTEXT_BOX.get();
+        val context = GsvcContextHolder.current();
         if (e instanceof NoStackLogError) {
-            log.error("[{}] gRPC({}) error: {}", context.getRequestId(), context.getSvcName(), e.getMessage());
+            log.error("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
         }
         else {
-            log.error("[{}] gRPC({}) error: {}", context.getRequestId(), context.getSvcName(), e.getMessage(), e);
+            log.error("gRPC({}) error: {}", context.getSvcName(), e.getMessage(), e);
         }
         return Status.INTERNAL.withDescription(e.getMessage()).withCause(e);
     }

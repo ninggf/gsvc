@@ -5,11 +5,12 @@ import jakarta.annotation.Nullable;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.val;
+import org.slf4j.MDC;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
+import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedCaseInsensitiveMap;
 import org.springframework.util.MultiValueMap;
@@ -33,7 +34,7 @@ public class GsvcContextHolder {
 
     private static final String HTTP_COOKIES = "FILTERED_HTTP_COOKIES";
 
-    public static final ThreadLocal<GsvcContext> CONTEXT_BOX = new ThreadLocal<>();
+    private static final ThreadLocal<GsvcContext> CONTEXT_BOX = new ThreadLocal<>();
 
     public static Optional<HttpServletRequest> getRequest() {
         val requestAttributes = RequestContextHolder.getRequestAttributes();
@@ -157,6 +158,25 @@ public class GsvcContextHolder {
             }
         }
         return headers;
+    }
+
+    @NonNull
+    public static GsvcContext current() {
+        var context = CONTEXT_BOX.get();
+        if (context == null) {
+            context = new GsvcContext(GsvcContextHolder.getRequestId(), null, "main");
+            CONTEXT_BOX.set(context);
+        }
+        return context;
+    }
+
+    public static void restore(@NonNull GsvcContext context) {
+        CONTEXT_BOX.set(context);
+        MDC.put("tid", context.requestId);
+    }
+
+    public static void clear() {
+        CONTEXT_BOX.remove();
     }
 
     public static String getRequestId() {
@@ -365,7 +385,6 @@ public class GsvcContextHolder {
     }
 
     @Data
-    @AllArgsConstructor
     public final static class GsvcContext {
 
         private String requestId;
@@ -373,6 +392,26 @@ public class GsvcContextHolder {
         private RequestAttributes attributes;
 
         private String svcName;
+
+        GsvcContext(String requestId, RequestAttributes attributes, String svcName) {
+            this.attributes = attributes;
+            this.svcName = svcName;
+            this.setRequestId(requestId);
+        }
+
+        public void setRequestId(String requestId) {
+            this.requestId = requestId;
+            MDC.put("tid", requestId);
+        }
+
+        public void restore() {
+            GsvcContextHolder.restore(this);
+        }
+
+        @NonNull
+        public static GsvcContext current() {
+            return GsvcContextHolder.current();
+        }
 
     }
 

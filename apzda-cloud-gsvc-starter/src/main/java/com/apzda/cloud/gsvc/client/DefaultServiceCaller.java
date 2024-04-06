@@ -65,14 +65,8 @@ public class DefaultServiceCaller implements IServiceCaller {
         // https://github.com/reactive-streams/reactive-streams-jvm/blob/master/README.md#1.7
         Hooks.onErrorDropped(error -> {
             if (log.isTraceEnabled()) {
-                val context = GsvcContextHolder.CONTEXT_BOX.get();
-                if (context == null) {
-                    log.trace("Error({}) dropped while doing RPC: {}", error.getClass(), error.getMessage());
-                }
-                else {
-                    log.trace("[{}] Error dropped while doing RPC({}): {}", context.getRequestId(), context.getSvcName(),
-                            error.getMessage());
-                }
+                val context = GsvcContextHolder.current();
+                log.trace("Error dropped while doing RPC({}): {}", context.getSvcName(), error.getMessage());
             }
         });
     }
@@ -82,8 +76,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         val serviceMethod = GatewayServiceRegistry.getServiceMethod(clazz, method);
         val url = serviceMethod.getRpcAddr();
         if (log.isDebugEnabled()) {
-            val requestId = GsvcContextHolder.getRequestId();
-            log.debug("[{}] Start Block RPC: {}", requestId, url);
+            log.debug("Start Block RPC: {}", url);
         }
         val reqBody = prepareRequestBody(request, serviceMethod);
         return doBlockCall(reqBody.bodyToMono(String.class), serviceMethod, url, resClazz);
@@ -94,7 +87,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         val res = handleRpcFallback(Flux.concat(reqBody), serviceMethod, String.class).blockFirst();
 
         if (log.isDebugEnabled()) {
-            log.debug("[{}] Response from {}: {}", GsvcContextHolder.getRequestId(), uri, res);
+            log.debug("Response from {}: {}", uri, res);
         }
 
         return ResponseUtils.parseResponse(res, rClass);
@@ -107,8 +100,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         val url = serviceMethod.getRpcAddr();
 
         if (log.isTraceEnabled()) {
-            val requestId = GsvcContextHolder.getRequestId();
-            log.trace("[{}] Start Async RPC: {}", requestId, url);
+            log.trace("Start Async RPC: {}", url);
         }
         val reqBody = prepareRequestBody(request, serviceMethod);
 
@@ -118,17 +110,18 @@ public class DefaultServiceCaller implements IServiceCaller {
     protected <R> Flux<R> doAsyncCall(Flux<ServerSentEvent<String>> reqBody, ServiceMethod serviceMethod, String uri,
             Class<R> rClass) {
         // bookmark: async rpc
-        val requestId = GsvcContextHolder.getRequestId();
+        val context = GsvcContextHolder.current();
         var reqMono = reqBody.map(res -> {
+            context.restore();
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Response from {}: {}", requestId, uri, res);
+                log.trace("Response from {}: {}", uri, res);
             }
             try {
                 val data = res.data();
                 return ResponseUtils.parseResponse(data, rClass);
             }
             catch (Exception e) {
-                log.trace("[{}] Cannot parse response from {}: {}", requestId, uri, res);
+                log.trace("Cannot parse response from {}: {}", uri, res);
                 return ResponseUtils.fallback(e, serviceMethod.getServiceName(), rClass);
             }
         });
@@ -141,10 +134,10 @@ public class DefaultServiceCaller implements IServiceCaller {
         val uri = method.getRpcAddr();
         val plugins = method.getPlugins();
         var size = plugins.size();
-        val requestId = GsvcContextHolder.getRequestId();
-
+        val context = GsvcContextHolder.current();
         reqBody = reqBody.doOnError(err -> {
-            log.error("[{}] RPC({}) failed: {}", requestId, uri, err.getMessage());
+            context.restore();
+            log.error("RPC({}) failed: {}", uri, err.getMessage());
         });
 
         while (--size >= 0) {
@@ -158,15 +151,9 @@ public class DefaultServiceCaller implements IServiceCaller {
     }
 
     protected WebClient.ResponseSpec prepareRequestBody(Object requestObj, ServiceMethod method) {
-        var context = GsvcContextHolder.CONTEXT_BOX.get();
-        if (context == null) {
-            context = new GsvcContextHolder.GsvcContext(GsvcContextHolder.getRequestId(),
-                    RequestContextHolder.getRequestAttributes(), method.getCfgName());
-            GsvcContextHolder.CONTEXT_BOX.set(context);
-        }
-        else {
-            context.setSvcName(method.getCfgName());
-        }
+        var context = GsvcContextHolder.current();
+        context.setAttributes(RequestContextHolder.getRequestAttributes());
+        context.setSvcName(method.getCfgName());
 
         val url = method.getRpcAddr();
         val webClient = applicationContext.getBean(method.getClientBeanName(), WebClient.class);

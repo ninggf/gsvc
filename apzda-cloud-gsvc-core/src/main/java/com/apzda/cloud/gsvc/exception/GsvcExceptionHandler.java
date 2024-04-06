@@ -1,7 +1,6 @@
 package com.apzda.cloud.gsvc.exception;
 
 import build.buf.validate.Violation;
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.utils.I18nHelper;
@@ -168,58 +167,51 @@ public class GsvcExceptionHandler {
         }
         else if (error instanceof TimeoutException || error instanceof io.netty.handler.timeout.TimeoutException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.GATEWAY_TIMEOUT).body(handle(error));
-            log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                    error.getMessage());
+            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
         else if (error instanceof WebClientRequestException) {
             // rpc exception
             responseWrapper = ResponseWrapper.status(HttpStatus.BAD_GATEWAY).body(handle(error));
-            log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                    error.getMessage());
+            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
         else if (error instanceof WebClientResponseException responseException) {
             // rpc exception
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
-            log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                    error.getMessage());
+            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
         else if (error instanceof ErrorResponseException responseException) {
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
             responseWrapper.headers(responseException.getHeaders());
-            log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                    error.getMessage());
+            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
         else if (error instanceof HttpStatusCodeException httpStatusCodeException) {
             responseWrapper = ResponseWrapper.status(httpStatusCodeException.getStatusCode()).body(handle(error));
             responseWrapper.headers(httpStatusCodeException.getResponseHeaders());
-            log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                    error.getMessage());
+            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
         else if (error instanceof MessageValidationException || error instanceof BindException
                 || error instanceof HttpMessageConversionException
                 || error instanceof MethodArgumentTypeMismatchException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.BAD_REQUEST).body(handle(error));
-            log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                    error.getMessage());
+            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
         else if (error instanceof ErrorResponse errorResponse) {
             responseWrapper = ResponseWrapper.status(errorResponse.getBody().getStatus()).body(handle(error));
             responseWrapper.headers(errorResponse.getHeaders());
-            log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),
-                    error.getMessage());
+            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
         else {
             responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
         }
         if (!(error instanceof NoStackLogError)) {
-            log.error("[{}] Exception Resolved:", GsvcContextHolder.getRequestId(), error);
+            log.error("Exception Resolved:", error);
         }
         return responseWrapper.unwrap(rClazz);
     }

@@ -61,8 +61,8 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
 
         val connector = new ReactorClientHttpConnector(httpClient);
 
-        log.trace("[{}] Setup WebClient for {}: BASE={}, ConnectTimeout={}, ReadTimeout={}, WriteTimeout={}",
-                GsvcContextHolder.getRequestId(), cfgName, baseUrl, connectTimeout, readTimeout, writeTimeout);
+        log.trace("Setup WebClient for {}: BASE={}, ConnectTimeout={}, ReadTimeout={}, WriteTimeout={}", cfgName,
+                baseUrl, connectTimeout, readTimeout, writeTimeout);
 
         return builder.clientConnector(connector).build();
     }

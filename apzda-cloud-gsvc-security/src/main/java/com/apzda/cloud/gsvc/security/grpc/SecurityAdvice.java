@@ -37,20 +37,20 @@ public class SecurityAdvice {
 
     @GrpcExceptionHandler(AuthenticationException.class)
     public Status handleException(AuthenticationException e) {
-        val context = GsvcContextHolder.CONTEXT_BOX.get();
-        log.error("[{}] gRPC({}) error: {}", context.getRequestId(), context.getSvcName(), e.getMessage());
+        val context = GsvcContextHolder.current();
+        log.error("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
         return Status.UNAUTHENTICATED.withDescription(e.getMessage()).withCause(e);
     }
 
     @GrpcExceptionHandler(AccessDeniedException.class)
     public Status handleException(AccessDeniedException e) {
-        val context = GsvcContextHolder.CONTEXT_BOX.get();
+        val context = GsvcContextHolder.current();
         try {
-            log.error("[{}] gRPC({}) error: {} - {}", context.getRequestId(), context.getSvcName(), e.getMessage(),
+            log.error("gRPC({}) error: {} - {}", context.getSvcName(), e.getMessage(),
                     SecurityContextHolder.getContext().getAuthentication().getName());
         }
         catch (Exception ve) {
-            log.error("[{}] gRPC({}) error: {}", context.getRequestId(), context.getSvcName(), e.getMessage());
+            log.error("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
         }
         return Status.PERMISSION_DENIED.withDescription(e.getMessage()).withCause(e);
     }

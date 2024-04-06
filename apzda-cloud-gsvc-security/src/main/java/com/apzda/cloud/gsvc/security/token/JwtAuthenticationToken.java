@@ -3,7 +3,6 @@
  */
 package com.apzda.cloud.gsvc.security.token;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.Getter;
@@ -112,7 +111,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     @Override
     @SuppressWarnings("unchecked")
     public Collection<GrantedAuthority> getAuthorities() {
-        log.trace("[{}] Retrieving authentication's authorities: {}!!", GsvcContextHolder.getRequestId(), getName());
+        log.trace("Retrieving authentication's authorities: {}!!", getName());
         if (principal instanceof UserDetails userDetails) {
             val authorities = userDetails.getAuthorities();
             if (!CollectionUtils.isEmpty(authorities)) {
@@ -133,13 +132,12 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
                     userDetailsMeta.remove(key);
 
                     if (log.isTraceEnabled()) {
-                        log.trace("[{}] accessToken({}) now is logout", GsvcContextHolder.getRequestId(), accessToken);
+                        log.trace("accessToken({}) now is logout", accessToken);
                     }
                 }
                 catch (Exception e) {
                     if (log.isTraceEnabled()) {
-                        log.trace("[{}] accessToken({}) logout failed: ", GsvcContextHolder.getRequestId(), accessToken,
-                                e);
+                        log.trace("accessToken({}) logout failed: ", accessToken, e);
                     }
                 }
             }

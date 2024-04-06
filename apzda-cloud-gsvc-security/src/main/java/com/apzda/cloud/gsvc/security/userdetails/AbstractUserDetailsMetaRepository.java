@@ -1,7 +1,6 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
 import cn.hutool.core.lang.ParameterizedTypeImpl;
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -27,13 +26,13 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
     protected final TypeReference<Collection<? extends GrantedAuthority>> typeReference;
 
     protected AbstractUserDetailsMetaRepository(UserDetailsMetaService userDetailsMetaService,
-                                                Class<? extends GrantedAuthority> authorityClass) {
+            Class<? extends GrantedAuthority> authorityClass) {
         this.userDetailsMetaService = userDetailsMetaService;
         this.authorityClass = authorityClass;
         this.typeReference = new TypeReference<>() {
             @Override
             public Type getType() {
-                return new ParameterizedTypeImpl(new Type[]{authorityClass}, null, Collection.class);
+                return new ParameterizedTypeImpl(new Type[] { authorityClass }, null, Collection.class);
             }
         };
     }
@@ -50,8 +49,7 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
 
         if (authorityMeta.isPresent()) {
             if (log.isTraceEnabled()) {
-                log.trace("[{}] User's authorities loaded from meta repository: {}", GsvcContextHolder.getRequestId(),
-                    userDetails.getUsername());
+                log.trace("User's Authorities loaded from meta repository: {}", userDetails.getUsername());
             }
             return authorityMeta.get();
         }
@@ -63,13 +61,12 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
             }
             setMetaData(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, authorities);
             if (log.isTraceEnabled()) {
-                log.trace("[{}] User's authorities loaded by userDetailsMetaService: {}", GsvcContextHolder.getRequestId(),
-                    userDetails.getUsername());
+                log.trace("User's Authorities loaded by userDetailsMetaService: {}", userDetails.getUsername());
             }
             return authorities;
-        } catch (Exception e) {
-            log.warn("[{}] Cannot load user's authorities: {} - {}", GsvcContextHolder.getRequestId(),
-                userDetails.getUsername(), e.getMessage());
+        }
+        catch (Exception e) {
+            log.warn("Cannot load user's authorities: {} - {}", userDetails.getUsername(), e.getMessage());
         }
         return Collections.emptyList();
     }

@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -24,7 +23,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     private final LoadingCache<String, UserMeta> userDetailsMetaCache;
 
     public InMemoryUserDetailsMetaRepository(UserDetailsMetaService userDetailsMetaService,
-                                             Class<? extends GrantedAuthority> authorityClass) {
+            Class<? extends GrantedAuthority> authorityClass) {
         super(userDetailsMetaService, authorityClass);
         this.userDetailsMetaCache = CacheBuilder.newBuilder().build(new UserMetaLoader());
     }
@@ -34,9 +33,9 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
         try {
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
             userMeta.put(key, value);
-        } catch (ExecutionException e) {
-            log.error("[{}] Cannot set user meta: {}.{} = {}", GsvcContextHolder.getRequestId(),
-                userDetails.getUsername(), key, value, e);
+        }
+        catch (ExecutionException e) {
+            log.error("Cannot set user meta: {}.{} = {}", userDetails.getUsername(), key, value, e);
         }
     }
 
@@ -48,16 +47,16 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
             val meta = userMeta.get(key);
             if (meta != null) {
                 if (log.isTraceEnabled()) {
-                    log.trace("[{}] User meta '{}' of '{}' loaded from Memory", GsvcContextHolder.getRequestId(), key, userDetails.getUsername());
+                    log.trace("User meta '{}' of '{}' loaded from Memory", key, userDetails.getUsername());
                 }
                 return Optional.of(rClass.cast(meta));
             }
             val metaData = userDetailsMetaService.getMetaData(userDetails, key, rClass);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
-        } catch (Exception e) {
-            log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
-                userDetails.getUsername(), key, e.getMessage());
+        }
+        catch (Exception e) {
+            log.error("Cannot load user meta for {}.{} - {}", userDetails.getUsername(), key, e.getMessage());
 
         }
         return Optional.empty();
@@ -72,16 +71,16 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
             val meta = userMeta.get(key);
             if (meta != null) {
                 if (log.isTraceEnabled()) {
-                    log.trace("[{}] User metas '{}' of '{}' loaded from Memory", GsvcContextHolder.getRequestId(), key, userDetails.getUsername());
+                    log.trace("User metas '{}' of '{}' loaded from Memory", key, userDetails.getUsername());
                 }
                 return Optional.of((R) meta);
             }
             val metaData = userDetailsMetaService.getMultiMetaData(userDetails, key, typeReference);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
-        } catch (Exception e) {
-            log.error("[{}] Cannot load user meta for {}.{} - {}", GsvcContextHolder.getRequestId(),
-                userDetails.getUsername(), key, e.getMessage());
+        }
+        catch (Exception e) {
+            log.error("Cannot load user meta for {}.{} - {}", userDetails.getUsername(), key, e.getMessage());
 
         }
         return Optional.empty();
@@ -112,6 +111,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
         public UserMeta load(@NonNull String key) throws Exception {
             return new UserMeta();
         }
+
     }
 
 }

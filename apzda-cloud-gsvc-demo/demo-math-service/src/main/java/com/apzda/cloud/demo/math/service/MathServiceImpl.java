@@ -52,12 +52,15 @@ public class MathServiceImpl implements MathService {
         log.info("执行SUM");
         final Sinks.Many<Result> resultMany = Sinks.many().replay().all();
         val atomicLong = new AtomicLong();
+        val context = GsvcContextHolder.current();
         request.subscribeOn(Schedulers.boundedElastic()).doOnComplete(() -> {
+            context.restore();
             log.info("[{}] 请求处理完成啦: {}", GsvcContextHolder.getRequestId(), atomicLong.get());
             resultMany.tryEmitNext(Result.newBuilder().setResult(atomicLong.get()).build());
             resultMany.tryEmitComplete();
         }).doOnError(resultMany::tryEmitError).subscribe(opNum -> {
-            log.info("收到操作数: {}", opNum.getNum1());
+            context.restore();
+            log.info("[{}] 收到操作数: {}", GsvcContextHolder.getRequestId(), opNum.getNum1());
             atomicLong.addAndGet(opNum.getNum1());
         });
         return resultMany.asFlux();

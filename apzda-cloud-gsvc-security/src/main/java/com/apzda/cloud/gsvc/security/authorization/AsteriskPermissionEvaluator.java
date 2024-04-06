@@ -16,7 +16,6 @@
  */
 package com.apzda.cloud.gsvc.security.authorization;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -98,14 +97,14 @@ public class AsteriskPermissionEvaluator implements PermissionEvaluator {
 
             if (!asterisk && granted.equalsIgnoreCase(authority)) {
                 if (log.isTraceEnabled()) {
-                    log.trace("[{}] Permit for: {} equals {}", GsvcContextHolder.getRequestId(), authority, granted);
+                    log.trace("Permit for: {} equals {}", authority, granted);
                 }
                 return true;
             }
 
             if (asterisk && match(granted, authority)) {
                 if (log.isTraceEnabled()) {
-                    log.trace("[{}] Permit for: {} matched {}", GsvcContextHolder.getRequestId(), authority, granted);
+                    log.trace("Permit for: {} matched {}", authority, granted);
                 }
                 return true;
             }

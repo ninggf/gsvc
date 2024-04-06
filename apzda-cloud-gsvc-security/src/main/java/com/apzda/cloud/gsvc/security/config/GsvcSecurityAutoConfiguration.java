@@ -4,7 +4,6 @@ import cn.hutool.jwt.signers.JWTSigner;
 import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
@@ -368,8 +367,7 @@ public class GsvcSecurityAutoConfiguration {
                 if (!CollectionUtils.isEmpty(userDetails.getAuthorities())) {
                     return userDetails.getAuthorities();
                 }
-                log.trace("[{}] Load Authorities by userDetailsService.loadUserByUsername: {}",
-                        GsvcContextHolder.getRequestId(), userDetails.getUsername());
+                log.trace("Load Authorities by userDetailsService.loadUserByUsername: {}", userDetails.getUsername());
                 val ud = userDetailsService.loadUserByUsername(userDetails.getUsername());
                 return ud.getAuthorities();
             };

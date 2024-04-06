@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.security.repository;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,7 +34,7 @@ public class JwtContextRepository implements SecurityContextRepository {
     public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
         // 此方法是一个会被延时加载的方法。
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Start to load Context", GsvcContextHolder.getRequestId());
+            log.trace("Start to load SecurityContext");
         }
         val request = requestResponseHolder.getRequest();
 
@@ -43,7 +42,7 @@ public class JwtContextRepository implements SecurityContextRepository {
 
         if (storedContext != null) {
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Context Loaded from request attribute", GsvcContextHolder.getRequestId());
+                log.trace("Context Loaded from request attribute");
             }
             return (SecurityContext) storedContext;
         }
@@ -55,15 +54,18 @@ public class JwtContextRepository implements SecurityContextRepository {
             if (authentication != null) {
                 context.setAuthentication(authentication);
                 if (log.isTraceEnabled()) {
-                    log.trace("[{}] Context loaded from TokenManager: {}", GsvcContextHolder.getRequestId(), tokenManager);
+                    log.trace("Context loaded from TokenManager: {}", tokenManager);
                 }
-            } else if (log.isTraceEnabled()) {
-                log.trace("[{}] Cannot loaded Context. the empty context is used", GsvcContextHolder.getRequestId());
             }
-        } catch (AuthenticationException ae) {
+            else if (log.isTraceEnabled()) {
+                log.trace("Cannot loaded Context. the empty context is used");
+            }
+        }
+        catch (AuthenticationException ae) {
             throw ae;
-        } catch (Exception e) {
-            log.error("[{}] Error happened while loading Context: {}", GsvcContextHolder.getRequestId(), e.getMessage());
+        }
+        catch (Exception e) {
+            log.error("Error happened while loading Context: {}", e.getMessage());
         }
         request.setAttribute(CONTEXT_ATTR_NAME, context);
         return context;
@@ -74,10 +76,11 @@ public class JwtContextRepository implements SecurityContextRepository {
         try {
             tokenManager.save(context.getAuthentication(), request);
             if (log.isTraceEnabled()) {
-                log.trace("[{}] Context saved: {}", GsvcContextHolder.getRequestId(), context);
+                log.trace("SecurityContext saved: {}", context);
             }
-        } catch (Exception e) {
-            log.error("[{}]  Save Context failed: {} - {}", GsvcContextHolder.getRequestId(), e.getMessage(), context);
+        }
+        catch (Exception e) {
+            log.error("Save Context failed: {} - {}", e.getMessage(), context);
         }
     }
 
@@ -85,7 +88,7 @@ public class JwtContextRepository implements SecurityContextRepository {
     public boolean containsContext(HttpServletRequest request) {
         val containsContext = request.getAttribute(CONTEXT_ATTR_NAME) != null;
         if (log.isTraceEnabled()) {
-            log.trace("[{}] Contains Context: {}", GsvcContextHolder.getRequestId(), containsContext);
+            log.trace("Contains Context: {}", containsContext);
         }
         return containsContext;
     }

@@ -63,7 +63,7 @@ public class ResponseUtils {
         }
         catch (JsonProcessingException e) {
             val requestId = GsvcContextHolder.getRequestId();
-            log.error("[{}] Cannot convert 【{}】 to class: {}", requestId, responseBody, tClass);
+            log.error("Cannot convert 【{}】 to class: {}", responseBody, tClass);
             try {
                 // bookmark: fallback to jackson error
                 return OBJECT_MAPPER.readValue(ServiceError.JACKSON_ERROR.fallbackString, tClass);

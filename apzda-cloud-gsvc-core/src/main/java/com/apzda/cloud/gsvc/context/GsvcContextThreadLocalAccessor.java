@@ -23,8 +23,8 @@ public class GsvcContextThreadLocalAccessor implements ThreadLocalAccessor<GsvcC
 
     @Override
     public GsvcContextHolder.GsvcContext getValue() {
-        val context = GsvcContextHolder.CONTEXT_BOX.get();
-        if (context != null && context.getAttributes() == null) {
+        val context = GsvcContextHolder.current();
+        if (context.getAttributes() == null) {
             context.setAttributes(RequestContextHolder.getRequestAttributes());
         }
 
@@ -33,7 +33,7 @@ public class GsvcContextThreadLocalAccessor implements ThreadLocalAccessor<GsvcC
 
     @Override
     public void setValue(@NonNull GsvcContextHolder.GsvcContext value) {
-        GsvcContextHolder.CONTEXT_BOX.set(value);
+        GsvcContextHolder.restore(value);
         if (value.getAttributes() != null) {
             RequestContextHolder.setRequestAttributes(value.getAttributes());
         }
@@ -41,7 +41,7 @@ public class GsvcContextThreadLocalAccessor implements ThreadLocalAccessor<GsvcC
 
     @Override
     public void setValue() {
-        GsvcContextHolder.CONTEXT_BOX.remove();
+        GsvcContextHolder.clear();
         RequestContextHolder.setRequestAttributes(null);
     }
 

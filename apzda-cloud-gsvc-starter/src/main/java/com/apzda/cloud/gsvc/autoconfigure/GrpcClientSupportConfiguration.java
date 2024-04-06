@@ -81,11 +81,11 @@ public class GrpcClientSupportConfiguration {
                 @Override
                 public ErrorResponseException transform(Throwable exception) {
                     if (exception instanceof StatusRuntimeException se) {
-                        val context = GsvcContextHolder.CONTEXT_BOX.get();
+                        val context = GsvcContextHolder.current();
                         val status = se.getStatus();
                         val statusCode = status.getCode();
                         val cause = status.getCause();
-                        log.debug("[{}] Grpc({}) Call failed: {} - {}", context.getRequestId(), context.getSvcName(),
+                        log.debug("gRPC({}) Call failed: {} - {}", context.getSvcName(),
                                 statusCode, status.getDescription(), cause);
                         HttpStatusCode code;
                         ProblemDetail pd;
@@ -143,12 +143,15 @@ public class GrpcClientSupportConfiguration {
                     CallOptions callOptions, Channel next) {
                 val requestId = GsvcContextHolder.getRequestId();
                 val serviceName = method.getServiceName();
+                val requestAttributes = RequestContextHolder.getRequestAttributes();
                 return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
                     @Override
                     public void start(Listener<RespT> responseListener, Metadata headers) {
                         headers.put(HeaderMetas.REQUEST_ID, requestId);
-                        GsvcContextHolder.CONTEXT_BOX.set(new GsvcContextHolder.GsvcContext(requestId,
-                                RequestContextHolder.getRequestAttributes(), serviceName));
+                        val context = GsvcContextHolder.current();
+                        context.setRequestId(requestId);
+                        context.setAttributes(requestAttributes);
+                        context.setSvcName(serviceName);
                         // bookmark: ClientInterceptor
                         super.start(responseListener, headers);
                     }
