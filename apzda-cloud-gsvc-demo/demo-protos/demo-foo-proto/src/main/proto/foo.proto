@@ -12,7 +12,10 @@ option java_outer_classname = "FooProto";
 
 message FooReq {
   string name = 1;
-  uint32 age = 2 [(buf.validate.field).uint32.gte = 18, (buf.validate.field).uint32.lte = 50];
+  uint32 age = 2 [(buf.validate.field).uint32 = {
+    gte: 18,
+    lte: 50
+  }];
 }
 
 message FooRes {

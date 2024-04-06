@@ -172,7 +172,7 @@ public class GsvcExceptionHandler {
                     error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
-        else if (error instanceof WebClientRequestException cle) {
+        else if (error instanceof WebClientRequestException) {
             // rpc exception
             responseWrapper = ResponseWrapper.status(HttpStatus.BAD_GATEWAY).body(handle(error));
             log.error("[{}] Exception Resolved[{}: {}]", GsvcContextHolder.getRequestId(), error.getClass().getName(),

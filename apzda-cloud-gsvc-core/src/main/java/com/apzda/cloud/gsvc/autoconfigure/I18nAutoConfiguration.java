@@ -91,6 +91,11 @@ public class I18nAutoConfiguration {
         return messageSource;
     }
 
+    @Bean("core.MessageSourceNameResolver")
+    MessageSourceNameResolver messageSourceNameResolver() {
+        return () -> "messages-core";
+    }
+
     @Bean
     @ConditionalOnBean({ MessageSource.class })
     I18nHelper i18nHelper() {

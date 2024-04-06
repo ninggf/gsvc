@@ -97,6 +97,7 @@ X-Gsvc-Caller: gtw
 POST http://{{fooService}}/~fooService/greeting
 Content-Type: application/json
 X-Gsvc-Caller: gtw
+Cookie: lang=zh_CN
 
 {
     "name": "gsvc",
