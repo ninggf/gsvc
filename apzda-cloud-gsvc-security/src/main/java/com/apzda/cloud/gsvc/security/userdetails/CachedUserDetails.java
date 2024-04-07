@@ -16,7 +16,9 @@
  */
 package com.apzda.cloud.gsvc.security.userdetails;
 
+import com.apzda.cloud.gsvc.dto.CurrentUser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.val;
 import org.springframework.security.core.GrantedAuthority;
@@ -30,15 +32,25 @@ import java.util.Collection;
  * @since 1.0.0
  **/
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CachedUserDetails implements UserDetails {
+
     @JsonIgnore
     Collection<? extends GrantedAuthority> authorities;
+
     private String password;
+
     private String username;
+
     boolean accountNonExpired;
+
     boolean accountNonLocked;
+
     boolean credentialsNonExpired;
+
     boolean enabled;
+
+    private CurrentUser user;
 
     public static CachedUserDetails from(UserDetails userDetails) {
         val ud = new CachedUserDetails();
@@ -53,4 +65,5 @@ public class CachedUserDetails implements UserDetails {
 
         return ud;
     }
+
 }

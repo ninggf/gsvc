@@ -3,10 +3,10 @@
  */
 package com.apzda.cloud.gsvc.security.token;
 
+import com.apzda.cloud.gsvc.security.authentication.AuthenticationDetails;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -17,7 +17,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author fengz windywany@gmail.com
@@ -31,10 +34,6 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     private final Object principal;
 
     private Object credentials;
-
-    @Getter
-    @Setter
-    private Locale locale;
 
     JwtAuthenticationToken(Object principal, Object credentials) {
         super(null);
@@ -60,8 +59,8 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     public String deviceAwareMetaKey(String key) {
         val details = this.getDetails();
-        if (details instanceof DeviceAuthenticationDetails deviceAuthenticationDetails) {
-            return key + "." + deviceAuthenticationDetails.getApp() + "@" + deviceAuthenticationDetails.getDevice();
+        if (details instanceof AuthenticationDetails device) {
+            return key + "." + device.getApp() + "@" + device.getDevice();
         }
         return key;
     }

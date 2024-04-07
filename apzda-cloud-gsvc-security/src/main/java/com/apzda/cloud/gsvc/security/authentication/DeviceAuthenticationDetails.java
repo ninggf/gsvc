@@ -14,7 +14,7 @@ import java.util.Map;
  * @author fengz
  */
 @Getter
-public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
+public class DeviceAuthenticationDetails extends WebAuthenticationDetails implements AuthenticationDetails {
 
     private final String device;
 
@@ -42,6 +42,23 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails {
     public static DeviceAuthenticationDetails create() {
         val request = GsvcContextHolder.getRequest();
         return request.map(DeviceAuthenticationDetails::new).orElse(null);
+    }
+
+    public static DeviceAuthenticationDetails create(HttpServletRequest request) {
+        return new DeviceAuthenticationDetails(request);
+    }
+
+    public AuthenticationDetails toGeneric() {
+        val details = new GenericAuthenticationDetails();
+        details.setApp(app);
+        details.setAppMeta(appMeta);
+        details.setDevice(device);
+        details.setDeviceId(deviceId);
+        details.setOsName(osName);
+        details.setOsVer(osVer);
+        details.setRemoteAddress(getRemoteAddress());
+
+        return details;
     }
 
     @Override

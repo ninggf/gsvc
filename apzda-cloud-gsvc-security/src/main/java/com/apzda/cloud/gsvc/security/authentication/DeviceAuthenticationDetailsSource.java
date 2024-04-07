@@ -7,7 +7,7 @@ import org.springframework.security.authentication.AuthenticationDetailsSource;
  * @author fengz
  */
 public class DeviceAuthenticationDetailsSource
-        implements AuthenticationDetailsSource<HttpServletRequest, DeviceAuthenticationDetails> {
+        implements AuthenticationDetailsSource<HttpServletRequest, AuthenticationDetails> {
 
     /**
      * @param context the {@code HttpServletRequest} object.
@@ -15,7 +15,7 @@ public class DeviceAuthenticationDetailsSource
      * current request
      */
     @Override
-    public DeviceAuthenticationDetails buildDetails(HttpServletRequest context) {
+    public AuthenticationDetails buildDetails(HttpServletRequest context) {
         return new DeviceAuthenticationDetails(context);
     }
 

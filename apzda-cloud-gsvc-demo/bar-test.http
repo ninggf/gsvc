@@ -305,6 +305,7 @@ GET http://{{barService}}/token/authz
 Accept: application/json
 Authorization: Bearer {{accessToken}}
 Accept-Language: zh-CN
+X-OS-Name: MacOS
 
 > {%
     client.test("Request executed successfully", function () {
@@ -312,7 +313,7 @@ Accept-Language: zh-CN
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.message === '你好Math!', "response message is not '你好Math!'")
+        client.assert(response.body.message === '你好Math! - MacOS', "response message is not '你好Math! - MacOS'")
     });
 %}
 

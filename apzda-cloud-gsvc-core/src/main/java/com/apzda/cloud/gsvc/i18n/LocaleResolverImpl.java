@@ -16,7 +16,6 @@
  */
 package com.apzda.cloud.gsvc.i18n;
 
-import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.val;
@@ -53,14 +52,8 @@ public class LocaleResolverImpl extends CookieLocaleResolver {
     @Override
     @NonNull
     public Locale resolveLocale(@Nullable HttpServletRequest request) {
-
         if (request == null) {
-            val currentUser = CurrentUserProvider.getCurrentUser();
-            val locale = currentUser.getLocale();
-            if (locale == null) {
-                return defaultLocale;
-            }
-            return locale;
+            return defaultLocale;
         }
         val cookie = GsvcContextHolder.cookie(language);
         if (cookie != null) {

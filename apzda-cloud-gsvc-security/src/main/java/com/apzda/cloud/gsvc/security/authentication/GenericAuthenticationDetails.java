@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
-
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -14,24 +14,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.grpc;
+package com.apzda.cloud.gsvc.security.authentication;
 
-import io.grpc.Metadata;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Map;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public final class HeaderMetas {
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class GenericAuthenticationDetails implements AuthenticationDetails, Serializable {
 
-    public static final Metadata.Key<String> REQUEST_ID = Metadata.Key.of("X-Request-Id",
-            Metadata.ASCII_STRING_MARSHALLER);
+    @Serial
+    private static final long serialVersionUID = -8012129218950437576L;
 
-    public static final Metadata.Key<String> LANGUAGE = Metadata.Key.of("Accept-Language",
-            Metadata.ASCII_STRING_MARSHALLER);
+    private String device;
 
-    public static final Metadata.Key<String> AUTH_DETAILS = Metadata.Key.of("X-Auth-Details",
-            Metadata.ASCII_STRING_MARSHALLER);
+    private String deviceId;
+
+    private String osName;
+
+    private String osVer;
+
+    private String app;
+
+    private String remoteAddress;
+
+    private Map<String, String> appMeta;
 
 }

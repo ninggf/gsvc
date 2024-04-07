@@ -16,8 +16,9 @@
  */
 package com.apzda.cloud.gsvc.security.grpc;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.security.authentication.GenericAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import lombok.val;
 import net.devh.boot.grpc.common.security.SecurityConstants;
 import net.devh.boot.grpc.server.security.interceptors.AbstractAuthenticatingServerCallListener;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
@@ -46,18 +48,30 @@ public class GrpcServerSecurityInterceptor implements ServerInterceptor {
 
     private final TokenManager tokenManager;
 
+    private final ObjectMapper objectMapper;
+
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
         val accessToken = headers.get(SecurityConstants.AUTHORIZATION_HEADER);
 
         if (StringUtils.isNotBlank(accessToken)) {
-            val requestId = headers.get(HeaderMetas.REQUEST_ID);
-            GsvcContextHolder.current().setRequestId(requestId);
             val context = securityContextHolderStrategy.createEmptyContext();
             try {
                 val authentication = tokenManager.restoreAuthentication(accessToken);
-                if (authentication != null) {
+                if (authentication instanceof AbstractAuthenticationToken authenticationToken) {
+                    try {
+                        val authDetails = headers.get(HeaderMetas.AUTH_DETAILS);
+                        if (authDetails != null) {
+                            val details = objectMapper.readValue(authDetails, GenericAuthenticationDetails.class);
+                            authenticationToken.setDetails(details);
+                            log.trace("Restore authentication details: {}", details);
+                        }
+                    }
+                    catch (Exception e) {
+                        log.warn("Cannot restore authentication details: {} - {}", authentication.getName(),
+                                e.getMessage());
+                    }
                     context.setAuthentication(authentication);
                     SecurityContextHolder.setContext(context);
                     log.trace("Authentication successful: {} ({})", authentication.getName(),

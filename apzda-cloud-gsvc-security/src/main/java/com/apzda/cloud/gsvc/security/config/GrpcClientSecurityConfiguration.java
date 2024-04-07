@@ -18,6 +18,7 @@ package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.security.grpc.GrpcClientSecurityInterceptor;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.ClientInterceptor;
 import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
 import net.devh.boot.grpc.client.interceptor.GrpcGlobalClientInterceptor;
@@ -35,8 +36,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class GrpcClientSecurityConfiguration {
 
     @GrpcGlobalClientInterceptor
-    ClientInterceptor grpcClientSecurityInterceptor() {
-        return new GrpcClientSecurityInterceptor();
+    ClientInterceptor grpcClientSecurityInterceptor(ObjectMapper objectMapper) {
+        return new GrpcClientSecurityInterceptor(objectMapper);
     }
 
 }

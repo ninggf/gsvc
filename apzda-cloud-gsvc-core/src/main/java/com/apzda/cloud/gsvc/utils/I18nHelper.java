@@ -16,7 +16,6 @@
  */
 package com.apzda.cloud.gsvc.utils;
 
-import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.i18n.LocaleResolverImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,6 @@ import org.springframework.web.servlet.LocaleResolver;
 
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -81,16 +79,14 @@ public class I18nHelper implements InitializingBean, ApplicationContextAware {
         try {
             val context = GsvcContextHolder.current();
             if (locale == null && context.getLocale() == null) {
-                val userLocale = CurrentUserProvider.getCurrentUser().getLocale();
-                locale = Optional.ofNullable(userLocale).orElse(defaultLocale);
+                locale = defaultLocale;
                 try {
                     val request = GsvcContextHolder.getRequest();
                     if (localeResolver instanceof LocaleResolverImpl localeResolver1) {
                         locale = localeResolver1.resolveLocale(request.orElse(null));
                     }
                     else {
-                        locale = request.map(httpServletRequest -> localeResolver.resolveLocale(httpServletRequest))
-                            .orElse(locale);
+                        locale = request.map(req -> localeResolver.resolveLocale(req)).orElse(locale);
                     }
                 }
                 catch (Exception e) {

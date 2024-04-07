@@ -20,6 +20,7 @@ import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.demo.math.proto.Request;
 import com.apzda.cloud.demo.math.proto.Result;
+import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.utils.I18nHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -90,8 +91,9 @@ public class MathServiceImpl implements MathService {
     @PreAuthorize("hasRole('ADMIN')")
     public Result auth(OpNum request) {
         val context = GsvcContextHolder.current();
-        log.debug("GsvcContext: {}", context);
-        return Result.newBuilder().setMessage(I18nHelper.t("math.hello")).build();
+        val currentUser = CurrentUserProvider.getCurrentUser();
+        log.debug("GsvcContext: {}, CurrentUser: {}", context, currentUser);
+        return Result.newBuilder().setMessage(I18nHelper.t("math.hello") + " - " + currentUser.getOs()).build();
     }
 
     @Override

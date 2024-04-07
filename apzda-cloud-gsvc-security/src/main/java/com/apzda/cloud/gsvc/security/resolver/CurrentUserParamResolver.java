@@ -17,13 +17,9 @@
 package com.apzda.cloud.gsvc.security.resolver;
 
 import com.apzda.cloud.gsvc.dto.CurrentUser;
-import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
-import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
-import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
+import com.apzda.cloud.gsvc.security.authentication.AuthenticationDetails;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.lang3.LocaleUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -71,33 +67,16 @@ public class CurrentUserParamResolver implements HandlerMethodArgumentResolver {
         val uid = authentication.getName();
         builder.uid(uid);
         val details = authentication.getDetails();
-        if (details instanceof DeviceAuthenticationDetails device) {
+        if (details instanceof AuthenticationDetails device) {
             builder.app(device.getApp());
             builder.os(device.getOsName());
             builder.osVer(device.getOsVer());
             builder.device(device.getDevice());
             builder.deviceId(device.getDeviceId());
+            builder.remoteAddress(device.getRemoteAddress());
             builder.meta(device.getAppMeta());
         }
 
-        if (authentication instanceof JwtAuthenticationToken token) {
-            val locale = token.getLocale();
-            if (locale != null) {
-                builder.locale(locale);
-                return builder;
-            }
-        }
-
-        if (authentication.getPrincipal() instanceof UserDetailsMeta userDetailsMeta) {
-            val lang = userDetailsMeta.get(UserDetailsMeta.LANGUAGE_KEY, authentication, "");
-            if (StringUtils.isNotBlank(lang)) {
-                val locale = LocaleUtils.toLocale(lang);
-                builder.locale(locale);
-                if (authentication instanceof JwtAuthenticationToken token) {
-                    token.setLocale(locale);
-                }
-            }
-        }
         return builder;
     }
 

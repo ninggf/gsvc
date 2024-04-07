@@ -30,10 +30,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,7 +48,7 @@ public class GrpcServerSupportConfiguration {
 
         @GrpcGlobalServerInterceptor
         @Order(-1)
-        ServerInterceptor requestIdServerInterceptor() {
+        ServerInterceptor requestIdServerInterceptor(Locale defaultLocale) {
             return new ServerInterceptor() {
                 @Override
                 public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
@@ -59,6 +56,7 @@ public class GrpcServerSupportConfiguration {
                     val context = GsvcContextHolder.current();
                     val requestId = headers.get(HeaderMetas.REQUEST_ID);
                     val language = headers.get(HeaderMetas.LANGUAGE);
+                    context.setLocale(defaultLocale);
 
                     if (StringUtils.isNotBlank(language)) {
                         try {

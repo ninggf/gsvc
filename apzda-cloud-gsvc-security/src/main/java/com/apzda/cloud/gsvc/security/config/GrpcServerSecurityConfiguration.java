@@ -19,6 +19,7 @@ package com.apzda.cloud.gsvc.security.config;
 import com.apzda.cloud.gsvc.security.grpc.GrpcServerSecurityInterceptor;
 import com.apzda.cloud.gsvc.security.grpc.SecurityAdvice;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.grpc.ServerInterceptor;
 import net.devh.boot.grpc.common.util.InterceptorOrder;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
@@ -42,8 +43,8 @@ public class GrpcServerSecurityConfiguration {
 
     @GrpcGlobalServerInterceptor
     @Order(InterceptorOrder.ORDER_SECURITY_AUTHENTICATION + 1)
-    ServerInterceptor grpcServerSecurityInterceptor(TokenManager tokenManager) {
-        return new GrpcServerSecurityInterceptor(tokenManager);
+    ServerInterceptor grpcServerSecurityInterceptor(TokenManager tokenManager, ObjectMapper objectMapper) {
+        return new GrpcServerSecurityInterceptor(tokenManager, objectMapper);
     }
 
     @Bean

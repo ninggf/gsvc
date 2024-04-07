@@ -7,6 +7,7 @@ import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
 import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.security.authentication.AuthenticationDetails;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
@@ -21,6 +22,7 @@ import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
@@ -57,7 +59,6 @@ public class JwtTokenManager implements TokenManager {
         val cookieConfig = properties.getCookie();
         val cookieName = cookieConfig.getCookieName();
         val bearer = properties.getBearer();
-        val requestId = GsvcContextHolder.getRequestId();
 
         String accessToken = null;
         if (StringUtils.isNotBlank(argName)) {
@@ -85,7 +86,11 @@ public class JwtTokenManager implements TokenManager {
         }
 
         if (StringUtils.isNotBlank(accessToken)) {
-            return restoreAuthentication(accessToken);
+            val authentication = restoreAuthentication(accessToken);
+            if (authentication instanceof AbstractAuthenticationToken jwtAuthenticationToken) {
+                jwtAuthenticationToken.setDetails(DeviceAuthenticationDetails.create());
+            }
+            return authentication;
         }
         log.trace("No token found of request!");
         return null;
@@ -94,7 +99,6 @@ public class JwtTokenManager implements TokenManager {
     @Override
     public Authentication restoreAuthentication(String accessToken) {
         boolean verified;
-        val requestId = GsvcContextHolder.getRequestId();
         try {
             verified = JWTUtil.verify(accessToken, jwtSigner);
         }
@@ -163,14 +167,19 @@ public class JwtTokenManager implements TokenManager {
     public void save(Authentication authentication, HttpServletRequest request) {
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
             log.trace("Authentication Saved: {}", authentication);
-            userDetailsMetaRepository.setMetaData(userDetails, UserDetailsMeta.CACHED_USER_DETAILS_KEY,
-                    CachedUserDetails.from(userDetails));
+            val cachedUser = CachedUserDetails.from(userDetails);
+            val details = authentication.getDetails();
+            if (details instanceof AuthenticationDetails) {
+                val user = ((AuthenticationDetails) details).create(userDetails.getUsername());
+                cachedUser.setUser(user);
+            }
+            userDetailsMetaRepository.setMetaData(userDetails, UserDetailsMeta.CACHED_USER_DETAILS_KEY, cachedUser);
         }
     }
 
     @Override
     public JwtToken createJwtToken(Authentication authentication) {
-        if (authentication.getDetails() instanceof DeviceAuthenticationDetails device
+        if (authentication.getDetails() instanceof AuthenticationDetails device
                 && !properties.deviceIsAllowed(device.getDevice())) {
             throw TokenException.DEVICE_NOT_ALLOWED;
         }
@@ -286,8 +295,6 @@ public class JwtTokenManager implements TokenManager {
 
     @Override
     public void verify(@NonNull Authentication authentication) throws SessionAuthenticationException {
-        val requestId = GsvcContextHolder.getRequestId();
-
         if (authentication instanceof JwtAuthenticationToken auth) {
             if (auth.getJwtToken() == null || auth.isLogin()) {
                 return;
