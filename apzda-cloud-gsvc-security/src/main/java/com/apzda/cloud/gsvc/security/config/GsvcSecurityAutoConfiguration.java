@@ -282,7 +282,8 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         AuthenticationManager authenticationManager(ObjectPostProcessor<Object> objectPostProcessor,
-                ObjectProvider<List<AuthenticationProvider>> providers) throws Exception {
+                ObjectProvider<List<AuthenticationProvider>> providers, AuthenticationEventPublisher eventPublisher)
+                throws Exception {
             // bookmark: 自定义认证管理器
             val builder = new AuthenticationManagerBuilder(objectPostProcessor);
             if (providers.getIfAvailable() != null) {
@@ -291,7 +292,7 @@ public class GsvcSecurityAutoConfiguration {
                 }
             }
 
-            return builder.build();
+            return builder.authenticationEventPublisher(eventPublisher).build();
         }
 
         @Bean

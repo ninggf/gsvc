@@ -2,6 +2,7 @@ package com.apzda.cloud.gsvc.security.userdetails;
 
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.CredentialsExpiredException;
@@ -32,6 +33,14 @@ public interface UserDetailsMeta extends UserDetails {
 
     @NonNull
     UserDetails getUserDetails();
+
+    default String getOpenId() {
+        return getUserDetails().getUsername();
+    }
+
+    default String getProvider() {
+        return "db";
+    }
 
     void set(String key, Object value);
 
@@ -70,7 +79,8 @@ public interface UserDetailsMeta extends UserDetails {
         remove(key);
     }
 
-    void clear();
+    default void clear() {
+    }
 
     static void checkUserDetails(UserDetails userDetails) {
         if (userDetails == null) {
@@ -78,6 +88,10 @@ public interface UserDetailsMeta extends UserDetails {
         }
 
         val username = userDetails.getUsername();
+        if (StringUtils.isBlank(username)) {
+            throw new UsernameNotFoundException("username is blank");
+        }
+
         if (!userDetails.isEnabled()) {
             throw new DisabledException(String.format("%s is disabled", username));
         }

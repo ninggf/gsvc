@@ -1,9 +1,9 @@
 package com.apzda.cloud.gsvc.security.handler;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
+import com.apzda.cloud.gsvc.security.event.AuthenticationCompleteEvent;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.apzda.cloud.gsvc.security.token.JwtToken;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
@@ -17,7 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -31,13 +34,20 @@ import java.util.List;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class DefaultAuthenticationHandler implements AuthenticationHandler {
+public class DefaultAuthenticationHandler implements AuthenticationHandler, ApplicationEventPublisherAware {
 
     private final SecurityConfigProperties properties;
 
     private final TokenManager tokenManager;
 
     private final ObjectProvider<List<JwtTokenCustomizer>> customizers;
+
+    private ApplicationEventPublisher applicationEventPublisher;
+
+    @Override
+    public void setApplicationEventPublisher(@NonNull ApplicationEventPublisher applicationEventPublisher) {
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -64,6 +74,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler {
                         newToken = c.customize(authentication, newToken);
                     }
                 }
+                this.applicationEventPublisher.publishEvent(new AuthenticationCompleteEvent(authentication, newToken));
                 ResponseUtils.respond(request, response, Response.success(newToken));
             }
             catch (Exception e) {
