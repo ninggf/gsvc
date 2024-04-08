@@ -24,6 +24,7 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.SQLRestriction;
 
 import static com.apzda.cloud.gsvc.domain.SnowflakeIdGenerator.NAME;
 
@@ -32,12 +33,14 @@ import static com.apzda.cloud.gsvc.domain.SnowflakeIdGenerator.NAME;
  * @version 1.0.0
  * @since 1.0.0
  **/
-@EntityListeners({AuditingEntityListener.class})
+@EntityListeners({ AuditingEntityListener.class })
 @GenericGenerator(name = NAME, type = SnowflakeIdGenerator.class)
 @MappedSuperclass
 @Getter
 @Setter
+@SQLRestriction("deleted = false")
 public abstract class SimpleEntity implements Auditable<Long, String, Long>, Tenantable<Long>, SoftDeletable {
+
     public static final String SNOWFLAKE = NAME;
 
     private String createdBy;
@@ -51,4 +54,5 @@ public abstract class SimpleEntity implements Auditable<Long, String, Long>, Ten
     private Long tenantId;
 
     private boolean deleted;
+
 }
