@@ -34,6 +34,12 @@ public interface TempStorage {
     @NonNull
     <T extends ExpiredData> Optional<T> load(@NonNull String id, @NonNull Class<T> tClass);
 
+    @NonNull
+    @SuppressWarnings("unchecked")
+    default <T extends ExpiredData> T load(@NonNull String id, @NonNull T defaultValue) {
+        return load(id, defaultValue.getClass()).map(expiredData -> (T) expiredData).orElse(defaultValue);
+    }
+
     void remove(@NonNull String id);
 
 }
