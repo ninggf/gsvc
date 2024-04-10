@@ -69,13 +69,13 @@ public class GtwRouterFunctionFactoryBean
     @Override
     public RouterFunction<ServerResponse> getObject() throws Exception {
         servletContext = StringUtils.stripEnd(servletContext, "/");
-
+        val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceClass);
         val router = RouterFunctions.route();
-        if (route.getMethod().charAt(0) == '/') {
-            setupForward(router, route);
+        if (route.getMethod().charAt(0) == '/' || "http".equals(serviceInfo.type)) {
+            setupForward(router, route, serviceInfo);
         }
         else {
-            setupRoute(router, route);
+            setupRoute(router, route, serviceInfo);
         }
         setupFilter(router, route);
 
@@ -90,8 +90,7 @@ public class GtwRouterFunctionFactoryBean
         return router.onError(Exception.class, exceptionHandler::handle).build();
     }
 
-    private void setupRoute(@NonNull RouterFunctions.Builder builder, @NonNull Route route) {
-        val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceClass);
+    private void setupRoute(@NonNull RouterFunctions.Builder builder, @NonNull Route route, ServiceInfo serviceInfo) {
         val actions = route.getActions();
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.absPath();
@@ -120,8 +119,7 @@ public class GtwRouterFunctionFactoryBean
         }
     }
 
-    private void setupForward(RouterFunctions.Builder builder, Route route) {
-        val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceClass);
+    private void setupForward(RouterFunctions.Builder builder, Route route, ServiceInfo serviceInfo) {
         val actions = route.getActions();
         val path = route.absPath();
 
@@ -191,6 +189,9 @@ public class GtwRouterFunctionFactoryBean
             segments.put("segment", segment);
             request.servletRequest().setAttribute(ATTR_MATCHED_SEGMENTS, segments);
             log.trace("{} matched '{}' with segments: {}", reqPath, path, segments);
+        }
+        if (!matched) {
+            log.trace("'{}' does not matched '{}'", reqPath, path);
         }
         return matched;
     }

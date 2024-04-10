@@ -5,14 +5,20 @@ package com.apzda.cloud.gsvc.plugin;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
+import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpCookie;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,7 +28,12 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
 
-    private final ApplicationContext context;
+    private final ObjectProvider<List<HttpHeadersFilter>> headersFiltersProvider;
+
+    @Value("${spring.application.name:gsvc}")
+    private String appName;
+
+    private volatile List<HttpHeadersFilter> headersFilters;
 
     @Override
     public int getOrder() {
@@ -31,19 +42,19 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
 
     @Override
     public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Object data, ServiceMethod method) {
-        val headers = GsvcContextHolder.headers("X-");
-        headers.putAll(GsvcContextHolder.headers("Accept-"));
-        val appName = context.getEnvironment().getProperty("spring.application.name");
+        val headers = GsvcContextHolder.getRequest().map(curRequest -> {
+            headersFilters = headersFiltersProvider.getIfAvailable();
+            return HttpHeadersFilter.filterRequest(headersFilters, new ServletServerHttpRequest(curRequest));
+        }).orElse(new HttpHeaders());
+
         headers.remove("x-gsvc-caller");
-        headers.put("x-gsvc-caller", appName);
+        headers.add("x-gsvc-caller", appName);
 
         val requestId = GsvcContextHolder.getRequestId();
-        headers.put("X-Request-ID", requestId);
+        headers.add("X-Request-ID", requestId);
 
         request = request.headers(httpHeaders -> {
-            for (Map.Entry<String, String> kv : headers.entrySet()) {
-                httpHeaders.put(kv.getKey(), Collections.singletonList(kv.getValue()));
-            }
+            httpHeaders.putAll(headers);
         });
 
         if (log.isTraceEnabled()) {

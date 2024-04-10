@@ -12,8 +12,9 @@ import lombok.Getter;
 @Getter
 @Builder
 public class ServiceInfo {
+
     /**
-     *
+     * Mico Service name
      */
     String cfgName;
 
@@ -25,6 +26,7 @@ public class ServiceInfo {
 
     boolean local;
 
+    String type;
     static final ServiceInfo DEFAULT = ServiceInfo.builder().local(true).build();
 
 }

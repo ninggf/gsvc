@@ -11,9 +11,12 @@ import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.ServiceInfo;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
-import com.apzda.cloud.gsvc.gtw.HttpHeadersFilter;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.gtw.ProxyExchangeHandler;
+import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
+import com.apzda.cloud.gsvc.gtw.filter.RemoveHopByHopHeadersFilter;
+import com.apzda.cloud.gsvc.gtw.filter.TransferEncodingNormalizationHeadersFilter;
+import com.apzda.cloud.gsvc.gtw.filter.XForwardedHeadersFilter;
 import com.apzda.cloud.gsvc.infra.Counter;
 import com.apzda.cloud.gsvc.infra.LocalInfraImpl;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
@@ -88,8 +91,23 @@ public class ApzdaGsvcAutoConfiguration {
     }
 
     @Bean
-    TransHeadersPlugin transHeadersPlugin(ApplicationContext applicationContext) {
-        return new TransHeadersPlugin(applicationContext);
+    TransHeadersPlugin transHeadersPlugin(ObjectProvider<List<HttpHeadersFilter>> headersFiltersProvider) {
+        return new TransHeadersPlugin(headersFiltersProvider);
+    }
+
+    @Bean
+    HttpHeadersFilter removeHopByHopHeadersFilter() {
+        return new RemoveHopByHopHeadersFilter();
+    }
+
+    @Bean
+    HttpHeadersFilter transferEncodingNormalizationHeadersFilter() {
+        return new TransferEncodingNormalizationHeadersFilter();
+    }
+
+    @Bean
+    HttpHeadersFilter xForwardedHeadersFilter() {
+        return new XForwardedHeadersFilter();
     }
 
     @Bean

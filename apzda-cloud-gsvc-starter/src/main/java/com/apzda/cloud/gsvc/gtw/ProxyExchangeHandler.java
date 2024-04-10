@@ -6,18 +6,22 @@ import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.lang.NonNull;
+import org.springframework.util.StopWatch;
 import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -33,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com.apzda.cloud.gsvc.core.GtwRouterFunctionFactoryBean.ATTR_MATCHED_SEGMENTS;
 
@@ -66,16 +71,8 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         val cfgName = serviceInfo.getCfgName();
         val client = this.applicationContext.getBean(ServiceMethod.getStubClientBeanName(cfgName), WebClient.class);
         val pattern = route.getMethod();
-        val uri = request.attribute(ATTR_MATCHED_SEGMENTS).map((segments) -> {
-            var template = pattern;
-            for (val sg : ((Map<String, String>) segments).entrySet()) {
-                template = template.replace("{" + sg.getKey() + "}", sg.getValue());
-            }
-            return template;
-        }).orElse(pattern);
-
         val method = request.method();
-        val params = httpRequest.getParameterMap();
+        val params = request.uri().getQuery();
         val charset = Optional.ofNullable(httpRequest.getCharacterEncoding()).map(encoding -> {
             try {
                 return Charset.forName(encoding);
@@ -87,13 +84,28 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             }
         }).orElse(StandardCharsets.UTF_8);
 
-        val filtered = HttpHeadersFilter.filterRequest(getHeadersFilters(), request);
+        val servletServerHttpRequest = new ServletServerHttpRequest(request.servletRequest());
+        val filtered = HttpHeadersFilter.filterRequest(getHeadersFilters(), servletServerHttpRequest);
+
+        val content = new ContentCachingRequestWrapper(httpRequest);
+
+        String uri = request.attribute(ATTR_MATCHED_SEGMENTS).map((segments) -> {
+            var template = pattern;
+            for (val sg : ((Map<String, String>) segments).entrySet()) {
+                template = template.replace("{" + sg.getKey() + "}", sg.getValue());
+            }
+            return template;
+        }).orElse(pattern);
+
+        if (pattern.charAt(0) != '/') {
+            uri = "/~" + context.getSvcName() + "/" + uri;
+            filtered.add("X-Gsvc-Caller", "gtw");
+        }
 
         log.trace("Proxy {} to {}{} with: charset({}), param({}), headers({})", request.path(), cfgName, uri, charset,
                 params, filtered);
 
-        val content = new ContentCachingRequestWrapper(httpRequest);
-
+        // TODO 使用InputStream
         BufferedReader reader;
         try {
             reader = content.getReader();
@@ -102,18 +114,26 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             return ServerResponse.status(500).body(Response.error(ServiceError.SERVICE_ERROR));
         }
 
-        val proxyResponse = client.method(method).uri(uri, params).headers(headers -> {
-            headers.putAll(filtered);
-            headers.remove(HttpHeaders.HOST);
-        })
-            .body(BodyInserters.fromDataBuffers(
-                    Flux.fromStream(reader::lines).map(str -> dataBufferFactory.wrap(str.getBytes(charset)))))
-            .exchangeToMono((response) -> response.toBodilessEntity().mapNotNull((resp) -> {
+        val proxyResponse = client.method(method)
+            .uri(uri + (StringUtils.isNotBlank(params) ? "?" + params : ""))
+            .headers(headers -> {
+                headers.add("X-Request-ID", GsvcContextHolder.getRequestId());
+                headers.putAll(filtered);
+                headers.remove(HttpHeaders.HOST);
+            })
+            .body(BodyInserters.fromDataBuffers(Flux.fromStream(reader::lines).map(str -> {
+                log.trace("Request Body: {}", str);
+                return dataBufferFactory.wrap(str.getBytes(charset));
+            })))
+            .exchangeToMono(response -> {
                 context.restore();
-                val headers = HttpHeadersFilter.filter(getHeadersFilters(), resp.getHeaders(), request,
-                        HttpHeadersFilter.Type.RESPONSE);
+                val headers = HttpHeadersFilter.filter(getHeadersFilters(), response.headers().asHttpHeaders(),
+                        servletServerHttpRequest, HttpHeadersFilter.Type.RESPONSE);
+
                 val httpHeaders = new HttpHeaders();
                 httpHeaders.addAll(headers);
+                httpHeaders.remove("X-Request-ID");
+
                 if (!httpHeaders.containsKey(HttpHeaders.TRANSFER_ENCODING)
                         && httpHeaders.containsKey(HttpHeaders.CONTENT_LENGTH)) {
                     // It is not valid to have both the transfer-encoding header and
@@ -122,27 +142,45 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                     // content-length header is present.
                     httpHeaders.remove(HttpHeaders.TRANSFER_ENCODING);
                 }
-                log.trace("Got Proxy response: {}", resp);
-                val serverResponse = ServerResponse.status(resp.getStatusCode())
+
+                // log.trace("Response Headers: {}", httpHeaders);
+
+                val serverResponse = ServerResponse.status(response.statusCode())
                     .headers(httpHeaders1 -> httpHeaders1.addAll(httpHeaders));
-                return serverResponse.build((req, res) -> {
-                    res.getWriter().write("Hello");
-                    res.getWriter().close();
+                val stopWatch = new StopWatch("缓存响应流");
+                stopWatch.start();
+                // 缓存响应流
+                val dataBuffers = response.body(BodyExtractors.toDataBuffers()).toStream();
+                stopWatch.stop();
+                log.trace("{}", stopWatch.prettyPrint(TimeUnit.MILLISECONDS));
+
+                val resp = serverResponse.build((req, res) -> {
+                    try (val writer = res.getOutputStream()) {
+                        dataBuffers.forEach(dataBuffer -> {
+                            log.trace("Read data from downstream: {}", dataBuffer.capacity());
+                            try (val input = dataBuffer.asInputStream()) {
+                                writer.write(input.readAllBytes());
+                            }
+                            catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    }
+                    log.trace("Proxy Response Body sent!");
                     return null;
                 });
-            }))
+
+                return Mono.just(resp);
+
+            })
             .onErrorResume((error) -> {
                 context.restore();
-                if (log.isTraceEnabled()) {
-                    log.trace("proxy for {} error: {}", request.path(), error.getMessage());
-                }
-                if (error instanceof Exception) {
-                    val responseEntity = exceptionHandler.handleException((Exception) error, httpRequest);
-                    return Mono.just(ServerResponse.status(responseEntity.getStatusCode()).body(responseEntity));
-                }
-                return Mono.just(ServerResponse.status(502).body(HttpStatus.BAD_GATEWAY.getReasonPhrase()));
+                log.warn("Proxy for {} error: {}", request.path(), error.getMessage());
+                return Mono.just(exceptionHandler.handle(error, httpRequest));
             });
-        // 此处要转换请求头a
+
+        // TODO 需要为接入sentinel等流控系统留出扩展点.
+
         return ServerResponse.async(proxyResponse);
     }
 

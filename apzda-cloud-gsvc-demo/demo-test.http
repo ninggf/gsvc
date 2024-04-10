@@ -162,12 +162,79 @@ X-Gsvc-Caller: gtw
 %}
 
 ### DemoService - Gateway - /token/i18n/bar.hello
-GET http://{{demoService}}/demo/bar/bar.hello
+GET http://{{demoService}}/demo/bar-service/bar.hello?name=张三丰
+Content-Type: application/json
+Accept: text/plain
+Accept-Language: zh-CN
+
+{
+    "a": 1,
+    "b": 2
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(response.body === '你好Bar! 张三丰', response.body + " != 你好Bar! 张三丰");
+    });
+%}
+
+### DemoService - Gateway - /b/bar/x
+GET http://{{demoService}}/demo/bar-service/bar.hello
+Accept: text/plain
+Accept-Language: en
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(response.body === 'Hello Bar!', response.body + " != Hello Bar!");
+    });
+%}
+
+### DemoService fw:/demo/bar-service/bar/hi
+POST http://{{demoService}}/demo/bar-service/bar/hi?name=demo&age=18
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
+    });
+    var threeCnt = 0;
+    var sevenCnt = 0;
+    response.body.onEachLine((line, unsubscribe) => {
+        if (line && line.indexOf("\"fileCount\":3") > 0) {
+            threeCnt = threeCnt + 1;
+        } else if (line && line.indexOf("\"fileCount\":7") > 0) {
+            sevenCnt = sevenCnt + 1;
+        }
+    }, () => {
+        client.test("fileCount is 3", function () {
+            client.assert(threeCnt === 1, threeCnt + " != 1");
+        });
+        client.test("fileCount is 7", function () {
+            client.assert(sevenCnt === 1, sevenCnt + " != 1");
+        });
+    })
+%}
+
+### DemoService fw:/demo/bar-service/bar/greeting
+POST http://{{demoService}}/demo/bar-service/bar/greeting
 Content-Type: application/json
 
 {
+    "name": "gsvc",
+    "age": 18
 }
 
-### DemoService - Gateway - /b/bar/x
-GET http://{{demoService}}/demo/b/bar/x/y?name=张三丰
-Content-Type: application/json
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.data.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
+    });
+%}

@@ -60,7 +60,7 @@ public class {{className}} {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc.enabled", havingValue = "false", matchIfMissing = true)
     {{interfaceClassName}} gsvc{{interfaceClassName}}Stub (IServiceCaller serviceCaller) {
-        GatewayServiceRegistry.registerProxy({{interfaceClassName}}.class);
+        GatewayServiceRegistry.registerProxy({{interfaceClassName}}.class, "http");
         return new {{interfaceClassName}}() {
         {{#unaryMethods}}
             @Override
@@ -97,7 +97,7 @@ public class {{className}} {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(value = "apzda.cloud.reference.{{interfaceClassName}}.grpc.enabled", havingValue = "true")
     {{interfaceClassName}} grpc{{interfaceClassName}}Stub (final StubFactoryAdapter adapter, final IServiceConfigure serviceConfigure) {
-        GatewayServiceRegistry.registerProxy({{interfaceClassName}}.class);
+        GatewayServiceRegistry.registerProxy({{interfaceClassName}}.class, "grpc");
         final String svcName = serviceConfigure.getSvcName("{{interfaceClassName}}");
         final {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub blockingStub = adapter.createBlockingStub(svcName,
                 {{interfaceClassName}}Grpc.{{interfaceClassName}}BlockingStub.class);

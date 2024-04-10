@@ -27,18 +27,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.servlet.LocaleResolver;
-import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import reactor.core.publisher.Hooks;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author ninggf
  */
 @Slf4j
 @Configuration(proxyBeanMethods = false)
-@EnableConfigurationProperties(ServiceConfigProperties.class)
+@EnableConfigurationProperties({ ServiceConfigProperties.class })
 public class ApzdaGsvcWebConfig implements InitializingBean {
 
     private final ServiceConfigProperties serviceConfigProperties;

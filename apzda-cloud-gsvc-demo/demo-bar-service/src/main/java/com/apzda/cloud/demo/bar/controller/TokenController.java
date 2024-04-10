@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -46,8 +47,8 @@ public class TokenController {
     }
 
     @GetMapping("/i18n/{key}")
-    public String i18n(@PathVariable String key) {
-        return I18nHelper.t(key);
+    public String i18n(@PathVariable String key, @RequestParam(value = "name", required = false) String name) {
+        return I18nHelper.t(key) + (StringUtils.isNotBlank(name) ? " " + name : "");
     }
 
     @GetMapping("/gi18n/{key}")

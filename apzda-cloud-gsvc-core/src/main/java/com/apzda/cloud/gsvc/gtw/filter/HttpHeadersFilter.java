@@ -1,19 +1,20 @@
-package com.apzda.cloud.gsvc.gtw;
+package com.apzda.cloud.gsvc.gtw.filter;
 
 import lombok.val;
 import org.springframework.http.HttpHeaders;
-import org.springframework.web.servlet.function.ServerRequest;
+import org.springframework.http.server.ServerHttpRequest;
 
 import java.util.List;
 
 public interface HttpHeadersFilter {
 
-    static HttpHeaders filterRequest(List<HttpHeadersFilter> filters, ServerRequest request) {
-        HttpHeaders headers = request.headers().asHttpHeaders();
+    static HttpHeaders filterRequest(List<HttpHeadersFilter> filters, ServerHttpRequest request) {
+        HttpHeaders headers = request.getHeaders();
         return filter(filters, headers, request, Type.REQUEST);
     }
 
-    static HttpHeaders filter(List<HttpHeadersFilter> filters, HttpHeaders input, ServerRequest request, Type type) {
+    static HttpHeaders filter(List<HttpHeadersFilter> filters, HttpHeaders input, ServerHttpRequest request,
+            Type type) {
         if (filters != null) {
             HttpHeaders filtered = input;
             for (val filter : filters) {
@@ -31,7 +32,7 @@ public interface HttpHeadersFilter {
      * Filters a set of Http Headers.
      * @return filtered Http Headers
      */
-    HttpHeaders filter(HttpHeaders input, ServerRequest request);
+    HttpHeaders filter(HttpHeaders input, ServerHttpRequest request);
 
     default boolean supports(Type type) {
         return type.equals(Type.REQUEST);

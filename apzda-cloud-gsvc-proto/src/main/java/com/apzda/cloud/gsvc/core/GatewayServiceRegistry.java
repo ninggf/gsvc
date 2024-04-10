@@ -47,16 +47,20 @@ public class GatewayServiceRegistry {
         });
     }
 
-    public static void registerProxy(Class<?> interfaceName) {
+    public static void registerProxy(Class<?> interfaceName, String type) {
         if (!interfaceName.isInterface()) {
             throw new IllegalArgumentException(String.format("%s is not interface", interfaceName));
         }
-        register(interfaceName);
-        DECLARED_SERVICES.get(interfaceName).local = false;
+        // register(interfaceName);
+
+        val serviceInfo = DECLARED_SERVICES.get(interfaceName);
+        serviceInfo.local = false;
+        serviceInfo.type = type;
     }
 
     public static void register(Class<?> interfaceName, Map<String, Object[]> methodMeta) {
-        register(interfaceName);
+        // register(interfaceName);
+
         genDeclaredServiceMethods(interfaceName, methodMeta);
     }
 

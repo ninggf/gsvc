@@ -55,6 +55,13 @@ public class GsvcExceptionHandler {
         return handle(error, request, ServerResponse.class);
     }
 
+    public ServerResponse handle(Throwable error, HttpServletRequest request) {
+        // bookmark: ProxyExchange Exception Handler
+
+        val serverRequest = ServerRequest.create(request, httpMessageConverters.getIfAvailable(Collections::emptyList));
+        return handle(error, serverRequest, ServerResponse.class);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleException(Exception error, HttpServletRequest request) {
         // bookmark: Spring Boot Global Exception Handler
