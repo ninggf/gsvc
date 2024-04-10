@@ -5,6 +5,7 @@ import com.apzda.cloud.gsvc.dto.MessageType;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.gtw.ProxyExchangeHandler;
 import com.apzda.cloud.gsvc.gtw.Route;
 import com.apzda.cloud.gsvc.server.ServiceMethodHandler;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
@@ -18,13 +19,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.springdoc.core.fn.builders.operation.Builder;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.function.*;
+
+import java.util.List;
 
 import static org.springdoc.core.utils.Constants.OPERATION_ATTRIBUTE;
 
@@ -36,63 +41,71 @@ import static org.springdoc.core.utils.Constants.OPERATION_ATTRIBUTE;
 public class GtwRouterFunctionFactoryBean
         implements FactoryBean<RouterFunction<ServerResponse>>, ApplicationContextAware {
 
+    private static final AntPathMatcher pathMatcher = new AntPathMatcher();
+
+    static {
+        pathMatcher.setCachePatterns(true);
+    }
+
+    public static final String ATTR_MATCHED_SEGMENTS = "GSVC_ATTR_MATCHED_SEGMENTS";
+
     private final Route route;
 
+    private final Class<?> serviceClass;
+
+    @Value("${server.servlet.context-path:/}")
+    private String servletContext;
+
     private ApplicationContext applicationContext;
+
+    private ProxyExchangeHandler proxyExchangeHandler;
 
     @Override
     public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
+        this.proxyExchangeHandler = applicationContext.getBean(ProxyExchangeHandler.class);
     }
 
     @Override
     public RouterFunction<ServerResponse> getObject() throws Exception {
+        servletContext = StringUtils.stripEnd(servletContext, "/");
+
         val router = RouterFunctions.route();
-        setupRoute(router, route);
+        if (route.getMethod().charAt(0) == '/') {
+            setupForward(router, route);
+        }
+        else {
+            setupRoute(router, route);
+        }
         setupFilter(router, route);
+
+        val path = route.absPath();
+        val meta = route.meta();
+        if (meta.isLogin()) {
+            GatewayServiceRegistry.registerRouteMeta(path, meta);
+        }
 
         val exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
         // bookmark exception handle(gtw call)
         return router.onError(Exception.class, exceptionHandler::handle).build();
     }
 
-    private void setupRoute(RouterFunctions.Builder builder, Route route) {
-        val interfaceName = route.getInterfaceName();
-        val serviceInfo = GatewayServiceRegistry.getServiceInfo(interfaceName);
+    private void setupRoute(@NonNull RouterFunctions.Builder builder, @NonNull Route route) {
+        val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceClass);
         val actions = route.getActions();
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.absPath();
-        val meta = route.meta();
 
         if (log.isDebugEnabled()) {
             log.debug("SN Route {} to {}.{}({})", path, serviceMethod.getServiceName(), serviceMethod.getDmName(),
-                    meta);
-        }
-
-        if (meta.isLogin()) {
-            GatewayServiceRegistry.registerRouteMeta(path, meta);
+                    route.meta());
         }
 
         final HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw",
                 serviceMethod, applicationContext);
 
-        for (HttpMethod action : actions) {
-            if (action == HttpMethod.GET) {
-                builder.GET(path, func);
-            }
-            else if (action == HttpMethod.POST) {
-                builder.POST(path, func);
-            }
-            else if (action == HttpMethod.DELETE) {
-                builder.DELETE(path, func);
-            }
-            else if (action == HttpMethod.PUT) {
-                builder.PUT(path, func);
-            }
-            else if (action == HttpMethod.PATCH) {
-                builder.PATCH(path, func);
-            }
-        }
+        builder.route((request -> match(request, path, actions)), func);
+
         val apiDocEnabled = applicationContext.getEnvironment()
             .getProperty("springdoc.api-docs.enabled", Boolean.class, true);
 
@@ -107,6 +120,50 @@ public class GtwRouterFunctionFactoryBean
         }
     }
 
+    private void setupForward(RouterFunctions.Builder builder, Route route) {
+        val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceClass);
+        val actions = route.getActions();
+        val path = route.absPath();
+
+        if (log.isDebugEnabled()) {
+            log.debug("FW Route {} to {}.{}({})", path, serviceInfo.getServiceName(), route.getMethod(), route.meta());
+        }
+
+        final HandlerFunction<ServerResponse> func = request -> proxyExchangeHandler.handle(request, route,
+                serviceInfo);
+
+        builder.route(request -> match(request, path, actions), func);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setupFilter(RouterFunctions.Builder router, Route route) {
+        val svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
+        val globalFilters = svcConfigure.getGlobalFilters();
+        if (!globalFilters.isEmpty()) {
+            log.debug("Setup global filters for {}: {}", route, globalFilters);
+            for (HandlerFilterFunction<ServerResponse, ServerResponse> filter : globalFilters) {
+                router.filter(filter);
+            }
+        }
+        var filters = route.getFilters();
+
+        if (filters.isEmpty()) {
+            return;
+        }
+
+        log.debug("Setup filters for {}: {}", route, filters);
+
+        val filtersBean = filters.stream()
+            .map(filter -> applicationContext.getBean(filter, HandlerFilterFunction.class))
+            .toList();
+
+        if (!CollectionUtils.isEmpty(filtersBean)) {
+            for (HandlerFilterFunction<ServerResponse, ServerResponse> filter : filtersBean) {
+                router.filter(filter);
+            }
+        }
+    }
+
     private ServiceMethod getServiceMethod(Route route, ServiceInfo serviceInfo) {
         val method = route.getMethod();
         val methods = GatewayServiceRegistry.getDeclaredServiceMethods(serviceInfo);
@@ -117,35 +174,25 @@ public class GtwRouterFunctionFactoryBean
         return serviceMethod;
     }
 
-    @SuppressWarnings("unchecked")
-    private void setupFilter(RouterFunctions.Builder builder, Route route) {
-        val svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
-        val globalFilters = svcConfigure.getGlobalFilters();
-        for (HandlerFilterFunction<ServerResponse, ServerResponse> filter : globalFilters) {
-            builder.filter(filter);
-        }
-        var filters = route.getFilters();
-
-        if (filters.isEmpty()) {
-            return;
-        }
-
-        log.debug("Setup filters for {}", route);
-
-        val filtersBean = filters.stream()
-            .map(filter -> applicationContext.getBean(filter, HandlerFilterFunction.class))
-            .toList();
-
-        if (!CollectionUtils.isEmpty(filtersBean)) {
-            for (HandlerFilterFunction<ServerResponse, ServerResponse> filter : filtersBean) {
-                builder.filter(filter);
-            }
-        }
-    }
-
     @Override
     public Class<?> getObjectType() {
         return RouterFunction.class;
+    }
+
+    private boolean match(ServerRequest request, String path, List<HttpMethod> actions) {
+        val reqPath = request.path();
+        boolean matched = pathMatcher.match(path, reqPath);
+        if (matched && !actions.isEmpty()) {
+            matched = actions.contains(request.method());
+        }
+        if (matched && request.servletRequest().getAttribute(ATTR_MATCHED_SEGMENTS) == null) {
+            val segments = pathMatcher.extractUriTemplateVariables(path, reqPath);
+            val segment = pathMatcher.extractPathWithinPattern(path, reqPath);
+            segments.put("segment", segment);
+            request.servletRequest().setAttribute(ATTR_MATCHED_SEGMENTS, segments);
+            log.trace("{} matched '{}' with segments: {}", reqPath, path, segments);
+        }
+        return matched;
     }
 
     private Builder createOperationBuilder(Route route, ServiceMethod serviceMethod) throws JsonProcessingException {

@@ -22,6 +22,7 @@ Cookie: lang=zh_CN
 
 ### Route - I18N(default) - /token/i18n/bar.hello
 GET http://{{barService}}/token/i18n/bar.hello
+Cookie: lang=en
 
 > {%
     client.test("Request executed successfully", function () {

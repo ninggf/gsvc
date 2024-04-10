@@ -160,3 +160,14 @@ X-Gsvc-Caller: gtw
         client.assert(response.body.errCode === 401, "错误的响应码" + response.body.errCode);
     });
 %}
+
+### DemoService - Gateway - /token/i18n/bar.hello
+GET http://{{demoService}}/demo/bar/bar.hello
+Content-Type: application/json
+
+{
+}
+
+### DemoService - Gateway - /b/bar/x
+GET http://{{demoService}}/demo/b/bar/x/y?name=张三丰
+Content-Type: application/json

@@ -42,7 +42,7 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
         GatewayServiceConfigure svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
 
         val svcLbName = svcConfigure.svcLbName(cfgName);
-        val baseUrl = ServiceMethod.baseUrl(svcLbName);
+        val baseUrl = ServiceMethod.getServiceBaseUrl(svcLbName);
         builder.baseUrl(baseUrl);
 
         val readTimeout = svcConfigure.getReadTimeout(cfgName, true);

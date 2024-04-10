@@ -19,7 +19,6 @@ public class GroupRoute extends Route {
         gr.prefix(route.prefix);
         gr.setPath(route.getPath());
         gr.index(route.index);
-        gr.setInterfaceName(route.getInterfaceName());
         gr.setLogin(route.getLogin());
         gr.setAccess(route.getAccess());
         gr.method(route.getMethod());

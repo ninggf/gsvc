@@ -10,7 +10,10 @@ import com.apzda.cloud.gsvc.core.GatewayServiceBeanFactoryPostProcessor;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.ServiceInfo;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
+import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
+import com.apzda.cloud.gsvc.gtw.HttpHeadersFilter;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
+import com.apzda.cloud.gsvc.gtw.ProxyExchangeHandler;
 import com.apzda.cloud.gsvc.infra.Counter;
 import com.apzda.cloud.gsvc.infra.LocalInfraImpl;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
@@ -106,6 +109,13 @@ public class ApzdaGsvcAutoConfiguration {
     @ConditionalOnMissingBean
     LocalInfraImpl infraCounterAndStorage(ServiceConfigProperties properties) {
         return new LocalInfraImpl(properties.getConfig().getTempExpireTime());
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    ProxyExchangeHandler proxyExchangeHandler(GsvcExceptionHandler gsvcExceptionHandler,
+            ObjectProvider<List<HttpHeadersFilter>> headersFiltersProvider) {
+        return new ProxyExchangeHandler(headersFiltersProvider, gsvcExceptionHandler);
     }
 
     @Configuration(proxyBeanMethods = false)

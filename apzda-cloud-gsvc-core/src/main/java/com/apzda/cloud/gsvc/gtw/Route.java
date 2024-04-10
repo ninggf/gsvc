@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.gtw;
 
-import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.google.common.base.Splitter;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
@@ -24,8 +23,6 @@ public class Route {
     private Boolean login;
 
     private String access;
-
-    private Class<?> interfaceName;
 
     private String method;
 
@@ -97,9 +94,11 @@ public class Route {
     public Route login(String login) {
         if (login != null) {
             this.login = Boolean.parseBoolean(login);
-        } else if (this.parent != null) {
+        }
+        else if (this.parent != null) {
             this.login = this.parent.login;
-        } else {
+        }
+        else {
             this.login = false;
         }
         return this;
@@ -108,7 +107,8 @@ public class Route {
     public Route access(String access) {
         if (access != null) {
             this.access = access;
-        } else if (this.parent != null && this.parent.access != null) {
+        }
+        else if (this.parent != null && this.parent.access != null) {
             this.access = this.parent.access;
         }
         if (StringUtils.isNotBlank(this.access)) {
@@ -117,33 +117,23 @@ public class Route {
         return this;
     }
 
-    public Route interfaceName(Class<?> clazz) {
-        if (clazz != null) {
-            this.interfaceName = clazz;
-        } else if (this.parent != null && this.parent.interfaceName != null) {
-            this.interfaceName = this.parent.interfaceName;
-        } else if (this.parent == null) {
-            // 一级路由interfaceName不能为空
-            throw new IllegalArgumentException(
-                String.format("interface-name of %s.routes[%d] is blank", prefix, index));
-        }
-
-        return this;
-    }
-
     public Route method(String method) {
         if (StringUtils.isNotBlank(method)) {
             this.method = method;
-        } else if (this.parent != null) {
+        }
+        else if (this.parent != null) {
             // 子路由method不能为空
             throw new IllegalArgumentException(String.format("Method of %s.routes[%d].routes[%d] is blank", this.prefix,
-                this.parent.index, index));
+                    this.parent.index, index));
         }
         return this;
     }
 
     public Route actions(String actions) {
-        if (StringUtils.isNotBlank(actions)) {
+        if ("*".equals(actions)) {
+            this.actions = Collections.emptyList();
+        }
+        else if (StringUtils.isNotBlank(actions)) {
             this.actions = Splitter.on(",")
                 .omitEmptyStrings()
                 .trimResults()
@@ -154,9 +144,11 @@ public class Route {
             if (CollectionUtils.isEmpty(this.actions)) {
                 this.actions = List.of(HttpMethod.GET, HttpMethod.POST);
             }
-        } else if (this.parent != null) {
+        }
+        else if (this.parent != null) {
             this.actions = this.parent.actions;
-        } else {
+        }
+        else {
             this.actions = List.of(HttpMethod.POST);
         }
         return this;
@@ -194,10 +186,12 @@ public class Route {
             for (int i = 0; i < this.tags.length; i++) {
                 this.tags[i] = tagList.get(i);
             }
-        } else if (this.parent != null) {
+        }
+        else if (this.parent != null) {
             this.tags = this.parent.tags;
-        } else {
-            this.tags = new String[]{};
+        }
+        else {
+            this.tags = new String[] {};
         }
         return this;
     }
@@ -218,10 +212,8 @@ public class Route {
         val str = new ToStringCreator(this);
 
         str.append("path", absPath());
-        val svcName = GatewayServiceRegistry.svcName(interfaceName);
 
-        str.append("svc", svcName)
-            .append("method", method)
+        str.append("method", method)
             .append("index", index())
             .append("login", login)
             .append("access", access)

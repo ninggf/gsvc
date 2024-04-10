@@ -25,11 +25,6 @@ public class ServiceConfig {
      */
     private String svcName;
 
-    /**
-     * 微服务接口, "apzda.cloud.reference.xxx"中无效.
-     */
-    private Class<?> interfaceName;
-
     private GrpcConfig grpc = new GrpcConfig();
 
     private final Map<String, MethodConfig> methods = new LinkedHashMap<>();

@@ -24,6 +24,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.RouterFunction;
+import reactor.util.function.Tuples;
 
 import java.util.*;
 
@@ -55,6 +56,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     val method = grpcClazz.getMethod("getServiceDescriptor");
                     val descriptor = (ServiceDescriptor) Objects.requireNonNull(method).invoke(null);
                     GatewayServiceRegistry.register(aClass, descriptor);
+
+                    return Tuples.of(GatewayServiceRegistry.cfgName(n), aClass);
                 }
                 catch (NoSuchBeanDefinitionException | NullPointerException | ClassNotFoundException e) {
                     log.trace("{} is not a Gsvc Service since '{}', skip it.", n, e.getMessage());
@@ -63,8 +66,6 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 catch (Exception e) {
                     throw new BeanCreationException(e.getMessage(), e);
                 }
-
-                return GatewayServiceRegistry.cfgName(n);
             })
             .filter(Objects::nonNull)
             .toList();
@@ -74,106 +75,79 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         final boolean defaultGatewayEnabled = environment.getProperty("apzda.cloud.gateway.default.enabled",
                 Boolean.class, false);
 
-        for (String cfgName : services) {
+        for (val service : services) {
+            val cfgName = service.getT1();
             val dashCfgName = com.apzda.cloud.gsvc.utils.StringUtils.toDashed(cfgName);
-            val interfaceName = StringUtils.defaultIfBlank(
-                    environment.getProperty("apzda.cloud.service." + dashCfgName + ".interface-name"),
-                    environment.getProperty("apzda.cloud.service." + cfgName + ".interface-name"));
+            val svcClz = service.getT2();
+            val beanNames = beanFactory.getBeanNamesForType(svcClz, false, false);
+            val isStubBean = Arrays.stream(beanNames)
+                .anyMatch((name) -> StringUtils.startsWithAny(name, "gsvc", "grpc")
+                        && StringUtils.endsWith(name, "Stub"));
 
-            Class<?> svcClz = null;
             boolean gatewayEnabled;
-            String realCfgName;
-            if (StringUtils.isNotBlank(interfaceName)) {
-                log.info("Found Gsvc Service(impl): {} - {}", cfgName, interfaceName);
-                try {
-                    val aClass = Class.forName(interfaceName);
-                    if (bf.getBeanNamesForType(aClass).length == 0) {
-                        throw new BeanDefinitionValidationException("No bean of '" + aClass + "' Found");
-                    }
-                    svcClz = aClass;
-                    // 注册服务路由
-                    registerRouterFunction(bf, aClass);
-                    gatewayEnabled = true;
-                }
-                catch (ClassNotFoundException e) {
-                    throw new BeanCreationException(e.getMessage(), e);
-                }
+            if (!isStubBean) {
+                log.info("Found Gsvc Service(impl): {} - {}", cfgName, svcClz);
+                // 注册服务路由
+                registerRouterFunction(bf, svcClz);
+                gatewayEnabled = true;
             }
             else {
                 val gsvcStub = "gsvc" + cfgName + "Stub";
                 val grpcStub = "grpc" + cfgName + "Stub";
 
                 if (environment.containsProperty("apzda.cloud.gateway." + dashCfgName + ".enabled")) {
-                    realCfgName = dashCfgName;
-                }
-                else if (environment.containsProperty("apzda.cloud.gateway." + cfgName + ".enabled")) {
-                    realCfgName = cfgName;
-                }
-                else {
-                    realCfgName = null;
-                }
-
-                if (realCfgName != null) {
-                    gatewayEnabled = environment.getProperty("apzda.cloud.gateway." + realCfgName + ".enabled",
+                    gatewayEnabled = environment.getProperty("apzda.cloud.gateway." + dashCfgName + ".enabled",
                             Boolean.class, true);
                 }
                 else {
-                    // 使用默认配置
                     gatewayEnabled = defaultGatewayEnabled;
                 }
 
                 if (beanFactory.containsBeanDefinition(gsvcStub)) {
                     beanFactory.getBeanDefinition(gsvcStub);
-                    svcClz = GatewayServiceRegistry.SERVICE_INTERFACES.get(cfgName);
                     log.info("Found Gsvc Service(http): {} - {}", cfgName, svcClz);
                     registerWebclient(cfgName, bf);
                 }
                 else if (beanFactory.containsBeanDefinition(grpcStub)) {
                     beanFactory.getBeanDefinition(grpcStub);
-                    svcClz = GatewayServiceRegistry.SERVICE_INTERFACES.get(cfgName);
                     log.info("Found Gsvc Service(grpc): {} - {}", cfgName, svcClz);
                 }
                 else {
-                    log.info("Found Gsvc Service(impl): {} - {}", cfgName, interfaceName);
-                    log.warn("No routes exported, only accessed locally: {} - {}", cfgName, interfaceName);
+                    log.info("Found Gsvc Service(impl): {} - {}", cfgName, svcClz);
+                    log.warn("No routes exported, only accessed locally: {} - {}", cfgName, svcClz);
                 }
             }
 
-            if (svcClz == null || !gatewayEnabled) {
+            if (!gatewayEnabled) {
                 continue;
             }
 
             try {
                 // 注册网关路由(配置方式)
-                var cfgPrefix = "apzda.cloud.gateway." + cfgName + ".routes";
-                var prefix = environment.getProperty("apzda.cloud.gateway." + cfgName + ".prefix");
+                val cfgPrefix = "apzda.cloud.gateway." + dashCfgName + ".routes";
+                val prefix = environment.getProperty("apzda.cloud.gateway." + dashCfgName + ".prefix");
+                val routes = createRoutes(cfgPrefix, environment);
 
-                if (!environment.containsProperty(cfgPrefix + ".[0]")) {
-                    cfgPrefix = "apzda.cloud.gateway." + dashCfgName + ".routes";
-                    prefix = environment.getProperty("apzda.cloud.gateway." + dashCfgName + ".prefix");
-                }
-
-                val routes = createRoutes(cfgPrefix, svcClz, environment);
                 for (GroupRoute route : routes) {
                     route.contextPath(prefix);
-                    registerRouterFunction(bf, route);
+                    registerRouterFunction(bf, svcClz, route);
                 }
                 // 注册网关路由(定义方式)
                 val descriptor = GatewayServiceRegistry.SERVICE_DESCRIPTOR.get(svcClz);
                 if (descriptor != null) {
-                    List<GroupRoute> routes1 = new ArrayList<>();
+                    routes.clear();
                     for (MethodDescriptor<?, ?> method : descriptor.getMethods()) {
                         if (method.getSchemaDescriptor() instanceof ProtoMethodDescriptorSupplier ms) {
-                            val route = createRoute(svcClz, ms.getMethodDescriptor(), defaultFilters);
+                            val route = createRoute(ms.getMethodDescriptor(), defaultFilters);
                             if (route != null) {
-                                routes1.add(route);
+                                routes.add(route);
                             }
                         }
                     }
 
-                    for (GroupRoute route : routes1) {
+                    for (GroupRoute route : routes) {
                         route.contextPath(prefix);
-                        registerRouterFunction(bf, route);
+                        registerRouterFunction(bf, svcClz, route);
                     }
                 }
             }
@@ -218,20 +192,12 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
     }
 
-    private List<GroupRoute> createRoutes(String prefix, Class<?> interfaceName, Environment environment)
-            throws ClassNotFoundException {
+    private List<GroupRoute> createRoutes(String prefix, Environment environment) throws ClassNotFoundException {
 
         val groupRoutes = new ArrayList<GroupRoute>();
 
         for (int i = 0; i < 10000; i++) {
-            if (interfaceName == null) {
-                val clazz = environment.getProperty(prefix + "[" + i + "].interface-name");
-                if (StringUtils.isBlank(clazz)) {
-                    return groupRoutes;
-                }
-                interfaceName = Class.forName(clazz);
-            }
-            val route = createRoute(prefix, interfaceName, i, environment, null);
+            val route = createRoute(prefix, i, environment, null);
             if (route == null) {
                 break;
             }
@@ -240,7 +206,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             List<Route> subRoutes = new ArrayList<>();
             for (int j = 0; j < 10000; j++) {
                 val subPrefix = prefix + "[" + i + "].routes";
-                val subRoute = createRoute(subPrefix, interfaceName, j, environment, route);
+                val subRoute = createRoute(subPrefix, j, environment, route);
                 if (subRoute == null) {
                     break;
                 }
@@ -254,7 +220,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         return groupRoutes;
     }
 
-    private Route createRoute(String prefix, Class<?> interfaceName, int index, Environment environment, Route parent) {
+    private Route createRoute(String prefix, int index, Environment environment, Route parent) {
         prefix = prefix + "[" + index + "]";
         val path = environment.getProperty(prefix + ".path");
         if (StringUtils.isBlank(path)) {
@@ -285,7 +251,6 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .parent(parent)
             .index(index)
             .path(path)
-            .interfaceName(interfaceName)
             .method(method)
             .actions(actions)
             .login(login)
@@ -296,8 +261,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .filters(filters);
     }
 
-    private GroupRoute createRoute(Class<?> aClass, Descriptors.MethodDescriptor methodDescriptor,
-            String defaultFilters) {
+    private GroupRoute createRoute(Descriptors.MethodDescriptor methodDescriptor, String defaultFilters) {
         val options = methodDescriptor.getOptions();
         val api = options.getExtension(GsvcExt.route);
         var path = api.getPath().trim();
@@ -355,7 +319,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         route.setSummary(api.getSummary());
         route.setDesc(api.getDesc());
         route.tags(api.getTags());
-        route.setInterfaceName(aClass);
+        // route.interfaceName(aClass);
         route.setMethod(methodDescriptor.getName());
         route.filters(filters);
         route.actions(StringUtils.defaultIfBlank(methods, "post"));
@@ -365,20 +329,20 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         return GroupRoute.valueOf(route);
     }
 
-    private void registerRouterFunction(BeanDefinitionRegistry registry, Route route) {
-        // to
-        val interfaceName = route.getInterfaceName();
-        val serviceInfo = GatewayServiceRegistry.getServiceInfo(interfaceName);
+    private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> serviceInterface, Route route) {
+        val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceInterface);
         if (serviceInfo == null) {
             log.warn("Service not found for route: {} ", route);
             return;
         }
-        if (StringUtils.isNotBlank(route.getMethod())) {
+        val method = route.getMethod();
+        if (StringUtils.isNotBlank(method)) {
             val cfgName = serviceInfo.getCfgName();
             val serviceName = serviceInfo.getServiceName();
             val definition = BeanDefinitionBuilder.genericBeanDefinition(GtwRouterFunctionFactoryBean.class);
 
             definition.addConstructorArgValue(route);
+            definition.addConstructorArgValue(serviceInterface);
             definition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
             val holder = getBeanDefinitionHolder(cfgName, serviceName + ".route." + route.index(), definition);
             BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
@@ -389,7 +353,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             if (!CollectionUtils.isEmpty(routes)) {
                 for (Route subRoute : routes) {
                     subRoute.contextPath(route.contextPath());
-                    registerRouterFunction(registry, subRoute);
+                    registerRouterFunction(registry, serviceInterface, subRoute);
                 }
             }
         }

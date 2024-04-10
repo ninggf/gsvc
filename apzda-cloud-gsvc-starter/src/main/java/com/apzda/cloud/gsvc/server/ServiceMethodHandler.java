@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.Message;
-import io.grpc.MethodDescriptor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
@@ -100,7 +99,7 @@ public class ServiceMethodHandler {
                         serviceMethod.getDmName());
             }
             // 1. 解析请求体
-            Mono<JsonNode> requestObj = deserializeRequest(type);
+            Mono<JsonNode> requestObj = deserializeRequest();
 
             // 2. 调用方法
             return switch (type) {
@@ -223,6 +222,7 @@ public class ServiceMethodHandler {
             }
         }).block();
 
+        assert realReqObj != null;
         val result = validator.validate((Message) realReqObj);
         // Check if there are any validation violations
         if (!result.isSuccess()) {
@@ -241,14 +241,12 @@ public class ServiceMethodHandler {
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }
 
-    protected Mono<JsonNode> deserializeRequest(MethodDescriptor.MethodType type) throws IOException {
+    protected Mono<JsonNode> deserializeRequest() throws IOException {
         val contentType = request.headers().contentType().orElse(MediaType.APPLICATION_FORM_URLENCODED);
 
         Mono<Object> args;
 
         val cfgName = serviceMethod.getCfgName();
-        val reqClass = serviceMethod.reqClass();
-        val dmName = serviceMethod.getDmName();
         val readTimeout = svcConfigure.getReadTimeout(cfgName, false);
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {

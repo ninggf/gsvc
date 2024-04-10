@@ -52,7 +52,7 @@ public class ServiceMethod {
         this.interfaceName = method.getDeclaringClass();
         this.method = method;
         this.cfgName = cfgName;
-        this.clientBeanName = cfgName + "WebClient";
+        this.clientBeanName = getStubClientBeanName(cfgName);
         this.serviceName = serviceName;
         this.meta = meta;
         this.bean = bean;
@@ -79,7 +79,11 @@ public class ServiceMethod {
         return requestType;
     }
 
-    public static String baseUrl(String svcLbName) {
+    public static String getStubClientBeanName(String cfgName) {
+        return cfgName + "WebClient";
+    }
+
+    public static String getServiceBaseUrl(String svcLbName) {
         if (SVC_NAME_PATTERN.matcher(svcLbName).matches()) {
             return svcLbName;
         }
