@@ -22,12 +22,14 @@ import lombok.val;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
@@ -78,7 +80,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         if (log.isDebugEnabled()) {
             log.debug("Start Block RPC: {}", url);
         }
-        val reqBody = prepareRequestBody(request, serviceMethod);
+        val reqBody = prepareRequest(request, serviceMethod);
         return doBlockCall(reqBody.bodyToMono(String.class), serviceMethod, url, resClazz);
     }
 
@@ -102,7 +104,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         if (log.isTraceEnabled()) {
             log.trace("Start Async RPC: {}", url);
         }
-        val reqBody = prepareRequestBody(request, serviceMethod);
+        val reqBody = prepareRequest(request, serviceMethod);
 
         return doAsyncCall(reqBody.bodyToFlux(SSE_RESPONSE_TYPE), serviceMethod, url, resClazz);
     }
@@ -150,7 +152,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         return reqBody.contextCapture();
     }
 
-    protected WebClient.ResponseSpec prepareRequestBody(Object requestObj, ServiceMethod method) {
+    protected WebClient.ResponseSpec prepareRequest(Object requestObj, ServiceMethod method) {
         var context = GsvcContextHolder.current();
         context.setAttributes(RequestContextHolder.getRequestAttributes());
         context.setSvcName(method.getCfgName());
@@ -173,7 +175,9 @@ public class DefaultServiceCaller implements IServiceCaller {
             if (!result.isSuccess()) {
                 throw new MessageValidationException(result.getViolations(), requestMsg.getDescriptorForType());
             }
-            return buildRequestBody(req, requestMsg).retrieve();
+            return buildRequestBody(req, requestMsg).retrieve()
+                .onStatus((status) -> status == HttpStatus.NO_CONTENT,
+                        (response) -> Mono.just(new ResponseStatusException(HttpStatus.NO_CONTENT)));
         }
         catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e.getMessage(), e);

@@ -101,12 +101,12 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
         return registration;
     }
 
-    //@Bean(name = DEFAULT_MULTIPART_RESOLVER_BEAN_NAME)
+    @Bean(name = DEFAULT_MULTIPART_RESOLVER_BEAN_NAME)
     @ConditionalOnMissingBean
     MultipartResolver filterMultipartResolver() {
         val resolver = new StandardServletMultipartResolver();
 
-        // resolver.setResolveLazily(true);
+        resolver.setResolveLazily(true);
         return resolver;
     }
 

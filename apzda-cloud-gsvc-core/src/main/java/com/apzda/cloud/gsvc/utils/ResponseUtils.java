@@ -1,7 +1,6 @@
 package com.apzda.cloud.gsvc.utils;
 
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -62,7 +61,6 @@ public class ResponseUtils {
             return OBJECT_MAPPER.readValue(responseBody, tClass);
         }
         catch (JsonProcessingException e) {
-            val requestId = GsvcContextHolder.getRequestId();
             log.error("Cannot convert 【{}】 to class: {}", responseBody, tClass);
             try {
                 // bookmark: fallback to jackson error

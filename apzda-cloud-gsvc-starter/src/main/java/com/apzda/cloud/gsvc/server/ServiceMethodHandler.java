@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.Message;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
@@ -29,7 +30,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -62,6 +64,8 @@ public class ServiceMethodHandler {
 
     private final Validator validator;
 
+    private final MultipartResolver multipartResolver;
+
     private GsvcContextHolder.GsvcContext context;
 
     private String caller;
@@ -74,6 +78,7 @@ public class ServiceMethodHandler {
         this.exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
         this.objectMapper = ResponseUtils.OBJECT_MAPPER;
         this.validator = applicationContext.getBean(Validator.class);
+        this.multipartResolver = applicationContext.getBean(MultipartResolver.class);
     }
 
     public static ServerResponse handle(ServerRequest request, String caller, ServiceMethod serviceMethod,
@@ -267,21 +272,19 @@ public class ServiceMethodHandler {
         else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA)
                 || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
             val queryParams = request.params();
-            val servletRequest = request.servletRequest();
+            HttpServletRequest servletRequest = request.servletRequest();
+            if (!(servletRequest instanceof MultipartHttpServletRequest)) {
+                servletRequest = multipartResolver.resolveMultipart(servletRequest);
+            }
 
-            if (servletRequest instanceof StandardMultipartHttpServletRequest standardMultipartHttpServletRequest) {
-                val multiFileMap = standardMultipartHttpServletRequest.getMultiFileMap();
-                val multipartData = Mono.just(multiFileMap);
-                args = Mono.zip(Mono.just(queryParams), multipartData).map(tuple -> {
-                    Map<String, Object> result = new HashMap<>();
-                    tuple.getT1().forEach((key, values) -> addBindValue(result, key, values));
-                    tuple.getT2().forEach((key, values) -> addBindValue(result, key, values));
-                    return result;
-                });
-            }
-            else {
-                args = Mono.error(new ResponseStatusException(HttpStatus.NO_CONTENT));
-            }
+            val multiFileMap = ((MultipartHttpServletRequest) servletRequest).getMultiFileMap();
+            val multipartData = Mono.just(multiFileMap);
+            args = Mono.zip(Mono.just(queryParams), multipartData).map(tuple -> {
+                Map<String, Object> result = new HashMap<>();
+                tuple.getT1().forEach((key, values) -> addBindValue(result, key, values));
+                tuple.getT2().forEach((key, values) -> addBindValue(result, key, values));
+                return result;
+            });
         }
         else {
             MultiValueMap<String, String> queryParams = request.params();
