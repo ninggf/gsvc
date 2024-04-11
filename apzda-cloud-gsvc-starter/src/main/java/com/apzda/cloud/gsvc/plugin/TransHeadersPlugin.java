@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -49,6 +48,7 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
 
         headers.remove("x-gsvc-caller");
         headers.add("x-gsvc-caller", appName);
+        headers.remove(HttpHeaders.HOST);
 
         val requestId = GsvcContextHolder.getRequestId();
         headers.add("X-Request-ID", requestId);
