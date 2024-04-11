@@ -23,6 +23,9 @@ import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
 import com.apzda.cloud.gsvc.security.config.GsvcSecurityAutoConfiguration;
+import com.apzda.cloud.gsvc.server.DefaultServiceMethodHandler;
+import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -42,6 +45,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
+import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -127,6 +131,14 @@ public class ApzdaGsvcAutoConfiguration {
     @ConditionalOnMissingBean
     LocalInfraImpl infraCounterAndStorage(ServiceConfigProperties properties) {
         return new LocalInfraImpl(properties.getConfig().getTempExpireTime());
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    IServiceMethodHandler serviceMethodHandler(GatewayServiceConfigure serviceConfigure, ObjectMapper objectMapper,
+            GsvcExceptionHandler gsvcExceptionHandler, Validator validator, MultipartResolver multipartResolver) {
+        return new DefaultServiceMethodHandler(serviceConfigure, objectMapper, gsvcExceptionHandler, validator,
+                multipartResolver);
     }
 
     @Bean

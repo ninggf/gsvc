@@ -44,7 +44,7 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 @ControllerAdvice
 @RequiredArgsConstructor
-public class GsvcExceptionHandler {
+public class GsvcExceptionHandler implements IExceptionHandler {
 
     private final ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters;
 
