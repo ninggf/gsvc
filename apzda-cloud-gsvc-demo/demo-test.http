@@ -238,3 +238,45 @@ Content-Type: application/json
         client.assert(response.body.data.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
     });
 %}
+
+### DemoService fw:/demo/file/upload
+POST http://{{demoService}}/demo/file/upload HTTP/1.1
+Content-Type: multipart/form-data; boundary=boundar
+Accept: application/json
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="abc.txt"
+Content-Type: text/plain
+
+< ./files/1.txt
+--boundary
+
+> {%
+    client.test("Files uploaded successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errCode + " != 0");
+        client.assert(response.body.data.files[0] != undefined, "出错啦: 文件上传失败");
+        client.assert(response.body.data.files[0].error === 0, "出错啦: 文件上传失败: " + response.body.data.files[0].message);
+        client.assert(response.body.data.files[0].length == 7, "出错啦: 文件上传失败: " + response.body.data.files[0].length);
+    });
+%}
+
+### DemoService fw:/demo/upload
+POST http://{{demoService}}/demo/upload HTTP/1.1
+Content-Type: multipart/form-data; boundary=boundar
+Accept: application/json
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="abc.txt"
+Content-Type: text/plain
+
+< ./files/1.txt
+--boundary
+
+> {%
+    client.test("Files uploaded successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errCode + " != 0");
+        client.assert(response.body.message === 'abc.txt', "出错啦: 文件上传失败");
+    });
+%}

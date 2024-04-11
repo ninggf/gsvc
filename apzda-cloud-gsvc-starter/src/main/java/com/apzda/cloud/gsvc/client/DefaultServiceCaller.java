@@ -173,7 +173,7 @@ public class DefaultServiceCaller implements IServiceCaller {
             if (!result.isSuccess()) {
                 throw new MessageValidationException(result.getViolations(), requestMsg.getDescriptorForType());
             }
-            return doHttpRequest(req, requestMsg).retrieve();
+            return buildRequestBody(req, requestMsg).retrieve();
         }
         catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e.getMessage(), e);
@@ -183,7 +183,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         }
     }
 
-    private WebClient.RequestHeadersSpec<?> doHttpRequest(WebClient.RequestBodySpec request, Message body)
+    private WebClient.RequestHeadersSpec<?> buildRequestBody(WebClient.RequestBodySpec request, Message body)
             throws IOException {
 
         val allFields = body.getAllFields();

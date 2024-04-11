@@ -26,10 +26,14 @@ import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.LocaleResolver;
 import reactor.core.publisher.Hooks;
 
 import java.util.List;
+
+import static org.springframework.web.multipart.support.MultipartFilter.DEFAULT_MULTIPART_RESOLVER_BEAN_NAME;
 
 /**
  * @author ninggf
@@ -95,6 +99,15 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
         registration.setOrder(-2147483646);
 
         return registration;
+    }
+
+    //@Bean(name = DEFAULT_MULTIPART_RESOLVER_BEAN_NAME)
+    @ConditionalOnMissingBean
+    MultipartResolver filterMultipartResolver() {
+        val resolver = new StandardServletMultipartResolver();
+
+        // resolver.setResolveLazily(true);
+        return resolver;
     }
 
 }

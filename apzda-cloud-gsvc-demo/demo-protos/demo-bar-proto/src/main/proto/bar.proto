@@ -95,6 +95,7 @@ message FileInfo {
   optional string path = 3; // 文件的绝对路径
   int32 error = 4; // 0: 正常; 其它值出错
   optional string message = 5; // 当error!=0时的错误提示
+  int64 length = 6;
 }
 
 message UploadRes {

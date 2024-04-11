@@ -53,6 +53,7 @@ public class FileServiceImpl implements FileService {
             }
             else {
                 fb.setError(0);
+                fb.setLength(uploadFile.getSize());
             }
             fb.setIndex(i++);
             fb.setPath(uploadFile.getFilename());

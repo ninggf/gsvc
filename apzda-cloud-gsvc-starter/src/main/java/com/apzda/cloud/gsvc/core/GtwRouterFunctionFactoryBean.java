@@ -190,9 +190,6 @@ public class GtwRouterFunctionFactoryBean
             request.servletRequest().setAttribute(ATTR_MATCHED_SEGMENTS, segments);
             log.trace("{} matched '{}' with segments: {}", reqPath, path, segments);
         }
-        if (!matched) {
-            log.trace("'{}' does not matched '{}'", reqPath, path);
-        }
         return matched;
     }
 

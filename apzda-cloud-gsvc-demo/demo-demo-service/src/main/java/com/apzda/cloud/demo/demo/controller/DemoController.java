@@ -18,10 +18,8 @@ import com.google.common.base.Joiner;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
@@ -138,6 +136,11 @@ public class DemoController {
         file3.delete();
 
         return Response.success(upload);
+    }
+
+    @PostMapping("/upload")
+    public Response<String> uploadLocal(MultipartFile file) throws IOException {
+        return Response.ok(file.getOriginalFilename());
     }
 
 }

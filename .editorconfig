@@ -17,3 +17,6 @@ trim_trailing_whitespace = false
 
 [*.cmd]
 end_of_line = crlf
+
+[*.txt]
+insert_final_newline = false

@@ -146,4 +146,8 @@ public class Response<T> implements Serializable {
         return success(null, message);
     }
 
+    public static <T> Response<T> ok(String message) {
+        return success(null, message);
+    }
+
 }

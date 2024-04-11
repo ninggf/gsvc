@@ -13,6 +13,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.LocaleResolver;
 
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * @author fengz
@@ -27,7 +28,7 @@ public class GsvcServletFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         val context = GsvcContextHolder.current();
-        val requestId = StringUtils.defaultIfBlank(request.getHeader("X-Request-ID"), context.getRequestId());
+        val requestId = StringUtils.defaultIfBlank(request.getHeader("X-Request-ID"), UUID.randomUUID().toString());
         request.setAttribute("X-Request-ID", requestId);
         response.setHeader("X-Request-ID", requestId);
         // bookmark: 初始化

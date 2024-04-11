@@ -174,9 +174,8 @@ public class GsvcContextHolder {
     public static GsvcContext current() {
         var context = CONTEXT_BOX.get();
         if (context == null) {
-            context = new GsvcContext(UUID.randomUUID().toString(), null, "main");
+            context = new GsvcContext("", null, "main");
             CONTEXT_BOX.set(context);
-            MDC.put("tid", context.requestId);
         }
         return context;
     }

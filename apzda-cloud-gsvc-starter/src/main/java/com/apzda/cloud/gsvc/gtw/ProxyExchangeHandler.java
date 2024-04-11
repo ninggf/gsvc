@@ -15,13 +15,17 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ReactiveHttpOutputMessage;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.lang.NonNull;
 import org.springframework.util.StopWatch;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.reactive.function.BodyExtractors;
+import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -30,7 +34,6 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -83,11 +86,8 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 return StandardCharsets.UTF_8;
             }
         }).orElse(StandardCharsets.UTF_8);
-
         val servletServerHttpRequest = new ServletServerHttpRequest(request.servletRequest());
         val filtered = HttpHeadersFilter.filterRequest(getHeadersFilters(), servletServerHttpRequest);
-
-        val content = new ContentCachingRequestWrapper(httpRequest);
 
         String uri = request.attribute(ATTR_MATCHED_SEGMENTS).map((segments) -> {
             var template = pattern;
@@ -106,9 +106,15 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 params, filtered);
 
         // TODO 使用InputStream
-        BufferedReader reader;
+        BodyInserter<?, ? super ReactiveHttpOutputMessage> body;
         try {
-            reader = content.getReader();
+            val content = new ContentCachingRequestWrapper(httpRequest);
+            val inputStream = httpRequest.getInputStream();
+            val contentType = request.headers().contentType().orElse(MediaType.APPLICATION_FORM_URLENCODED);
+            log.error("InputStream {} - {} - {}", inputStream.isFinished(), inputStream.isReady(),
+                    inputStream.available());
+            body = BodyInserters.fromDataBuffers(DataBufferUtils.readInputStream(httpRequest::getInputStream,
+                    DefaultDataBufferFactory.sharedInstance, 1024));
         }
         catch (IOException e) {
             return ServerResponse.status(500).body(Response.error(ServiceError.SERVICE_ERROR));
@@ -121,10 +127,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 headers.putAll(filtered);
                 headers.remove(HttpHeaders.HOST);
             })
-            .body(BodyInserters.fromDataBuffers(Flux.fromStream(reader::lines).map(str -> {
-                log.trace("Request Body: {}", str);
-                return dataBufferFactory.wrap(str.getBytes(charset));
-            })))
+            .body(body)
             .exchangeToMono(response -> {
                 context.restore();
                 val headers = HttpHeadersFilter.filter(getHeadersFilters(), response.headers().asHttpHeaders(),
@@ -173,11 +176,13 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 return Mono.just(resp);
 
             })
-            .onErrorResume((error) -> {
+            .onErrorResume(error -> {
                 context.restore();
                 log.warn("Proxy for {} error: {}", request.path(), error.getMessage());
-                return Mono.just(exceptionHandler.handle(error, httpRequest));
-            });
+                val resp = exceptionHandler.handle(error.getCause() != null ? error.getCause() : error, httpRequest);
+                return Mono.just(resp);
+            })
+            .onErrorComplete();
 
         // TODO 需要为接入sentinel等流控系统留出扩展点.
 
