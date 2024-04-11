@@ -227,6 +227,8 @@ public class GsvcContextHolder {
 
         private Locale locale;
 
+        private String caller;
+        
         GsvcContext(String requestId, RequestAttributes attributes, String svcName) {
             this.attributes = attributes;
             this.svcName = svcName;

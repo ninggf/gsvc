@@ -48,7 +48,9 @@ import java.util.Optional;
 
 /**
  * @author ninggf
+ * @deprecated use {@link DefaultServiceMethodHandler}.
  */
+@Deprecated
 @Slf4j
 public class ServiceMethodHandler {
 

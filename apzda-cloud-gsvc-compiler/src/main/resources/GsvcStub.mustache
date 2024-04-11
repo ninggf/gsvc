@@ -8,6 +8,7 @@ import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.exception.IExceptionHandler;
 import com.apzda.cloud.gsvc.grpc.FluxObserver;
 import com.apzda.cloud.gsvc.grpc.StubFactoryAdapter;
+import com.apzda.cloud.gsvc.server.ConditionalOnLocalImpl;
 import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -229,8 +230,8 @@ public class {{className}} {
     }
 
     @Bean
-    @ConditionalOnBean(annotation = Service.class, value = {{interfaceClassName}}.class)
-    RouterFunction<ServerResponse> gsvcBarServiceRouterFunction(
+    @ConditionalOnLocalImpl({{interfaceClassName}}.class)
+    RouterFunction<ServerResponse> gsvc{{interfaceClassName}}RouterFunction(
         {{interfaceClassName}} serviceImpl,
         IServiceConfigure serviceConfigure, IServiceMethodHandler serviceMethodHandler,
         IExceptionHandler gsvcExceptionHandler) {
