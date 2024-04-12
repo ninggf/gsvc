@@ -33,6 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClientRequest;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -158,8 +159,18 @@ public class DefaultServiceCaller implements IServiceCaller {
         context.setSvcName(method.getCfgName());
 
         val url = method.getRpcAddr();
+        val readTimeout = svcConfigure.getReadTimeout(method, true);
+
         val webClient = applicationContext.getBean(method.getClientBeanName(), WebClient.class);
         WebClient.RequestBodySpec req = webClient.post().uri(url).accept(MediaType.APPLICATION_JSON);
+
+        if (readTimeout.toMillis() > 0) {
+            req = req.httpRequest((httpRequest) -> {
+                HttpClientRequest nr = httpRequest.getNativeRequest();
+                nr.responseTimeout(readTimeout);
+            });
+        }
+
         List<IPlugin> plugins = method.getPlugins();
 
         for (IPlugin plugin : plugins) {

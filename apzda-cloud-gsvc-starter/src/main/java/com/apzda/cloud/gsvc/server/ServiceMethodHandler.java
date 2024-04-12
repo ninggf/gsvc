@@ -158,16 +158,16 @@ public class ServiceMethodHandler {
 
         Flux<Object> returnObj = (Flux<Object>) serviceMethod.call(realReqObj.block());
 
+        val timeout = svcConfigure.getTimeout(serviceMethod.getCfgName(), serviceMethod.getDmName());
+        if (timeout.toMillis() > 0) {
+            returnObj = returnObj.timeout(timeout);
+        }
+
         while (--size >= 0) {
             var plugin = plugins.get(size);
             if (plugin instanceof IPostInvoke preInvoke) {
                 returnObj = (Flux<Object>) preInvoke.postInvoke(requestObj, returnObj, serviceMethod);
             }
-        }
-
-        val timeout = svcConfigure.getTimeout(serviceMethod.getCfgName(), serviceMethod.getDmName());
-        if (!timeout.isZero()) {
-            returnObj = returnObj.timeout(timeout);
         }
 
         final Flux<Object> responseFlux = returnObj.contextCapture();
@@ -254,10 +254,10 @@ public class ServiceMethodHandler {
         Mono<Object> args;
 
         val cfgName = serviceMethod.getCfgName();
-        val readTimeout = svcConfigure.getReadTimeout(cfgName, false);
+        val readTimeout = svcConfigure.getReadTimeout(serviceMethod, false);
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
-            return Mono.<JsonNode>create(sink -> {
+            var mono = Mono.<JsonNode>create(sink -> {
                 try {
                     val requestBody = objectMapper.readTree(request.servletRequest().getReader());
                     if (log.isTraceEnabled()) {
@@ -269,7 +269,11 @@ public class ServiceMethodHandler {
                 catch (IOException e) {
                     sink.error(e);
                 }
-            }).timeout(readTimeout);
+            });
+            if (readTimeout.toMillis() > 0) {
+                mono = mono.timeout(readTimeout);
+            }
+            return mono;
         }
         else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA)
                 || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
@@ -299,7 +303,7 @@ public class ServiceMethodHandler {
             });
         }
 
-        return args.<JsonNode>handle((arg, sink) -> {
+        var mono = args.<JsonNode>handle((arg, sink) -> {
             try {
                 context.restore();
                 val reqObj = objectMapper.convertValue(arg, JsonNode.class);
@@ -313,7 +317,12 @@ public class ServiceMethodHandler {
                 log.error("Request({}) resolved failed: {}", contentType, e.getMessage());
                 sink.error(e);
             }
-        }).timeout(readTimeout);
+        });
+
+        if (readTimeout.toMillis() > 0) {
+            mono = mono.timeout(readTimeout);
+        }
+        return mono;
     }
 
     private void addBindValue(Map<String, Object> params, String key, List<?> values) {

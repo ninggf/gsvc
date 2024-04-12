@@ -150,16 +150,16 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
 
         Flux<Object> returnObj = (Flux<Object>) func.apply(realReqObj.block());
 
+        val timeout = svcConfigure.getTimeout(serviceMethod.getCfgName(), serviceMethod.getDmName());
+        if (timeout.toMillis() > 0) {
+            returnObj = returnObj.timeout(timeout);
+        }
+
         while (--size >= 0) {
             var plugin = plugins.get(size);
             if (plugin instanceof IPostInvoke preInvoke) {
                 returnObj = (Flux<Object>) preInvoke.postInvoke(requestObj, returnObj, serviceMethod);
             }
-        }
-
-        val timeout = svcConfigure.getTimeout(serviceMethod.getCfgName(), serviceMethod.getDmName());
-        if (!timeout.isZero()) {
-            returnObj = returnObj.timeout(timeout);
         }
 
         final Flux<Object> responseFlux = returnObj.contextCapture();
@@ -247,7 +247,6 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
 
         Mono<Object> args;
 
-        val cfgName = serviceMethod.getCfgName();
         // bookmark: readTimeout
         val readTimeout = svcConfigure.getReadTimeout(serviceMethod, false);
         val context = GsvcContextHolder.current();

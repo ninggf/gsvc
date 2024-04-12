@@ -14,7 +14,6 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -45,17 +44,17 @@ public class GatewayServiceConfigure implements IServiceConfigure {
         var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
         // service
         var readTimeout = config.getReadTimeout();
-        if (!readTimeout.isZero()) {
+        if (readTimeout.toMillis() > 0) {
             return readTimeout;
         }
         // default
         config = isRef ? serviceConfig.refConfig("default") : serviceConfig.svcConfig("default");
         readTimeout = config.getReadTimeout();
-        if (!readTimeout.isZero()) {
+        if (readTimeout.toMillis() > 0) {
             return readTimeout;
         }
 
-        return Duration.ofSeconds(-1);
+        return isRef ? Duration.ofSeconds(60) : Duration.ZERO;
     }
 
     @Override
@@ -73,51 +72,67 @@ public class GatewayServiceConfigure implements IServiceConfigure {
         return getReadTimeout(svcName, isRef);
     }
 
+    public Duration getReadTimeout(ServiceMethod method) {
+        val svcName = method.getCfgName();
+        var config = serviceConfig.refConfig(svcName);
+        val dmName = method.getDmName();
+        val methodConfig = config.getMethods().get(dmName);
+        if (methodConfig != null) {
+            val readTimeout = methodConfig.getReadTimeout();
+            if (readTimeout.toMillis() > 0) {
+                return readTimeout;
+            }
+        }
+        return Duration.ZERO;
+    }
+
     public Duration getWriteTimeout(String svcName, boolean isRef) {
+        // service > default
         var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
         var writeTimeout = config.getWriteTimeout();
-        if (!writeTimeout.isZero()) {
+        if (writeTimeout.toMillis() > 0) {
             return writeTimeout;
         }
         config = isRef ? serviceConfig.refConfig("default") : serviceConfig.svcConfig("default");
         writeTimeout = config.getWriteTimeout();
-        if (!writeTimeout.isZero()) {
+        if (writeTimeout.toMillis() > 0) {
             return writeTimeout;
         }
-        // service global
+
         return Duration.ZERO;
     }
 
     public Duration getConnectTimeout(String svcName) {
         var config = serviceConfig.refConfig(svcName);
-        // service global
-        var readTimeout = config.getConnectTimeout();
-        if (!readTimeout.isZero()) {
-            return readTimeout;
+        // service > default
+        var connectTimeout = config.getConnectTimeout();
+        if (connectTimeout.toMillis() > 0) {
+            return connectTimeout;
         }
         config = serviceConfig.refConfig("default");
-        readTimeout = config.getConnectTimeout();
-        if (!readTimeout.isZero()) {
-            return readTimeout;
+        connectTimeout = config.getConnectTimeout();
+        if (connectTimeout.toMillis() > 0) {
+            return connectTimeout;
         }
         // default
-        return Duration.ofSeconds(1);
+        return Duration.ofSeconds(3);
     }
 
     public Duration getTimeout(String svcName, String method) {
+        // method > service > default
         var config = serviceConfig.svcConfig(svcName);
         val methodConfig = config.getMethods().get(method);
-        if (methodConfig != null && !methodConfig.getTimeout().isZero()) {
+        if (methodConfig != null && methodConfig.getTimeout().toMillis() > 0) {
             return methodConfig.getTimeout();
         }
 
         var timeout = config.getTimeout();
-        if (!timeout.isZero()) {
+        if (timeout.toMillis() > 0) {
             return timeout;
         }
         config = serviceConfig.svcConfig("default");
         timeout = config.getTimeout();
-        if (!timeout.isZero()) {
+        if (timeout.toMillis() > 0) {
             return timeout;
         }
         // default
@@ -128,28 +143,28 @@ public class GatewayServiceConfigure implements IServiceConfigure {
         var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
         // service global
         var keepAliveTime = config.getGrpc().getKeepAliveTime();
-        if (!keepAliveTime.isZero()) {
+        if (keepAliveTime.toMillis() > 0) {
             return keepAliveTime;
         }
         config = isRef ? serviceConfig.refConfig("default") : serviceConfig.svcConfig("default");
         keepAliveTime = config.getGrpc().getKeepAliveTime();
-        if (!keepAliveTime.isZero()) {
+        if (keepAliveTime.toMillis() > 0) {
             return keepAliveTime;
         }
         // default
-        return Duration.ofSeconds(120);
+        return Duration.ofSeconds(300);
     }
 
     public Duration getGrpcKeepAliveTimeout(String svcName, boolean isRef) {
         var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
         // service global
         var keepAliveTimeout = config.getGrpc().getKeepAliveTimeout();
-        if (!keepAliveTimeout.isZero()) {
+        if (keepAliveTimeout.toMillis() > 0) {
             return keepAliveTimeout;
         }
         config = isRef ? serviceConfig.refConfig("default") : serviceConfig.svcConfig("default");
         keepAliveTimeout = config.getGrpc().getKeepAliveTimeout();
-        if (!keepAliveTimeout.isZero()) {
+        if (keepAliveTimeout.toMillis() > 0) {
             return keepAliveTimeout;
         }
         // default
@@ -203,11 +218,8 @@ public class GatewayServiceConfigure implements IServiceConfigure {
 
     public List<IGtwGlobalFilter<ServerResponse, ServerResponse>> getGlobalFilters() {
         val filters = globalFilters.getIfAvailable();
-        if (filters != null) {
-            filters.sort(Comparator.comparingInt(IGtwGlobalFilter::getOrder));
-            return filters;
-        }
-        return Collections.emptyList();
+        // filters.sort(Comparator.comparingInt(IGtwGlobalFilter::getOrder));
+        return Objects.requireNonNullElse(filters, Collections.emptyList());
     }
 
     public List<? extends IPlugin> getGlobalPlugins() {

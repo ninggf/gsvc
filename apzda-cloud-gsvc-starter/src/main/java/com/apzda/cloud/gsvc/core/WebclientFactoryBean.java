@@ -2,6 +2,7 @@ package com.apzda.cloud.gsvc.core;
 
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -50,14 +51,22 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
         val connectTimeout = svcConfigure.getConnectTimeout(cfgName);
 
         val httpClient = HttpClient.create()
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) connectTimeout.toMillis())
             .option(ChannelOption.SO_KEEPALIVE, true)
+            .option(EpollChannelOption.TCP_KEEPIDLE, 300)
+            .option(EpollChannelOption.TCP_KEEPINTVL, 60)
+            .option(EpollChannelOption.TCP_KEEPCNT, 8)
             .doOnConnected(conn -> {
-                conn.addHandlerLast(new ReadTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS));
-                if (!writeTimeout.isZero() && writeTimeout.isNegative()) {
+                if (readTimeout.toMillis() > 0) {
+                    conn.addHandlerLast(new ReadTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS));
+                }
+                if (writeTimeout.toMillis() > 0) {
                     conn.addHandlerLast(new WriteTimeoutHandler(writeTimeout.toMillis(), TimeUnit.MILLISECONDS));
                 }
             });
+
+        if (connectTimeout.toMillis() > 0) {
+            httpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) connectTimeout.toMillis());
+        }
 
         val connector = new ReactorClientHttpConnector(httpClient);
 
