@@ -16,4 +16,10 @@ public class MethodConfig {
     @DurationUnit(ChronoUnit.MILLIS)
     private Duration timeout = Duration.ZERO;
 
+    /**
+     * the timeout of read request body
+     */
+    @DurationUnit(ChronoUnit.MILLIS)
+    private Duration readTimeout = Duration.ZERO;
+
 }

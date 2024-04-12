@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.config;
 
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
+import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
@@ -54,7 +55,22 @@ public class GatewayServiceConfigure implements IServiceConfigure {
             return readTimeout;
         }
 
-        return Duration.ofSeconds(30);
+        return Duration.ofSeconds(-1);
+    }
+
+    @Override
+    public Duration getReadTimeout(ServiceMethod method, boolean isRef) {
+        val svcName = method.getCfgName();
+        var config = isRef ? serviceConfig.refConfig(svcName) : serviceConfig.svcConfig(svcName);
+        val dmName = method.getDmName();
+        val methodConfig = config.getMethods().get(dmName);
+        if (methodConfig != null) {
+            val readTimeout = methodConfig.getReadTimeout();
+            if (readTimeout.toMillis() > 0) {
+                return readTimeout;
+            }
+        }
+        return getReadTimeout(svcName, isRef);
     }
 
     public Duration getWriteTimeout(String svcName, boolean isRef) {

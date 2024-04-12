@@ -16,6 +16,8 @@
  */
 package com.apzda.cloud.gsvc.config;
 
+import com.apzda.cloud.gsvc.core.ServiceMethod;
+
 import java.time.Duration;
 
 /**
@@ -24,7 +26,11 @@ import java.time.Duration;
  * @since 1.0.0
  **/
 public interface IServiceConfigure {
+
     String getSvcName(String cfgName);
 
     Duration getReadTimeout(String svcName, boolean isRef);
+
+    Duration getReadTimeout(ServiceMethod method, boolean isRef);
+
 }

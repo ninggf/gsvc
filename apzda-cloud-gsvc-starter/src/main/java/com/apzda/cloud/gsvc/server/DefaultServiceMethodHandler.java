@@ -111,7 +111,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
 
         if (log.isTraceEnabled()) {
             val type = serviceMethod.getType();
-            log.trace("Start to call method[{}]: {}.{}", type, serviceMethod.getServiceName(),
+            log.trace("[{}] Call method[{}]: {}.{}", caller, type, serviceMethod.getServiceName(),
                     serviceMethod.getDmName());
         }
         // 1. 解析请求体
@@ -248,10 +248,11 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         Mono<Object> args;
 
         val cfgName = serviceMethod.getCfgName();
-        val readTimeout = svcConfigure.getReadTimeout(cfgName, false);
+        // bookmark: readTimeout
+        val readTimeout = svcConfigure.getReadTimeout(serviceMethod, false);
         val context = GsvcContextHolder.current();
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
-            return Mono.<JsonNode>create(sink -> {
+            var mono = Mono.<JsonNode>create(sink -> {
                 try {
                     val requestBody = objectMapper.readTree(request.servletRequest().getReader());
                     if (log.isTraceEnabled()) {
@@ -263,7 +264,11 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
                 catch (IOException e) {
                     sink.error(e);
                 }
-            }).timeout(readTimeout);
+            });
+            if (readTimeout.toMillis() > 0) {
+                mono = mono.timeout(readTimeout);
+            }
+            return mono;
         }
         else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA)
                 || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
@@ -293,7 +298,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             });
         }
 
-        return args.<JsonNode>handle((arg, sink) -> {
+        var mono = args.<JsonNode>handle((arg, sink) -> {
             try {
                 context.restore();
                 val reqObj = objectMapper.convertValue(arg, JsonNode.class);
@@ -307,7 +312,12 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
                 log.error("Request({}) resolved failed: {}", contentType, e.getMessage());
                 sink.error(e);
             }
-        }).timeout(readTimeout);
+        });
+
+        if (readTimeout.toMillis() > 0) {
+            mono = mono.timeout(readTimeout);
+        }
+        return mono;
     }
 
     private void addBindValue(Map<String, Object> params, String key, List<?> values) {
