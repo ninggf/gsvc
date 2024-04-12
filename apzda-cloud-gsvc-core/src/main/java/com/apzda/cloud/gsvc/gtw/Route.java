@@ -3,10 +3,13 @@ package com.apzda.cloud.gsvc.gtw;
 import com.google.common.base.Splitter;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.convert.DurationUnit;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +34,9 @@ public class Route {
     private String desc;
 
     private String[] tags;
+
+    @DurationUnit(ChronoUnit.MILLIS)
+    private Duration readTimeout = Duration.ZERO;
 
     private List<HttpMethod> actions = Collections.emptyList();
 
