@@ -26,10 +26,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
@@ -188,8 +188,14 @@ public class DefaultServiceCaller implements IServiceCaller {
                 throw new MessageValidationException(result.getViolations(), requestMsg.getDescriptorForType());
             }
             return buildRequestBody(req, requestMsg).retrieve()
-                .onStatus((status) -> status == HttpStatus.NO_CONTENT,
-                        (response) -> Mono.just(new ResponseStatusException(HttpStatus.NO_CONTENT)));
+                .onStatus(
+                        (status) -> status != HttpStatus.OK && (status.is2xxSuccessful() || status.is3xxRedirection()),
+                        (response) -> {
+                            context.restore();
+                            val exception = new ErrorResponseException(response.statusCode());
+                            exception.getHeaders().putAll(response.headers().asHttpHeaders());
+                            return Mono.just(exception);
+                        });
         }
         catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e.getMessage(), e);

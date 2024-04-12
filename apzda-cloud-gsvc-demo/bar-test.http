@@ -382,7 +382,7 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 302, "Response status is not 200");
+        client.assert(response.status === 302, "Response status is not 302");
         const type = response.contentType.mimeType;
         client.assert(type === "text/html", "Expected 'text/plain' but received '" + type + "'");
         client.assert(response.headers.valueOf("Location").endsWith("/home"), "'" + response.headers.valueOf('Location') + " not end with /home")

@@ -150,7 +150,6 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
 
             val httpHeaders = new HttpHeaders();
             httpHeaders.addAll(headers);
-            httpHeaders.remove("X-Request-ID");
 
             if (!httpHeaders.containsKey(HttpHeaders.TRANSFER_ENCODING)
                     && httpHeaders.containsKey(HttpHeaders.CONTENT_LENGTH)) {
@@ -182,7 +181,6 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                         }
                     });
                 }
-                log.trace("Proxy Response Body sent!");
                 return null;
             });
 
@@ -199,11 +197,11 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
 
         proxyResponse = proxyResponse.onErrorResume(error -> {
             context.restore();
-            log.warn("Proxy for {} error: {}", request.path(), error.getMessage());
             val resp = exceptionHandler.handle(error.getCause() != null ? error.getCause() : error, httpRequest);
             return Flux.just(resp);
         }).onErrorComplete();
 
+        // the proxyResponse must have only one ServerResponse
         return ServerResponse.async(proxyResponse.elementAt(0));
     }
 

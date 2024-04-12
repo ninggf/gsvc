@@ -144,10 +144,10 @@ GET http://{{demoService}}/demo/m/add?num1=1&num2=18
 %}
 
 ### DemoService Err
-//@no-redirect
 POST http://{{demoService}}/demo/~demoService/err
 Content-Type: application/json
 X-Gsvc-Caller: gtw
+Accept: application/json
 
 {
 }
@@ -158,6 +158,45 @@ X-Gsvc-Caller: gtw
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 401, "错误的响应码" + response.body.errCode);
+    });
+%}
+
+### DemoService Err
+//@no-redirect
+POST http://{{demoService}}/demo/~demoService/err
+Content-Type: application/json
+X-Gsvc-Caller: gtw
+Accept: text/html
+
+{
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 307, "Response status is not 307");
+        const type = response.contentType.mimeType;
+        client.assert(type === "text/html", "Expected 'text/html' but received '" + type + "'");
+        client.assert(response.headers.valueOf("Location").endsWith("/login"), "错误的登录地址: " + response.headers.valueOf("Location"));
+    });
+%}
+
+### DemoService fw:/sa/hi
+//@no-redirect
+POST http://{{demoService}}/demo/sa/hi
+Accept: text/html
+Content-Type: application/json
+
+{
+    "age": 20,
+    "name": "gsvc"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 307, "Response status is not 307");
+        const type = response.contentType.mimeType;
+        client.assert(type === "text/html", "Expected 'text/html' but received '" + type + "'");
+        client.assert(response.headers.valueOf("Location").endsWith("/login"), "错误的登录地址: " + response.headers.valueOf("Location"));
     });
 %}
 

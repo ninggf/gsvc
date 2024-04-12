@@ -22,6 +22,7 @@ import java.util.Map;
  */
 @Slf4j
 @RequiredArgsConstructor
+@Deprecated
 public class RouterFunctionFactoryBean implements FactoryBean<RouterFunction<ServerResponse>>, ApplicationContextAware {
 
     private final String cfgName;

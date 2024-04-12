@@ -3,6 +3,7 @@ package com.apzda.cloud.gsvc.exception;
 import build.buf.validate.Violation;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
+import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
 import com.apzda.cloud.gsvc.utils.I18nHelper;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,13 +11,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.lang.NonNull;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.ErrorResponse;
@@ -44,11 +46,19 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 @ControllerAdvice
 @RequiredArgsConstructor
-public class GsvcExceptionHandler implements IExceptionHandler {
+public class GsvcExceptionHandler implements IExceptionHandler, ApplicationContextAware {
 
     private final ObjectProvider<List<HttpMessageConverter<?>>> httpMessageConverters;
 
     private final ObjectProvider<List<ExceptionTransformer>> transformers;
+
+    private HttpHeadersFilter removeHopByHopHeadersFilter;
+
+    @Override
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
+        this.removeHopByHopHeadersFilter = applicationContext.getBean("removeHopByHopHeadersFilter",
+                HttpHeadersFilter.class);
+    }
 
     public ServerResponse handle(Throwable error, ServerRequest request) {
         // bookmark: RouterFunction Exception Handler
@@ -136,21 +146,48 @@ public class GsvcExceptionHandler implements IExceptionHandler {
     private <R> R checkLoginRedirect(ServerRequest request, Throwable e, Class<R> rClass) {
         // bookmark: Gateway Redirect to Login Page
         HttpStatusCode status = HttpStatusCode.valueOf(500);
+        HttpHeaders headers = new HttpHeaders();
         if (e instanceof ErrorResponseException statusException) {
             status = statusException.getStatusCode();
+            headers = new HttpHeaders(statusException.getHeaders());
         }
         else if (e instanceof HttpStatusCodeException statusCodeException) {
             status = statusCodeException.getStatusCode();
+            if (statusCodeException.getResponseHeaders() != null) {
+                headers = new HttpHeaders(statusCodeException.getResponseHeaders());
+            }
         }
 
-        if (status == HttpStatus.UNAUTHORIZED) {
-            val loginUrl = ResponseUtils.getLoginUrl(request.headers().accept());
+        val mediaTypes = request.headers().accept();
+        val mediaType = mediaTypes.isEmpty() ? MediaType.APPLICATION_JSON : mediaTypes.get(0).removeQualityValue();
+
+        if (status.is2xxSuccessful() || status.is3xxRedirection()) {
+            val filtered = removeHopByHopHeadersFilter.filter(headers, null);
+
+            if (rClass.isAssignableFrom(ServerResponse.class)) {
+                return (R) ServerResponse.status(status)
+                    .contentType(mediaType)
+                    .headers(rHeaders -> rHeaders.putAll(filtered))
+                    .build();
+            }
+            else {
+                return (R) ResponseEntity.status(status).contentType(mediaType).headers(filtered).build();
+            }
+        }
+        else if (status == HttpStatus.UNAUTHORIZED) {
+            val loginUrl = ResponseUtils.getLoginUrl(mediaTypes);
             if (StringUtils.isNotBlank(loginUrl)) {
                 if (rClass.isAssignableFrom(ServerResponse.class)) {
-                    return (R) ServerResponse.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
+                    return (R) ServerResponse.status(HttpStatus.TEMPORARY_REDIRECT)
+                        .contentType(mediaType)
+                        .location(URI.create(loginUrl))
+                        .build();
                 }
                 else {
-                    return (R) ResponseEntity.status(HttpStatus.FOUND).location(URI.create(loginUrl)).build();
+                    return (R) ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT)
+                        .location(URI.create(loginUrl))
+                        .contentType(mediaType)
+                        .build();
                 }
             }
         }
@@ -295,16 +332,16 @@ public class GsvcExceptionHandler implements IExceptionHandler {
         }
 
         void headers(HttpHeaders headers) {
-            this.headers = headers;
+            if (headers != null) {
+                this.headers = headers;
+            }
         }
 
         @SuppressWarnings("unchecked")
         public <R> R unwrap(Class<R> rClazz) {
             if (rClazz.isAssignableFrom(ServerResponse.class)) {
                 return (R) ServerResponse.status(status).headers((httpHeaders -> {
-                    if (this.headers != null) {
-                        httpHeaders.putAll(this.headers);
-                    }
+                    httpHeaders.putAll(this.headers);
                 })).body(body);
             }
             else {

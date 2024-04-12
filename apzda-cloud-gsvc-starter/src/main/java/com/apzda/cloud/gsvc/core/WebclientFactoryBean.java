@@ -2,7 +2,6 @@ package com.apzda.cloud.gsvc.core;
 
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -53,9 +52,6 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
         val httpClient = HttpClient.create()
             .followRedirect(false)
             .option(ChannelOption.SO_KEEPALIVE, true)
-            .option(EpollChannelOption.TCP_KEEPIDLE, 300)
-            .option(EpollChannelOption.TCP_KEEPINTVL, 60)
-            .option(EpollChannelOption.TCP_KEEPCNT, 8)
             .doOnConnected(conn -> {
                 if (readTimeout.toMillis() > 0) {
                     conn.addHandlerLast(new ReadTimeoutHandler(readTimeout.toMillis(), TimeUnit.MILLISECONDS));

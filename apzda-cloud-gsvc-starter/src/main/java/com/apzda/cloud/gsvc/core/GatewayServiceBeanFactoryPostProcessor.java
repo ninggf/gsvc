@@ -174,7 +174,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
         log.trace("Registered {}WebClient For: {}", cfgName, cfgName);
     }
-
+    @Deprecated
     private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> clazz) {
         val serviceName = GatewayServiceRegistry.svcName(clazz);
         val cfgName = GatewayServiceRegistry.cfgName(clazz);
