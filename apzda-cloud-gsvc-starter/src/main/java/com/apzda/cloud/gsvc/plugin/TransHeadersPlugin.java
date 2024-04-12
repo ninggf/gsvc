@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Collections;
@@ -25,7 +27,7 @@ import java.util.Map;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
+public class TransHeadersPlugin implements IGlobalPlugin, IPreCall {
 
     private final ObjectProvider<List<HttpHeadersFilter>> headersFiltersProvider;
 
@@ -40,7 +42,9 @@ public class TransHeadersPlugin implements IPreCall, IGlobalPlugin {
     }
 
     @Override
-    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Object data, ServiceMethod method) {
+    @NonNull
+    public WebClient.RequestBodySpec preCall(@NonNull WebClient.RequestBodySpec request, @Nullable Object data,
+            @Nullable ServiceMethod method) {
         val headers = GsvcContextHolder.getRequest().map(curRequest -> {
             headersFilters = headersFiltersProvider.getIfAvailable();
             return HttpHeadersFilter.filterRequest(headersFilters, new ServletServerHttpRequest(curRequest));

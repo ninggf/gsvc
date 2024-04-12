@@ -143,9 +143,9 @@ public class ApzdaGsvcAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    ProxyExchangeHandler proxyExchangeHandler(GsvcExceptionHandler gsvcExceptionHandler,
-            ObjectProvider<List<HttpHeadersFilter>> headersFiltersProvider) {
-        return new ProxyExchangeHandler(headersFiltersProvider, gsvcExceptionHandler);
+    ProxyExchangeHandler proxyExchangeHandler(GatewayServiceConfigure serviceConfigure,
+            GsvcExceptionHandler gsvcExceptionHandler, ObjectProvider<List<HttpHeadersFilter>> headersFiltersProvider) {
+        return new ProxyExchangeHandler(headersFiltersProvider, gsvcExceptionHandler, serviceConfigure);
     }
 
     @Configuration(proxyBeanMethods = false)
@@ -175,12 +175,19 @@ public class ApzdaGsvcAutoConfiguration {
                 val methods = GatewayServiceRegistry.getDeclaredServiceMethods(interfaceName);
                 for (Map.Entry<String, ServiceMethod> mv : methods.entrySet()) {
                     val method = mv.getValue();
-                    for (IGlobalPlugin plugin : globalPlugins) {
+                    // global is always enabled
+                    for (IPlugin plugin : globalPlugins) {
                         method.registerPlugin(plugin);
                     }
+                    // method > service > default. plugin prefixed '-' will be disabled.
                     val plugins = gatewayServiceConfigure.getPlugins(cfgName, method.getDmName(), !service.isLocal());
                     for (String plugin : plugins) {
-                        method.registerPlugin(applicationContext.getBean(plugin, IPlugin.class));
+                        try {
+                            method.registerPlugin(applicationContext.getBean(plugin, IPlugin.class));
+                        }
+                        catch (Exception e) {
+                            log.warn("Plugin {} not found for {}.{}!", plugin, cfgName, method.getDmName());
+                        }
                     }
                 }
             }

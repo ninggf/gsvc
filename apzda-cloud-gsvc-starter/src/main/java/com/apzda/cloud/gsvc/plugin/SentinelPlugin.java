@@ -13,7 +13,13 @@ import reactor.core.publisher.Flux;
  * @author fengz
  */
 @Slf4j
-public class SentinelPlugin implements IGlobalPlugin, IPostCall {
+public class SentinelPlugin implements IGlobalPlugin, IPostCall, IForwardPlugin {
+
+    @Override
+    public <R> Flux<R> postForward(Flux<R> response, String uri) {
+        return response.transform(new SentinelReactorTransformer<>(uri))
+            .onErrorMap(DegradeException.class, e -> new DegradedException(e.getMessage()));
+    }
 
     @Override
     public <R> Flux<R> postCall(Flux<R> response, ServiceMethod method, Class<R> rClass) {
@@ -21,8 +27,7 @@ public class SentinelPlugin implements IGlobalPlugin, IPostCall {
 
         // log.trace("Register Sentinel Resource: {}", resource);
 
-        return response.transform(new SentinelReactorTransformer<>(resource))
-            .onErrorMap(DegradeException.class, e -> new DegradedException(e.getMessage()));
+        return postForward(response, resource);
     }
 
     @Override

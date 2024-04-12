@@ -3,6 +3,7 @@ package com.apzda.cloud.gsvc.config;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
+import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.resolver.NoneResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -14,6 +15,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author ninggf
@@ -192,13 +194,10 @@ public class GatewayServiceConfigure implements IServiceConfigure {
         return Collections.emptyList();
     }
 
-    public List<IGlobalPlugin> getGlobalPlugins() {
+    public List<? extends IPlugin> getGlobalPlugins() {
         val plugins = globalPlugins.getIfAvailable();
-        if (plugins != null) {
-            plugins.sort(Comparator.comparingInt(IGlobalPlugin::getOrder));
-            return plugins;
-        }
-        return Collections.emptyList();
+        // plugins.sort(Comparator.comparingInt(IGlobalPlugin::getOrder));
+        return Objects.requireNonNullElse(plugins, Collections.emptyList());
     }
 
 }

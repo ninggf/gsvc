@@ -75,10 +75,6 @@ public class ServiceMethod {
         return method.invoke(bean, request);
     }
 
-    public Class<?> reqClass() {
-        return requestType;
-    }
-
     public static String getStubClientBeanName(String cfgName) {
         return cfgName + "WebClient";
     }

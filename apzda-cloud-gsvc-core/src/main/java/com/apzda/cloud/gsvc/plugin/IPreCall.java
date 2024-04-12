@@ -4,6 +4,8 @@
 package com.apzda.cloud.gsvc.plugin;
 
 import com.apzda.cloud.gsvc.core.ServiceMethod;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -11,6 +13,8 @@ import org.springframework.web.reactive.function.client.WebClient;
  */
 public interface IPreCall extends IPlugin {
 
-    WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Object data, ServiceMethod method);
+    @NonNull
+    WebClient.RequestBodySpec preCall(@NonNull WebClient.RequestBodySpec request, @Nullable Object data,
+            @Nullable ServiceMethod method);
 
 }

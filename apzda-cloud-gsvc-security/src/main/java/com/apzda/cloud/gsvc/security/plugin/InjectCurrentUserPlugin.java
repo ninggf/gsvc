@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.ServerRequest;
@@ -35,7 +37,9 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
     private final SecurityConfigProperties properties;
 
     @Override
-    public WebClient.RequestBodySpec preCall(WebClient.RequestBodySpec request, Object data, ServiceMethod method) {
+    @NonNull
+    public WebClient.RequestBodySpec preCall(@NonNull WebClient.RequestBodySpec request, @Nullable Object data,
+            @Nullable ServiceMethod method) {
         val tokenName = properties.getTokenName();
         val cookieName = properties.getCookie().getCookieName();
         if (StringUtils.isNotBlank(tokenName)) {
