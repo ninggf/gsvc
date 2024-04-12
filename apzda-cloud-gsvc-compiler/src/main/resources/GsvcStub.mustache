@@ -238,7 +238,7 @@ public class {{className}} {
         RouterFunctions.Builder route = RouterFunctions.route();
         String cfgName = GatewayServiceRegistry.cfgName({{interfaceClassName}}.class);
         String serviceName = GatewayServiceRegistry.svcName({{interfaceClassName}}.class);
-        String path = "/x" + serviceName + "/";
+        String path = "/~" + serviceName + "/";
     {{#unaryMethods}}
         log.debug("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
         route.POST(path+"{{methodName}}",

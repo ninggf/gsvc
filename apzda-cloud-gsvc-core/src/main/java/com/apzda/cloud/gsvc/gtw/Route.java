@@ -174,6 +174,19 @@ public class Route {
         return this;
     }
 
+    public Route readTimeout(Duration readTimeout) {
+        if (readTimeout.toMillis() > 0) {
+            this.readTimeout = readTimeout;
+        }
+        else if (parent != null) {
+            this.readTimeout = parent.readTimeout;
+        }
+        else {
+            this.readTimeout = Duration.ZERO;
+        }
+        return this;
+    }
+
     public Route summary(String summary) {
         this.summary = StringUtils.defaultString(summary);
         return this;

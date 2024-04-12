@@ -51,6 +51,7 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
         val connectTimeout = svcConfigure.getConnectTimeout(cfgName);
 
         val httpClient = HttpClient.create()
+            .followRedirect(false)
             .option(ChannelOption.SO_KEEPALIVE, true)
             .option(EpollChannelOption.TCP_KEEPIDLE, 300)
             .option(EpollChannelOption.TCP_KEEPINTVL, 60)

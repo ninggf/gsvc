@@ -26,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.function.RouterFunction;
 import reactor.util.function.Tuples;
 
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -88,7 +89,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             if (!isStubBean) {
                 log.info("Found Gsvc Service(impl): {} - {}", cfgName, svcClz);
                 // 注册服务路由
-                registerRouterFunction(bf, svcClz);
+                // registerRouterFunction(bf, svcClz);
                 gatewayEnabled = true;
             }
             else {
@@ -233,6 +234,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val summary = environment.getProperty(prefix + ".summary");
         val desc = environment.getProperty(prefix + ".desc");
         val tags = environment.getProperty(prefix + ".tags");
+        val readTimeout = environment.getProperty(prefix + ".readTimeout", Duration.class, Duration.ZERO);
         var filters = environment.getProperty(prefix + ".filters");
 
         if (parent == null) {
@@ -255,6 +257,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .actions(actions)
             .login(login)
             .access(access)
+            .readTimeout(readTimeout)
             .summary(summary)
             .tags(tags)
             .desc(desc)

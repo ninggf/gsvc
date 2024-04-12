@@ -145,7 +145,7 @@ public class GsvcSecurityAutoConfiguration {
             });
 
             http.csrf(AbstractHttpConfigurer::disable);
-            http.cors(AbstractHttpConfigurer::disable);
+            // http.cors(AbstractHttpConfigurer::disable);
             http.anonymous(AbstractHttpConfigurer::disable);
             http.rememberMe(AbstractHttpConfigurer::disable);
             http.formLogin(AbstractHttpConfigurer::disable);

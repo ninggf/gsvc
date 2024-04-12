@@ -22,6 +22,7 @@ public class GroupRoute extends Route {
         gr.setLogin(route.getLogin());
         gr.setAccess(route.getAccess());
         gr.method(route.getMethod());
+        gr.setReadTimeout(route.getReadTimeout());
         gr.setActions(route.getActions());
         gr.setFilters(route.getFilters());
         gr.setSummary(route.getSummary());

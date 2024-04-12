@@ -20,6 +20,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.lang.NonNull;
 import org.springframework.util.StopWatch;
@@ -27,9 +28,11 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import reactor.core.publisher.Flux;
+import reactor.netty.http.client.HttpClientRequest;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -96,9 +99,12 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         List<? extends IPlugin> plugins;
 
         if (pattern.charAt(0) != '/') {
+            val serviceMethod = GatewayServiceRegistry.getServiceMethod(serviceInfo.getClazz(), uri);
+            if (serviceMethod == null) {
+                return ServerResponse.status(HttpStatus.NOT_FOUND).build();
+            }
             uri = "/~" + context.getSvcName() + "/" + uri;
             filtered.add("X-Gsvc-Caller", "gtw");
-            val serviceMethod = GatewayServiceRegistry.getServiceMethod(serviceInfo.getClazz(), uri);
             plugins = serviceMethod.getPlugins();
         }
         else {
@@ -113,6 +119,14 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
 
         var proxyRequest = client.method(method).uri(uri + (StringUtils.isNotBlank(params) ? "?" + params : ""));
 
+        val readTimeout = route.getReadTimeout();
+        if (readTimeout.toMillis() > 0) {
+            proxyRequest = proxyRequest.httpRequest(httpReq -> {
+                HttpClientRequest nr = httpReq.getNativeRequest();
+                nr.responseTimeout(readTimeout);
+            });
+        }
+
         for (IPlugin plugin : plugins) {
             if (plugin instanceof IForwardPlugin prePlugin) {
                 proxyRequest = prePlugin.preForward(proxyRequest, uri);
@@ -125,6 +139,12 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             headers.remove(HttpHeaders.HOST);
         }).body(body).exchangeToFlux(response -> {
             context.restore();
+
+            val responseStatus = response.statusCode();
+            if (responseStatus == HttpStatus.UNAUTHORIZED) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+            }
+
             val headers = HttpHeadersFilter.filter(getHeadersFilters(), response.headers().asHttpHeaders(),
                     servletServerHttpRequest, HttpHeadersFilter.Type.RESPONSE);
 
@@ -141,9 +161,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 httpHeaders.remove(HttpHeaders.TRANSFER_ENCODING);
             }
 
-            // log.trace("Response Headers: {}", httpHeaders);
-
-            val serverResponse = ServerResponse.status(response.statusCode())
+            val serverResponse = ServerResponse.status(responseStatus)
                 .headers(httpHeaders1 -> httpHeaders1.addAll(httpHeaders));
             val stopWatch = new StopWatch("缓存响应流");
             stopWatch.start();
