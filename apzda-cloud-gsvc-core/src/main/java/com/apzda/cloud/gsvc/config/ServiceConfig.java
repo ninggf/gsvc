@@ -38,19 +38,13 @@ public class ServiceConfig {
     private Duration timeout = Duration.ZERO;
 
     /**
-     * 文件上传超时时间，单位Millis. 0或负值表示永不超时.
-     */
-    @DurationUnit(ChronoUnit.MILLIS)
-    private Duration uploadTimeout = Duration.ofMinutes(30);
-
-    /**
      * 服务在远程时，响应超时时间，单位Millis
      */
     @DurationUnit(ChronoUnit.MILLIS)
     private Duration readTimeout = Duration.ZERO;
 
     /**
-     * 服务在远程时，响应超时时间，单位Millis
+     * 服务在远程时，写入超时时间，单位Millis
      */
     @DurationUnit(ChronoUnit.MILLIS)
     private Duration writeTimeout = Duration.ZERO;
