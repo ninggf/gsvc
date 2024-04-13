@@ -41,6 +41,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
     private static final Map<String, Boolean> REGISTERED = new HashMap<>();
 
+    private String defaultRouteGlobalFilters;
+
     @Override
     public void postProcessBeanFactory(@NonNull ConfigurableListableBeanFactory beanFactory) throws BeansException {
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) beanFactory;
@@ -71,8 +73,9 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .filter(Objects::nonNull)
             .toList();
 
+        // 默认网关全部过滤器
+        this.defaultRouteGlobalFilters = environment.getProperty("apzda.cloud.gateway.default.filters");
         // 默认网关过滤器
-        val defaultFilters = environment.getProperty("apzda.cloud.gateway.default.filters");
         final boolean defaultGatewayEnabled = environment.getProperty("apzda.cloud.gateway.default.enabled",
                 Boolean.class, false);
 
@@ -129,7 +132,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 val prefix = environment.getProperty("apzda.cloud.gateway." + dashCfgName + ".prefix");
                 val routes = createRoutes(cfgPrefix, environment);
 
-                for (GroupRoute route : routes) {
+                for (val route : routes) {
                     route.contextPath(prefix);
                     registerRouterFunction(bf, svcClz, route);
                 }
@@ -139,14 +142,14 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     routes.clear();
                     for (MethodDescriptor<?, ?> method : descriptor.getMethods()) {
                         if (method.getSchemaDescriptor() instanceof ProtoMethodDescriptorSupplier ms) {
-                            val route = createRoute(ms.getMethodDescriptor(), defaultFilters);
+                            val route = createRoute(ms.getMethodDescriptor(), defaultRouteGlobalFilters);
                             if (route != null) {
                                 routes.add(route);
                             }
                         }
                     }
 
-                    for (GroupRoute route : routes) {
+                    for (val route : routes) {
                         route.contextPath(prefix);
                         registerRouterFunction(bf, svcClz, route);
                     }
@@ -174,6 +177,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
         log.trace("Registered {}WebClient For: {}", cfgName, cfgName);
     }
+
     @Deprecated
     private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> clazz) {
         val serviceName = GatewayServiceRegistry.svcName(clazz);
@@ -193,9 +197,9 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, registry);
     }
 
-    private List<GroupRoute> createRoutes(String prefix, Environment environment) throws ClassNotFoundException {
+    private List<Route> createRoutes(String prefix, Environment environment) throws ClassNotFoundException {
 
-        val groupRoutes = new ArrayList<GroupRoute>();
+        val groupRoutes = new ArrayList<Route>();
 
         for (int i = 0; i < 10000; i++) {
             val route = createRoute(prefix, i, environment, null);
@@ -234,17 +238,16 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val summary = environment.getProperty(prefix + ".summary");
         val desc = environment.getProperty(prefix + ".desc");
         val tags = environment.getProperty(prefix + ".tags");
-        val readTimeout = environment.getProperty(prefix + ".readTimeout", Duration.class, Duration.ZERO);
+        val readTimeout = environment.getProperty(prefix + ".read-timeout", Duration.class, Duration.ZERO);
         var filters = environment.getProperty(prefix + ".filters");
 
         if (parent == null) {
-            val defaultFilters = environment.getProperty("apzda.cloud.gateway.default.filters");
-            if (StringUtils.isNotBlank(defaultFilters)) {
+            if (StringUtils.isNotBlank(defaultRouteGlobalFilters)) {
                 if (StringUtils.isBlank(filters)) {
-                    filters = defaultFilters;
+                    filters = defaultRouteGlobalFilters;
                 }
                 else {
-                    filters = defaultFilters + "," + filters;
+                    filters = defaultRouteGlobalFilters + "," + filters;
                 }
             }
         }
@@ -264,7 +267,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .filters(filters);
     }
 
-    private GroupRoute createRoute(Descriptors.MethodDescriptor methodDescriptor, String defaultFilters) {
+    private Route createRoute(Descriptors.MethodDescriptor methodDescriptor, String defaultFilters) {
         val options = methodDescriptor.getOptions();
         val api = options.getExtension(GsvcExt.route);
         var path = api.getPath().trim();
@@ -322,13 +325,14 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         route.setSummary(api.getSummary());
         route.setDesc(api.getDesc());
         route.tags(api.getTags());
-        // route.interfaceName(aClass);
         route.setMethod(methodDescriptor.getName());
         route.filters(filters);
         route.actions(StringUtils.defaultIfBlank(methods, "post"));
         route.setLogin(login);
         route.access(access);
-
+        if (api.getTimeout() > 0) {
+            route.readTimeout(Duration.ofMillis(api.getTimeout()));
+        }
         return GroupRoute.valueOf(route);
     }
 

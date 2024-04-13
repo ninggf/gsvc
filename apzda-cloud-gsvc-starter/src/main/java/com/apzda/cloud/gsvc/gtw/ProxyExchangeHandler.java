@@ -111,15 +111,16 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             plugins = serviceConfigure.getGlobalPlugins();
         }
 
-        log.trace("Proxy {} to {}{} with: charset({}), param({}), headers({})", request.path(), cfgName, uri, charset,
-                params, filtered);
+        val readTimeout = route.getReadTimeout();
+
+        log.trace("Proxy {} to {}{} with: readTimeout({}), charset({}), param({}), headers({})", request.path(),
+                cfgName, uri, readTimeout, charset, params, filtered);
 
         val body = BodyInserters.fromDataBuffers(DataBufferUtils.readInputStream(httpRequest::getInputStream,
                 DefaultDataBufferFactory.sharedInstance, 1024));
 
         var proxyRequest = client.method(method).uri(uri + (StringUtils.isNotBlank(params) ? "?" + params : ""));
 
-        val readTimeout = route.getReadTimeout();
         if (readTimeout.toMillis() > 0) {
             proxyRequest = proxyRequest.httpRequest(httpReq -> {
                 HttpClientRequest nr = httpReq.getNativeRequest();
@@ -162,7 +163,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
 
             val serverResponse = ServerResponse.status(responseStatus)
                 .headers(httpHeaders1 -> httpHeaders1.addAll(httpHeaders));
-            val stopWatch = new StopWatch("缓存响应流");
+            val stopWatch = new StopWatch("Transform Response to stream");
             stopWatch.start();
             // 缓存响应流
             val dataBuffers = response.body(BodyExtractors.toDataBuffers()).toStream();

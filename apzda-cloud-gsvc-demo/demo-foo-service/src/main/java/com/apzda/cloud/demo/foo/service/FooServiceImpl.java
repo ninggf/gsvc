@@ -8,6 +8,7 @@ import com.apzda.cloud.demo.foo.proto.FooReq;
 import com.apzda.cloud.demo.foo.proto.FooRes;
 import com.apzda.cloud.demo.foo.proto.FooService;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.google.protobuf.Empty;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,9 @@ import lombok.val;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author fengz
@@ -79,6 +83,37 @@ public class FooServiceImpl implements FooService {
     @Override
     public GsvcExt.CommonRes err(Empty request) {
         return barService.err(request);
+    }
+
+    @Override
+    public GsvcExt.CommonRes sleep2(Empty request) {
+        try {
+            TimeUnit.SECONDS.sleep(2);
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        log.trace("Sleep2 complete");
+        return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
+    }
+
+    @Override
+    public Flux<GsvcExt.CommonRes> sleep3(Empty request) {
+        val context = GsvcContextHolder.current();
+        return Flux.create((sink) -> {
+            CompletableFuture.runAsync(() -> {
+                context.restore();
+                try {
+                    TimeUnit.SECONDS.sleep(2);
+                    log.trace("Sleep3 complete");
+                    sink.next(GsvcExt.CommonRes.newBuilder().setErrCode(0).build());
+                    sink.complete();
+                }
+                catch (InterruptedException e) {
+                    sink.error(e);
+                }
+            });
+        });
     }
 
 }

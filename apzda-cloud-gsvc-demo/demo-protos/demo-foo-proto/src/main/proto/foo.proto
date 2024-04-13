@@ -44,4 +44,6 @@ service FooService {
   rpc hi(FooReq) returns(stream FooRes);
   rpc saInfo(FooReq) returns(FooRes);
   rpc err(google.protobuf.Empty) returns(gsvc.CommonRes);
+  rpc sleep2(google.protobuf.Empty) returns (gsvc.CommonRes);
+  rpc sleep3(google.protobuf.Empty) returns (stream gsvc.CommonRes);
 }

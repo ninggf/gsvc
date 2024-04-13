@@ -319,3 +319,63 @@ Content-Type: text/plain
         client.assert(response.body.message === 'abc.txt', "出错啦: 文件上传失败");
     });
 %}
+
+### DemoService fw:/demo/foo/timeout1
+GET http://{{demoService}}/demo/foo/timeout1
+
+> {%
+
+    client.test("Gateway should be timeout ", function () {
+        client.assert(response.status === 504, "Response status is not 504");
+    });
+%}
+
+### DemoService fw:/demo/foo/timeout2
+GET http://{{demoService}}/demo/foo/timeout2
+
+> {%
+
+    client.test("Gateway should be timeout ", function () {
+        client.assert(response.status === 504, "Response status is not 504");
+    });
+%}
+
+### DemoService fw:/demo/foo/timeout3
+GET http://{{demoService}}/demo/foo/timeout3
+
+> {%
+
+    client.test("Gateway should be timeout ", function () {
+        client.assert(response.status === 504, "Response status is not 504");
+    });
+%}
+
+### DemoService fw:/demo/foo/sleep1
+POST http://{{demoService}}/demo/foo/sleep1
+
+> {%
+
+    client.test("Gateway should be ok", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### DemoService fw:/demo/foo/sleep2
+POST http://{{demoService}}/demo/foo/sleep2
+
+> {%
+
+    client.test("Gateway should be timeout ", function () {
+        client.assert(response.status === 504, "Response status is not 504");
+    });
+%}
+
+### DemoService fw:/demo/foo/sleep3
+POST http://{{demoService}}/demo/foo/sleep3
+
+> {%
+
+    client.test("Gateway should be timeout ", function () {
+        client.assert(response.status === 504, "Response status is not 504");
+    });
+%}
