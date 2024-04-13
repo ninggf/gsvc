@@ -36,7 +36,7 @@ public class GsvcErrorAttributes extends DefaultErrorAttributes {
             while (error instanceof ServletException && error.getCause() != null) {
                 error = error.getCause();
             }
-            response = handler.handle(error);
+            response = handler.handle(error, true);
         }
         errorAttributes.put("errCode", response.getErrCode());
         errorAttributes.put("errMsg", response.getErrMsg());

@@ -80,8 +80,8 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         return handle(error, serverRequest, ResponseEntity.class);
     }
 
-    public Response<?> handle(Throwable e) {
-        e = transform(e);
+    public Response<?> handle(Throwable throwable, boolean transform) {
+        val e = transform ? transform(throwable) : throwable;
         if (e instanceof GsvcException gsvcException) {
             val error = gsvcException.getError();
             return Response.error(error);
@@ -140,6 +140,10 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         }
 
         return Response.error(ServiceError.SERVICE_ERROR);
+    }
+
+    public Response<?> handle(Throwable e) {
+        return handle(e, false);
     }
 
     @SuppressWarnings("unchecked")
@@ -266,6 +270,10 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
     }
 
     private Throwable transform(Throwable throwable) {
+        while (throwable.getClass().equals(RuntimeException.class) && throwable.getCause() != null) {
+            throwable = throwable.getCause();
+        }
+
         val ts = transformers.getIfAvailable();
         if (ts == null) {
             return throwable;
