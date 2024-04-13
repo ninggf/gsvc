@@ -3,7 +3,11 @@ name: Deploy Docs to Pages
 
 on:
   push:
-    branches: [ "docs" ]
+    branches:
+      - docs
+  pull_request:
+    branches:
+      - docs
   workflow_dispatch:
 
 permissions:
@@ -12,8 +16,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
