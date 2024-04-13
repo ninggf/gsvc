@@ -28,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FormFieldPart;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
@@ -41,6 +42,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -242,7 +244,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }
 
-    protected Mono<JsonNode> deserializeRequest(ServerRequest request, ServiceMethod serviceMethod) throws IOException {
+    protected Mono<JsonNode> deserializeRequest(ServerRequest request, ServiceMethod serviceMethod) {
         val contentType = request.headers().contentType().orElse(MediaType.APPLICATION_FORM_URLENCODED);
 
         Mono<Object> args;
@@ -328,10 +330,11 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             List<?> args = values.stream().map(value -> {
                 context.restore();
                 if (value instanceof MultipartFile filePart) {
+                    val originalFilename = filePart.getOriginalFilename();
                     val file = UploadFile.builder()
                         .name(filePart.getName())
-                        .ext(FileUtil.extName(filePart.getOriginalFilename()))
-                        .filename(filePart.getOriginalFilename())
+                        .ext(FileUtil.extName(originalFilename))
+                        .filename(originalFilename)
                         .contentType(Optional.ofNullable(filePart.getContentType()).orElse(MediaType.TEXT_PLAIN_VALUE));
                     try {
                         val tmpFile = File.createTempFile("UP_LD_", ".part");
@@ -339,19 +342,46 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
                         filePart.transferTo(tmpFile);
 
                         if (log.isTraceEnabled()) {
-                            log.trace("File '{}' uploaded to '{}'", filePart.getOriginalFilename(),
-                                    tmpFile.getAbsoluteFile());
+                            log.trace("File '{}' uploaded to '{}'", originalFilename, tmpFile.getAbsoluteFile());
                         }
 
                         return file.build();
                     }
                     catch (IOException e) {
-                        log.error("Upload file '{}' failed: {}", filePart.getOriginalFilename(), e.getMessage());
+                        log.error("Upload file '{}' failed: {}", originalFilename, e.getMessage());
                         return file.size(-1).error(e.getMessage()).build();
                     }
                 }
                 else if (value instanceof FormFieldPart formFieldPart) {
-                    return formFieldPart.value();
+                    val name = formFieldPart.name();
+                    val content = formFieldPart.value();
+                    val headers = formFieldPart.headers();
+                    headers.getContentType();
+                    val file = UploadFile.builder()
+                        .name("file")
+                        .ext(FileUtil.extName(name))
+                        .filename(name)
+                        .contentType(Optional.ofNullable(headers.getContentType())
+                            .orElse(MediaType.TEXT_PLAIN)
+                            .removeQualityValue()
+                            .toString());
+                    try {
+                        val tmpFile = File.createTempFile("UP_LD_", ".part");
+                        file.file(tmpFile.getAbsolutePath()).size(content.length());
+                        try (val writer = new FileWriter(tmpFile)) {
+                            FileCopyUtils.copy(content, writer);
+                        }
+
+                        if (log.isTraceEnabled()) {
+                            log.trace("File '{}' uploaded to '{}'", name, tmpFile.getAbsoluteFile());
+                        }
+
+                        return file.build();
+                    }
+                    catch (IOException e) {
+                        log.error("Upload file '{}' failed: {}", name, e.getMessage());
+                        return file.size(-1).error(e.getMessage()).build();
+                    }
                 }
                 else {
                     return value;
