@@ -157,6 +157,10 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
                 headers = new HttpHeaders(statusCodeException.getResponseHeaders());
             }
         }
+        else if (e instanceof WebClientResponseException responseException) {
+            status = responseException.getStatusCode();
+            headers = new HttpHeaders(responseException.getHeaders());
+        }
 
         val mediaTypes = request.headers().accept();
         val mediaType = mediaTypes.isEmpty() ? MediaType.APPLICATION_JSON : mediaTypes.get(0).removeQualityValue();
@@ -197,7 +201,8 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
 
     private <R> R handle(Throwable error, ServerRequest request, Class<R> rClazz) {
         error = transform(error);
-        if (error instanceof HttpStatusCodeException || error instanceof ErrorResponse) {
+        if (error instanceof HttpStatusCodeException || error instanceof ErrorResponse
+                || error instanceof WebClientResponseException) {
             // bookmark login
             val handled = checkLoginRedirect(request, error, rClazz);
             if (handled != null) {

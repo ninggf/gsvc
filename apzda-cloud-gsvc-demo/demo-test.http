@@ -173,7 +173,7 @@ Accept: text/html
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 307, "Response status is not 307");
+        client.assert(response.status === 307, "Response status is " + response.status + " not 307");
         const type = response.contentType.mimeType;
         client.assert(type === "text/html", "Expected 'text/html' but received '" + type + "'");
         client.assert(response.headers.valueOf("Location").endsWith("/login"), "错误的登录地址: " + response.headers.valueOf("Location"));
