@@ -39,27 +39,15 @@ import java.util.Objects;
  * @since 1.0.0
  **/
 @Slf4j
-public class I18nHelper implements InitializingBean, ApplicationContextAware {
+public abstract class I18nUtils implements InitializingBean, ApplicationContextAware {
 
-    private static MessageSource messageSource;
+    protected static MessageSource messageSource;
 
-    private static LocaleResolver localeResolver;
+    protected static LocaleResolver localeResolver;
 
-    private static Locale defaultLocale;
+    protected static Locale defaultLocale;
 
-    private ApplicationContext applicationContext;
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        I18nHelper.messageSource = applicationContext.getBean(MessageSource.class);
-        try {
-            I18nHelper.localeResolver = applicationContext.getBean(LocaleResolver.class);
-        }
-        catch (Exception ignored) {
-        }
-        I18nHelper.defaultLocale = applicationContext.getBean(Locale.class);
-        log.debug("I18nHelper initialized with [{}, {}]", I18nHelper.messageSource, I18nHelper.localeResolver);
-    }
+    protected ApplicationContext applicationContext;
 
     @Override
     public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {

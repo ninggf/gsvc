@@ -22,7 +22,7 @@ import com.apzda.cloud.demo.math.proto.Request;
 import com.apzda.cloud.demo.math.proto.Result;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
-import com.apzda.cloud.gsvc.utils.I18nHelper;
+import com.apzda.cloud.gsvc.utils.I18nUtils;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -93,18 +93,18 @@ public class MathServiceImpl implements MathService {
         val context = GsvcContextHolder.current();
         val currentUser = CurrentUserProvider.getCurrentUser();
         log.debug("GsvcContext: {}, CurrentUser: {}", context, currentUser);
-        return Result.newBuilder().setMessage(I18nHelper.t("math.hello") + " - " + currentUser.getOs()).build();
+        return Result.newBuilder().setMessage(I18nUtils.t("math.hello") + " - " + currentUser.getOs()).build();
     }
 
     @Override
     @PreAuthorize("@authz.isSa(#root)")
     public Result authz(OpNum request) {
-        return Result.newBuilder().setMessage(I18nHelper.t("math.hello")).build();
+        return Result.newBuilder().setMessage(I18nUtils.t("math.hello")).build();
     }
 
     @Override
     public Result translate(Request request) {
-        val str = I18nHelper.t(request.getKey(), "");
+        val str = I18nUtils.t(request.getKey(), "");
         return Result.newBuilder().setMessage(str).build();
     }
 

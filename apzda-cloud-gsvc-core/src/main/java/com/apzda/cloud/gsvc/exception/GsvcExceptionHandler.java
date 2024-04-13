@@ -4,7 +4,7 @@ import build.buf.validate.Violation;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
-import com.apzda.cloud.gsvc.utils.I18nHelper;
+import com.apzda.cloud.gsvc.utils.I18nUtils;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -95,7 +95,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
                 if (log.isDebugEnabled()) {
                     log.debug("Add code: '{}' to message resource property file to support i18n", i8nKey);
                 }
-                val message = I18nHelper.t(i8nKey, violation.getMessage());
+                val message = I18nUtils.t(i8nKey, violation.getMessage());
                 violations.put(field, message);
             }
 
@@ -104,7 +104,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         else if (e instanceof BindException bindException) {
             val violations = new HashMap<String, String>();
             for (FieldError error : bindException.getFieldErrors()) {
-                violations.put(error.getField(), I18nHelper.t(error));
+                violations.put(error.getField(), I18nUtils.t(error));
             }
             return Response.error(ServiceError.BIND_ERROR, violations);
         }

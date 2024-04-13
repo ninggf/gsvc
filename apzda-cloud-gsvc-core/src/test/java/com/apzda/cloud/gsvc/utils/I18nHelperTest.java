@@ -27,11 +27,11 @@ class I18nHelperTest {
         val zhCn = Locale.SIMPLIFIED_CHINESE;
         System.out.println("zhCn = " + zhCn.toLanguageTag());
         // when
-        val msg = I18nHelper.t("{} login successfully", new Object[] { "admin" });
-        val msgZhCN = I18nHelper.t("{} login successfully", new Object[] { "admin" }, zhCn);
-        val errMsg = I18nHelper.t("{} login failure:    :{}", new Object[] { "admin", "test" });
-        val errMsgZhCN = I18nHelper.t("{} login failure: {}", new Object[] { "admin", "test" }, zhCn);
-        val okTxt = I18nHelper.t("hello.ok");
+        val msg = I18nUtils.t("{} login successfully", new Object[] { "admin" });
+        val msgZhCN = I18nUtils.t("{} login successfully", new Object[] { "admin" }, zhCn);
+        val errMsg = I18nUtils.t("{} login failure:    :{}", new Object[] { "admin", "test" });
+        val errMsgZhCN = I18nUtils.t("{} login failure: {}", new Object[] { "admin", "test" }, zhCn);
+        val okTxt = I18nUtils.t("hello.ok");
         // then
         assertThat(msg).isEqualTo("admin login successfully");
         assertThat(msgZhCN).isEqualTo("admin登录成功。");

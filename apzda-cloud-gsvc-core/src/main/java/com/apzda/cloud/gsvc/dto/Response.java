@@ -1,7 +1,7 @@
 package com.apzda.cloud.gsvc.dto;
 
 import com.apzda.cloud.gsvc.IServiceError;
-import com.apzda.cloud.gsvc.utils.I18nHelper;
+import com.apzda.cloud.gsvc.utils.I18nUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -50,7 +50,7 @@ public class Response<T> implements Serializable {
     void setMessage(String message) {
         this.message = message;
         if (StringUtils.startsWith(message, "{") && StringUtils.endsWith(message, "}")) {
-            val msg = I18nHelper.t(message.substring(1, message.length() - 1), "");
+            val msg = I18nUtils.t(message.substring(1, message.length() - 1), "");
             if (StringUtils.isNotBlank(msg)) {
                 this.message = msg;
             }
@@ -112,13 +112,13 @@ public class Response<T> implements Serializable {
         resp.errCode = code;
         resp.errMsg = errMsg;
         if (StringUtils.startsWith(errMsg, "{") && StringUtils.endsWith(errMsg, "}")) {
-            val msg = I18nHelper.t(errMsg.substring(1, errMsg.length() - 1), "");
+            val msg = I18nUtils.t(errMsg.substring(1, errMsg.length() - 1), "");
             if (StringUtils.isNotBlank(msg)) {
                 resp.errMsg = msg;
             }
         }
         else {
-            val msg = I18nHelper.t("error." + Math.abs(code), "");
+            val msg = I18nUtils.t("error." + Math.abs(code), "");
             if (StringUtils.isNotBlank(msg)) {
                 resp.errMsg = msg + " - " + errMsg;
             }

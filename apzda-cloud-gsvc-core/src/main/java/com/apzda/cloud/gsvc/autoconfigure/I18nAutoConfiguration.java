@@ -18,8 +18,12 @@ package com.apzda.cloud.gsvc.autoconfigure;
 
 import com.apzda.cloud.gsvc.i18n.LocaleResolverImpl;
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
-import com.apzda.cloud.gsvc.utils.I18nHelper;
+import com.apzda.cloud.gsvc.utils.I18nUtils;
 import lombok.val;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.aot.hint.RuntimeHints;
+import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
@@ -31,13 +35,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.Ordered;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.LocaleResolver;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -49,34 +56,39 @@ import java.util.Locale;
 @AutoConfiguration(before = MessageSourceAutoConfiguration.class)
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @EnableConfigurationProperties
+@ImportRuntimeHints(I18nAutoConfiguration.MessageSourceRuntimeHints.class)
 public class I18nAutoConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "spring.messages")
-    MessageSourceProperties messageSourceProperties() {
-        return new MessageSourceProperties();
+    MessageSourceProperties messageSourceProperties(Environment environment,
+            ObjectProvider<List<MessageSourceNameResolver>> provider) {
+        val names = new HashSet<String>();
+        provider.ifAvailable((resolvers) -> {
+            for (MessageSourceNameResolver resolver : resolvers) {
+                names.addAll(StringUtils.commaDelimitedListToSet(StringUtils.trimAllWhitespace(resolver.baseNames())));
+            }
+        });
+
+        if (environment.containsProperty("spring.messages.basename")) {
+            names.add(environment.getProperty("spring.messages.basename"));
+        }
+
+        val properties = new MessageSourceProperties();
+        properties.setBasename(String.join(",", names.stream().toList()));
+
+        return properties;
     }
 
     @Bean
     @ConditionalOnMissingBean
-    MessageSource messageSource(MessageSourceProperties properties,
-            ObjectProvider<List<MessageSourceNameResolver>> resolvers) {
+    MessageSource messageSource(MessageSourceProperties properties) {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
 
         if (StringUtils.hasText(properties.getBasename())) {
             messageSource.setBasenames(StringUtils
                 .commaDelimitedListToStringArray(StringUtils.trimAllWhitespace(properties.getBasename())));
         }
-
-        resolvers.ifAvailable(resolverList -> {
-            for (MessageSourceNameResolver resolver : resolverList) {
-                val names = resolver.baseNames();
-                if (StringUtils.hasText(names)) {
-                    messageSource.addBasenames(
-                            StringUtils.commaDelimitedListToStringArray(StringUtils.trimAllWhitespace(names)));
-                }
-            }
-        });
 
         if (properties.getEncoding() != null) {
             messageSource.setDefaultEncoding(properties.getEncoding().name());
@@ -98,8 +110,23 @@ public class I18nAutoConfiguration {
 
     @Bean
     @ConditionalOnBean({ MessageSource.class })
-    I18nHelper i18nHelper() {
-        return new I18nHelper();
+    I18nUtils i18nUtils() {
+        return new I18nUtils() {
+            private static final Logger log = LoggerFactory.getLogger(I18nUtils.class);
+
+            @Override
+            public void afterPropertiesSet() throws Exception {
+                messageSource = applicationContext.getBean(MessageSource.class);
+                try {
+                    localeResolver = applicationContext.getBean(LocaleResolver.class);
+                }
+                catch (Exception ignored) {
+                }
+                I18nUtils.defaultLocale = applicationContext.getBean(Locale.class);
+                log.trace("I18n Utils initialized: messageSource({}), localeResolver({})", messageSource,
+                        localeResolver);
+            }
+        };
     }
 
     @Bean
@@ -118,6 +145,15 @@ public class I18nAutoConfiguration {
     @ConditionalOnMissingBean
     Clock appClock() {
         return Clock.systemDefaultZone();
+    }
+
+    static class MessageSourceRuntimeHints implements RuntimeHintsRegistrar {
+
+        @Override
+        public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+            hints.resources().registerPattern("messages.properties").registerPattern("messages_*.properties");
+        }
+
     }
 
 }

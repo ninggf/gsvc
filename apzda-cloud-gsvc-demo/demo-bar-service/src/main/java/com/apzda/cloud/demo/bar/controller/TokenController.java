@@ -6,7 +6,7 @@ import com.apzda.cloud.demo.math.proto.Request;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.security.token.SimpleJwtToken;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
-import com.apzda.cloud.gsvc.utils.I18nHelper;
+import com.apzda.cloud.gsvc.utils.I18nUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -48,7 +48,7 @@ public class TokenController {
 
     @GetMapping("/i18n/{key}")
     public String i18n(@PathVariable String key, @RequestParam(value = "name", required = false) String name) {
-        return I18nHelper.t(key) + (StringUtils.isNotBlank(name) ? " " + name : "");
+        return I18nUtils.t(key) + (StringUtils.isNotBlank(name) ? " " + name : "");
     }
 
     @GetMapping("/gi18n/{key}")
