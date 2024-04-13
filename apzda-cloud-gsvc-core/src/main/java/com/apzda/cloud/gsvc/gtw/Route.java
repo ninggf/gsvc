@@ -230,14 +230,15 @@ public class Route {
     public String toString() {
         val str = new ToStringCreator(this);
 
-        str.append("path", absPath());
-
-        str.append("method", method)
+        str.append("path", absPath())
+            .append("method", method)
+            .append("timeout", readTimeout)
             .append("index", index())
             .append("login", login)
             .append("access", access)
             .append("actions", actions)
             .append("filters", filters);
+
         return str.toString();
     }
 
