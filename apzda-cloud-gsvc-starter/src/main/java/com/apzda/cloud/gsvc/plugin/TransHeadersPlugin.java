@@ -50,6 +50,9 @@ public class TransHeadersPlugin implements IGlobalPlugin, IPreCall {
             return HttpHeadersFilter.filterRequest(headersFilters, new ServletServerHttpRequest(curRequest));
         }).orElse(new HttpHeaders());
 
+        headers.remove("Accept");
+        headers.remove("Content-Type");
+        headers.remove("Content-Length");
         headers.remove("X-Gsvc-Caller");
         headers.add("X-Gsvc-Caller", appName);
         headers.remove(HttpHeaders.HOST);
