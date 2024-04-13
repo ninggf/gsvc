@@ -5,14 +5,18 @@ import com.apzda.cloud.demo.bar.proto.BarRes;
 import com.apzda.cloud.demo.bar.proto.BarService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
+import com.apzda.cloud.demo.math.proto.Request;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.google.protobuf.Empty;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.ErrorResponseException;
@@ -21,6 +25,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -34,6 +39,11 @@ public class BarServiceImpl implements BarService {
 
     private final MathService mathService;
 
+    private final ObservationRegistry observationRegistry;
+
+    @Value("${management.tracing.enabled:false}")
+    private Boolean enabled;
+
     @Override
     @Operation(summary = "打个招呼", description = "测试的的的的")
     public BarRes greeting(BarReq request) {
@@ -42,6 +52,7 @@ public class BarServiceImpl implements BarService {
 
     @Override
     public Flux<BarRes> hello(BarReq request) {
+        log.error("Tracing Enabled: {}", enabled);
 
         for (GsvcExt.UploadFile uploadFile : request.getFilesList()) {
             if (uploadFile.getSize() > 0) {
@@ -52,12 +63,33 @@ public class BarServiceImpl implements BarService {
                 log.error("文件上传失败: {}", uploadFile.getError());
             }
         }
-        var res = BarRes.newBuilder()
+
+        val res = BarRes.newBuilder()
             .setAge(request.getAge() + 2)
             .setName(request.getName() + ".bar@hello")
             .setFileCount(request.getFilesCount())
             .build();
-        return Flux.just(res);
+        val traceEnabled = enabled;
+        val context = GsvcContextHolder.current();
+        val observation = Observation.createNotStarted("bridge", this.observationRegistry);
+
+        return Flux.create((sink) -> {
+            CompletableFuture.runAsync(() -> {
+                context.restore();
+                sink.next(res);
+                if (Boolean.TRUE.equals(traceEnabled)) {
+                    observation.lowCardinalityKeyValue("key", "math.hello");
+                    observation.observe(() -> {
+                        mathService.translate(Request.newBuilder().setKey("math.hello").build());
+                        mathService
+                            .sum(Flux.just(OpNum.newBuilder().setNum1(1).build(),
+                                    OpNum.newBuilder().setNum1(2).build()))
+                            .blockLast();
+                    });
+                }
+                sink.complete();
+            });
+        });
     }
 
     @Override
@@ -108,6 +140,7 @@ public class BarServiceImpl implements BarService {
 
     @Override
     public GsvcExt.CommonRes err(Empty request) {
+        mathService.add(OpNum.newBuilder().setNum1(1).setNum2(2).build());
         throw new ErrorResponseException(HttpStatus.UNAUTHORIZED);
     }
 

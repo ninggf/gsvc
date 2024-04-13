@@ -28,6 +28,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
@@ -41,6 +42,7 @@ import org.springframework.core.annotation.Order;
 @AutoConfigureBefore(GrpcServerAutoConfiguration.class)
 @ConditionalOnClass(GrpcGlobalServerInterceptor.class)
 @ConditionalOnBean(GrpcTracing.class)
+@ConditionalOnProperty(name = "management.tracing.enabled", havingValue = "true")
 public class GrpcServerTraceAutoConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(GrpcServerTraceAutoConfiguration.class);

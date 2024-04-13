@@ -82,7 +82,15 @@ public class FooServiceImpl implements FooService {
 
     @Override
     public GsvcExt.CommonRes err(Empty request) {
-        return barService.err(request);
+        try {
+            val resp = barService.err(request);
+            log.trace("BarService.err: {}", resp);
+            return resp;
+        }
+        catch (Exception e) {
+            log.trace("BarService.err, Exception: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

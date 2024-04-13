@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.demo.math;
 
+import com.apzda.cloud.demo.foo.proto.FooServiceGsvc;
 import com.apzda.cloud.demo.math.proto.MathServiceGsvc;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -27,7 +28,7 @@ import org.springframework.context.annotation.Import;
  * @since 1.0.0
  **/
 @SpringBootApplication
-@Import(MathServiceGsvc.class)
+@Import({ MathServiceGsvc.class, FooServiceGsvc.class })
 public class MathApplication {
 
     public static void main(String[] args) {

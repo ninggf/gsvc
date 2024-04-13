@@ -43,4 +43,8 @@ management:
     enabled: true
 management.zipkin.tracing.endpoint: http://localhost:9411/api/v2/spans
 management.tracing.sampling.probability: 1.0
-
+apzda:
+  cloud:
+    reference:
+      foo-service:
+        svc-name: http://localhost:12561

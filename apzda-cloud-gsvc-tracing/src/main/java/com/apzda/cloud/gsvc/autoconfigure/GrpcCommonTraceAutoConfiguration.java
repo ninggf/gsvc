@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
 /**
@@ -35,6 +36,7 @@ import org.springframework.context.annotation.Bean;
 @AutoConfiguration(after = BraveAutoConfiguration.class)
 @ConditionalOnClass({ Tracing.class, GrpcTracing.class })
 @ConditionalOnBean(Tracing.class)
+@ConditionalOnProperty(name = "management.tracing.enabled", havingValue = "true")
 public class GrpcCommonTraceAutoConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(GrpcCommonTraceAutoConfiguration.class);

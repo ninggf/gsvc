@@ -32,6 +32,7 @@ import org.springframework.security.authentication.DefaultAuthenticationEventPub
  **/
 @AutoConfiguration
 @ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
+@ConditionalOnProperty(name = "management.tracing.enabled", havingValue = "true")
 public class GsvcTracingAutoConfiguration {
 
     @Bean

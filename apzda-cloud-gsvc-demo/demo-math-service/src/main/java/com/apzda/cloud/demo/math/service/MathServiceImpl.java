@@ -16,6 +16,8 @@
  */
 package com.apzda.cloud.demo.math.service;
 
+import com.apzda.cloud.demo.foo.proto.FooReq;
+import com.apzda.cloud.demo.foo.proto.FooService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.demo.math.proto.Request;
@@ -23,8 +25,11 @@ import com.apzda.cloud.demo.math.proto.Result;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.utils.I18nUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -40,10 +45,19 @@ import java.util.concurrent.atomic.AtomicLong;
  **/
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class MathServiceImpl implements MathService {
+
+    private final FooService fooService;
+
+    @Value("${apzda.cloud.reference.foo-service.svc-name:}")
+    private String svcName;
 
     @Override
     public Result add(OpNum request) {
+        if (StringUtils.isNotBlank(svcName)) {
+            fooService.hello(FooReq.newBuilder().setAge(22).setName("math").build()).blockLast();
+        }
         val num1 = request.getNum1();
         val num2 = request.getNum2();
         log.info("[{}] 收到请求, num1={}, num2={}", GsvcContextHolder.getRequestId(), num1, num2);
@@ -105,6 +119,7 @@ public class MathServiceImpl implements MathService {
     @Override
     public Result translate(Request request) {
         val str = I18nUtils.t(request.getKey(), "");
+        log.trace("[{}] Translate '{}' => '{}'", GsvcContextHolder.getRequestId(), request.getKey(), str);
         return Result.newBuilder().setMessage(str).build();
     }
 

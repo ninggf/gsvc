@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
+import cn.hutool.core.lang.UUID;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.error.GlobalGrpcExceptionAdvice;
@@ -18,6 +19,7 @@ import net.devh.boot.grpc.server.service.GrpcServiceDefinition;
 import net.devh.boot.grpc.server.service.GrpcServiceDiscoverer;
 import org.apache.commons.lang3.LocaleUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -54,7 +56,8 @@ public class GrpcServerSupportConfiguration {
                 public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
                         Metadata headers, ServerCallHandler<ReqT, RespT> next) {
                     val context = GsvcContextHolder.current();
-                    val requestId = headers.get(HeaderMetas.REQUEST_ID);
+                    val requestId = StringUtils.defaultIfBlank(headers.get(HeaderMetas.REQUEST_ID),
+                            StringUtils.defaultIfBlank(MDC.get("traceId"), UUID.randomUUID().toString(true)));
                     val language = headers.get(HeaderMetas.LANGUAGE);
                     context.setLocale(defaultLocale);
 
