@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 1.0.0
  **/
 @Slf4j
-public class SnowflakeUtil {
+public abstract class SnowflakeUtil {
 
     private static final String localhostStr = NetUtil.getLocalhostStr();
 

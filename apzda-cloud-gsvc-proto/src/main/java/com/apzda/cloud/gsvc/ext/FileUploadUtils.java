@@ -26,7 +26,7 @@ import java.net.URLConnection;
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class UploadFileCreator {
+public abstract class FileUploadUtils {
 
     public static GsvcExt.UploadFile create(String file) {
         return create(new File(file));

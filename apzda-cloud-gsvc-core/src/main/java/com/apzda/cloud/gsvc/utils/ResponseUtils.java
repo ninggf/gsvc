@@ -30,7 +30,7 @@ import java.util.concurrent.TimeoutException;
  * @author fengz
  */
 @Slf4j
-public class ResponseUtils {
+public abstract class ResponseUtils {
 
     public static final MediaType TEXT_MASK = MediaType.parseMediaType("text/*");
 

@@ -13,7 +13,7 @@ import com.apzda.cloud.demo.foo.proto.FooService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.gsvc.dto.Response;
-import com.apzda.cloud.gsvc.ext.UploadFileCreator;
+import com.apzda.cloud.gsvc.ext.FileUploadUtils;
 import com.google.common.base.Joiner;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -116,17 +116,17 @@ public class DemoController {
 
         val file = new File("./index.md");
         FileCopyUtils.copy("# INDEX", new FileWriter(file));
-        val f1 = UploadFileCreator.create(file);
+        val f1 = FileUploadUtils.create(file);
         builder.addFiles(f1);
 
         val file2 = new File("./index.xml");
         FileCopyUtils.copy("<root>test</root>", new FileWriter(file2));
-        val f2 = UploadFileCreator.create(file2);
+        val f2 = FileUploadUtils.create(file2);
         builder.addFiles(f2);
 
         val file3 = new File("./index.txt");
         FileCopyUtils.copy("<root>test</root>", new FileWriter(file3));
-        val f3 = UploadFileCreator.create(file3);
+        val f3 = FileUploadUtils.create(file3);
         builder.setFile(f3);
 
         val upload = fileService.upload(builder.build());

@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * @author ninggf
  */
-public class GsvcContextHolder {
+public abstract class GsvcContextHolder {
 
     private static final String FILTERED_HTTP_HEADERS = "FILTERED_HTTP_HEADERS";
 
@@ -228,7 +228,7 @@ public class GsvcContextHolder {
         private Locale locale;
 
         private String caller;
-        
+
         GsvcContext(String requestId, RequestAttributes attributes, String svcName) {
             this.attributes = attributes;
             this.svcName = svcName;

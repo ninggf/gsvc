@@ -19,7 +19,7 @@ import java.util.Map;
  * @author fengz
  */
 @Slf4j
-public class GatewayServiceRegistry {
+public abstract class GatewayServiceRegistry {
 
     private static final Map<String, Map<String, ServiceMethod>> SERVICES = new HashMap<>();
 

@@ -2,7 +2,7 @@ package com.apzda.cloud.gsvc.utils;
 
 import java.util.regex.Pattern;
 
-public class StringUtils {
+public abstract class StringUtils {
 
     private static final Pattern UNDERSCORE_PATTERN = Pattern.compile("_([a-z])");
 
