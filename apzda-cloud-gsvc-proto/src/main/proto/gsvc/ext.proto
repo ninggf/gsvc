@@ -8,29 +8,19 @@ option java_package = "com.apzda.cloud.gsvc.ext";
 option java_outer_classname = "GsvcExt";
 option optimize_for = SPEED;
 
+extend google.protobuf.FileOptions{uint32 serviceId = 50000;}
 extend google.protobuf.FileOptions{string serviceName = 50001;}
 
-message Valid {
-  repeated ValidRule rules = 1;
-}
-
-message ValidRule {
-  string rule = 1;
-  optional string  group = 2;
-  optional  string message = 3;
-}
-
-extend google.protobuf.FieldOptions {Valid valid = 50002;}
-
 message Route {
-  string path = 1;
-  bool login = 2;
-  string access = 3;
-  string methods = 4;
-  string  filters = 5;
-  string summary = 6;
-  string desc = 7;
-  string tags = 8;
+  optional string path = 1;
+  optional bool   login = 2;
+  optional string access = 3;
+  optional string methods = 4;
+  optional string filters = 5;
+  optional string summary = 6;
+  optional string desc = 7;
+  optional string tags = 8;
+  optional uint64 timeout = 9;
 }
 
 extend google.protobuf.MethodOptions {Route route = 50003;}
@@ -53,7 +43,6 @@ message UploadFile {
   string name = 6;
   optional string error = 7;
 }
-
 
 message Sorter {
   enum Direction {
