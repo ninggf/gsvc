@@ -131,10 +131,13 @@ public class DemoController {
 
         val upload = fileService.upload(builder.build());
 
-        file.delete();
-        file2.delete();
-        file3.delete();
-
+        try {
+            file.delete();
+            file2.delete();
+            file3.delete();
+        }
+        catch (Exception ignored) {
+        }
         return Response.success(upload);
     }
 

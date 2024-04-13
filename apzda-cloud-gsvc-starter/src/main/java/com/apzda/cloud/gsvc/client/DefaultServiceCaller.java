@@ -21,11 +21,15 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.http.codec.multipart.Part;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -187,7 +191,7 @@ public class DefaultServiceCaller implements IServiceCaller {
             if (!result.isSuccess()) {
                 throw new MessageValidationException(result.getViolations(), requestMsg.getDescriptorForType());
             }
-            return buildRequestBody(req, requestMsg).retrieve()
+            return buildRequestBody(method, req, requestMsg).retrieve()
                 .onStatus(
                         (status) -> status != HttpStatus.OK && (status.is2xxSuccessful() || status.is3xxRedirection()),
                         (response) -> {
@@ -205,8 +209,8 @@ public class DefaultServiceCaller implements IServiceCaller {
         }
     }
 
-    private WebClient.RequestHeadersSpec<?> buildRequestBody(WebClient.RequestBodySpec request, Message body)
-            throws IOException {
+    private WebClient.RequestHeadersSpec<?> buildRequestBody(ServiceMethod method, WebClient.RequestBodySpec request,
+            Message body) throws IOException {
 
         val allFields = body.getAllFields();
         val uploadFileFields = allFields.values()
@@ -224,9 +228,10 @@ public class DefaultServiceCaller implements IServiceCaller {
                 .bodyValue(requestBody);
         }
         else {
-            val multipartBodyBuilder = generateMultipartFormData(allFields);
+            val formData = generateMultipartFormData(allFields).build();
+            log.trace("Form Data of {}: {}", method.getRpcAddr(), formData);
             response = request.contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(multipartBodyBuilder.build()));
+                .body(BodyInserters.fromMultipartData(formData));
         }
 
         return response;
@@ -269,10 +274,18 @@ public class DefaultServiceCaller implements IServiceCaller {
         val of = new File(originalFile);
         val contentType = URLConnection.guessContentTypeFromName(originalFile);
         val header = String.format("form-data; name=\"%s\"; filename=\"%s\"", name, URLEncodeUtil.encode(of.getName()));
-        try (val input = new FileInputStream(of)) {
-            builder.part(name, new ByteArrayResource(input.readAllBytes()), MediaType.valueOf(contentType))
-                .header("Content-Disposition", header);
-        }
+        val fileInputStream = DataBufferUtils.readInputStream(() -> new FileInputStream(of),
+                DefaultDataBufferFactory.sharedInstance, 1024);
+
+        val headers = new HttpHeaders();
+        headers.add("Content-Disposition", header);
+
+        val part = new FilePart(name, headers, fileInputStream);
+
+        builder.part(name, part, MediaType.valueOf(contentType));
+    }
+
+    record FilePart(String name, HttpHeaders headers, Flux<DataBuffer> content) implements Part {
     }
 
 }

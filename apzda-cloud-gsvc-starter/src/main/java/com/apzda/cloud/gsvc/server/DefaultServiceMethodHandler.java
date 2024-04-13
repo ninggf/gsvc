@@ -111,8 +111,8 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
 
         if (log.isTraceEnabled()) {
             val type = serviceMethod.getType();
-            log.trace("[{}] Call method[{}]: {}.{}", caller, type, serviceMethod.getServiceName(),
-                    serviceMethod.getDmName());
+            log.trace("Call method[{}]({}.{}) from {}", type, serviceMethod.getServiceName(), serviceMethod.getDmName(),
+                    caller);
         }
         // 1. 解析请求体
         return deserializeRequest(request, serviceMethod);
