@@ -29,3 +29,24 @@ GET http://{{barService}}/token/i18n/foo.hello
         client.assert(response.body === "Hello Foo!", "出错啦: " + response.body + " != 'Hello Foo！'");
     });
 %}
+
+### Route - gI18N(zh_CN) - /token/gi18n/math.hello
+GET http://{{barService}}/token/gi18n/math.hello
+Cookie: lang=zh_CN
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body === "你好Math!", "出错啦: " + response.body + " != '你好Math!'");
+    });
+%}
+
+### Route - I18N(en) - foo.test.msg
+GET http://{{barService}}/all/t/foo.test.msg
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body === "Hello Math!", "出错啦: " + response.body + " != 'Hello Math！'");
+    });
+%}

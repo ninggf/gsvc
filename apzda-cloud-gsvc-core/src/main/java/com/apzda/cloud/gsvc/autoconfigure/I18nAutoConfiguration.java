@@ -38,7 +38,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.Ordered;
-import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.LocaleResolver;
 
@@ -61,33 +60,32 @@ public class I18nAutoConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "spring.messages")
-    MessageSourceProperties messageSourceProperties(Environment environment,
+    MessageSourceProperties messageSourceProperties() {
+        return new MessageSourceProperties();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    MessageSource messageSource(MessageSourceProperties properties,
             ObjectProvider<List<MessageSourceNameResolver>> provider) {
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+
         val names = new HashSet<String>();
+
+        if (StringUtils.hasText(properties.getBasename())) {
+            names.add(properties.getBasename());
+        }
+
         provider.ifAvailable((resolvers) -> {
             for (MessageSourceNameResolver resolver : resolvers) {
                 names.addAll(StringUtils.commaDelimitedListToSet(StringUtils.trimAllWhitespace(resolver.baseNames())));
             }
         });
 
-        if (environment.containsProperty("spring.messages.basename")) {
-            names.add(environment.getProperty("spring.messages.basename"));
-        }
-
-        val properties = new MessageSourceProperties();
         properties.setBasename(String.join(",", names.stream().toList()));
 
-        return properties;
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    MessageSource messageSource(MessageSourceProperties properties) {
-        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
-
-        if (StringUtils.hasText(properties.getBasename())) {
-            messageSource.setBasenames(StringUtils
-                .commaDelimitedListToStringArray(StringUtils.trimAllWhitespace(properties.getBasename())));
+        if (!names.isEmpty()) {
+            messageSource.setBasenames(names.toArray(names.toArray(new String[0])));
         }
 
         if (properties.getEncoding() != null) {

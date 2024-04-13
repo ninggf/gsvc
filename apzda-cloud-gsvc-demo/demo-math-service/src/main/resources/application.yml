@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: math
+  messages:
+    basename: messages
 
 grpc:
   server:
