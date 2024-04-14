@@ -51,7 +51,7 @@ import java.util.Map;
  * @author fengz
  */
 @Slf4j
-public class DefaultServiceCaller implements IServiceCaller {
+public class DefaultRemoteServiceCaller implements IServiceCaller {
 
     public static final ParameterizedTypeReference<ServerSentEvent<String>> SSE_RESPONSE_TYPE = new ParameterizedTypeReference<>() {
     };
@@ -64,7 +64,7 @@ public class DefaultServiceCaller implements IServiceCaller {
 
     protected final Validator validator;
 
-    public DefaultServiceCaller(ApplicationContext applicationContext, GatewayServiceConfigure svcConfigure) {
+    public DefaultRemoteServiceCaller(ApplicationContext applicationContext, GatewayServiceConfigure svcConfigure) {
         this.applicationContext = applicationContext;
         this.svcConfigure = svcConfigure;
         this.validator = applicationContext.getBean(Validator.class);
@@ -138,6 +138,7 @@ public class DefaultServiceCaller implements IServiceCaller {
 
     protected <R> Flux<R> handleRpcFallback(Flux<R> reqBody, ServiceMethod method, Class<R> rClass) {
         // bookmark: fallback
+        val serviceInfo = GatewayServiceRegistry.getServiceInfo(method.getInterfaceName());
         val uri = method.getRpcAddr();
         val plugins = method.getPlugins();
         var size = plugins.size();
@@ -150,7 +151,7 @@ public class DefaultServiceCaller implements IServiceCaller {
         while (--size >= 0) {
             val plugin = plugins.get(size);
             if (plugin instanceof IPostCall postPlugin) {
-                reqBody = postPlugin.postCall(reqBody, method, rClass);
+                reqBody = postPlugin.postCall(serviceInfo, reqBody, method, rClass);
             }
         }
 

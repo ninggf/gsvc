@@ -7,6 +7,7 @@ import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.gtw.ProxyExchangeHandler;
 import com.apzda.cloud.gsvc.gtw.Route;
+import com.apzda.cloud.gsvc.gtw.RouteRegistry;
 import com.apzda.cloud.gsvc.server.ServiceMethodHandler;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.apzda.cloud.swagger.ProtobufMsgHelper;
@@ -25,8 +26,8 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.function.*;
 
 import java.util.List;
@@ -40,12 +41,6 @@ import static org.springdoc.core.utils.Constants.OPERATION_ATTRIBUTE;
 @RequiredArgsConstructor
 public class GtwRouterFunctionFactoryBean
         implements FactoryBean<RouterFunction<ServerResponse>>, ApplicationContextAware {
-
-    private static final AntPathMatcher pathMatcher = new AntPathMatcher();
-
-    static {
-        pathMatcher.setCachePatterns(true);
-    }
 
     public static final String ATTR_MATCHED_SEGMENTS = "GSVC_ATTR_MATCHED_SEGMENTS";
 
@@ -131,6 +126,8 @@ public class GtwRouterFunctionFactoryBean
                 serviceInfo);
 
         builder.route(request -> match(request, path, actions), func);
+
+        RouteRegistry.register(path);
     }
 
     @SuppressWarnings("unchecked")
@@ -179,15 +176,18 @@ public class GtwRouterFunctionFactoryBean
 
     private boolean match(ServerRequest request, String path, List<HttpMethod> actions) {
         val reqPath = request.path();
-        boolean matched = pathMatcher.match(path, reqPath);
+        boolean matched = RouteRegistry.pathMatcher.match(path, reqPath);
         if (matched && !actions.isEmpty()) {
             matched = actions.contains(request.method());
         }
-        if (matched && request.servletRequest().getAttribute(ATTR_MATCHED_SEGMENTS) == null) {
-            val segments = pathMatcher.extractUriTemplateVariables(path, reqPath);
-            val segment = pathMatcher.extractPathWithinPattern(path, reqPath);
+        val httpServletRequest = request.servletRequest();
+
+        if (matched && httpServletRequest.getAttribute(ATTR_MATCHED_SEGMENTS) == null) {
+            val segments = RouteRegistry.pathMatcher.extractUriTemplateVariables(path, reqPath);
+            val segment = RouteRegistry.pathMatcher.extractPathWithinPattern(path, reqPath);
             segments.put("segment", segment);
-            request.servletRequest().setAttribute(ATTR_MATCHED_SEGMENTS, segments);
+            httpServletRequest.setAttribute(ATTR_MATCHED_SEGMENTS, segments);
+            httpServletRequest.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, path);
             log.trace("{} matched '{}' with segments: {}", reqPath, path, segments);
         }
         return matched;

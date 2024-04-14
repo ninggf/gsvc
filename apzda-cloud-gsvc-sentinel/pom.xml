@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>gsvc</artifactId>
         <groupId>com.apzda.cloud</groupId>
@@ -9,7 +10,7 @@
 
     <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
     <description>
-        Adapt to Sentinel 1.8.7. This artifact should be deprecated after sentinel-web-servlet supports jakarta.
+        Adapt to Sentinel 1.8.7.
     </description>
 
     <dependencies>
@@ -23,6 +24,11 @@
             <artifactId>apzda-cloud-gsvc-core</artifactId>
         </dependency>
         <!-- sentinel -->
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-parameter-flow-control </artifactId>
+            <version>${sentinel.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.alibaba.csp</groupId>
             <artifactId>sentinel-reactor-adapter</artifactId>
@@ -44,6 +50,11 @@
         <dependency>
             <groupId>com.alibaba.csp</groupId>
             <artifactId>sentinel-transport-simple-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 

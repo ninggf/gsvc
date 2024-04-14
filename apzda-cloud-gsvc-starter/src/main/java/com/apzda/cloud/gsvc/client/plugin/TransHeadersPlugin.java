@@ -1,11 +1,13 @@
 /*
  * This file is part of gsvc created at 2023/9/10 by ningGf.
  */
-package com.apzda.cloud.gsvc.plugin;
+package com.apzda.cloud.gsvc.client.plugin;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
+import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
+import com.apzda.cloud.gsvc.plugin.IPreCall;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;

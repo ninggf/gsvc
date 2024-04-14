@@ -34,6 +34,7 @@ import java.io.IOException;
  *
  * @author youji.zj
  */
+@Deprecated
 public class CommonTotalFilter implements Filter {
 
     public static final String TOTAL_URL_REQUEST = "total-url-request";

@@ -2,7 +2,7 @@ package com.apzda.cloud.gsvc.autoconfigure;
 
 import build.buf.protovalidate.Config;
 import build.buf.protovalidate.Validator;
-import com.apzda.cloud.gsvc.client.DefaultServiceCaller;
+import com.apzda.cloud.gsvc.client.DefaultRemoteServiceCaller;
 import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
@@ -21,7 +21,7 @@ import com.apzda.cloud.gsvc.infra.Counter;
 import com.apzda.cloud.gsvc.infra.LocalInfraImpl;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
-import com.apzda.cloud.gsvc.plugin.TransHeadersPlugin;
+import com.apzda.cloud.gsvc.client.plugin.TransHeadersPlugin;
 import com.apzda.cloud.gsvc.security.config.GsvcSecurityAutoConfiguration;
 import com.apzda.cloud.gsvc.server.DefaultServiceMethodHandler;
 import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
@@ -91,7 +91,7 @@ public class ApzdaGsvcAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     IServiceCaller serviceCaller(ApplicationContext applicationContext, GatewayServiceConfigure serviceConfigure) {
-        return new DefaultServiceCaller(applicationContext, serviceConfigure);
+        return new DefaultRemoteServiceCaller(applicationContext, serviceConfigure);
     }
 
     @Bean

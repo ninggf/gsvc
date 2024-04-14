@@ -60,6 +60,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
                 HttpHeadersFilter.class);
     }
 
+    @Override
     public ServerResponse handle(Throwable error, ServerRequest request) {
         // bookmark: RouterFunction Exception Handler
         return handle(error, request, ServerResponse.class);

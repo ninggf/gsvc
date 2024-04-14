@@ -14,29 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.plugin;
+package com.apzda.cloud.gsvc.gtw;
 
-import com.apzda.cloud.gsvc.core.ServiceInfo;
-import org.springframework.http.HttpMethod;
-import org.springframework.lang.NonNull;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
+import com.apzda.cloud.adapter.spring.callback.UrlCleaner;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface IForwardPlugin extends IPlugin {
+public class GatewayUrlCleaner implements UrlCleaner {
 
-    @NonNull
-    default WebClient.RequestBodySpec preForward(@NonNull ServiceInfo serviceInfo,
-            @NonNull WebClient.RequestBodySpec request, String uri) {
-        return request;
-    }
+    @Override
+    public String clean(String originUrl) {
+        if (RouteRegistry.ignore(originUrl)) {
+            return "";
+        }
 
-    default <R> Flux<R> postForward(@NonNull ServiceInfo serviceInfo, Flux<R> response, String uri, HttpMethod method) {
-        return response;
+        return originUrl;
     }
 
 }

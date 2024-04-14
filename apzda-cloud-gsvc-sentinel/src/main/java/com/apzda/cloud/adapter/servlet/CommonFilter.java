@@ -39,6 +39,7 @@ import java.io.IOException;
  * @author Eric Zhao
  * @author zhaoyuguang
  */
+@Deprecated
 public class CommonFilter implements Filter {
 
     private static final Logger log = LoggerFactory.getLogger(CommonFilter.class);

@@ -1,6 +1,6 @@
-package com.apzda.cloud.gsvc.sentinel;
+package com.apzda.cloud.sentinel.callback;
 
-import com.apzda.cloud.adapter.servlet.callback.UrlCleaner;
+import com.apzda.cloud.adapter.spring.callback.UrlCleaner;
 
 /**
  * @author fengz

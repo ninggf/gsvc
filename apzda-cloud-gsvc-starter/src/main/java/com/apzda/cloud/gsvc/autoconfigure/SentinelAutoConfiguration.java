@@ -1,23 +1,27 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
 import com.alibaba.csp.sentinel.transport.heartbeat.client.SimpleHttpClient;
-import com.apzda.cloud.adapter.servlet.CommonFilter;
-import com.apzda.cloud.adapter.servlet.callback.RequestOriginParser;
-import com.apzda.cloud.adapter.servlet.callback.UrlBlockHandler;
-import com.apzda.cloud.adapter.servlet.callback.UrlCleaner;
-import com.apzda.cloud.adapter.servlet.callback.WebCallbackManager;
-import com.apzda.cloud.gsvc.plugin.SentinelPlugin;
-import com.apzda.cloud.gsvc.sentinel.DefaultRequestOriginParser;
-import com.apzda.cloud.gsvc.sentinel.DefaultUrlBlockHandler;
-import com.apzda.cloud.gsvc.sentinel.DefaultUrlCleaner;
+import com.apzda.cloud.adapter.spring.SentinelWebInterceptor;
+import com.apzda.cloud.adapter.spring.callback.BlockExceptionHandler;
+import com.apzda.cloud.adapter.spring.callback.RequestOriginParser;
+import com.apzda.cloud.adapter.spring.callback.UrlCleaner;
+import com.apzda.cloud.adapter.spring.config.SentinelWebMvcConfig;
+import com.apzda.cloud.gsvc.gtw.GatewayUrlCleaner;
+import com.apzda.cloud.sentinel.callback.StandardRequestOriginParser;
+import com.apzda.cloud.sentinel.callback.StandardUrlBlockHandler;
+import com.apzda.cloud.sentinel.plugin.SentinelPlugin;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * @author fengz
@@ -31,41 +35,53 @@ public class SentinelAutoConfiguration {
 
     @Bean
     SentinelPlugin gsvcSentinelPlugin() {
+        log.trace("SentinelPlugin created");
         return new SentinelPlugin();
     }
 
     @Bean
-    public FilterRegistrationBean<CommonFilter> sentinelFilterRegistration(UrlBlockHandler urlBlockHandler,
-            RequestOriginParser originParser, UrlCleaner urlCleaner) {
-        WebCallbackManager.setUrlBlockHandler(urlBlockHandler);
-        WebCallbackManager.setRequestOriginParser(originParser);
-        WebCallbackManager.setUrlCleaner(urlCleaner);
-
-        FilterRegistrationBean<CommonFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new CommonFilter());
-        registration.addUrlPatterns("/*");
-        registration.setName("gsvcSentinelFilter");
-        registration.setOrder(-2147483647);
-
-        return registration;
+    @ConditionalOnMissingBean
+    BlockExceptionHandler blockExceptionHandler() {
+        return new StandardUrlBlockHandler();
     }
 
     @Bean
     @ConditionalOnMissingBean
-    UrlBlockHandler defaultUrlBlockHandler() {
-        return new DefaultUrlBlockHandler();
+    RequestOriginParser requestOriginParser() {
+        return new StandardRequestOriginParser();
     }
 
     @Bean
     @ConditionalOnMissingBean
-    RequestOriginParser defaultRequestOriginParser() {
-        return new DefaultRequestOriginParser();
+    UrlCleaner urlCleaner() {
+        return new GatewayUrlCleaner();
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    UrlCleaner defaultUrlCleaner() {
-        return new DefaultUrlCleaner();
+    @Configuration(proxyBeanMethods = false)
+    @RequiredArgsConstructor
+    static class SentinelWebMvcConfigurer implements WebMvcConfigurer {
+
+        private final BlockExceptionHandler blockExceptionHandler;
+
+        private final RequestOriginParser requestOriginParser;
+
+        private final UrlCleaner urlCleaner;
+
+        @Override
+        public void addInterceptors(InterceptorRegistry registry) {
+            val config = new SentinelWebMvcConfig();
+            // Enable the HTTP method prefix.
+            config.setHttpMethodSpecify(true);
+            config.setWebContextUnify(true);
+            config.setBlockExceptionHandler(blockExceptionHandler);
+            config.setOriginParser(requestOriginParser);
+            config.setUrlCleaner(urlCleaner);
+            // Add to the interceptor list.
+            val sentinelWebInterceptor = new SentinelWebInterceptor(config);
+            registry.addInterceptor(sentinelWebInterceptor).addPathPatterns("/**");
+            log.info("SentinelWebInterceptor installed for /**: {}", config);
+        }
+
     }
 
 }

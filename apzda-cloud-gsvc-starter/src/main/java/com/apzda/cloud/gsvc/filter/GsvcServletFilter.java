@@ -29,14 +29,17 @@ public class GsvcServletFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         val context = GsvcContextHolder.current();
-
         val requestId = StringUtils.defaultIfBlank(request.getHeader("X-Request-ID"),
                 StringUtils.defaultIfBlank(MDC.get("traceId"), UUID.randomUUID().toString(true)));
+        val caller = request.getHeader("X-Gsvc-Caller");
 
         request.setAttribute("X-Request-ID", requestId);
         response.setHeader("X-Request-ID", requestId);
         // bookmark: 初始化
         context.setRequestId(requestId);
+        if (StringUtils.isNotBlank(caller)) {
+            context.setCaller(caller);
+        }
 
         try {
             context.setLocale(localeResolver.resolveLocale(request));

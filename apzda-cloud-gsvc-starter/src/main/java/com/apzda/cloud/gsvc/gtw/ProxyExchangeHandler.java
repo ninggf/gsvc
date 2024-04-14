@@ -63,11 +63,11 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
-    @SuppressWarnings("unchecked")
     public ServerResponse handle(ServerRequest request, Route route, ServiceInfo serviceInfo) {
         val context = GsvcContextHolder.current();
         context.setAttributes(RequestContextHolder.getRequestAttributes());
-        context.setSvcName(serviceInfo.getServiceName());
+        val serviceName = serviceInfo.getServiceName();
+        context.setSvcName(serviceName);
 
         val httpRequest = request.servletRequest();
 
@@ -96,6 +96,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             }
             return template;
         }).orElse(pattern);
+
         List<? extends IPlugin> plugins;
 
         if (pattern.charAt(0) != '/') {
@@ -103,7 +104,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             if (serviceMethod == null) {
                 return ServerResponse.status(HttpStatus.NOT_FOUND).build();
             }
-            uri = "/~" + context.getSvcName() + "/" + uri;
+            uri = "/~" + serviceName + "/" + uri;
             filtered.add("X-Gsvc-Caller", "gtw");
             plugins = serviceMethod.getPlugins();
         }
@@ -130,7 +131,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
 
         for (IPlugin plugin : plugins) {
             if (plugin instanceof IForwardPlugin prePlugin) {
-                proxyRequest = prePlugin.preForward(proxyRequest, uri);
+                proxyRequest = prePlugin.preForward(serviceInfo, proxyRequest, uri);
             }
         }
 
@@ -189,10 +190,11 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         });
 
         var size = plugins.size();
+
         while (--size >= 0) {
             val plugin = plugins.get(size);
             if (plugin instanceof IForwardPlugin postPlugin) {
-                proxyResponse = postPlugin.postForward(proxyResponse, uri);
+                proxyResponse = postPlugin.postForward(serviceInfo, proxyResponse, uri, method);
             }
         }
 

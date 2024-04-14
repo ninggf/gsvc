@@ -17,6 +17,7 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
 import com.alibaba.csp.sentinel.adapter.grpc.SentinelGrpcServerInterceptor;
+import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Configuration;
@@ -28,10 +29,12 @@ import org.springframework.context.annotation.Configuration;
  **/
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(GrpcGlobalServerInterceptor.class)
+@Slf4j
 public class SentinelGrpcServerConfiguration {
 
     @GrpcGlobalServerInterceptor
     SentinelGrpcServerInterceptor sentinelGrpcServerInterceptor() {
+        log.trace("SentinelGrpcServerInterceptor installed");
         return new SentinelGrpcServerInterceptor();
     }
 
