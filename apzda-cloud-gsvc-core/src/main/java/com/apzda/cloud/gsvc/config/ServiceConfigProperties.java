@@ -21,7 +21,9 @@ import java.util.Map;
 @Data
 @ToString
 @ConfigurationProperties("apzda.cloud")
-public class ServiceConfigProperties {
+public final class ServiceConfigProperties {
+
+    public final static ServiceConfigProperties EMPTY = new ServiceConfigProperties();
 
     private final static ServiceConfig SERVICE_DEFAULT = new ServiceConfig();
 

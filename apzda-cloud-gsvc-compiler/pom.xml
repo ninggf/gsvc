@@ -7,6 +7,7 @@
         <version>1.2.13-SNAPSHOT</version>
     </parent>
     <artifactId>gsvc-compiler</artifactId>
+    <name>apzda-cloud-gsvc-compiler</name>
     <description>将protobuf的IDL编译成支持gsvc的接口.</description>
     <properties>
         <maven.compiler.source>${java.version}</maven.compiler.source>

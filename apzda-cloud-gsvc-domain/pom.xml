@@ -8,6 +8,8 @@
     </parent>
 
     <artifactId>domain</artifactId>
+    <name>apzda-cloud-gsvc-domain</name>
+
     <dependencies>
         <dependency>
             <groupId>com.apzda.cloud</groupId>

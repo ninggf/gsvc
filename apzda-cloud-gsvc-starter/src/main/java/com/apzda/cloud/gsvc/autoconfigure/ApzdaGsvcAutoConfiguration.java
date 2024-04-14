@@ -4,6 +4,7 @@ import build.buf.protovalidate.Config;
 import build.buf.protovalidate.Validator;
 import com.apzda.cloud.gsvc.client.DefaultRemoteServiceCaller;
 import com.apzda.cloud.gsvc.client.IServiceCaller;
+import com.apzda.cloud.gsvc.client.plugin.TransHeadersPlugin;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.core.GatewayServiceBeanFactoryPostProcessor;
@@ -21,7 +22,6 @@ import com.apzda.cloud.gsvc.infra.Counter;
 import com.apzda.cloud.gsvc.infra.LocalInfraImpl;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
-import com.apzda.cloud.gsvc.client.plugin.TransHeadersPlugin;
 import com.apzda.cloud.gsvc.security.config.GsvcSecurityAutoConfiguration;
 import com.apzda.cloud.gsvc.server.DefaultServiceMethodHandler;
 import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
@@ -32,6 +32,7 @@ import lombok.val;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
@@ -45,6 +46,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.Ordered;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -59,6 +61,7 @@ import java.util.Map;
 @AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
         GsvcSecurityAutoConfiguration.class, WebClientAutoConfiguration.class })
 @Import({ ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class, RedisInfraConfiguration.class })
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 public class ApzdaGsvcAutoConfiguration {
 

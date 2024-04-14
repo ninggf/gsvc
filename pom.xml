@@ -22,6 +22,7 @@
         <module>apzda-cloud-gsvc-tracing</module>
         <module>apzda-cloud-gsvc-domain</module>
         <module>apzda-cloud-xxl-job-adapter</module>
+        <module>apzda-cloud-gsvc-test</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -167,6 +168,11 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>xxl-job-adapter</artifactId>
+                <version>1.2.13-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
+                <artifactId>apzda-cloud-gsvc-test</artifactId>
                 <version>1.2.13-SNAPSHOT</version>
             </dependency>
             <!-- javax -->
