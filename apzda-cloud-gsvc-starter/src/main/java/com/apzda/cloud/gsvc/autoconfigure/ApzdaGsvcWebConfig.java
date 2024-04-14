@@ -107,6 +107,7 @@ public class ApzdaGsvcWebConfig implements InitializingBean {
         val resolver = new StandardServletMultipartResolver();
 
         resolver.setResolveLazily(true);
+        log.trace("Use StandardServletMultipartResolver with ResolveLazily!");
         return resolver;
     }
 

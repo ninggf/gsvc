@@ -89,7 +89,9 @@ public class ServiceMethodHandler {
         if (!StringUtils.hasText(caller)) {
             caller = request.headers().firstHeader("X-Gsvc-Caller");
         }
-
+        if (StringUtils.hasText(caller)) {
+            GsvcContextHolder.current().setCaller(caller);
+        }
         return new ServiceMethodHandler(request, serviceMethod, applicationContext).run(caller);
     }
 

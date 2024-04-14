@@ -61,7 +61,7 @@ import java.util.Map;
 @AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
         GsvcSecurityAutoConfiguration.class, WebClientAutoConfiguration.class })
 @Import({ ApzdaGsvcWebConfig.class, SentinelAutoConfiguration.class, RedisInfraConfiguration.class })
-@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
+//@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 public class ApzdaGsvcAutoConfiguration {
 
