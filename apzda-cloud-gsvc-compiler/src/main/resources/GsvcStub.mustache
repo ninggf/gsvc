@@ -166,6 +166,7 @@ public class {{className}} {
 
     @com.apzda.cloud.gsvc.grpc.GrpcService
     @ConditionalOnMissingBean
+    @ConditionalOnBean({ {{interfaceClassName}}.class })
     @ConditionalOnProperty(value = "apzda.cloud.service.{{interfaceClassName}}.grpc.enabled", havingValue = "true")
     {{interfaceClassName}}Grpc.{{interfaceClassName}}ImplBase grpc{{interfaceClassName}}ImplAdapter(final {{interfaceClassName}} serviceImpl) {
         return new {{interfaceClassName}}Grpc.{{interfaceClassName}}ImplBase() {
