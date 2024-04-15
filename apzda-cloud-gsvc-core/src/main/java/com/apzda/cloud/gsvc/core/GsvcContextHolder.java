@@ -1,5 +1,10 @@
 package com.apzda.cloud.gsvc.core;
 
+import cn.hutool.core.net.Ipv4Util;
+import com.apzda.cloud.gsvc.autoconfigure.ConfigureHelper;
+import com.google.common.base.Splitter;
+import io.grpc.Attributes;
+import io.grpc.Metadata;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.Cookie;
@@ -69,6 +74,7 @@ public abstract class GsvcContextHolder {
                         httpServletRequest.setAttribute(FILTERED_HTTP_HEADERS, defaultHttpHeaders);
                         filtered = defaultHttpHeaders;
                         context.setHeaders(defaultHttpHeaders);
+                        context.setRemoteAddr(httpServletRequest.getRemoteAddr());
                     }
                 }
             }
@@ -204,12 +210,49 @@ public abstract class GsvcContextHolder {
     }
 
     public static String getRemoteIp() {
-        val request = getRequest();
-        var ip = "127.0.0.1";
-        if (request.isPresent()) {
-            ip = request.get().getRemoteAddr();
+        val context = current();
+        if (StringUtils.hasText(context.remoteIp)) {
+            return context.remoteIp;
         }
-        return ip;
+
+        val request = getRequest();
+        var ip = "0.0.0.0"; // 未获取到IP
+
+        var headers = context.headers;
+
+        if (headers == null && request.isPresent()) {
+            headers = headers();
+        }
+        if (headers == null) {
+            context.setRemoteIp(ip);
+            return ip;
+        }
+
+        var remoteAddr = context.remoteAddr;
+
+        val froms = ConfigureHelper.getRealIpFrom();
+        val realIpHeader = ConfigureHelper.getRealIpHeader();
+
+        if (StringUtils.hasText(realIpHeader)
+                && froms.stream().anyMatch((from -> Ipv4Util.matches(from, remoteAddr)))) {
+            val remoteIp = headers.get(realIpHeader);
+            if (StringUtils.hasText(remoteIp)) {
+                context.remoteIp = remoteIp;
+                return remoteIp;
+            }
+        }
+
+        val xForwardedFor = headers.get("X-Forwarded-For");
+        if (StringUtils.hasText(xForwardedFor)) {
+            val ips = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(xForwardedFor);
+            if (!ips.isEmpty()) {
+                context.remoteIp = ips.get(0);
+                return context.remoteIp;
+            }
+        }
+
+        context.remoteIp = remoteAddr;
+        return context.remoteIp;
     }
 
     @Data
@@ -229,6 +272,14 @@ public abstract class GsvcContextHolder {
 
         private String caller;
 
+        private String remoteIp;
+
+        private String remoteAddr;
+
+        private Attributes grpcAttributes;
+
+        private Metadata grpcMetadata;
+
         GsvcContext(String requestId, RequestAttributes attributes, String svcName) {
             this.attributes = attributes;
             this.svcName = svcName;
@@ -244,8 +295,13 @@ public abstract class GsvcContextHolder {
             GsvcContextHolder.restore(this);
         }
 
+        public String getRemoteIp() {
+            return GsvcContextHolder.getRemoteIp();
+        }
+
         @NonNull
         public static GsvcContext current() {
+
             return GsvcContextHolder.current();
         }
 

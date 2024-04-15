@@ -379,3 +379,39 @@ POST http://{{demoService}}/demo/foo/sleep3
         client.assert(response.status === 504, "Response status is not 504");
     });
 %}
+
+### DemoService /demo/~demoService/ipAddr
+POST http://{{demoService}}/demo/~demoService/ipAddr
+X-Real-IP: 8.8.8.8
+X-Gsvc-Caller: gtw
+
+> {%
+    client.test("Remote Ip is 8.8.8.8", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.errMsg === "8.8.8.8", response.body.errMsg)
+    });
+%}
+
+### DemoService fw:/demo/bar-service/bar/ipAddr
+POST http://{{demoService}}/demo/bar-service/bar/ipAddr
+X-Real-IP: 8.8.8.8
+X-Gsvc-Caller: gtw
+
+> {%
+    client.test("Remote Ip is 8.8.8.8", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.errMsg === "8.8.8.8", response.body.errMsg)
+    });
+%}
+
+### DemoService fw:/demo/bar-service/ipAddr
+GET http://{{demoService}}/demo/bar-service/ipAddr
+X-Real-IP: 6.6.6.6
+X-Gsvc-Caller: gtw
+
+> {%
+    client.test("Remote Ip is 6.6.6.6", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.message === "6.6.6.6", response.body.errMsg)
+    });
+%}

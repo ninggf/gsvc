@@ -124,4 +124,9 @@ public class FooServiceImpl implements FooService {
         });
     }
 
+    @Override
+    public GsvcExt.CommonRes ipAddr(Empty request) {
+        return barService.ipAddr(request);
+    }
+
 }

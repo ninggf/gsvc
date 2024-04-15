@@ -34,4 +34,6 @@ public final class HeaderMetas {
     public static final Metadata.Key<String> AUTH_DETAILS = Metadata.Key.of("X-Auth-Details",
             Metadata.ASCII_STRING_MARSHALLER);
 
+    public static final Metadata.Key<String> REMOTE_IP = Metadata.Key.of("X-Real-IP", Metadata.ASCII_STRING_MARSHALLER);
+
 }

@@ -28,4 +28,9 @@ public class DemoServiceImpl implements DemoService {
         return fooService.err(request);
     }
 
+    @Override
+    public GsvcExt.CommonRes ipAddr(Empty request) {
+        return fooService.ipAddr(request);
+    }
+
 }

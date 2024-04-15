@@ -41,13 +41,13 @@ import static org.springframework.web.multipart.support.MultipartFilter.DEFAULT_
 @Slf4j
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties({ ServiceConfigProperties.class })
-public class ApzdaGsvcWebConfig implements InitializingBean {
+public class GsvcWebMvcConfigure implements InitializingBean {
 
     private final ServiceConfigProperties serviceConfigProperties;
 
     private final ObjectMapper objectMapper;
 
-    public ApzdaGsvcWebConfig(ServiceConfigProperties serviceConfigProperties, ObjectMapper objectMapper) {
+    public GsvcWebMvcConfigure(ServiceConfigProperties serviceConfigProperties, ObjectMapper objectMapper) {
         this.serviceConfigProperties = serviceConfigProperties;
         this.objectMapper = objectMapper;
     }

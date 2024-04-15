@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package math;
 
+import "gsvc/ext.proto";
+import "google/protobuf/empty.proto";
+
 option java_package = "com.apzda.cloud.demo.math.proto";
 option java_multiple_files = true;
 option java_outer_classname = "MathProto";
@@ -54,4 +57,6 @@ service MathService {
   rpc authz(OpNum) returns(Result);
 
   rpc translate(Request) returns(Result);
+
+  rpc ipAddr(google.protobuf.Empty) returns (gsvc.CommonRes);
 }

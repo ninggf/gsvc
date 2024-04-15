@@ -141,6 +141,7 @@ public class GrpcClientSupportConfiguration {
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
                     CallOptions callOptions, Channel next) {
                 val context = GsvcContextHolder.current();
+                val remoteIp = GsvcContextHolder.getRemoteIp();
                 val serviceName = method.getServiceName();
                 context.setSvcName(serviceName);
                 var locale = context.getLocale();
@@ -152,6 +153,7 @@ public class GrpcClientSupportConfiguration {
                     public void start(Listener<RespT> responseListener, Metadata headers) {
                         context.restore();
                         headers.put(HeaderMetas.REQUEST_ID, context.getRequestId());
+                        headers.put(HeaderMetas.REMOTE_IP, remoteIp);
                         headers.put(HeaderMetas.LANGUAGE, context.getLocale().toLanguageTag());
                         // bookmark: ClientInterceptor
                         super.start(responseListener, headers);

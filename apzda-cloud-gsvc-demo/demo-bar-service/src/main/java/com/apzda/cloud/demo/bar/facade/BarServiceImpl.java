@@ -150,4 +150,9 @@ public class BarServiceImpl implements BarService {
         return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
     }
 
+    @Override
+    public GsvcExt.CommonRes ipAddr(Empty request) {
+        return mathService.ipAddr(request);
+    }
+
 }

@@ -46,4 +46,5 @@ service FooService {
   rpc err(google.protobuf.Empty) returns(gsvc.CommonRes);
   rpc sleep2(google.protobuf.Empty) returns (gsvc.CommonRes);
   rpc sleep3(google.protobuf.Empty) returns (stream gsvc.CommonRes);
+  rpc ipAddr(google.protobuf.Empty) returns (gsvc.CommonRes);
 }

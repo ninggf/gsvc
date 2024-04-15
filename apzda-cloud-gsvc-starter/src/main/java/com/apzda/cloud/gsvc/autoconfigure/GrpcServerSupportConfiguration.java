@@ -9,6 +9,8 @@ import com.apzda.cloud.gsvc.grpc.GsvcContextServerCallListener;
 import com.apzda.cloud.gsvc.security.grpc.HeaderMetas;
 import com.google.common.collect.Lists;
 import io.grpc.*;
+import io.grpc.inprocess.InProcessSocketAddress;
+import io.netty.channel.local.LocalAddress;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import net.devh.boot.grpc.server.autoconfigure.GrpcServerAutoConfiguration;
@@ -32,6 +34,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -58,9 +61,10 @@ public class GrpcServerSupportConfiguration {
                     val context = GsvcContextHolder.current();
                     val requestId = StringUtils.defaultIfBlank(headers.get(HeaderMetas.REQUEST_ID),
                             StringUtils.defaultIfBlank(MDC.get("traceId"), UUID.randomUUID().toString(true)));
+                    context.setRequestId(requestId);
+
                     val language = headers.get(HeaderMetas.LANGUAGE);
                     context.setLocale(defaultLocale);
-
                     if (StringUtils.isNotBlank(language)) {
                         try {
                             val locale = LocaleUtils.toLocale(language);
@@ -69,9 +73,26 @@ public class GrpcServerSupportConfiguration {
                         catch (Exception ignored) {
                         }
                     }
+
                     val serviceName = call.getMethodDescriptor().getFullMethodName();
-                    context.setRequestId(requestId);
                     context.setSvcName(serviceName);
+
+                    val remoteIp = headers.get(HeaderMetas.REMOTE_IP);
+                    val socketAddress = call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR);
+                    if (socketAddress instanceof InetSocketAddress inetSocketAddress) {
+                        context.setRemoteAddr(inetSocketAddress.getAddress().getHostAddress());
+                    }
+                    else if (socketAddress instanceof InProcessSocketAddress || socketAddress instanceof LocalAddress
+                            || socketAddress instanceof io.grpc.netty.shaded.io.netty.channel.local.LocalAddress) {
+                        context.setRemoteAddr("127.0.0.1");
+                    }
+                    else {
+                        context.setRemoteAddr("0.0.0.0");
+                    }
+
+                    context.setRemoteIp(StringUtils.defaultIfBlank(remoteIp, context.getRemoteAddr()));
+                    context.setGrpcAttributes(call.getAttributes());
+                    context.setGrpcMetadata(headers);
 
                     val grpcContext = Context.current().withValue(GSVC_CONTEXT_KEY, context);
                     val previousContext = grpcContext.attach();

@@ -26,7 +26,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * @author fengz
  */
-@AutoConfiguration(before = ApzdaGsvcAutoConfiguration.class)
+@AutoConfiguration(before = GsvcAutoConfiguration.class)
 @ConditionalOnClass(SimpleHttpClient.class)
 @ConditionalOnProperty("csp.sentinel.dashboard.server")
 @Import({ SentinelGrpClientConfiguration.class, SentinelGrpcServerConfiguration.class })

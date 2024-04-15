@@ -1,6 +1,6 @@
 package com.apzda.cloud.gsvc.utils;
 
-import com.apzda.cloud.gsvc.autoconfigure.I18nAutoConfiguration;
+import com.apzda.cloud.gsvc.autoconfigure.GsvcCoreAutoConfiguration;
 import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 1.0.0
  **/
 @JsonTest
-@ImportAutoConfiguration(I18nAutoConfiguration.class)
+@ImportAutoConfiguration(GsvcCoreAutoConfiguration.class)
 @TestPropertySource(properties = "spring.messages.basename=messages-core")
 class I18nHelperTest {
 

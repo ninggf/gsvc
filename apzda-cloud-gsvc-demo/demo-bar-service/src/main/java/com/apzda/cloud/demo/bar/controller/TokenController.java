@@ -3,6 +3,7 @@ package com.apzda.cloud.demo.bar.controller;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.demo.math.proto.Request;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.security.token.SimpleJwtToken;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
@@ -79,6 +80,10 @@ public class TokenController {
     public Response<String> authx() {
         mathService.authz(OpNum.newBuilder().setNum1(1).setNum2(1).build());
         return Response.success("ok");
+    }
+    @GetMapping("/ip-addr")
+    public Response<String> ipAddr() {
+        return Response.ok(GsvcContextHolder.getRemoteIp());
     }
 
     @Data

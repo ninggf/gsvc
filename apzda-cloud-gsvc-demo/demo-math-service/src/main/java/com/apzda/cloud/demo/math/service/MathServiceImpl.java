@@ -24,7 +24,9 @@ import com.apzda.cloud.demo.math.proto.Request;
 import com.apzda.cloud.demo.math.proto.Result;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.apzda.cloud.gsvc.utils.I18nUtils;
+import com.google.protobuf.Empty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -121,6 +123,11 @@ public class MathServiceImpl implements MathService {
         val str = I18nUtils.t(request.getKey(), "");
         log.trace("[{}] Translate '{}' => '{}'", GsvcContextHolder.getRequestId(), request.getKey(), str);
         return Result.newBuilder().setMessage(str).build();
+    }
+
+    @Override
+    public GsvcExt.CommonRes ipAddr(Empty request) {
+        return GsvcExt.CommonRes.newBuilder().setErrCode(0).setErrMsg(GsvcContextHolder.getRemoteIp()).build();
     }
 
 }

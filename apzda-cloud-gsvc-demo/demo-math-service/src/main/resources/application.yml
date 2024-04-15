@@ -20,6 +20,8 @@ logging:
 
 apzda:
   cloud:
+    config:
+      real-ip-from: 127.0.0.1,192.168.*.*,172.*.*.*,10.*.*.*
     service:
       MathService:
         grpc:

@@ -112,6 +112,10 @@ public final class ServiceConfigProperties {
 
         private String homePage;
 
+        private String realIpHeader = "X-Real-IP";
+
+        private String realIpFrom;
+
         @DurationUnit(ChronoUnit.HOURS)
         private Duration tempExpireTime = Duration.ofHours(168);
 

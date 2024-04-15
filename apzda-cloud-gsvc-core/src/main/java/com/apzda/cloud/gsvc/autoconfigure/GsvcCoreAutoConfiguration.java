@@ -19,12 +19,15 @@ package com.apzda.cloud.gsvc.autoconfigure;
 import com.apzda.cloud.gsvc.i18n.LocaleResolverImpl;
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
 import com.apzda.cloud.gsvc.utils.I18nUtils;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -35,6 +38,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.Ordered;
@@ -55,8 +59,8 @@ import java.util.Locale;
 @AutoConfiguration(before = MessageSourceAutoConfiguration.class)
 @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @EnableConfigurationProperties
-@ImportRuntimeHints(I18nAutoConfiguration.MessageSourceRuntimeHints.class)
-public class I18nAutoConfiguration {
+@ImportRuntimeHints(GsvcCoreAutoConfiguration.MessageSourceRuntimeHints.class)
+public class GsvcCoreAutoConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "spring.messages")
@@ -143,6 +147,28 @@ public class I18nAutoConfiguration {
     @ConditionalOnMissingBean
     Clock appClock() {
         return Clock.systemDefaultZone();
+    }
+
+    @Slf4j
+    @Configuration(proxyBeanMethods = false)
+    static class StaticConfigureConfiguration implements InitializingBean {
+
+        @Value("${apzda.cloud.config.real-ip-header:X-Real-IP}")
+        private String realIpHeader;
+
+        @Value("${apzda.cloud.config.real-ip-from:}")
+        private String realIpFrom;
+
+        @Override
+        public void afterPropertiesSet() throws Exception {
+            ConfigureHelper.setRealIpHeader(realIpHeader);
+            ConfigureHelper.setRealIpFrom(realIpFrom);
+            if (StringUtils.hasText(realIpHeader) && !ConfigureHelper.getRealIpFrom().isEmpty()) {
+                log.debug("Will try getting remote ip from header {} which sent by {}", realIpHeader,
+                        ConfigureHelper.getRealIpFrom());
+            }
+        }
+
     }
 
     static class MessageSourceRuntimeHints implements RuntimeHintsRegistrar {

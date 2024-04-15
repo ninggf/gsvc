@@ -16,7 +16,7 @@
  */
 package com.apzda.cloud.test.autoconfig;
 
-import com.apzda.cloud.gsvc.autoconfigure.ApzdaGsvcAutoConfiguration;
+import com.apzda.cloud.gsvc.autoconfigure.GsvcAutoConfiguration;
 import com.apzda.cloud.gsvc.config.IServiceConfigure;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  **/
 @GsvcTest
 @ContextConfiguration(classes = TestApp.class)
-@ImportAutoConfiguration(classes = { ApzdaGsvcAutoConfiguration.class })
+@ImportAutoConfiguration(classes = { GsvcAutoConfiguration.class })
 public class PriorityTest {
 
     @Autowired

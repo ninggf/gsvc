@@ -34,6 +34,7 @@ service BarService {
   rpc bidiStreaming(stream BarReq) returns (stream BarRes);
   rpc err(google.protobuf.Empty) returns(gsvc.CommonRes);
   rpc rpcErr(google.protobuf.Empty) returns(gsvc.CommonRes);
+  rpc ipAddr(google.protobuf.Empty) returns (gsvc.CommonRes);
 }
 
 message LoginReq {
