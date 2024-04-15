@@ -48,3 +48,8 @@ apzda:
     reference:
       foo-service:
         svc-name: http://localhost:12561
+
+---
+spring.config.activate.on-profile: jdk21
+spring.main.keep-alive: true
+spring.threads.virtual.enabled: true
