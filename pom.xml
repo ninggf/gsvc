@@ -42,7 +42,6 @@
         <spring-boot.version>3.2.4</spring-boot.version>
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <mybatis-plus.version>3.5.6</mybatis-plus.version>
-        <mybatis-spring.version>3.0.3</mybatis-spring.version>
         <hutool.version>5.8.27</hutool.version>
         <guava.version>33.1.0-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
@@ -240,19 +239,13 @@
             <!-- third-party library -->
             <dependency>
                 <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-boot-starter-test</artifactId>
+                <artifactId>mybatis-plus-spring-boot3-starter-test</artifactId>
                 <version>${mybatis-plus.version}</version>
-            </dependency>
-
-            <dependency>
-                <artifactId>mybatis-spring</artifactId>
-                <groupId>org.mybatis</groupId>
-                <version>${mybatis-spring.version}</version>
             </dependency>
             <dependency>
                 <groupId>cn.hutool</groupId>
@@ -295,11 +288,6 @@
             <dependency>
                 <groupId>com.alibaba.csp</groupId>
                 <artifactId>sentinel-core</artifactId>
-                <version>${sentinel.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba.csp</groupId>
-                <artifactId>sentinel-spring-webmvc-v6x-adapter</artifactId>
                 <version>${sentinel.version}</version>
             </dependency>
             <dependency>
