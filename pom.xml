@@ -8,7 +8,7 @@
     </parent>
     <groupId>com.apzda.cloud</groupId>
     <artifactId>gsvc</artifactId>
-    <version>1.2.18</version>
+    <version>1.2.19-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Gsvc</name>
     <description>A Toy Based on Spring Boot and Grpc-Java</description>
@@ -105,7 +105,7 @@
         <url>https://github.com/ninggf/gsvc</url>
         <connection>scm:git@github.com:ninggf/gsvc.git</connection>
         <developerConnection>scm:git:git@github.com:ninggf/gsvc.git</developerConnection>
-        <tag>v1.2.18</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
@@ -127,52 +127,52 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-core</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-parent</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-proto</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-security</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-starter</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-tracing</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>domain</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>xxl-job-adapter</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-test</artifactId>
-                <version>1.2.18</version>
+                <version>1.2.19-SNAPSHOT</version>
             </dependency>
             <!-- javax -->
             <dependency>
