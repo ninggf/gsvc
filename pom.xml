@@ -409,7 +409,7 @@
                         <generateReleasePoms>false</generateReleasePoms>
                         <arguments>-Dmaven.site.skip=true</arguments>
                         <releaseProfiles>release</releaseProfiles>
-                        <goals>clean,compile</goals>
+                        <goals>clean install</goals>
                     </configuration>
                 </plugin>
                 <!-- maven-javadoc-plugin -->
