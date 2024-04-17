@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -62,3 +65,39 @@ jobs:
           ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/demo-test.http
           ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/bar-test.http
           ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/foo-test.http
+  deploy:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: [ "build" ]
+    runs-on: ubuntu-22.04
+    env:
+      MAVEN_USERNAME: ${{ secrets.OSSRH_ID }}
+      MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+      GPG_SECURITY_PWD: ${{ secrets.GPG_SECURITY_PWD }}
+    steps:
+      - name: Install gpg secret key
+        run: |-
+          # Install gpg secret key
+          cat <(echo -e "${{ secrets.GPG_SECURITY_KEY }}") | gpg --batch --import
+          # Verify gpg secret key
+          gpg --list-secret-keys --keyid-format LONG
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+          cache: maven
+      - name: Set up maven settings
+        uses: s4u/maven-settings-action@v3.0.0
+        with:
+          servers: |
+            [{
+              "id": "ossrh",
+              "username": "${{ secrets.OSSRH_ID }}",
+              "password": "${{ secrets.OSSRH_TOKEN }}"
+            }]
+      - name: Deploy to OSSRH
+        run: mvn -P+release -Djava.version=17 -DskipTests=true clean deploy
