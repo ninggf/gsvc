@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.SearchStrategy;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
@@ -91,9 +92,10 @@ public class GsvcWebMvcConfigure implements InitializingBean {
     }
 
     @Bean
-    FilterRegistrationBean<GsvcServletFilter> gsvcFilterRegistration(LocaleResolver localeResolver) {
+    FilterRegistrationBean<GsvcServletFilter> gsvcFilterRegistration(LocaleResolver localeResolver,
+            @Value("${spring.application.name:main}") String appName) {
         FilterRegistrationBean<GsvcServletFilter> registration = new FilterRegistrationBean<>();
-        registration.setFilter(new GsvcServletFilter(localeResolver));
+        registration.setFilter(new GsvcServletFilter(localeResolver, appName));
         registration.addUrlPatterns("/*");
         registration.setName("gsvcServletFilter");
         registration.setOrder(-2147483646);

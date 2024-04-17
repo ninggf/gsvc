@@ -23,12 +23,14 @@ import java.io.IOException;
 public class GsvcServletFilter extends OncePerRequestFilter {
 
     private final LocaleResolver localeResolver;
-
+    private final String serviceName;
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
         val context = GsvcContextHolder.current();
+        context.setSvcName(serviceName);
+
         val requestId = StringUtils.defaultIfBlank(request.getHeader("X-Request-ID"),
                 StringUtils.defaultIfBlank(MDC.get("traceId"), UUID.randomUUID().toString(true)));
         val caller = request.getHeader("X-Gsvc-Caller");
