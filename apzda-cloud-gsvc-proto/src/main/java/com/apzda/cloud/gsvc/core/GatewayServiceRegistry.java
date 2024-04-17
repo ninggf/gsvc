@@ -51,7 +51,7 @@ public abstract class GatewayServiceRegistry {
         if (!interfaceName.isInterface()) {
             throw new IllegalArgumentException(String.format("%s is not interface", interfaceName));
         }
-        // register(interfaceName);
+        register(interfaceName);
 
         val serviceInfo = DECLARED_SERVICES.get(interfaceName);
         serviceInfo.local = false;
@@ -59,7 +59,7 @@ public abstract class GatewayServiceRegistry {
     }
 
     public static void register(Class<?> interfaceName, Map<String, Object[]> methodMeta) {
-        // register(interfaceName);
+        register(interfaceName);
 
         genDeclaredServiceMethods(interfaceName, methodMeta);
     }
