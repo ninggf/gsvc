@@ -42,5 +42,7 @@ jobs:
               "username": "${{ secrets.OSSRH_USERNAME }}",
               "password": "${{ secrets.OSSRH_TOKEN }}"
             }]
+      - name: Change Compiler Version
+        run: "sed -i '' 's/-SNAPSHOT<\/gsvc/<\/gsvc/' pom.xml"
       - name: Deploy to OSSRH
-        run: mvn -P+release -Djava.version=17 -DskipTests=true clean deploy
+        run: mvn -P+deploy -Djava.version=17 -DskipTests=true clean deploy
