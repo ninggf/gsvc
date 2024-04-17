@@ -76,7 +76,7 @@ public class LocalInfraImpl implements Counter, TempStorage {
                 log.debug("Removed: {}", ids);
                 key = keys.firstKey();
             }
-        }, 1, 5, TimeUnit.SECONDS);
+        }, 1, 1, TimeUnit.SECONDS);
     }
 
     @Override
