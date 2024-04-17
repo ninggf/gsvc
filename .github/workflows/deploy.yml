@@ -13,14 +13,14 @@ jobs:
   deploy:
     runs-on: ubuntu-22.04
     env:
-      MAVEN_USERNAME: ${{ secrets.OSSRH_ID }}
+      MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
       MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
-      GPG_SECURITY_PWD: ${{ secrets.GPG_SECURITY_PWD }}
+      GPG_SECURITY_PWD: ${{ secrets.GPG_SECRET_PWD }}
     steps:
       - name: Install gpg secret key
         run: |-
           # Install gpg secret key
-          cat <(echo -e "${{ secrets.GPG_SECURITY_KEY }}") | gpg --batch --import
+          cat <(echo -e "${{ secrets.GPG_SECRET_KEY }}") | gpg --batch --import
           # Verify gpg secret key
           gpg --list-secret-keys --keyid-format LONG
       - name: Checkout
@@ -39,7 +39,7 @@ jobs:
           servers: |
             [{
               "id": "ossrh",
-              "username": "${{ secrets.OSSRH_ID }}",
+              "username": "${{ secrets.OSSRH_USERNAME }}",
               "password": "${{ secrets.OSSRH_TOKEN }}"
             }]
       - name: Deploy to OSSRH
