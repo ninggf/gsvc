@@ -46,6 +46,6 @@ jobs:
         run: |-
           long="${{ github.ref }}"
           version=${long#"refs/tags/v"}
-          sed -i "s/\$\{project.version\}/${version}/" pom.xml
+          sed -i "s/\${project.version}/${version}/" pom.xml
       - name: Deploy to OSSRH
         run: mvn -P+deploy -Djava.version=17 -DskipTests=true clean deploy
