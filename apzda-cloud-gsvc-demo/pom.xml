@@ -3,7 +3,7 @@
     <parent>
         <artifactId>apzda-cloud-gsvc-parent</artifactId>
         <groupId>com.apzda.cloud</groupId>
-        <version>1.2.15</version>
+        <version>1.2.16-SNAPSHOT</version>
         <relativePath>../apzda-cloud-gsvc-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -28,37 +28,37 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>demo-demo-proto</artifactId>
-                <version>1.2.15</version>
+                <version>1.2.16-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>demo-demo-service</artifactId>
-                <version>1.2.15</version>
+                <version>1.2.16-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>demo-foo-proto</artifactId>
-                <version>1.2.15</version>
+                <version>1.2.16-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>demo-foo-service</artifactId>
-                <version>1.2.15</version>
+                <version>1.2.16-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>demo-bar-proto</artifactId>
-                <version>1.2.15</version>
+                <version>1.2.16-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>demo-math-proto</artifactId>
-                <version>1.2.15</version>
+                <version>1.2.16-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>demo-bar-service</artifactId>
-                <version>1.2.15</version>
+                <version>1.2.16-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
