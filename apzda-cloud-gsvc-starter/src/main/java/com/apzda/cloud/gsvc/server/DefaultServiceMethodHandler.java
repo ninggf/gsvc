@@ -395,7 +395,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
     private String createResponse(Object resp, ServiceMethod serviceMethod) throws JsonProcessingException {
         val context = GsvcContextHolder.current();
         val flat = svcConfigure.isFlatResponse();
-        if (flat && "gtw".equals(context.getCaller())) {
+        if (!flat && "gtw".equals(context.getCaller())) {
             // bookmark: wrap response for the request from gateway.
             val node = objectMapper.convertValue(resp, JsonNode.class);
             if (node instanceof ObjectNode objectNode) {

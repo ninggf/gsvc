@@ -127,7 +127,7 @@ public final class ServiceConfigProperties {
 
         private boolean contextCapture = false;
 
-        private boolean flatResponse = true;
+        private boolean flatResponse = false;
 
         @Override
         public String toString() {
