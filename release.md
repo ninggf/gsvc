@@ -1,0 +1,29 @@
+### Added
+
+- Add gsvc.serviceName option
+- apzda-cloud-gsvc-test module
+    - @GsvcTest
+    - @AutoConfigureGsvcTest
+- xxl-job-adapter module
+- Configuration properties
+    - apzda.cloud.config.real-ip-header: GsvcContextHolder.getRemoteIp use to get remote Ip.
+    - apzda.cloud.config.real-ip-from: only accept real-ip-header form which the request comes.
+    - apzda.cloud.config.flat-response: do not wrap the response.
+- GsvcContextHolder.current
+- IForwardPlugin interface
+- I18nUtils now supports message as key
+
+### Changed
+
+- Spring boot upgraded to 3.2.4
+- Spring Cloud upgraded to 2023.0.1
+- I18nHelper renamed to I18nUtils
+- Dependencies upgraded to their latest version
+
+### Improved
+
+- Service Name Resolve mechanism
+- Gateway, forwarding request to downstream instead of RPC.
+- RPC Mechanism, using Stub instead of Reflection.
+- Tracing
+- Sentinel

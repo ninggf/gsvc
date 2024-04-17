@@ -3,7 +3,7 @@ name: Deploy to OSSRH
 on:
   push:
     tags:
-      - v*
+      - 'v*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -50,3 +50,12 @@ jobs:
           sed -i "s/\${project.version}/${version}/" pom.xml
       - name: Deploy to OSSRH
         run: mvn -P+deploy -Djava.version=17 -DskipTests=true clean deploy
+  release:
+    runs-on: ubuntu-22.04
+    needs: deploy
+    permissions:
+      contents: write
+    steps:
+      - uses: ncipollo/release-action@v1.14.0
+        with:
+          bodyFile: "release.md"
