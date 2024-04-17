@@ -228,4 +228,8 @@ public class GatewayServiceConfigure implements IServiceConfigure {
         return Objects.requireNonNullElse(plugins, Collections.emptyList());
     }
 
+    public boolean isFlatResponse() {
+        return serviceConfig.getConfig().isFlatResponse();
+    }
+
 }

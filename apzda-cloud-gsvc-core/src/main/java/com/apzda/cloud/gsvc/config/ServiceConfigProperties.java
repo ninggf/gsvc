@@ -127,6 +127,8 @@ public final class ServiceConfigProperties {
 
         private boolean contextCapture = false;
 
+        private boolean flatResponse = true;
+
         @Override
         public String toString() {
             return new ToStringCreator(this).append("Login", loginPage)
