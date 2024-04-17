@@ -168,7 +168,18 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         }
 
         val mediaTypes = request.headers().accept();
-        val mediaType = mediaTypes.isEmpty() ? MediaType.APPLICATION_JSON : mediaTypes.get(0).removeQualityValue();
+        var mediaType = mediaTypes.isEmpty() ? MediaType.APPLICATION_JSON : mediaTypes.get(0).removeQualityValue();
+        if (mediaType.isWildcardType()) {
+            mediaType = MediaType.APPLICATION_JSON;
+        }
+        else if (mediaType.isWildcardSubtype()) {
+            mediaType = switch (mediaType.getType()) {
+                case "*", "text" -> MediaType.TEXT_PLAIN;
+                case "application" -> MediaType.APPLICATION_JSON;
+
+                default -> throw new IllegalStateException("Unexpected value: " + mediaType.getType());
+            };
+        }
 
         if (status.is2xxSuccessful() || status.is3xxRedirection()) {
             val filtered = removeHopByHopHeadersFilter.filter(headers, null);
