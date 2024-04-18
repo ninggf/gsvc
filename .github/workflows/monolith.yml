@@ -49,8 +49,12 @@ jobs:
           tail: true
           run: |-
             java -jar demo-math-service/target/demo-math-service-fat.jar &
+            java -jar demo-bar-service/target/demo-bar-service-fat.jar &
+            java -jar demo-foo-service/target/demo-foo-service-fat.jar &
             java -jar demo-allinone-app/target/demo-allinone-app-fat.jar &
           wait-on: |-
+            http-get://localhost:12561/actuator/health
+            http-get://localhost:12562/actuator/health
             http-get://localhost:${{ env.SERVER_PORT_NO }}/actuator/health
             tcp:localhost:9090
       - name: Download ijhttp tools
