@@ -478,3 +478,33 @@ Accept: application/json
         client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
     });
 %}
+
+### BarService local:fileupload
+POST http://{{barService}}/file/upload HTTP/1.1
+Content-Type: multipart/form-data; boundary=boundaryx
+Accept: application/json
+
+--boundary
+Content-Disposition: form-data; name="files"; filename="pom.xml"
+Content-Type: application/xml
+
+< ./pom.xml
+--boundary
+Content-Disposition: form-data; name="files"; filename="1.txt"
+Content-Type: text/plain
+
+< ./files/1.txt
+--boundary
+Content-Disposition: form-data; name="path"
+
+test/..././../aha/
+--boundary
+
+> {%
+    client.test("Files uploaded successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errCode + " != 0");
+        client.assert(response.body.data.files.length === 2, "出错啦: 文件数不为2");
+        client.assert(response.body.data.files[0].error === 0, "出错啦: 文件1上传失败: " + response.body.data.files[0].message);
+    });
+%}
