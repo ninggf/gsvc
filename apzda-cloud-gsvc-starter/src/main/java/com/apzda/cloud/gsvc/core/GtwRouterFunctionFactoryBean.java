@@ -8,7 +8,7 @@ import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.gtw.ProxyExchangeHandler;
 import com.apzda.cloud.gsvc.gtw.Route;
 import com.apzda.cloud.gsvc.gtw.RouteRegistry;
-import com.apzda.cloud.gsvc.server.ServiceMethodHandler;
+import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.apzda.cloud.swagger.ProtobufMsgHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -55,10 +55,13 @@ public class GtwRouterFunctionFactoryBean
 
     private ProxyExchangeHandler proxyExchangeHandler;
 
+    private IServiceMethodHandler serviceMethodHandler;
+
     @Override
     public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
         this.proxyExchangeHandler = applicationContext.getBean(ProxyExchangeHandler.class);
+        this.serviceMethodHandler = applicationContext.getBean(IServiceMethodHandler.class);
     }
 
     @Override
@@ -89,14 +92,21 @@ public class GtwRouterFunctionFactoryBean
         val actions = route.getActions();
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.absPath();
-
+        val method = serviceMethod.getDmName();
         if (log.isDebugEnabled()) {
-            log.debug("SN Route {} to {}.{}({})", path, serviceMethod.getServiceName(), serviceMethod.getDmName(),
-                    route.meta());
+            log.debug("SN Route {} to {}.{}({})", path, serviceMethod.getServiceName(), method, route.meta());
         }
 
-        final HandlerFunction<ServerResponse> func = request -> ServiceMethodHandler.handle(request, "gtw",
-                serviceMethod, applicationContext);
+        HandlerFunction<ServerResponse> func = request -> {
+            val type = serviceMethod.getType();
+
+            return switch (type) {
+                case UNARY -> serviceMethodHandler.handleUnary(request, serviceClass, method, null);
+                case SERVER_STREAMING ->
+                    serviceMethodHandler.handleServerStreaming(request, serviceClass, method, null);
+                default -> serviceMethodHandler.handleBidStreaming(request, serviceClass, method, null);
+            };
+        };
 
         builder.route((request -> match(request, path, actions)), func);
 

@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.Message;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -35,9 +34,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
+import org.springframework.web.util.WebUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -72,10 +73,14 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             if (serviceMethod == null) {
                 throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
             }
-            val requestObj = createRequestObj(request, serviceMethod);
+            val caller = func == null ? "gtw" : request.headers().firstHeader("X-Gsvc-Caller");
+            val requestObj = createRequestObj(request, serviceMethod, caller);
             return doUnaryCall(request, requestObj, serviceMethod, func);
         }
         catch (Throwable throwable) {
+            if (throwable instanceof ReflectiveOperationException && throwable.getCause() != null) {
+                return exceptionHandler.handle(throwable.getCause(), request);
+            }
             return exceptionHandler.handle(throwable, request);
         }
     }
@@ -88,10 +93,14 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             if (serviceMethod == null) {
                 throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
             }
-            val requestObj = createRequestObj(request, serviceMethod);
+            val caller = func == null ? "gtw" : request.headers().firstHeader("X-Gsvc-Caller");
+            val requestObj = createRequestObj(request, serviceMethod, caller);
             return doStreamingCall(request, requestObj, serviceMethod, func);
         }
         catch (Throwable throwable) {
+            if (throwable instanceof ReflectiveOperationException && throwable.getCause() != null) {
+                return exceptionHandler.handle(throwable.getCause(), request);
+            }
             return exceptionHandler.handle(throwable, request);
         }
     }
@@ -102,8 +111,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         return ServerResponse.status(HttpStatus.NOT_IMPLEMENTED).build();
     }
 
-    protected Mono<JsonNode> createRequestObj(ServerRequest request, ServiceMethod serviceMethod) throws IOException {
-        val caller = request.headers().firstHeader("X-Gsvc-Caller");
+    protected Mono<JsonNode> createRequestObj(ServerRequest request, ServiceMethod serviceMethod, String caller) {
         if (!StringUtils.hasText(caller)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
@@ -122,7 +130,8 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
 
     @SuppressWarnings("unchecked")
     private ServerResponse doStreamingCall(ServerRequest request, Mono<JsonNode> requestObj,
-            ServiceMethod serviceMethod, Function<Object, Object> func) {
+            ServiceMethod serviceMethod, Function<Object, Object> func)
+            throws ReflectiveOperationException, ValidationException {
         val plugins = serviceMethod.getPlugins();
         var size = plugins.size();
 
@@ -132,7 +141,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             }
         }
 
-        Mono<Object> realReqObj = requestObj.handle((req, sink) -> {
+        Object realReqObj = requestObj.handle((req, sink) -> {
             try {
                 val reqObj = objectMapper.readValue(req.toString(), serviceMethod.getRequestType());
                 val result = validator.validate((Message) reqObj);
@@ -148,9 +157,22 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             catch (Exception e) {
                 sink.error(e);
             }
-        });
+        }).block();
 
-        Flux<Object> returnObj = (Flux<Object>) func.apply(realReqObj.block());
+        assert realReqObj != null;
+        val result = validator.validate((Message) realReqObj);
+        // Check if there are any validation violations
+        if (!result.isSuccess()) {
+            throw new MessageValidationException(result.getViolations(), ((Message) realReqObj).getDescriptorForType());
+        }
+
+        Flux<Object> returnObj;
+        if (func == null) {
+            returnObj = (Flux<Object>) serviceMethod.call(realReqObj);
+        }
+        else {
+            returnObj = (Flux<Object>) func.apply(realReqObj);
+        }
 
         val timeout = svcConfigure.getTimeout(serviceMethod.getCfgName(), serviceMethod.getDmName());
         if (timeout.toMillis() > 0) {
@@ -204,7 +226,8 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
     }
 
     private ServerResponse doUnaryCall(ServerRequest request, Mono<JsonNode> requestObj, ServiceMethod serviceMethod,
-            Function<Object, Object> func) throws JsonProcessingException, ValidationException {
+            Function<Object, Object> func)
+            throws JsonProcessingException, ValidationException, ReflectiveOperationException {
         val plugins = serviceMethod.getPlugins();
         var size = plugins.size();
         for (IPlugin plugin : plugins) {
@@ -230,8 +253,13 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         if (!result.isSuccess()) {
             throw new MessageValidationException(result.getViolations(), ((Message) realReqObj).getDescriptorForType());
         }
-
-        Object returnObj = func.apply(realReqObj);
+        Object returnObj;
+        if (func == null) {
+            returnObj = serviceMethod.call(realReqObj);
+        }
+        else {
+            returnObj = func.apply(realReqObj);
+        }
 
         while (--size >= 0) {
             var plugin = plugins.get(size);
@@ -252,10 +280,12 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         // bookmark: readTimeout
         val readTimeout = svcConfigure.getReadTimeout(serviceMethod, false);
         val context = GsvcContextHolder.current();
+        val httpServletRequest = request.servletRequest();
+
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
             var mono = Mono.<JsonNode>create(sink -> {
                 try {
-                    val requestBody = objectMapper.readTree(request.servletRequest().getReader());
+                    val requestBody = objectMapper.readTree(httpServletRequest.getReader());
                     if (log.isTraceEnabled()) {
                         context.restore();
                         log.trace("Request({}) resolved: {}", contentType, requestBody);
@@ -271,15 +301,14 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             }
             return mono;
         }
-        else if (contentType.isCompatibleWith(MediaType.MULTIPART_FORM_DATA)
-                || contentType.isCompatibleWith(MediaType.MULTIPART_MIXED)) {
-            val queryParams = request.params();
-            HttpServletRequest servletRequest = request.servletRequest();
-            if (!(servletRequest instanceof MultipartHttpServletRequest)) {
-                servletRequest = multipartResolver.resolveMultipart(servletRequest);
+        else if (multipartResolver.isMultipart(httpServletRequest)) {
+            MultipartHttpServletRequest multipartRequest = WebUtils.getNativeRequest(httpServletRequest,
+                    MultipartHttpServletRequest.class);
+            if (multipartRequest == null) {
+                multipartRequest = new StandardMultipartHttpServletRequest(httpServletRequest);
             }
-
-            val multiFileMap = ((MultipartHttpServletRequest) servletRequest).getMultiFileMap();
+            val queryParams = request.params();
+            val multiFileMap = multipartRequest.getMultiFileMap();
             val multipartData = Mono.just(multiFileMap);
             args = Mono.zip(Mono.just(queryParams), multipartData).map(tuple -> {
                 Map<String, Object> result = new HashMap<>();
