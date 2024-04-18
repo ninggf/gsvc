@@ -57,14 +57,20 @@ jobs:
             tcp:localhost:9090
       - name: Download ijhttp tools
         run: |-
-          curl -f -L -o ijhttp.zip "https://jb.gg/ijhttp/latest"
-          unzip ijhttp.zip
-          ./ijhttp/ijhttp --version
+          # curl -f -L -o ijhttp.zip "https://jb.gg/ijhttp/latest"
+          # unzip ijhttp.zip
+          # ./ijhttp/ijhttp --version
+          docker pull jetbrains/intellij-http-client:233.15026.9
+          docker tag  jetbrains/intellij-http-client:233.15026.9 ijhttp
       - name: Execute HTTP requests
         run: |-
-          ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/demo-test.http
-          ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/bar-test.http
-          ./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/foo-test.http
+          #./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/demo-test.http
+          #./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/bar-test.http
+          #./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/foo-test.http
+          docker run --rm -v ./apzda-cloud-gsvc-demo:/workdir --add-host host.docker.internal:host-gateway ijhttp -D \
+            --env-file http-client.env.json -env dev \
+            demo-test.http bar-test.http foo-test.http
+
   deploy:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: [ "build" ]
