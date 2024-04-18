@@ -68,7 +68,7 @@ jobs:
           #./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/bar-test.http
           #./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/foo-test.http
           docker run --rm -v ./apzda-cloud-gsvc-demo:/workdir --add-host host.docker.internal:host-gateway ijhttp -D \
-            --env-file http-client.env.json -env dev \
+            --env-file http-client.env.json --env dev \
             demo-test.http bar-test.http foo-test.http
 
   deploy:
