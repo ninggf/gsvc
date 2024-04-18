@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Changed
 
-#### New Features
+- use application name as default service name
+
+### Fixed
+
+- convert Wildcard MediaType to a specified type
 
 ## [1.2.18] - 2024-04-17
 
