@@ -48,7 +48,6 @@ import org.springframework.web.servlet.LocaleResolver;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -71,7 +70,7 @@ public class GsvcCoreAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     MessageSource messageSource(MessageSourceProperties properties,
-            ObjectProvider<List<MessageSourceNameResolver>> provider) {
+            ObjectProvider<MessageSourceNameResolver> provider) {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
 
         val names = new HashSet<String>();
@@ -80,11 +79,9 @@ public class GsvcCoreAutoConfiguration {
             names.add(properties.getBasename());
         }
 
-        provider.ifAvailable((resolvers) -> {
-            for (MessageSourceNameResolver resolver : resolvers) {
-                names.addAll(StringUtils.commaDelimitedListToSet(StringUtils.trimAllWhitespace(resolver.baseNames())));
-            }
-        });
+        for (MessageSourceNameResolver resolver : provider.orderedStream().toList()) {
+            names.addAll(StringUtils.commaDelimitedListToSet(StringUtils.trimAllWhitespace(resolver.baseNames())));
+        }
 
         properties.setBasename(String.join(",", names.stream().toList()));
 

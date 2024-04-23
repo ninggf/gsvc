@@ -23,11 +23,9 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -39,7 +37,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class AsteriskPermissionEvaluator implements PermissionEvaluator {
 
-    private final ObjectProvider<List<PermissionChecker>> checkerProvider;
+    private final ObjectProvider<PermissionChecker> checkerProvider;
 
     @Override
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
@@ -50,14 +48,13 @@ public class AsteriskPermissionEvaluator implements PermissionEvaluator {
             return allow;
         }
         val aClass = targetDomainObject.getClass();
-        val checkers = checkerProvider.getIfAvailable();
-        if (!CollectionUtils.isEmpty(checkers)) {
-            for (PermissionChecker checker : checkers) {
-                if (checker.supports(aClass)) {
-                    val allowed = checker.check(authentication, targetDomainObject, (String) permission);
-                    if (allowed != null) {
-                        return allowed;
-                    }
+        val checkers = checkerProvider.orderedStream().toList();
+
+        for (PermissionChecker checker : checkers) {
+            if (checker.supports(aClass)) {
+                val allowed = checker.check(authentication, targetDomainObject, (String) permission);
+                if (allowed != null) {
+                    return allowed;
                 }
             }
         }
@@ -72,14 +69,12 @@ public class AsteriskPermissionEvaluator implements PermissionEvaluator {
             return false;
         }
 
-        val checkers = checkerProvider.getIfAvailable();
-        if (!CollectionUtils.isEmpty(checkers)) {
-            for (PermissionChecker checker : checkers) {
-                if (checker.supports(targetType)) {
-                    val allowed = checker.check(authentication, targetId, targetType, (String) permission);
-                    if (allowed != null) {
-                        return allowed;
-                    }
+        val checkers = checkerProvider.orderedStream().toList();
+        for (PermissionChecker checker : checkers) {
+            if (checker.supports(targetType)) {
+                val allowed = checker.check(authentication, targetId, targetType, (String) permission);
+                if (allowed != null) {
+                    return allowed;
                 }
             }
         }

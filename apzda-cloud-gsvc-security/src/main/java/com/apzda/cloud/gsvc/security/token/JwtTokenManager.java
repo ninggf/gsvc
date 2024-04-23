@@ -31,7 +31,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -50,7 +49,7 @@ public class JwtTokenManager implements TokenManager {
 
     protected final JWTSigner jwtSigner;
 
-    private final ObjectProvider<List<JwtTokenCustomizer>> customizers;
+    private final ObjectProvider<JwtTokenCustomizer> customizers;
 
     @Override
     public Authentication restoreAuthentication(HttpServletRequest request) {
@@ -123,7 +122,6 @@ public class JwtTokenManager implements TokenManager {
                 .name((String) jwt.getPayload(JWT.SUBJECT))
                 .build();
             val username = jwtToken.getName();
-
             val tmpUser = User.withUsername(username).password("").build();
 
             Optional<CachedUserDetails> cachedUserDetails = userDetailsMetaRepository.getMetaData(tmpUser,
@@ -256,11 +254,10 @@ public class JwtTokenManager implements TokenManager {
                 save(authentication, GsvcContextHolder.getRequest().orElse(null));
 
                 JwtToken newToken = newJwtToken;
-                val cs = customizers.getIfAvailable();
-                if (cs != null) {
-                    for (JwtTokenCustomizer c : cs) {
-                        newToken = c.customize(authentication, newToken);
-                    }
+                val cs = customizers.orderedStream().toList();
+
+                for (JwtTokenCustomizer c : cs) {
+                    newToken = c.customize(authentication, newToken);
                 }
 
                 return newToken;

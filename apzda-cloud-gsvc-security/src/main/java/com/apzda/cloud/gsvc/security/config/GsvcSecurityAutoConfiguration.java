@@ -84,7 +84,6 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
@@ -113,9 +112,9 @@ public class GsvcSecurityAutoConfiguration {
 
         private final ApplicationEventPublisher eventPublisher;
 
-        private final ObjectProvider<List<DeviceAwareAuthenticationProcessingFilter>> authenticationProcessingFilter;
+        private final ObjectProvider<DeviceAwareAuthenticationProcessingFilter> authenticationProcessingFilter;
 
-        private final ObjectProvider<List<AuthorizeCustomizer>> authorizeCustomizer;
+        private final ObjectProvider<AuthorizeCustomizer> authorizeCustomizer;
 
         @Value("${server.error.path:/error}")
         private String errorPath;
@@ -178,26 +177,23 @@ public class GsvcSecurityAutoConfiguration {
                 http.logout(AbstractHttpConfigurer::disable);
             }
 
-            val filters = authenticationProcessingFilter.getIfAvailable();
-            if (filters != null) {
-                filters.sort(Comparator.comparingInt(DeviceAwareAuthenticationProcessingFilter::getOrder));
-                for (AbstractAuthenticationProcessingFilter filter : filters) {
-                    filter.setSecurityContextHolderStrategy(SecurityContextHolder.getContextHolderStrategy());
+            val filters = authenticationProcessingFilter.orderedStream().toList();
+            for (AbstractAuthenticationProcessingFilter filter : filters) {
+                filter.setSecurityContextHolderStrategy(SecurityContextHolder.getContextHolderStrategy());
 
-                    filter.setAuthenticationManager(authenticationManager);
-                    // 上下文仓储
-                    filter.setSecurityContextRepository(securityContextRepository);
-                    // 认证成功与失败处理器
-                    filter.setAuthenticationSuccessHandler(authenticationHandler);
-                    filter.setAuthenticationFailureHandler(authenticationHandler);
-                    // 认证成功后处理策略（过期，禁止多处登录等）
-                    filter.setSessionAuthenticationStrategy(authenticationHandler);
+                filter.setAuthenticationManager(authenticationManager);
+                // 上下文仓储
+                filter.setSecurityContextRepository(securityContextRepository);
+                // 认证成功与失败处理器
+                filter.setAuthenticationSuccessHandler(authenticationHandler);
+                filter.setAuthenticationFailureHandler(authenticationHandler);
+                // 认证成功后处理策略（过期，禁止多处登录等）
+                filter.setSessionAuthenticationStrategy(authenticationHandler);
 
-                    filter.setApplicationEventPublisher(eventPublisher);
-                    filter.setAllowSessionCreation(false);
+                filter.setApplicationEventPublisher(eventPublisher);
+                filter.setAllowSessionCreation(false);
 
-                    http.addFilterBefore(filter, SessionManagementFilter.class);
-                }
+                http.addFilterBefore(filter, SessionManagementFilter.class);
             }
             // 用于处理Session加载过程中的异常
             http.addFilterBefore(new AuthenticationExceptionFilter(), SessionManagementFilter.class);
@@ -240,14 +236,10 @@ public class GsvcSecurityAutoConfiguration {
                     }
                 }
 
-                val customizers = authorizeCustomizer.getIfAvailable();
-                if (customizers != null) {
-                    customizers.sort(Comparator.comparingInt(AuthorizeCustomizer::getOrder));
-                    for (AuthorizeCustomizer customizer : customizers) {
-                        customizer.customize(authorize);
-                    }
+                val customizers = authorizeCustomizer.orderedStream().toList();
+                for (AuthorizeCustomizer customizer : customizers) {
+                    customizer.customize(authorize);
                 }
-
                 authorize.requestMatchers(antMatcher(error)).permitAll();
                 authorize.anyRequest().permitAll();
             });
@@ -298,7 +290,7 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         AuthenticationHandler authenticationHandler(TokenManager tokenManager,
-                ObjectProvider<List<JwtTokenCustomizer>> customizers) {
+                ObjectProvider<JwtTokenCustomizer> customizers) {
             return new DefaultAuthenticationHandler(properties, tokenManager, customizers);
         }
 
@@ -383,7 +375,7 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnMissingBean
         TokenManager tokenManager(UserDetailsService userDetailsService,
                 UserDetailsMetaRepository userDetailsMetaRepository, JWTSigner jwtSigner,
-                ObjectProvider<List<JwtTokenCustomizer>> customizers) {
+                ObjectProvider<JwtTokenCustomizer> customizers) {
             return new JwtTokenManager(userDetailsService, userDetailsMetaRepository, properties, jwtSigner,
                     customizers);
         }
@@ -435,7 +427,7 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         static PermissionEvaluator asteriskPermissionEvaluator(
-                ObjectProvider<List<PermissionChecker>> checkerProvider) {
+                ObjectProvider<PermissionChecker> checkerProvider) {
             return new AsteriskPermissionEvaluator(checkerProvider);
         }
 

@@ -27,7 +27,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author fengz
@@ -40,7 +39,7 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler, Appl
 
     private final TokenManager tokenManager;
 
-    private final ObjectProvider<List<JwtTokenCustomizer>> customizers;
+    private final ObjectProvider<JwtTokenCustomizer> customizers;
 
     private ApplicationEventPublisher applicationEventPublisher;
 
@@ -68,11 +67,9 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler, Appl
 
                 authenticationToken.login(jwtToken);
                 JwtToken newToken = jwtToken;
-                val cs = customizers.getIfAvailable();
-                if (cs != null) {
-                    for (JwtTokenCustomizer c : cs) {
-                        newToken = c.customize(authentication, newToken);
-                    }
+                val cs = customizers.orderedStream().toList();
+                for (JwtTokenCustomizer c : cs) {
+                    newToken = c.customize(authentication, newToken);
                 }
                 this.applicationEventPublisher.publishEvent(new AuthenticationCompleteEvent(authentication, newToken));
                 ResponseUtils.respond(request, response, Response.success(newToken));

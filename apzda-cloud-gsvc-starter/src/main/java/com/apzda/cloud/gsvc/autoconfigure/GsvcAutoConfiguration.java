@@ -84,8 +84,8 @@ public class GsvcAutoConfiguration {
 
     @Bean
     GatewayServiceConfigure gatewayServiceConfigure(ServiceConfigProperties properties,
-            ObjectProvider<List<IGtwGlobalFilter<ServerResponse, ServerResponse>>> globalFilters,
-            ObjectProvider<List<IGlobalPlugin>> globalPlugins) {
+            ObjectProvider<IGtwGlobalFilter<ServerResponse, ServerResponse>> globalFilters,
+            ObjectProvider<IGlobalPlugin> globalPlugins) {
         return new GatewayServiceConfigure(properties, globalFilters, globalPlugins);
     }
 

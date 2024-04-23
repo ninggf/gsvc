@@ -13,9 +13,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author ninggf
@@ -25,9 +23,9 @@ public class GatewayServiceConfigure implements IServiceConfigure {
 
     private final ServiceConfigProperties serviceConfig;
 
-    private final ObjectProvider<List<IGtwGlobalFilter<ServerResponse, ServerResponse>>> globalFilters;
+    private final ObjectProvider<IGtwGlobalFilter<ServerResponse, ServerResponse>> globalFilters;
 
-    private final ObjectProvider<List<IGlobalPlugin>> globalPlugins;
+    private final ObjectProvider<IGlobalPlugin> globalPlugins;
 
     /**
      * 仅供GRPC stub使用.
@@ -217,15 +215,11 @@ public class GatewayServiceConfigure implements IServiceConfigure {
     }
 
     public List<IGtwGlobalFilter<ServerResponse, ServerResponse>> getGlobalFilters() {
-        val filters = globalFilters.getIfAvailable();
-        // filters.sort(Comparator.comparingInt(IGtwGlobalFilter::getOrder));
-        return Objects.requireNonNullElse(filters, Collections.emptyList());
+        return globalFilters.orderedStream().toList();
     }
 
     public List<? extends IPlugin> getGlobalPlugins() {
-        val plugins = globalPlugins.getIfAvailable();
-        // plugins.sort(Comparator.comparingInt(IGlobalPlugin::getOrder));
-        return Objects.requireNonNullElse(plugins, Collections.emptyList());
+        return globalPlugins.orderedStream().toList();
     }
 
     public boolean isFlatResponse() {
