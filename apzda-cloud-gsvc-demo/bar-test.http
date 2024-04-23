@@ -52,6 +52,7 @@ Content-Type: application/json
 %}
 
 ### BarService Greeting
+//@no-redirect
 POST http://{{barService}}/~barService/greeting
 Content-Type: application/json
 X-Gsvc-Caller: gtw
@@ -506,5 +507,192 @@ test/..././../aha/
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errCode + " != 0");
         client.assert(response.body.data.files.length === 2, "出错啦: 文件数不为2");
         client.assert(response.body.data.files[0].error === 0, "出错啦: 文件1上传失败: " + response.body.data.files[0].message);
+    });
+%}
+
+### Route - SaService - /sa/login/user2
+POST http://{{barService}}/sa/login
+Content-Type: application/json
+
+{
+    "username": "user2",
+    "password": "123456"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.global.set("accessToken", response.body.data.accessToken)
+        client.global.set("refreshToken", response.body.data.refreshToken)
+    });
+%}
+
+### BarService Greeting - user2
+//@no-redirect
+POST http://{{barService}}/~barService/greeting
+Content-Type: application/json
+Accept: application/json
+X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
+
+{
+    "name": "gsvc",
+    "age": 18
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -815, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### SarService active - user2
+//@no-redirect
+POST http://{{barService}}/~saService/active
+Content-Type: application/json
+Accept: application/json
+X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
+
+{
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### Route - SaService - /sa/login/user3
+POST http://{{barService}}/sa/login
+Content-Type: application/json
+
+{
+    "username": "user3",
+    "password": "123456"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.global.set("accessToken", response.body.data.accessToken)
+        client.global.set("refreshToken", response.body.data.refreshToken)
+    });
+%}
+
+### BarService Greeting - user3
+//@no-redirect
+POST http://{{barService}}/~barService/greeting
+Content-Type: application/json
+Accept: application/json
+X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
+
+{
+    "name": "gsvc",
+    "age": 18
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -813, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### SarService reset - user3
+//@no-redirect
+POST http://{{barService}}/~saService/reset
+Content-Type: application/json
+Accept: application/json
+X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
+
+{
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+
+### Route - SaService - /sa/login/user4
+POST http://{{barService}}/sa/login
+Content-Type: application/json
+
+{
+    "username": "user4",
+    "password": "123456"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.global.set("accessToken", response.body.data.accessToken)
+        client.global.set("refreshToken", response.body.data.refreshToken)
+    });
+%}
+
+### BarService Greeting - user4
+//@no-redirect
+POST http://{{barService}}/~barService/greeting
+Content-Type: application/json
+Accept: application/json
+X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
+
+{
+    "name": "gsvc",
+    "age": 18
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -801, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### SarService mfaSetup - user4
+//@no-redirect
+POST http://{{barService}}/~saService/setup
+Content-Type: application/json
+Accept: application/json
+X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
+
+{
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
     });
 %}

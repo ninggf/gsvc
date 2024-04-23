@@ -32,13 +32,25 @@ import java.util.stream.Collectors;
 @ConfigurationProperties("apzda.cloud.security")
 @Data
 public class SecurityConfigProperties {
+
     private String metaRepo;
+
     private boolean traceEnabled;
+
     private boolean mfaEnabled;
+
+    private boolean accountLockedEnabled;
+
+    private boolean credentialsExpiredEnabled;
+
     private String rolePrefix = "ROLE_";
+
     private Class<? extends GrantedAuthority> authorityClass = SimpleGrantedAuthority.class;
+
     private CookieConfig cookie = new CookieConfig();
+
     private String argName;
+
     private String tokenName = "Authorization";
 
     private String bearer = "Bearer";
@@ -49,8 +61,15 @@ public class SecurityConfigProperties {
     private Duration jwtLeeway = Duration.ofSeconds(30);
 
     private List<String> exclude = new ArrayList<>();
+
     private List<String> mfaExclude = new ArrayList<>();
+
+    private List<String> activePath = new ArrayList<>();
+
+    private List<String> resetCredentialsPath = new ArrayList<>();
+
     private List<ACL> acl = new ArrayList<>();
+
     private List<String> allowedDevices = new ArrayList<>();
 
     @DurationUnit(ChronoUnit.MINUTES)
@@ -64,14 +83,16 @@ public class SecurityConfigProperties {
     }
 
     public Set<RequestMatcher> mfaExcludes() {
-        val mfaExcludeSet = mfaExclude.stream().map(AntPathRequestMatcher::antMatcher).collect(Collectors.toSet());
-        val excludeSet = exclude.stream().map(AntPathRequestMatcher::antMatcher).collect(Collectors.toSet());
-        val excludes = new HashSet<RequestMatcher>(mfaExcludeSet.size() + excludeSet.size());
-        excludes.addAll(mfaExcludeSet);
-        excludes.addAll(excludeSet);
-        return excludes;
+        return antMatchers(mfaExclude, exclude);
     }
 
+    public Set<RequestMatcher> activeExcludes() {
+        return antMatchers(activePath, exclude);
+    }
+
+    public Set<RequestMatcher> resetCredentialsExcludes() {
+        return antMatchers(resetCredentialsPath, exclude);
+    }
 
     public boolean deviceIsAllowed(String device) {
         if (StringUtils.isBlank(device)) {
@@ -83,6 +104,15 @@ public class SecurityConfigProperties {
         }
 
         return allowedDevices.contains(device);
+    }
+
+    static Set<RequestMatcher> antMatchers(List<String> paths, List<String> exclude) {
+        val excludePaths = paths.stream().map(AntPathRequestMatcher::antMatcher).collect(Collectors.toSet());
+        val excludeSet = exclude.stream().map(AntPathRequestMatcher::antMatcher).collect(Collectors.toSet());
+        val excludes = new HashSet<RequestMatcher>(excludePaths.size() + excludeSet.size());
+        excludes.addAll(excludePaths);
+        excludes.addAll(excludeSet);
+        return excludes;
     }
 
     @Data

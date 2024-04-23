@@ -81,6 +81,9 @@ service SaService {
       tags: "Home,首页"
     };
   }
+  rpc active(google.protobuf.Empty) returns(gsvc.CommonRes);
+  rpc reset(google.protobuf.Empty) returns(gsvc.CommonRes);
+  rpc setup(google.protobuf.Empty) returns(gsvc.CommonRes);
 }
 
 message FileReq {

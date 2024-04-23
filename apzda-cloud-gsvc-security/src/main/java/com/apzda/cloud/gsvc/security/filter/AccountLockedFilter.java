@@ -16,13 +16,9 @@
  */
 package com.apzda.cloud.gsvc.security.filter;
 
-import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
-import com.apzda.cloud.gsvc.security.mfa.MfaException;
-import com.apzda.cloud.gsvc.security.mfa.MfaStatus;
-import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -30,43 +26,24 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import java.util.Set;
 
 /**
- * 这个过滤器目前使用暴力方式解决多因素认证问题.
+ * 用于检测账户锁定.
  *
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
 @Slf4j
-public class MfaAuthenticationFilter extends AfterAuthenticatedFilter {
+public class AccountLockedFilter extends AfterAuthenticatedFilter {
 
-    protected final SecurityConfigProperties properties;
-
-    public MfaAuthenticationFilter(Set<RequestMatcher> excludes, SecurityConfigProperties properties) {
+    public AccountLockedFilter(Set<RequestMatcher> excludes) {
         super(excludes);
-        this.properties = properties;
     }
 
     @Override
     protected boolean doFilter(@NonNull Authentication authentication, @NonNull UserDetails userDetails) {
-        if (properties.isAccountLockedEnabled() && !userDetails.isAccountNonLocked()) {
-            return true;
+        if (!userDetails.isAccountNonLocked()) {
+            throw new LockedException(String.format("%s's account is expired", userDetails.getUsername()));
         }
-
-        if (properties.isCredentialsExpiredEnabled() && !userDetails.isCredentialsNonExpired()) {
-            return true;
-        }
-
-        if (userDetails instanceof UserDetailsMeta userDetailsMeta) {
-            val mfaStatus = userDetailsMeta.get(UserDetailsMeta.MFA_STATUS_KEY, authentication, MfaStatus.DISABLED);
-
-            log.trace("Mfa Status of '{}' is: {}", userDetailsMeta.getUsername(), mfaStatus);
-
-            switch (mfaStatus) {
-                case MfaStatus.UNSET -> throw MfaException.UNSET;
-                case MfaStatus.PENDING -> throw MfaException.NOT_VERIFIED;
-            }
-        }
-
         return true;
     }
 

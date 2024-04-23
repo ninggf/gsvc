@@ -17,8 +17,10 @@
 package com.apzda.cloud.demo.bar.config;
 
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
+import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -31,6 +33,24 @@ public class BarConfiguration {
     @Bean("bar.MessageSourceNameResolver")
     MessageSourceNameResolver messageSourceNameResolver() {
         return () -> "messages-bar";
+    }
+
+    @Bean
+    @Order(1)
+    JwtTokenCustomizer customizer1() {
+        return (authentication, token) -> {
+            token.setStatus("1");
+            return token;
+        };
+    }
+
+    @Bean
+    @Order(2)
+    JwtTokenCustomizer customizer2() {
+        return (authentication, token) -> {
+            token.setStatus("2");
+            return token;
+        };
     }
 
 }

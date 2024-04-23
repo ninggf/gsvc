@@ -2,13 +2,18 @@ package com.apzda.cloud.demo.bar.facade;
 
 import com.apzda.cloud.demo.bar.proto.*;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
+import com.apzda.cloud.gsvc.security.token.JwtToken;
+import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.Empty;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -27,8 +32,9 @@ public class SaServiceImpl implements SaService {
 
     private final AuthenticationManager authenticationManager;
 
-    private final ObjectMapper objectMapper;
     private final SecurityContextRepository securityContextRepository;
+
+    private final ObjectProvider<JwtTokenCustomizer> customizers;
 
     @Override
     public LoginRes login(LoginReq request) {
@@ -50,7 +56,14 @@ public class SaServiceImpl implements SaService {
                 val context = SecurityContextHolder.getContextHolderStrategy().createEmptyContext();
                 context.setAuthentication(authenticate);
                 SecurityContextHolder.setContext(context);
-                securityContextRepository.saveContext(context, GsvcContextHolder.getRequest().get(), GsvcContextHolder.getResponse().get());
+                securityContextRepository.saveContext(context, GsvcContextHolder.getRequest().get(),
+                        GsvcContextHolder.getResponse().get());
+
+                JwtToken newToken = jwtToken;
+
+                for (JwtTokenCustomizer customizer : customizers.orderedStream().toList()) {
+                    newToken = customizer.customize(authenticate, newToken);
+                }
 
                 return LoginRes.newBuilder()
                     .setErrCode(0)
@@ -59,7 +72,8 @@ public class SaServiceImpl implements SaService {
                     .setName(jwtToken.getName())
                     .build();
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException(e);
         }
 
@@ -82,6 +96,24 @@ public class SaServiceImpl implements SaService {
             .setUserName(request.getName() + ", " + request.getCurrentUser().getUid())
             .setErrCode(0)
             .build();
+    }
+
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public GsvcExt.CommonRes active(Empty request) {
+        return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
+    }
+
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public GsvcExt.CommonRes reset(Empty request) {
+        return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
+    }
+
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public GsvcExt.CommonRes setup(Empty request) {
+        return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
     }
 
 }

@@ -11,7 +11,9 @@ import com.apzda.cloud.gsvc.security.authorization.AuthorizationLogicCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.PermissionChecker;
 import com.apzda.cloud.gsvc.security.context.SpringSecurityUserProvider;
+import com.apzda.cloud.gsvc.security.filter.AccountLockedFilter;
 import com.apzda.cloud.gsvc.security.filter.AuthenticationExceptionFilter;
+import com.apzda.cloud.gsvc.security.filter.CredentialsExpiredFilter;
 import com.apzda.cloud.gsvc.security.filter.MfaAuthenticationFilter;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
@@ -64,6 +66,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -84,8 +87,11 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
+import static com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta.MFA_STATUS_KEY;
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 /**
@@ -195,11 +201,21 @@ public class GsvcSecurityAutoConfiguration {
 
                 http.addFilterBefore(filter, SessionManagementFilter.class);
             }
-            // 用于处理Session加载过程中的异常
+            // 用于处理Session加载过程,CredentialsExpiredFilter,AccountLockedFilter,MfaAuthenticationFilter中的异常
             http.addFilterBefore(new AuthenticationExceptionFilter(), SessionManagementFilter.class);
 
+            if (properties.isCredentialsExpiredEnabled()) {
+                val credentialsExpiredFilter = new CredentialsExpiredFilter(properties.resetCredentialsExcludes());
+                http.addFilterAfter(credentialsExpiredFilter, SessionManagementFilter.class);
+            }
+
+            if (properties.isAccountLockedEnabled()) {
+                val accountLockedFilter = new AccountLockedFilter(properties.activeExcludes());
+                http.addFilterAfter(accountLockedFilter, SessionManagementFilter.class);
+            }
+
             if (properties.isMfaEnabled()) {
-                val mfaAuthenticationFilter = new MfaAuthenticationFilter(properties.mfaExcludes());
+                val mfaAuthenticationFilter = new MfaAuthenticationFilter(properties.mfaExcludes(), properties);
                 http.addFilterAfter(mfaAuthenticationFilter, ExceptionTranslationFilter.class);
             }
 
@@ -348,6 +364,14 @@ public class GsvcSecurityAutoConfiguration {
             val user1 = User.withUsername("user1").password(encodedPwd).authorities(authorities).build();
             manager.createUser(user1);
 
+            val user2 = User.withUsername("user2").password(encodedPwd).accountLocked(true).build();
+            manager.createUser(user2);
+
+            val user3 = User.withUsername("user3").password(encodedPwd).credentialsExpired(true).build();
+            manager.createUser(user3);
+
+            val user4 = User.withUsername("user4").password(encodedPwd).build();
+            manager.createUser(user4);
             return manager;
         }
 
@@ -356,13 +380,27 @@ public class GsvcSecurityAutoConfiguration {
         UserDetailsMetaService userDetailsMetaService(final UserDetailsService userDetailsService) {
             log.warn("Default UserDetailsMetaService is used, please use a real one!!!");
 
-            return (userDetails) -> {
-                if (!CollectionUtils.isEmpty(userDetails.getAuthorities())) {
-                    return userDetails.getAuthorities();
+            return new UserDetailsMetaService() {
+                @Override
+                public Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails) {
+                    if (!CollectionUtils.isEmpty(userDetails.getAuthorities())) {
+                        return userDetails.getAuthorities();
+                    }
+                    log.trace("Load Authorities by userDetailsService.loadUserByUsername: {}",
+                            userDetails.getUsername());
+                    val ud = userDetailsService.loadUserByUsername(userDetails.getUsername());
+                    return ud.getAuthorities();
                 }
-                log.trace("Load Authorities by userDetailsService.loadUserByUsername: {}", userDetails.getUsername());
-                val ud = userDetailsService.loadUserByUsername(userDetails.getUsername());
-                return ud.getAuthorities();
+
+                @Override
+                @NonNull
+                public <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass) {
+                    if (StringUtils.startsWith(key, MFA_STATUS_KEY)
+                            && StringUtils.endsWithAny(userDetails.getUsername(), "2", "3", "4")) {
+                        return (Optional<R>) Optional.of("UNSET");
+                    }
+                    return Optional.empty();
+                }
             };
         }
 
@@ -426,8 +464,7 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        static PermissionEvaluator asteriskPermissionEvaluator(
-                ObjectProvider<PermissionChecker> checkerProvider) {
+        static PermissionEvaluator asteriskPermissionEvaluator(ObjectProvider<PermissionChecker> checkerProvider) {
             return new AsteriskPermissionEvaluator(checkerProvider);
         }
 

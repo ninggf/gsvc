@@ -50,7 +50,7 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
     @Override
     default void commence(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
-        logger.trace("[{}] Need User provided his/her Credentials by an entryPoint", GsvcContextHolder.getRequestId());
+        logger.trace("[{}] Need User provided his/her more data", GsvcContextHolder.getRequestId());
         onUnauthorized(request, response, authException);
     }
 
