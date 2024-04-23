@@ -33,6 +33,8 @@ public class JwtContextRepository implements SecurityContextRepository {
     @SuppressWarnings("deprecation")
     public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
         // 此方法是一个会被延时加载的方法。
+        // TODO 跳过permitAll URL
+
         if (log.isTraceEnabled()) {
             log.trace("Start to load SecurityContext");
         }
@@ -61,8 +63,7 @@ public class JwtContextRepository implements SecurityContextRepository {
                 log.trace("Cannot loaded Context. the empty context is used");
             }
         }
-        catch (AuthenticationException ae) {
-            throw ae;
+        catch (AuthenticationException ignored) {
         }
         catch (Exception e) {
             log.error("Error happened while loading Context: {}", e.getMessage());
