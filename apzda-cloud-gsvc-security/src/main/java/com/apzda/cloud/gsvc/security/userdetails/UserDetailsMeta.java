@@ -5,9 +5,7 @@ import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AccountExpiredException;
-import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -95,14 +93,9 @@ public interface UserDetailsMeta extends UserDetails {
         if (!userDetails.isEnabled()) {
             throw new DisabledException(String.format("%s is disabled", username));
         }
-        if (!userDetails.isCredentialsNonExpired()) {
-            throw new CredentialsExpiredException(String.format("%s's password is expired", username));
-        }
+
         if (!userDetails.isAccountNonExpired()) {
             throw new AccountExpiredException(String.format("%s's account is expired", username));
-        }
-        if (!userDetails.isAccountNonLocked()) {
-            throw new LockedException(String.format("%s's account is expired", username));
         }
     }
 
