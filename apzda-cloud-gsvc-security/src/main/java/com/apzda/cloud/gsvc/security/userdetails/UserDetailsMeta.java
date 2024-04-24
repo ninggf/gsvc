@@ -46,26 +46,39 @@ public interface UserDetailsMeta extends UserDetails {
         if (authentication instanceof JwtAuthenticationToken token) {
             set(token.deviceAwareMetaKey(key), value);
         }
-        set(key, value);
+        else {
+            set(key, value);
+        }
     }
 
-    <R> Optional<R> get(String key, Class<R> rClass);
+    <R> Optional<R> get(String key, String metaKey, Class<R> rClass);
 
     default String getString(String key) {
-        return get(key, "");
+        return getString(key, key, "");
+    }
+
+    default String getString(String key, String metaKey, @NonNull String defaultValue) {
+        return get(key, metaKey, defaultValue);
+    }
+
+    default String getString(String key, @NonNull Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken token) {
+            return getString(token.deviceAwareMetaKey(key), key, "");
+        }
+        return getString(key, key, "");
     }
 
     @SuppressWarnings("unchecked")
-    default <R> R get(String key, @NonNull R defaultValue) {
-        Optional<R> meta = (Optional<R>) get(key, defaultValue.getClass());
+    default <R> R get(String key, String metaKey, @NonNull R defaultValue) {
+        Optional<R> meta = (Optional<R>) get(key, metaKey, defaultValue.getClass());
         return meta.orElse(defaultValue);
     }
 
     default <R> R get(@NonNull String key, @NonNull Authentication authentication, @NonNull R defaultValue) {
         if (authentication instanceof JwtAuthenticationToken token) {
-            return get(token.deviceAwareMetaKey(key), defaultValue);
+            return get(token.deviceAwareMetaKey(key), key, defaultValue);
         }
-        return get(key, defaultValue);
+        return get(key, key, defaultValue);
     }
 
     void remove(String key);
@@ -74,7 +87,9 @@ public interface UserDetailsMeta extends UserDetails {
         if (authentication instanceof JwtAuthenticationToken token) {
             remove(token.deviceAwareMetaKey(key));
         }
-        remove(key);
+        else {
+            remove(key);
+        }
     }
 
     default void clear() {

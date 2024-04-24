@@ -5,16 +5,12 @@ import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
-import com.apzda.cloud.gsvc.security.authentication.DeviceAwareAuthenticationProcessingFilter;
 import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizationLogicCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.PermissionChecker;
 import com.apzda.cloud.gsvc.security.context.SpringSecurityUserProvider;
-import com.apzda.cloud.gsvc.security.filter.AccountLockedFilter;
-import com.apzda.cloud.gsvc.security.filter.AuthenticationExceptionFilter;
-import com.apzda.cloud.gsvc.security.filter.CredentialsExpiredFilter;
-import com.apzda.cloud.gsvc.security.filter.MfaAuthenticationFilter;
+import com.apzda.cloud.gsvc.security.filter.*;
 import com.apzda.cloud.gsvc.security.handler.AuthenticationHandler;
 import com.apzda.cloud.gsvc.security.handler.DefaultAuthenticationHandler;
 import com.apzda.cloud.gsvc.security.mfa.MfaTokenCustomizer;
@@ -91,6 +87,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static com.apzda.cloud.gsvc.security.filter.AbstractAuthenticatedFilter.*;
 import static com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta.MFA_STATUS_KEY;
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
@@ -118,9 +115,11 @@ public class GsvcSecurityAutoConfiguration {
 
         private final ApplicationEventPublisher eventPublisher;
 
-        private final ObjectProvider<DeviceAwareAuthenticationProcessingFilter> authenticationProcessingFilter;
+        private final ObjectProvider<SecurityFilterRegistrationBean<? extends AbstractAuthenticationProcessingFilter>> authenticationFilterProvider;
 
         private final ObjectProvider<AuthorizeCustomizer> authorizeCustomizer;
+
+        private final ObjectProvider<SecurityFilterRegistrationBean<AbstractAuthenticatedFilter>> authenticatedFilterProvider;
 
         @Value("${server.error.path:/error}")
         private String errorPath;
@@ -183,10 +182,11 @@ public class GsvcSecurityAutoConfiguration {
                 http.logout(AbstractHttpConfigurer::disable);
             }
 
-            val filters = authenticationProcessingFilter.orderedStream().toList();
-            for (AbstractAuthenticationProcessingFilter filter : filters) {
+            val filters = authenticationFilterProvider.orderedStream().toList();
+            for (SecurityFilterRegistrationBean<? extends AbstractAuthenticationProcessingFilter> filterBean : filters) {
+                val filter = filterBean.filter();
                 filter.setSecurityContextHolderStrategy(SecurityContextHolder.getContextHolderStrategy());
-
+                // 认证管理器
                 filter.setAuthenticationManager(authenticationManager);
                 // 上下文仓储
                 filter.setSecurityContextRepository(securityContextRepository);
@@ -195,7 +195,6 @@ public class GsvcSecurityAutoConfiguration {
                 filter.setAuthenticationFailureHandler(authenticationHandler);
                 // 认证成功后处理策略（过期，禁止多处登录等）
                 filter.setSessionAuthenticationStrategy(authenticationHandler);
-
                 filter.setApplicationEventPublisher(eventPublisher);
                 filter.setAllowSessionCreation(false);
 
@@ -204,19 +203,10 @@ public class GsvcSecurityAutoConfiguration {
             // 用于处理Session加载过程,CredentialsExpiredFilter,AccountLockedFilter,MfaAuthenticationFilter中的异常
             http.addFilterBefore(new AuthenticationExceptionFilter(), SessionManagementFilter.class);
 
-            if (properties.isCredentialsExpiredEnabled()) {
-                val credentialsExpiredFilter = new CredentialsExpiredFilter(properties.resetCredentialsExcludes());
-                http.addFilterAfter(credentialsExpiredFilter, SessionManagementFilter.class);
-            }
-
-            if (properties.isAccountLockedEnabled()) {
-                val accountLockedFilter = new AccountLockedFilter(properties.activeExcludes());
-                http.addFilterAfter(accountLockedFilter, SessionManagementFilter.class);
-            }
-
-            if (properties.isMfaEnabled()) {
-                val mfaAuthenticationFilter = new MfaAuthenticationFilter(properties.mfaExcludes(), properties);
-                http.addFilterAfter(mfaAuthenticationFilter, ExceptionTranslationFilter.class);
+            for (SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> filter : authenticatedFilterProvider
+                .orderedStream()
+                .toList()) {
+                http.addFilterBefore(filter.filter(), ExceptionTranslationFilter.class);
             }
 
             http.exceptionHandling((exception) -> {
@@ -261,6 +251,29 @@ public class GsvcSecurityAutoConfiguration {
             });
             log.debug("SecurityFilterChain Initialized");
             return http.build();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(name = CREDENTIALS_FILTER)
+        @ConditionalOnProperty(name = "apzda.cloud.security.credentials-expired-enabled", havingValue = "true")
+        SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> credentialsExpiredFilter() {
+            return new SecurityFilterRegistrationBean<>(
+                    new CredentialsExpiredFilter(properties.resetCredentialsExcludes()));
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(name = ACCOUNT_LOCKED_FILTER)
+        @ConditionalOnProperty(name = "apzda.cloud.security.account-locked-enabled", havingValue = "true")
+        SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> accountLockedFilter() {
+            return new SecurityFilterRegistrationBean<>(new AccountLockedFilter(properties.activeExcludes()));
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(name = MFA_FILTER)
+        @ConditionalOnProperty(name = "apzda.cloud.security.mfa-enabled", havingValue = "true")
+        SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> mfaAuthenticationFilter() {
+            return new SecurityFilterRegistrationBean<>(
+                    new MfaAuthenticationFilter(properties.mfaExcludes(), properties));
         }
 
         @Bean
@@ -382,7 +395,7 @@ public class GsvcSecurityAutoConfiguration {
 
             return new UserDetailsMetaService() {
                 @Override
-                public Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails) {
+                public Collection<? extends GrantedAuthority> getAuthorities(@NonNull UserDetails userDetails) {
                     if (!CollectionUtils.isEmpty(userDetails.getAuthorities())) {
                         return userDetails.getAuthorities();
                     }
@@ -394,10 +407,11 @@ public class GsvcSecurityAutoConfiguration {
 
                 @Override
                 @NonNull
-                public <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass) {
-                    if (StringUtils.startsWith(key, MFA_STATUS_KEY)
+                public <R> Optional<R> getMetaData(@NonNull UserDetails userDetails, @NonNull String metaKey,
+                        @NonNull Class<R> rClass) {
+                    if (metaKey.equals(MFA_STATUS_KEY)
                             && StringUtils.endsWithAny(userDetails.getUsername(), "2", "3", "4")) {
-                        return (Optional<R>) Optional.of("UNSET");
+                        return Optional.of(rClass.cast("UNSET"));
                     }
                     return Optional.empty();
                 }

@@ -34,8 +34,6 @@ import reactor.core.publisher.Hooks;
 
 import java.util.List;
 
-import static org.springframework.web.multipart.support.MultipartFilter.DEFAULT_MULTIPART_RESOLVER_BEAN_NAME;
-
 /**
  * @author ninggf
  */
@@ -103,9 +101,9 @@ public class GsvcWebMvcConfigure implements InitializingBean {
         return registration;
     }
 
-    @Bean(name = DEFAULT_MULTIPART_RESOLVER_BEAN_NAME)
+    @Bean
     @ConditionalOnMissingBean
-    MultipartResolver filterMultipartResolver() {
+    MultipartResolver multipartResolver() {
         val resolver = new StandardServletMultipartResolver();
 
         resolver.setResolveLazily(true);

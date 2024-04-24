@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,27 +47,32 @@ import java.util.Set;
 @Getter
 @RequiredArgsConstructor
 @Slf4j
-public abstract class AfterAuthenticatedFilter extends OncePerRequestFilter {
+public abstract class AbstractAuthenticatedFilter extends OncePerRequestFilter implements Ordered {
+
+    public static final String ACCOUNT_LOCKED_FILTER = "accountLockedFilter";
+
+    public static final String MFA_FILTER = "mfaAuthenticationFilter";
+
+    public static final String CREDENTIALS_FILTER = "credentialsExpiredFilter";
 
     private final Set<RequestMatcher> excludes;
 
     private SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder
         .getContextHolderStrategy();
 
-    public void setSecurityContextHolderStrategy(SecurityContextHolderStrategy securityContextHolderStrategy) {
-        Assert.notNull(securityContextHolderStrategy, "securityContextHolderStrategy cannot be null");
-        this.securityContextHolderStrategy = securityContextHolderStrategy;
+    public void setSecurityContextHolderStrategy(SecurityContextHolderStrategy strategy) {
+        Assert.notNull(strategy, "securityContextHolderStrategy cannot be null");
+        securityContextHolderStrategy = strategy;
     }
 
     protected Authentication getAuthentication() {
-        return this.securityContextHolderStrategy.getContext().getAuthentication();
+        return securityContextHolderStrategy.getContext().getAuthentication();
     }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
         if (excludes.stream().anyMatch((m) -> m.matches(request))) {
-            log.trace("Excluding request {}", request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
@@ -87,5 +93,10 @@ public abstract class AfterAuthenticatedFilter extends OncePerRequestFilter {
     }
 
     protected abstract boolean doFilter(@NonNull Authentication authentication, @NonNull UserDetails userDetails);
+
+    @Override
+    public int getOrder() {
+        return Ordered.LOWEST_PRECEDENCE;
+    }
 
 }

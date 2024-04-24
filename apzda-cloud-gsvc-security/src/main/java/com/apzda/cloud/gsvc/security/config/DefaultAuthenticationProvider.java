@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.security.config;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
@@ -41,10 +40,11 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
         if (passwordEncoder.matches((CharSequence) credentials, password)) {
             val userDetailsMeta = userDetailsMetaRepository.create(userDetails);
             val authed = JwtAuthenticationToken.authenticated(userDetailsMeta, password);
-            // bookmark: Clear Authorities, cause to reload authorities from UserDetailsMetaService
+            // bookmark: Clear Authorities, cause to reload authorities from
+            // UserDetailsMetaService
             log.trace("Clear user's authorities and last login time: {}", username);
             userDetailsMeta.remove(UserDetailsMeta.AUTHORITY_META_KEY);
-            userDetailsMeta.set(authed.deviceAwareMetaKey(UserDetailsMeta.LOGIN_TIME_META_KEY), 0L);
+            userDetailsMeta.set(UserDetailsMeta.LOGIN_TIME_META_KEY, authed, 0L);
             return authed;
         }
 

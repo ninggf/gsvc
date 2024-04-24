@@ -45,7 +45,8 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails) {
-        val authorityMeta = getMultiMetaData(userDetails, UserDetailsMeta.AUTHORITY_META_KEY, typeReference);
+        val authorityMeta = getMultiMetaData(userDetails, UserDetailsMeta.AUTHORITY_META_KEY,
+                UserDetailsMeta.AUTHORITY_META_KEY, typeReference);
 
         if (authorityMeta.isPresent()) {
             if (log.isTraceEnabled()) {

@@ -16,7 +16,10 @@
  */
 package com.apzda.cloud.demo.foo.config;
 
+import com.apzda.cloud.demo.foo.security.FooLoginFilter;
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
+import com.apzda.cloud.gsvc.security.filter.AbstractProcessingFilter;
+import com.apzda.cloud.gsvc.security.filter.SecurityFilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,6 +34,11 @@ public class FooConfiguration {
     @Bean("foo.MessageSourceNameResolver")
     MessageSourceNameResolver messageSourceNameResolver() {
         return () -> "messages-foo";
+    }
+
+    @Bean
+    SecurityFilterRegistrationBean<AbstractProcessingFilter> fooLoginFilter() {
+        return new SecurityFilterRegistrationBean<>(new FooLoginFilter());
     }
 
 }

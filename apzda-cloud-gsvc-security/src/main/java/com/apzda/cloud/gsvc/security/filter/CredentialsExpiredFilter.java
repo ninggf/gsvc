@@ -17,6 +17,7 @@
 package com.apzda.cloud.gsvc.security.filter;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
@@ -31,7 +32,7 @@ import java.util.Set;
  * @since 1.0.0
  **/
 @Slf4j
-public class CredentialsExpiredFilter extends AfterAuthenticatedFilter {
+public class CredentialsExpiredFilter extends AbstractAuthenticatedFilter {
 
     public CredentialsExpiredFilter(Set<RequestMatcher> excludes) {
         super(excludes);
@@ -43,6 +44,11 @@ public class CredentialsExpiredFilter extends AfterAuthenticatedFilter {
             throw new CredentialsExpiredException(String.format("%s's password is expired", userDetails.getUsername()));
         }
         return true;
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE + 1;
     }
 
 }

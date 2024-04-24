@@ -1,7 +1,6 @@
 package com.apzda.cloud.gsvc.security.handler;
 
 import com.apzda.cloud.gsvc.IServiceError;
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcException;
@@ -50,14 +49,14 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
     @Override
     default void commence(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
-        logger.trace("[{}] Need User provided his/her more data", GsvcContextHolder.getRequestId());
+        logger.trace("Need User provided his/her more data");
         onUnauthorized(request, response, authException);
     }
 
     @Override
     default void onInvalidSessionDetected(HttpServletRequest request, HttpServletResponse response)
             throws IOException, ServletException {
-        logger.trace("[{}] InvalidSessionDetected", GsvcContextHolder.getRequestId());
+        logger.trace("InvalidSessionDetected");
         onUnauthorized(request, response, new InvalidSessionException("Invalid Session"));
     }
 
@@ -69,20 +68,17 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
 
     @Override
     default void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
-
     }
 
     @Override
     default void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response,
             Authentication authentication) throws IOException, ServletException {
-
     }
 
     static void handleAuthenticationException(HttpServletRequest request, HttpServletResponse response,
             @NonNull Exception exception) throws IOException {
         if (!response.isCommitted()) {
-            logger.warn("[{}] Authentication Exception caught: {}", GsvcContextHolder.getRequestId(),
-                    exception.getMessage());
+            logger.debug("Authentication Exception caught and handled: {}", exception.getMessage());
             if (exception instanceof UsernameNotFoundException) {
                 val error = Response.error(ServiceError.USER_PWD_INCORRECT);
                 error.setHttpCode(401);
@@ -109,8 +105,7 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
             }
         }
         else {
-            logger.error("[{}] Authentication Exception cannot be handled", GsvcContextHolder.getRequestId(),
-                    exception);
+            logger.error("Authentication Exception cannot be handled for response was commited", exception);
         }
     }
 

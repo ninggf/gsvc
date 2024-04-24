@@ -20,7 +20,7 @@ public class JwtContextRepository implements SecurityContextRepository {
 
     private static final String CONTEXT_ATTR_NAME = "GSVC.SECURITY.CONTEXT";
 
-    private final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder
+    private static final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder
         .getContextHolderStrategy();
 
     private final TokenManager tokenManager;
@@ -30,22 +30,13 @@ public class JwtContextRepository implements SecurityContextRepository {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
-        // 此方法是一个会被延时加载的方法。
-        // TODO 跳过permitAll URL
-
-        if (log.isTraceEnabled()) {
-            log.trace("Start to load SecurityContext");
-        }
+        log.trace("Start loading SecurityContext");
         val request = requestResponseHolder.getRequest();
-
         val storedContext = request.getAttribute(CONTEXT_ATTR_NAME);
 
         if (storedContext != null) {
-            if (log.isTraceEnabled()) {
-                log.trace("Context Loaded from request attribute");
-            }
+            log.trace("Context Loaded from request attribute");
             return (SecurityContext) storedContext;
         }
 
@@ -55,12 +46,7 @@ public class JwtContextRepository implements SecurityContextRepository {
             val authentication = tokenManager.restoreAuthentication(request);
             if (authentication != null) {
                 context.setAuthentication(authentication);
-                if (log.isTraceEnabled()) {
-                    log.trace("Context loaded from TokenManager: {}", tokenManager);
-                }
-            }
-            else if (log.isTraceEnabled()) {
-                log.trace("Cannot loaded Context. the empty context is used");
+                log.trace("Context loaded from TokenManager: {}", tokenManager);
             }
         }
         catch (AuthenticationException ignored) {
@@ -76,9 +62,7 @@ public class JwtContextRepository implements SecurityContextRepository {
     public void saveContext(SecurityContext context, HttpServletRequest request, HttpServletResponse response) {
         try {
             tokenManager.save(context.getAuthentication(), request);
-            if (log.isTraceEnabled()) {
-                log.trace("SecurityContext saved: {}", context);
-            }
+            log.trace("SecurityContext saved: {}", context);
         }
         catch (Exception e) {
             log.error("Save Context failed: {} - {}", e.getMessage(), context);
@@ -88,9 +72,7 @@ public class JwtContextRepository implements SecurityContextRepository {
     @Override
     public boolean containsContext(HttpServletRequest request) {
         val containsContext = request.getAttribute(CONTEXT_ATTR_NAME) != null;
-        if (log.isTraceEnabled()) {
-            log.trace("Contains Context: {}", containsContext);
-        }
+        log.trace("SecurityContext is loaded: {}", containsContext);
         return containsContext;
     }
 

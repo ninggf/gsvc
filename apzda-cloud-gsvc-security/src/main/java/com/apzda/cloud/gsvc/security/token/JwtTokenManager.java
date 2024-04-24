@@ -63,7 +63,7 @@ public class JwtTokenManager implements TokenManager {
         if (StringUtils.isNotBlank(argName)) {
             accessToken = StringUtils.defaultIfBlank(request.getParameter(argName), null);
             if (log.isTraceEnabled()) {
-                log.trace("Try token from parameter({}): {}", argName, accessToken);
+                log.trace("Try to get token from parameter({}): {}", argName, accessToken);
             }
         }
 
@@ -72,7 +72,7 @@ public class JwtTokenManager implements TokenManager {
             if (StringUtils.isNotBlank(bearer) && token.startsWith(bearer)) {
                 accessToken = token.substring(bearer.length() + 1);
                 if (log.isTraceEnabled()) {
-                    log.trace("Try token from header({}: {}): {}", headerName, bearer, accessToken);
+                    log.trace("Try to get token from header({}: {}): {}", headerName, bearer, accessToken);
                 }
             }
         }
@@ -80,7 +80,7 @@ public class JwtTokenManager implements TokenManager {
         if (StringUtils.isBlank(accessToken) && StringUtils.isNotBlank(cookieName)) {
             accessToken = GsvcContextHolder.cookies().get(cookieName).getValue();
             if (log.isTraceEnabled()) {
-                log.trace("Try token from cookie({}): {}", cookieName, accessToken);
+                log.trace("Try to get token from cookie({}): {}", cookieName, accessToken);
             }
         }
 
@@ -91,7 +91,7 @@ public class JwtTokenManager implements TokenManager {
             }
             return authentication;
         }
-        log.trace("No token found of request!");
+        // log.trace("No token found of request!");
         return null;
     }
 
@@ -129,7 +129,7 @@ public class JwtTokenManager implements TokenManager {
 
             val userDetails = cachedUserDetails.orElseGet(() -> {
                 try {
-                    log.trace("Try loading userDetails from userDetailsService: {}", username);
+                    log.trace("Try to load userDetails from userDetailsService: {}", username);
                     val ud = userDetailsService.loadUserByUsername(username);
                     if (ud != null) {
                         UserDetailsMeta.checkUserDetails(ud);
@@ -164,7 +164,6 @@ public class JwtTokenManager implements TokenManager {
     @Override
     public void save(Authentication authentication, HttpServletRequest request) {
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
-            log.trace("Authentication Saved: {}", authentication);
             val cachedUser = CachedUserDetails.from(userDetails);
             val details = authentication.getDetails();
             if (details instanceof AuthenticationDetails) {
@@ -172,6 +171,7 @@ public class JwtTokenManager implements TokenManager {
                 cachedUser.setUser(user);
             }
             userDetailsMetaRepository.setMetaData(userDetails, UserDetailsMeta.CACHED_USER_DETAILS_KEY, cachedUser);
+            log.trace("Authentication Saved: {}", authentication);
         }
     }
 

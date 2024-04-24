@@ -16,41 +16,23 @@
  */
 package com.apzda.cloud.gsvc.security.filter;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
-import org.springframework.lang.NonNull;
-import org.springframework.security.authentication.LockedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.util.matcher.RequestMatcher;
-
-import java.util.Set;
+import org.springframework.web.filter.GenericFilterBean;
 
 /**
- * 用于检测账户锁定.
- *
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Slf4j
-public class AccountLockedFilter extends AbstractAuthenticatedFilter {
 
-    public AccountLockedFilter(Set<RequestMatcher> excludes) {
-        super(excludes);
-    }
-
-    @Override
-    protected boolean doFilter(@NonNull Authentication authentication, @NonNull UserDetails userDetails) {
-        if (!userDetails.isAccountNonLocked()) {
-            throw new LockedException(String.format("%s is locked", userDetails.getUsername()));
-        }
-        return true;
-    }
+public record SecurityFilterRegistrationBean<T extends GenericFilterBean>(T filter) implements Ordered {
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
+        if (filter instanceof Ordered) {
+            return ((Ordered) filter).getOrder();
+        }
+        return Ordered.LOWEST_PRECEDENCE;
     }
 
 }

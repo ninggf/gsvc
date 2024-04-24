@@ -30,15 +30,19 @@ import java.util.Optional;
  * @since 1.0.0
  **/
 public interface UserDetailsMetaService {
+
     Collection<? extends GrantedAuthority> getAuthorities(@NonNull UserDetails userDetails);
 
     @NonNull
-    default <R> Optional<R> getMetaData(@NonNull UserDetails userDetails, @NonNull String key, @NonNull Class<R> rClass) {
+    default <R> Optional<R> getMetaData(@NonNull UserDetails userDetails, @NonNull String metaKey,
+            @NonNull Class<R> rClass) {
         return Optional.empty();
     }
 
     @NonNull
-    default <R> Optional<R> getMultiMetaData(@NonNull UserDetails userDetails, @NonNull String key, @NonNull TypeReference<R> typeReference) {
+    default <R> Optional<R> getMultiMetaData(@NonNull UserDetails userDetails, @NonNull String metaKey,
+            @NonNull TypeReference<R> typeReference) {
         return Optional.empty();
     }
+
 }

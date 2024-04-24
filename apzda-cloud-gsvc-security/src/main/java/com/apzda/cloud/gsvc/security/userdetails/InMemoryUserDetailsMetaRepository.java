@@ -41,7 +41,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
 
     @Override
     @NonNull
-    public <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass) {
+    public <R> Optional<R> getMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
         try {
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
             val meta = userMeta.get(key);
@@ -51,7 +51,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
                 }
                 return Optional.of(rClass.cast(meta));
             }
-            val metaData = userDetailsMetaService.getMetaData(userDetails, key, rClass);
+            val metaData = userDetailsMetaService.getMetaData(userDetails, metaKey, rClass);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
         }
@@ -65,7 +65,8 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     @Override
     @NonNull
     @SuppressWarnings("unchecked")
-    public <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, TypeReference<R> typeReference) {
+    public <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, String metaKey,
+            TypeReference<R> typeReference) {
         try {
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
             val meta = userMeta.get(key);
@@ -75,12 +76,12 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
                 }
                 return Optional.of((R) meta);
             }
-            val metaData = userDetailsMetaService.getMultiMetaData(userDetails, key, typeReference);
+            val metaData = userDetailsMetaService.getMultiMetaData(userDetails, metaKey, typeReference);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
         }
         catch (Exception e) {
-            log.error("Cannot load user meta for {}.{} - {}", userDetails.getUsername(), key, e.getMessage());
+            log.error("Cannot load user metas for {}.{} - {}", userDetails.getUsername(), key, e.getMessage());
 
         }
         return Optional.empty();

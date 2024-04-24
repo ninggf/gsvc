@@ -51,7 +51,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     @Override
     @NonNull
-    public <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass) {
+    public <R> Optional<R> getMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
             if (value != null) {
@@ -60,7 +60,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
                 }
                 return Optional.of(objectMapper.readValue(value, rClass));
             }
-            val metaData = userDetailsMetaService.getMetaData(userDetails, key, rClass);
+            val metaData = userDetailsMetaService.getMetaData(userDetails, metaKey, rClass);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
         }
@@ -72,7 +72,8 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     @Override
     @NonNull
-    public <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, TypeReference<R> typeReference) {
+    public <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, String metaKey,
+            TypeReference<R> typeReference) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
             if (value != null) {
@@ -81,12 +82,12 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
                 }
                 return Optional.of(objectMapper.readValue(value, typeReference));
             }
-            val metaData = userDetailsMetaService.getMultiMetaData(userDetails, key, typeReference);
+            val metaData = userDetailsMetaService.getMultiMetaData(userDetails, metaKey, typeReference);
             metaData.ifPresent(r -> setMetaData(userDetails, key, r));
             return metaData;
         }
         catch (Exception e) {
-            log.error("Cannot load user meta for {}.{} - {}", thenMetaKey(userDetails), key, e.getMessage());
+            log.error("Cannot load user metas for {}.{} - {}", thenMetaKey(userDetails), key, e.getMessage());
         }
         return Optional.empty();
     }

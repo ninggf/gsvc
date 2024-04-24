@@ -22,35 +22,42 @@ public interface UserDetailsMetaRepository {
     void setMetaData(UserDetails userDetails, String key, Object value);
 
     @NonNull
-    <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass);
+    <R> Optional<R> getMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass);
 
     @NonNull
-    default <R> Optional<Collection<R>> getMultiMetaData(UserDetails userDetails, String key, Class<R> rClass) {
-        val typeReference = new TypeReference<Collection<R>>() {
-            @Override
-            public Type getType() {
-                return new ParameterizedTypeImpl(new Type[]{rClass}, null, Collection.class);
-            }
-        };
-
-        return getMultiMetaData(userDetails, key, typeReference);
+    default <R> Optional<R> getMetaData(UserDetails userDetails, String key, Class<R> rClass) {
+        return getMetaData(userDetails, key, key, rClass);
     }
 
     @NonNull
-    <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, TypeReference<R> typeReference);
+    default <R> Optional<Collection<R>> getMultiMetaData(UserDetails userDetails, String key, String metaKey,
+            Class<R> rClass) {
+        val typeReference = new TypeReference<Collection<R>>() {
+            @Override
+            public Type getType() {
+                return new ParameterizedTypeImpl(new Type[] { rClass }, null, Collection.class);
+            }
+        };
+
+        return getMultiMetaData(userDetails, key, metaKey, typeReference);
+    }
+
+    @NonNull
+    <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, String metaKey,
+            TypeReference<R> typeReference);
 
     @SuppressWarnings("unchecked")
-    default <R> R getMetaData(UserDetails userDetails, String key, @NonNull R defaultValue) {
-        Optional<R> meta = (Optional<R>) getMetaData(userDetails, key, defaultValue.getClass());
+    default <R> R getMetaData(UserDetails userDetails, String key, String metaKey, @NonNull R defaultValue) {
+        Optional<R> meta = (Optional<R>) getMetaData(userDetails, key, metaKey, defaultValue.getClass());
         return meta.orElse(defaultValue);
     }
 
     default String getMetaData(UserDetails userDetails, String key) {
-        return getMetaData(userDetails, key, "");
+        return getMetaData(userDetails, key, key, "");
     }
 
-    default String getString(UserDetails userDetails, String key) {
-        return getMetaData(userDetails, key, "");
+    default String getString(UserDetails userDetails, String key, String metaKey) {
+        return getMetaData(userDetails, key, metaKey, "");
     }
 
     void removeMetaData(UserDetails userDetails, String key);

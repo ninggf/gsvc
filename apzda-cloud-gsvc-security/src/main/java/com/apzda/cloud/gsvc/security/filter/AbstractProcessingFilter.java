@@ -1,5 +1,6 @@
-package com.apzda.cloud.gsvc.security.authentication;
+package com.apzda.cloud.gsvc.security.filter;
 
+import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetailsSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,6 @@ import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.util.ContentCachingRequestWrapper;
@@ -22,7 +22,7 @@ import java.io.IOException;
  * @author fengz
  */
 @Slf4j
-public abstract class DeviceAwareAuthenticationProcessingFilter extends AbstractAuthenticationProcessingFilter
+public abstract class AbstractProcessingFilter extends AbstractAuthenticationProcessingFilter
         implements Ordered, ApplicationContextAware {
 
     protected AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new DeviceAuthenticationDetailsSource();
@@ -31,14 +31,12 @@ public abstract class DeviceAwareAuthenticationProcessingFilter extends Abstract
 
     protected ObjectMapper objectMapper;
 
-    protected DeviceAwareAuthenticationProcessingFilter(String defaultFilterProcessesUrl,
-            AuthenticationManager authenticationManager) {
-        super(defaultFilterProcessesUrl, authenticationManager);
+    protected AbstractProcessingFilter(String defaultFilterProcessesUrl) {
+        super(defaultFilterProcessesUrl, null);
     }
 
-    protected DeviceAwareAuthenticationProcessingFilter(RequestMatcher requiresAuthenticationRequestMatcher,
-            AuthenticationManager authenticationManager) {
-        super(requiresAuthenticationRequestMatcher, authenticationManager);
+    protected AbstractProcessingFilter(RequestMatcher requiresAuthenticationRequestMatcher) {
+        super(requiresAuthenticationRequestMatcher, null);
     }
 
     @Override

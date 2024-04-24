@@ -127,8 +127,8 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             if (principal instanceof UserDetailsMeta userDetailsMeta) {
 
                 try {
-                    val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
-                    userDetailsMeta.remove(key);
+                    val key = UserDetailsMeta.ACCESS_TOKEN_META_KEY;
+                    userDetailsMeta.remove(key, this);
 
                     if (log.isTraceEnabled()) {
                         log.trace("accessToken({}) now is logout", accessToken);
@@ -152,12 +152,15 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     public void login() {
         if (jwtToken != null && StringUtils.isNotBlank(jwtToken.getAccessToken())
                 && principal instanceof UserDetailsMeta userDetailsMeta) {
-            val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
-            userDetailsMeta.set(key, jwtToken.getAccessToken());
+
+            val key = UserDetailsMeta.ACCESS_TOKEN_META_KEY;
+            userDetailsMeta.set(key, this, jwtToken.getAccessToken());
+
             userDetailsMeta.remove(UserDetailsMeta.AUTHORITY_META_KEY);
-            val loginKey = deviceAwareMetaKey(UserDetailsMeta.LOGIN_TIME_META_KEY);
-            if (userDetailsMeta.get(loginKey, 0L) == 0) {
-                userDetailsMeta.set(loginKey, System.currentTimeMillis());
+
+            val loginKey = UserDetailsMeta.LOGIN_TIME_META_KEY;
+            if (userDetailsMeta.get(loginKey, this, 0L) == 0) {
+                userDetailsMeta.set(loginKey, this, System.currentTimeMillis());
             }
         }
     }
@@ -169,8 +172,8 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
         if (principal instanceof UserDetailsMeta userDetailsMeta) {
             val accessToken = jwtToken.getAccessToken();
-            val key = deviceAwareMetaKey(UserDetailsMeta.ACCESS_TOKEN_META_KEY);
-            return Objects.equals(accessToken, userDetailsMeta.getString(key));
+            val key = UserDetailsMeta.ACCESS_TOKEN_META_KEY;
+            return Objects.equals(accessToken, userDetailsMeta.getString(key, this));
         }
         return false;
     }

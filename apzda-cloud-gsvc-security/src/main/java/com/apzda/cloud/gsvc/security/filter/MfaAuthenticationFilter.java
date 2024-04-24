@@ -37,7 +37,7 @@ import java.util.Set;
  * @since 1.0.0
  **/
 @Slf4j
-public class MfaAuthenticationFilter extends AfterAuthenticatedFilter {
+public class MfaAuthenticationFilter extends AbstractAuthenticatedFilter {
 
     protected final SecurityConfigProperties properties;
 

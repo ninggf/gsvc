@@ -1,13 +1,16 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author fengz
@@ -18,6 +21,8 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
     protected final UserDetails userDetails;
 
     protected final UserDetailsMetaRepository userDetailsMetaRepository;
+
+    protected final Map<String, Object> metas = new ConcurrentHashMap<>();
 
     protected Collection<? extends GrantedAuthority> authorities;
 
@@ -75,8 +80,13 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
     }
 
     @Override
-    public <R> Optional<R> get(String key, Class<R> rClass) {
-        return this.userDetailsMetaRepository.getMetaData(this.userDetails, key, rClass);
+    public <R> Optional<R> get(String key, String metaKey, Class<R> rClass) {
+        if (metas.containsKey(key)) {
+            return Optional.of(rClass.cast(metas.get(key)));
+        }
+        val meta = this.userDetailsMetaRepository.getMetaData(this.userDetails, key, metaKey, rClass);
+        meta.ifPresent(r -> metas.put(key, r));
+        return meta;
     }
 
     @Override
