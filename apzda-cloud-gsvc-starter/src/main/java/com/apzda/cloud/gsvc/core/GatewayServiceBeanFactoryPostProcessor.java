@@ -175,7 +175,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, bf);
 
-        log.trace("Registered {}WebClient For: {}", cfgName, cfgName);
+        log.trace("Registered {}WebClient Definition For: {}", cfgName, cfgName);
     }
 
     @Deprecated

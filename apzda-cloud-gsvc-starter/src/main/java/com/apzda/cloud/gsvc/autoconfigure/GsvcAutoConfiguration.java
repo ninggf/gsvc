@@ -30,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -41,10 +42,7 @@ import org.springframework.boot.web.reactive.function.client.WebClientCustomizer
 import org.springframework.cloud.client.loadbalancer.reactive.DeferringLoadBalancerExchangeFilterFunction;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.*;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -59,7 +57,6 @@ import java.util.Map;
 @AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
         GsvcSecurityAutoConfiguration.class, WebClientAutoConfiguration.class })
 @Import({ GsvcWebMvcConfigure.class, SentinelAutoConfiguration.class, RedisInfraConfiguration.class })
-// @AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 public class GsvcAutoConfiguration {
 
@@ -116,7 +113,8 @@ public class GsvcAutoConfiguration {
     }
 
     @Bean
-    BeanFactoryPostProcessor gsvcBeanFactoryPostProcessor() {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    static BeanFactoryPostProcessor gsvcBeanFactoryPostProcessor() {
         return new GatewayServiceBeanFactoryPostProcessor();
     }
 
