@@ -119,7 +119,7 @@ public class GsvcSecurityAutoConfiguration {
 
         private final ObjectProvider<AuthorizeCustomizer> authorizeCustomizer;
 
-        private final ObjectProvider<SecurityFilterRegistrationBean<AbstractAuthenticatedFilter>> authenticatedFilterProvider;
+        private final ObjectProvider<SecurityFilterRegistrationBean<? extends AbstractAuthenticatedFilter>> authenticatedFilterProvider;
 
         @Value("${server.error.path:/error}")
         private String errorPath;
@@ -130,8 +130,8 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @Order(-100)
         SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager,
-                SecurityContextRepository securityContextRepository, AuthenticationHandler authenticationHandler)
-                throws Exception {
+                SecurityContextRepository securityContextRepository, AuthenticationHandler authenticationHandler,
+                ApplicationContext applicationContext) throws Exception {
 
             val requestCache = new NullRequestCache();
             http.requestCache(cache -> cache.requestCache(requestCache));
@@ -197,13 +197,17 @@ public class GsvcSecurityAutoConfiguration {
                 filter.setSessionAuthenticationStrategy(authenticationHandler);
                 filter.setApplicationEventPublisher(eventPublisher);
                 filter.setAllowSessionCreation(false);
+                // 注入上下文
+                if (filter instanceof AbstractProcessingFilter processingFilter) {
+                    processingFilter.setApplicationContext(applicationContext);
+                }
 
                 http.addFilterBefore(filter, SessionManagementFilter.class);
             }
             // 用于处理Session加载过程,CredentialsExpiredFilter,AccountLockedFilter,MfaAuthenticationFilter中的异常
             http.addFilterBefore(new AuthenticationExceptionFilter(), SessionManagementFilter.class);
 
-            for (SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> filter : authenticatedFilterProvider
+            for (SecurityFilterRegistrationBean<? extends AbstractAuthenticatedFilter> filter : authenticatedFilterProvider
                 .orderedStream()
                 .toList()) {
                 http.addFilterBefore(filter.filter(), ExceptionTranslationFilter.class);
