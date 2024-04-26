@@ -28,7 +28,7 @@ public class GsvcServletFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         context.setSvcName(serviceName);
 
         val requestId = StringUtils.defaultIfBlank(request.getHeader("X-Request-ID"),

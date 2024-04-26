@@ -71,7 +71,7 @@ public class MathServiceImpl implements MathService {
         log.info("执行SUM");
         final Sinks.Many<Result> resultMany = Sinks.many().replay().all();
         val atomicLong = new AtomicLong();
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         request.subscribeOn(Schedulers.boundedElastic()).doOnComplete(() -> {
             context.restore();
             log.info("[{}] 请求处理完成啦: {}", GsvcContextHolder.getRequestId(), atomicLong.get());
@@ -106,7 +106,7 @@ public class MathServiceImpl implements MathService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public Result auth(OpNum request) {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         val currentUser = CurrentUserProvider.getCurrentUser();
         log.debug("GsvcContext: {}, CurrentUser: {}", context, currentUser);
         return Result.newBuilder().setMessage(I18nUtils.t("math.hello") + " - " + currentUser.getOs()).build();

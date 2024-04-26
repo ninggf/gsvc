@@ -90,13 +90,13 @@ public class ServiceMethodHandler {
             caller = request.headers().firstHeader("X-Gsvc-Caller");
         }
         if (StringUtils.hasText(caller)) {
-            GsvcContextHolder.current().setCaller(caller);
+            GsvcContextHolder.getContext().setCaller(caller);
         }
         return new ServiceMethodHandler(request, serviceMethod, applicationContext).run(caller);
     }
 
     private ServerResponse run(String caller) {
-        context = GsvcContextHolder.current();
+        context = GsvcContextHolder.getContext();
         try {
             if (!StringUtils.hasText(caller)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -173,7 +173,7 @@ public class ServiceMethodHandler {
         }
 
         final Flux<Object> responseFlux = returnObj.contextCapture();
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         // server-streaming method will respond text/event-stream
         return ServerResponse.sse(sseBuilder -> {
             responseFlux.doOnComplete(sseBuilder::complete).doOnError(err -> {

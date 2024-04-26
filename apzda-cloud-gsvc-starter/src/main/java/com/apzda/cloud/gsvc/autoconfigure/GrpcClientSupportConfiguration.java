@@ -80,7 +80,7 @@ public class GrpcClientSupportConfiguration {
                 @Override
                 public ErrorResponseException transform(Throwable exception) {
                     if (exception instanceof StatusRuntimeException se) {
-                        val context = GsvcContextHolder.current();
+                        val context = GsvcContextHolder.getContext();
                         val status = se.getStatus();
                         val statusCode = status.getCode();
                         val cause = status.getCause();
@@ -140,7 +140,7 @@ public class GrpcClientSupportConfiguration {
             @Override
             public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> method,
                     CallOptions callOptions, Channel next) {
-                val context = GsvcContextHolder.current();
+                val context = GsvcContextHolder.getContext();
                 val remoteIp = GsvcContextHolder.getRemoteIp();
                 val serviceName = method.getServiceName();
                 context.setSvcName(serviceName);

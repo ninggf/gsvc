@@ -65,7 +65,7 @@ public abstract class I18nUtils implements InitializingBean, ApplicationContextA
             .replaceAll("\\W+", ".");
         //@formatter:on
         try {
-            val context = GsvcContextHolder.current();
+            val context = GsvcContextHolder.getContext();
             if (locale == null && context.getLocale() == null) {
                 locale = defaultLocale;
                 try {

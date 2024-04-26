@@ -61,7 +61,7 @@ public class GrpcClientSecurityInterceptor implements ClientInterceptor {
                 }
             }
         }
-        val gContext = GsvcContextHolder.current();
+        val gContext = GsvcContextHolder.getContext();
         return new ForwardingClientCall.SimpleForwardingClientCall<>(next.newCall(method, callOptions)) {
             @Override
             public void start(Listener<RespT> responseListener, Metadata headers) {

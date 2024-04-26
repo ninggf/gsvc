@@ -58,7 +58,7 @@ public class GrpcServerSupportConfiguration {
                 @Override
                 public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call,
                         Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-                    val context = GsvcContextHolder.current();
+                    val context = GsvcContextHolder.getContext();
                     val requestId = StringUtils.defaultIfBlank(headers.get(HeaderMetas.REQUEST_ID),
                             StringUtils.defaultIfBlank(MDC.get("traceId"), UUID.randomUUID().toString(true)));
                     context.setRequestId(requestId);

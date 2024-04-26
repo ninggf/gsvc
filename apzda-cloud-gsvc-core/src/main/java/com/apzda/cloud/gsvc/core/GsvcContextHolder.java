@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.core;
 
 import cn.hutool.core.net.Ipv4Util;
+import cn.hutool.core.net.NetUtil;
 import com.apzda.cloud.gsvc.autoconfigure.ConfigureHelper;
 import com.google.common.base.Splitter;
 import io.grpc.Attributes;
@@ -54,7 +55,7 @@ public abstract class GsvcContextHolder {
     }
 
     public static DefaultHttpHeaders headers() {
-        val context = current();
+        val context = getContext();
         val headers = context.getHeaders();
         if (headers != null) {
             return headers;
@@ -112,7 +113,7 @@ public abstract class GsvcContextHolder {
     @SuppressWarnings("unchecked")
     @NonNull
     public static Map<String, HttpCookie> cookies() {
-        val context = current();
+        val context = getContext();
         val cachedCookie = context.getCookies();
         if (cachedCookie != null) {
             return cachedCookie;
@@ -177,13 +178,19 @@ public abstract class GsvcContextHolder {
     }
 
     @NonNull
-    public static GsvcContext current() {
+    public static GsvcContext getContext() {
         var context = CONTEXT_BOX.get();
         if (context == null) {
             context = new GsvcContext("", null, "main");
             CONTEXT_BOX.set(context);
         }
         return context;
+    }
+
+    @Deprecated
+    @NonNull
+    public static GsvcContext current() {
+        return getContext();
     }
 
     public static void restore(@NonNull GsvcContext context) {
@@ -210,7 +217,7 @@ public abstract class GsvcContextHolder {
     }
 
     public static String getRemoteIp() {
-        val context = current();
+        val context = getContext();
         if (StringUtils.hasText(context.remoteIp)) {
             return context.remoteIp;
         }
@@ -233,8 +240,9 @@ public abstract class GsvcContextHolder {
         val froms = ConfigureHelper.getRealIpFrom();
         val realIpHeader = ConfigureHelper.getRealIpHeader();
 
-        if (StringUtils.hasText(realIpHeader)
-                && froms.stream().anyMatch((from -> Ipv4Util.matches(from, remoteAddr)))) {
+        if (StringUtils.hasText(realIpHeader) && froms.stream()
+            .anyMatch((from -> (from.contains("/") && NetUtil.isInRange(remoteAddr, from))
+                    || Ipv4Util.matches(from, remoteAddr)))) {
             val remoteIp = headers.get(realIpHeader);
             if (StringUtils.hasText(remoteIp)) {
                 context.remoteIp = remoteIp;
@@ -302,7 +310,7 @@ public abstract class GsvcContextHolder {
         @NonNull
         public static GsvcContext current() {
 
-            return GsvcContextHolder.current();
+            return GsvcContextHolder.getContext();
         }
 
     }

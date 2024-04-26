@@ -70,7 +70,7 @@ public class BarServiceImpl implements BarService {
             .setFileCount(request.getFilesCount())
             .build();
         val traceEnabled = enabled;
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         val observation = Observation.createNotStarted("bridge", this.observationRegistry);
 
         return Flux.create((sink) -> {
@@ -95,7 +95,7 @@ public class BarServiceImpl implements BarService {
     @Override
     public Flux<BarRes> hi(BarReq request) {
         val atomicInteger = new AtomicInteger();
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         return Flux.fromIterable(List.of(request, request)).publishOn(Schedulers.boundedElastic()).map(barReq -> {
             context.restore();
             try {

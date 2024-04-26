@@ -72,7 +72,7 @@ public class DefaultRemoteServiceCaller implements IServiceCaller {
         // https://github.com/reactive-streams/reactive-streams-jvm/blob/master/README.md#1.7
         Hooks.onErrorDropped(error -> {
             if (log.isTraceEnabled()) {
-                val context = GsvcContextHolder.current();
+                val context = GsvcContextHolder.getContext();
                 log.trace("Error dropped while doing RPC({}): {}", context.getSvcName(), error.getMessage());
             }
         });
@@ -117,7 +117,7 @@ public class DefaultRemoteServiceCaller implements IServiceCaller {
     protected <R> Flux<R> doAsyncCall(Flux<ServerSentEvent<String>> reqBody, ServiceMethod serviceMethod, String uri,
             Class<R> rClass) {
         // bookmark: async rpc
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         var reqMono = reqBody.map(res -> {
             context.restore();
             if (log.isTraceEnabled()) {
@@ -142,7 +142,7 @@ public class DefaultRemoteServiceCaller implements IServiceCaller {
         val uri = method.getRpcAddr();
         val plugins = method.getPlugins();
         var size = plugins.size();
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         reqBody = reqBody.doOnError(err -> {
             context.restore();
             log.error("RPC({}) failed: {}", uri, err.getMessage());
@@ -159,7 +159,7 @@ public class DefaultRemoteServiceCaller implements IServiceCaller {
     }
 
     protected WebClient.ResponseSpec prepareRequest(Object requestObj, ServiceMethod method) {
-        var context = GsvcContextHolder.current();
+        var context = GsvcContextHolder.getContext();
         context.setAttributes(RequestContextHolder.getRequestAttributes());
         context.setSvcName(method.getCfgName());
 

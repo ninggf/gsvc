@@ -104,7 +104,7 @@ public enum ServiceError implements IServiceError {
 
     @Override
     public String message() {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         val svcName = context.getSvcName();
         if (svcName != null) {
             return message.replace("Service ", "Service(" + svcName + ") ");

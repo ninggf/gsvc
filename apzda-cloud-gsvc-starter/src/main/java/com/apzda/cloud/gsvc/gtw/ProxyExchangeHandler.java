@@ -64,7 +64,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
     }
 
     public ServerResponse handle(ServerRequest request, Route route, ServiceInfo serviceInfo) {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         context.setAttributes(RequestContextHolder.getRequestAttributes());
         val serviceName = serviceInfo.getServiceName();
         context.setSvcName(serviceName);

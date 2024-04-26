@@ -107,7 +107,7 @@ public class FooServiceImpl implements FooService {
 
     @Override
     public Flux<GsvcExt.CommonRes> sleep3(Empty request) {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         return Flux.create((sink) -> {
             CompletableFuture.runAsync(() -> {
                 context.restore();

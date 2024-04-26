@@ -26,7 +26,7 @@ public class StandardUrlBlockHandler implements BlockExceptionHandler {
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, BlockException ex) throws IOException {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         val requestId = StringUtils.defaultIfBlank(context.getRequestId(), UUID.randomUUID().toString(true));
         context.setRequestId(requestId);
 

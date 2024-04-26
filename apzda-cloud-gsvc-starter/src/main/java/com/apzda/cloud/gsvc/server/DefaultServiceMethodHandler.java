@@ -116,7 +116,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
 
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         context.setCaller(caller);
 
         if (log.isTraceEnabled()) {
@@ -187,7 +187,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         }
 
         final Flux<Object> responseFlux = returnObj.contextCapture();
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         // server-streaming method will respond text/event-stream
         return ServerResponse.sse(sseBuilder -> {
             responseFlux.doOnComplete(sseBuilder::complete).doOnError(err -> {
@@ -279,7 +279,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
 
         // bookmark: readTimeout
         val readTimeout = svcConfigure.getReadTimeout(serviceMethod, false);
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         val httpServletRequest = request.servletRequest();
 
         if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
@@ -354,7 +354,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         if (params.containsKey(key)) {
             return;
         }
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         if (!CollectionUtils.isEmpty(values)) {
             List<?> args = values.stream().map(value -> {
                 context.restore();
@@ -422,7 +422,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
     }
 
     private String createResponse(Object resp, ServiceMethod serviceMethod) throws JsonProcessingException {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         val flat = svcConfigure.isFlatResponse();
         if (!flat && "gtw".equals(context.getCaller())) {
             // bookmark: wrap response for the request from gateway.

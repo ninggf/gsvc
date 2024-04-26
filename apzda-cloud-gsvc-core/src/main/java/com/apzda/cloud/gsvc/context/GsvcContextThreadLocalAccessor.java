@@ -23,7 +23,7 @@ public class GsvcContextThreadLocalAccessor implements ThreadLocalAccessor<GsvcC
 
     @Override
     public GsvcContextHolder.GsvcContext getValue() {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         if (context.getAttributes() == null) {
             context.setAttributes(RequestContextHolder.getRequestAttributes());
         }

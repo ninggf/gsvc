@@ -37,14 +37,14 @@ public class SecurityAdvice {
 
     @GrpcExceptionHandler(AuthenticationException.class)
     public Status handleException(AuthenticationException e) {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         log.error("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
         return Status.UNAUTHENTICATED.withDescription(e.getMessage()).withCause(e);
     }
 
     @GrpcExceptionHandler(AccessDeniedException.class)
     public Status handleException(AccessDeniedException e) {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         try {
             log.error("gRPC({}) error: {} - {}", context.getSvcName(), e.getMessage(),
                     SecurityContextHolder.getContext().getAuthentication().getName());

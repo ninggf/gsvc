@@ -35,7 +35,7 @@ public class GlobalGrpcExceptionAdvice {
 
     @GrpcExceptionHandler
     public Status handleException(Exception e) {
-        val context = GsvcContextHolder.current();
+        val context = GsvcContextHolder.getContext();
         if (e instanceof NoStackLogError) {
             log.error("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
         }
