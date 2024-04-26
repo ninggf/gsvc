@@ -33,6 +33,7 @@ import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.net.URI;
+import java.rmi.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -117,7 +118,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
             violations.put(typeMismatchException.getName(), e.getMessage());
             return Response.error(ServiceError.BIND_ERROR, violations);
         }
-        else if (e instanceof WebClientRequestException) {
+        else if (e instanceof WebClientRequestException || e instanceof UnknownHostException) {
             return Response.error(ServiceError.REMOTE_SERVICE_NO_INSTANCE);
         }
         else if (e instanceof WebClientResponseException responseException) {
@@ -235,7 +236,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
             log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
             return responseWrapper.unwrap(rClazz);
         }
-        else if (error instanceof WebClientRequestException) {
+        else if (error instanceof WebClientRequestException || error instanceof UnknownHostException) {
             // rpc exception
             responseWrapper = ResponseWrapper.status(HttpStatus.BAD_GATEWAY).body(handle(error));
             log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
