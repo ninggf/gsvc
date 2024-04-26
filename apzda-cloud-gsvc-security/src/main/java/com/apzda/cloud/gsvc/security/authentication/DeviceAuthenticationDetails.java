@@ -29,7 +29,7 @@ public class DeviceAuthenticationDetails extends WebAuthenticationDetails implem
     private final Map<String, String> appMeta;
 
     public DeviceAuthenticationDetails(HttpServletRequest request) {
-        super(request);
+        super(GsvcContextHolder.getRemoteIp(), null);
         val headers = GsvcContextHolder.headers();
         this.device = StringUtils.defaultIfBlank(headers.get("X-Device"), "pc");
         this.deviceId = StringUtils.defaultString(headers.get("X-Device-Id"));
