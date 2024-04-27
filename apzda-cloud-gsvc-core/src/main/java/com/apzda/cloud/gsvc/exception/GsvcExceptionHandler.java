@@ -19,6 +19,7 @@ import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.ErrorResponse;
@@ -32,6 +33,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import java.net.SocketException;
 import java.net.URI;
 import java.rmi.UnknownHostException;
 import java.util.Collections;
@@ -118,7 +120,11 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
             violations.put(typeMismatchException.getName(), e.getMessage());
             return Response.error(ServiceError.BIND_ERROR, violations);
         }
-        else if (e instanceof WebClientRequestException || e instanceof UnknownHostException) {
+        else if (e instanceof TimeoutException || e instanceof io.netty.handler.timeout.TimeoutException) {
+            return Response.error(ServiceError.SERVICE_TIMEOUT);
+        }
+        else if (e instanceof WebClientRequestException || e instanceof UnknownHostException
+                || e instanceof SocketException) {
             return Response.error(ServiceError.REMOTE_SERVICE_NO_INSTANCE);
         }
         else if (e instanceof WebClientResponseException responseException) {
@@ -126,9 +132,6 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         }
         else if (e instanceof HttpStatusCodeException codeException) {
             return handleHttpStatusError(codeException.getStatusCode(), codeException.getMessage());
-        }
-        else if (e instanceof TimeoutException || e instanceof io.netty.handler.timeout.TimeoutException) {
-            return Response.error(ServiceError.SERVICE_TIMEOUT);
         }
         else if (e instanceof DegradedException) {
             return Response.error(ServiceError.DEGRADE);
@@ -233,45 +236,46 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         }
         else if (error instanceof TimeoutException || error instanceof io.netty.handler.timeout.TimeoutException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.GATEWAY_TIMEOUT).body(handle(error));
-            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
-            return responseWrapper.unwrap(rClazz);
+
+            return responseWrapper.unwrap(rClazz, error);
         }
-        else if (error instanceof WebClientRequestException || error instanceof UnknownHostException) {
+        else if (error instanceof WebClientRequestException || error instanceof UnknownHostException
+                || error instanceof SocketException) {
             // rpc exception
             responseWrapper = ResponseWrapper.status(HttpStatus.BAD_GATEWAY).body(handle(error));
-            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
-            return responseWrapper.unwrap(rClazz);
+
+            return responseWrapper.unwrap(rClazz, error);
         }
         else if (error instanceof WebClientResponseException responseException) {
             // rpc exception
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
-            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
-            return responseWrapper.unwrap(rClazz);
+
+            return responseWrapper.unwrap(rClazz, error);
         }
         else if (error instanceof ErrorResponseException responseException) {
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
             responseWrapper.headers(responseException.getHeaders());
-            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
-            return responseWrapper.unwrap(rClazz);
+
+            return responseWrapper.unwrap(rClazz, error);
         }
         else if (error instanceof HttpStatusCodeException httpStatusCodeException) {
             responseWrapper = ResponseWrapper.status(httpStatusCodeException.getStatusCode()).body(handle(error));
             responseWrapper.headers(httpStatusCodeException.getResponseHeaders());
-            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
-            return responseWrapper.unwrap(rClazz);
+
+            return responseWrapper.unwrap(rClazz, error);
         }
         else if (error instanceof MessageValidationException || error instanceof BindException
                 || error instanceof HttpMessageConversionException
                 || error instanceof MethodArgumentTypeMismatchException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.BAD_REQUEST).body(handle(error));
-            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
-            return responseWrapper.unwrap(rClazz);
+
+            return responseWrapper.unwrap(rClazz, error);
         }
         else if (error instanceof ErrorResponse errorResponse) {
             responseWrapper = ResponseWrapper.status(errorResponse.getBody().getStatus()).body(handle(error));
             responseWrapper.headers(errorResponse.getHeaders());
-            log.error("Exception Resolved[{}: {}]", error.getClass().getName(), error.getMessage());
-            return responseWrapper.unwrap(rClazz);
+
+            return responseWrapper.unwrap(rClazz, error);
         }
         else {
             responseWrapper = ResponseWrapper.status(HttpStatus.INTERNAL_SERVER_ERROR).body(handle(error));
@@ -279,7 +283,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         if (!(error instanceof NoStackLogError)) {
             log.error("Exception Resolved:", error);
         }
-        return responseWrapper.unwrap(rClazz);
+        return responseWrapper.unwrap(rClazz, null);
     }
 
     private Throwable transform(Throwable throwable) {
@@ -326,7 +330,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         return Response.error(statusCode.value(), message);
     }
 
-    final static class ResponseWrapper {
+    static class ResponseWrapper {
 
         private HttpStatusCode status;
 
@@ -346,12 +350,6 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
             return wrapper;
         }
 
-        static ResponseWrapper ok() {
-            val wrapper = new ResponseWrapper();
-            wrapper.status = HttpStatus.OK;
-            return wrapper;
-        }
-
         ResponseWrapper body(Response<?> body) {
             this.body = body;
             return this;
@@ -364,11 +362,15 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         }
 
         @SuppressWarnings("unchecked")
-        public <R> R unwrap(Class<R> rClazz) {
+        public <R> R unwrap(Class<R> rClazz, @Nullable Throwable error) {
+            if (error != null) {
+                log.error("Exception Resolved[{}]: {}", error.getClass().getName(), error.getMessage());
+            }
+
             if (rClazz.isAssignableFrom(ServerResponse.class)) {
-                return (R) ServerResponse.status(status).headers((httpHeaders -> {
+                return (R) ServerResponse.status(status).headers(httpHeaders -> {
                     httpHeaders.putAll(this.headers);
-                })).body(body);
+                }).body(body);
             }
             else {
                 return (R) ResponseEntity.status(status).headers(headers).body(body);
