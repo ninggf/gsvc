@@ -14,17 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.model;
+package com.apzda.cloud.gsvc.security.dto;
+
+import com.apzda.cloud.gsvc.model.Tenantable;
+import lombok.Data;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface OwnerAware<ID> {
+@Data
+public class StaffDto implements Tenantable<Long> {
 
-    ID getUid();
-
-    void setUid(ID uid);
+    private Long tenantId;
 
 }

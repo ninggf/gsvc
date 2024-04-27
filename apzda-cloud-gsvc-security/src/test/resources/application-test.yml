@@ -1,7 +1,7 @@
 logging:
   level:
     com.apzda.cloud: trace
-
+    #org.springframework.security: trace
 
 apzda:
   cloud:
