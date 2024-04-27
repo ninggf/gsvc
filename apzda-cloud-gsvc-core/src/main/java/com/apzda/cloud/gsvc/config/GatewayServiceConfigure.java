@@ -6,6 +6,7 @@ import com.apzda.cloud.gsvc.gtw.IGtwGlobalFilter;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.resolver.NoneResolver;
+import com.apzda.cloud.gsvc.resolver.ServiceNameResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -179,7 +180,7 @@ public class GatewayServiceConfigure implements IServiceConfigure {
 
         val registry = serviceConfig.getRegistry();
         val type = registry.getType();
-        val resolver = ServiceConfigProperties.RESOLVERS.getOrDefault(type, new NoneResolver());
+        val resolver = ServiceNameResolver.RESOLVERS.getOrDefault(type, new NoneResolver());
 
         return resolver.resolve(svcLbName, registry);
     }

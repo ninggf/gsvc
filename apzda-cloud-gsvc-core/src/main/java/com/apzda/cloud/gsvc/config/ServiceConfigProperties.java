@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.config;
 
-import com.apzda.cloud.gsvc.resolver.*;
 import com.apzda.cloud.gsvc.utils.StringUtils;
 import lombok.Data;
 import lombok.ToString;
@@ -11,7 +10,6 @@ import org.springframework.core.style.ToStringCreator;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -28,16 +26,6 @@ public final class ServiceConfigProperties {
     private final static ServiceConfig SERVICE_DEFAULT = new ServiceConfig();
 
     private final static ServiceConfig REFERENCE_DEFAULT = new ServiceConfig();
-
-    public final static Map<RegistryType, ServiceNameResolver> RESOLVERS = new HashMap<>() {
-        {
-            put(RegistryType.NONE, new NoneResolver());
-            put(RegistryType.DOCKER, new DockerNameResolver());
-            put(RegistryType.K8S, new K8sNameResolver());
-            put(RegistryType.EUREKA, new EurekaNameResolver());
-            put(RegistryType.NACOS, new NacosNameResolver());
-        }
-    };
 
     private final Map<String, ServiceConfig> service = new LinkedHashMap<>();
 
@@ -98,6 +86,18 @@ public final class ServiceConfigProperties {
             }
         }
         return source.get(name);
+    }
+
+    public enum RegistryType {
+
+        NONE, DOCKER, K8S, EUREKA, NACOS
+
+    }
+
+    public enum NameStyle {
+
+        CAMEL, DASHED, KEBAB;
+
     }
 
     /**
@@ -161,18 +161,6 @@ public final class ServiceConfigProperties {
         private int port = 8080;
 
         private boolean ssl = false;
-
-    }
-
-    public enum RegistryType {
-
-        NONE, DOCKER, K8S, EUREKA, NACOS
-
-    }
-
-    public enum NameStyle {
-
-        CAMEL, DASHED, KEBAB;
 
     }
 
