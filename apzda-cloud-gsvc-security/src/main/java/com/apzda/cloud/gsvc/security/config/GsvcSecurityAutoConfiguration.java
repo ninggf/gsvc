@@ -363,7 +363,7 @@ public class GsvcSecurityAutoConfiguration {
             val authorities = new ArrayList<GrantedAuthority>();
 
             authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-            authorities.add(new SimpleGrantedAuthority("view:/foo/info/user"));
+            authorities.add(new SimpleGrantedAuthority("view:/foo/info.user"));
 
             val password = "123456";
             val encodedPwd = passwordEncoder.encode(password);
