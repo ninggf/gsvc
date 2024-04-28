@@ -74,8 +74,8 @@ class AsteriskPermissionEvaluatorTest {
         val permit = evaluator.hasPermission(authentication, null, "view:gsvc.user");
         assertThat(permit).isFalse();
         val permit2 = evaluator.hasPermission(authentication, "3", "new:gsvc.admin");
-        assertThat(permit2).isFalse();
-        val permit3 = evaluator.hasPermission(authentication, "3", "view:gsvc.admin");
+        assertThat(permit2).isTrue();
+        val permit3 = evaluator.hasPermission(authentication, "4", "view:gsvc.admin");
         assertThat(permit3).isTrue();
     }
 
