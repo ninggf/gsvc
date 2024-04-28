@@ -4,13 +4,16 @@ import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.context.TenantManager;
 import com.apzda.cloud.gsvc.dto.CurrentUser;
+import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizationLogicCustomizer;
+import com.apzda.cloud.gsvc.security.authorization.PermissionChecker;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.dto.CardDto;
 import com.apzda.cloud.gsvc.security.dto.StaffDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
+import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -96,7 +100,7 @@ class CurrentUserParamResolverTest {
     @WithMockUser("gsvc")
     void isMine() throws Exception {
         val card = new CardDto();
-        card.setUid("gsvc");
+        card.setCreatedBy("gsvc");
         mvc.perform(post("/test/card").with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(card))
@@ -152,7 +156,7 @@ class CurrentUserParamResolverTest {
     @WithMockUser("gsvc")
     void isNotMine() throws Exception {
         val card = new CardDto();
-        card.setUid("gsvcx");
+        card.setCreatedBy("gsvcx");
         mvc.perform(post("/test/card").with(csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(card))
@@ -182,6 +186,21 @@ class CurrentUserParamResolverTest {
         mvc.perform(get("/test/staff/4").accept(MediaType.TEXT_HTML)).andExpect(status().is(403));
     }
 
+    @Test
+    @WithMockUser(value = "gsvc", authorities = "view,new:gsvc.user.*")
+    void iCan_should_ok() throws Exception {
+        mvc.perform(get("/test/authority").accept(MediaType.TEXT_HTML)).andExpect(status().isOk());
+        mvc.perform(get("/test/ican/1").accept(MediaType.TEXT_HTML)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(value = "gsvc", authorities = "view:gsvc.user.1,2,3")
+    void iCan_with_id_should_ok() throws Exception {
+        mvc.perform(get("/test/authority").accept(MediaType.TEXT_HTML)).andExpect(status().is(403));
+        mvc.perform(get("/test/ican/3").accept(MediaType.TEXT_HTML)).andExpect(status().isOk());
+        mvc.perform(get("/test/ican/4").accept(MediaType.TEXT_HTML)).andExpect(status().is(403));
+    }
+
     @Configuration
     @EnableConfigurationProperties(SecurityConfigProperties.class)
     @EnableMethodSecurity
@@ -193,8 +212,13 @@ class CurrentUserParamResolverTest {
         }
 
         @Bean
-        AuthorizationLogicCustomizer authz() {
-            return new AuthorizationLogicCustomizer();
+        PermissionEvaluator permissionEvaluator(ObjectProvider<PermissionChecker> permissionEvaluatorProvider) {
+            return new AsteriskPermissionEvaluator(permissionEvaluatorProvider);
+        }
+
+        @Bean
+        AuthorizationLogicCustomizer authz(PermissionEvaluator permissionEvaluator) {
+            return new AuthorizationLogicCustomizer(permissionEvaluator);
         }
 
         @Bean

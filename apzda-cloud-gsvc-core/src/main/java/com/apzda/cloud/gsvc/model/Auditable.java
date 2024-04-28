@@ -23,7 +23,7 @@ import org.springframework.lang.Nullable;
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface Auditable<ID, U, T> {
+public interface Auditable<ID, U, T> extends OwnerAware<U> {
 
     @Nullable
     ID getId();

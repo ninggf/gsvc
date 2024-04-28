@@ -23,8 +23,8 @@ package com.apzda.cloud.gsvc.model;
  **/
 public interface OwnerAware<ID> {
 
-    ID getUid();
+    ID getCreatedBy();
 
-    void setUid(ID uid);
+    void setCreatedBy(ID createdBy);
 
 }

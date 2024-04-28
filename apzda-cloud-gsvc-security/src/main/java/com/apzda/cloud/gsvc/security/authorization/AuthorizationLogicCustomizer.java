@@ -20,10 +20,13 @@ import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.context.TenantManager;
 import com.apzda.cloud.gsvc.model.OwnerAware;
 import com.apzda.cloud.gsvc.model.Tenantable;
+import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
+import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -33,19 +36,38 @@ import java.util.Objects;
  * @version 1.0.0
  * @since 1.0.0
  **/
+@RequiredArgsConstructor
 public class AuthorizationLogicCustomizer {
+
+    private final PermissionEvaluator evaluator;
 
     public boolean isSa(MethodSecurityExpressionOperations operations) {
         return operations.hasRole("sa");
     }
 
+    public boolean iCan(String authority) {
+        val authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return evaluator.hasPermission(authentication, null, authority);
+        }
+        return false;
+    }
+
+    public boolean iCan(String authority, Object object) {
+        val authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return evaluator.hasPermission(authentication, object, authority);
+        }
+        return false;
+    }
+
     public boolean isMine(@Nullable OwnerAware<?> object) {
-        if (object == null || object.getUid() == null) {
+        if (object == null || object.getCreatedBy() == null) {
             return false;
         }
         val me = CurrentUserProvider.getCurrentUser();
         val uid = me.getUid();
-        val owner = object.getUid().toString();
+        val owner = object.getCreatedBy().toString();
 
         return Objects.equals(uid, owner);
     }
@@ -59,7 +81,7 @@ public class AuthorizationLogicCustomizer {
         return Objects.equals(uid, owner);
     }
 
-    public boolean isOwned(@Nullable Tenantable<?> object) {
+    public boolean isTenanted(@Nullable Tenantable<?> object) {
         if (object == null || object.getTenantId() == null) {
             return false;
         }
@@ -71,7 +93,7 @@ public class AuthorizationLogicCustomizer {
             .anyMatch((id) -> id.equals(tenantId));
     }
 
-    public boolean isOwned(@Nullable String tenantId) {
+    public boolean isTenanted(@Nullable String tenantId) {
         if (StringUtils.isBlank(tenantId)) {
             return false;
         }

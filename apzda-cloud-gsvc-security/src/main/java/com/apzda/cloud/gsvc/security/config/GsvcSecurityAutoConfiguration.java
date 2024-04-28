@@ -289,8 +289,8 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        static AuthorizationLogicCustomizer authz() {
-            return new AuthorizationLogicCustomizer();
+        AuthorizationLogicCustomizer authz(PermissionEvaluator evaluator) {
+            return new AuthorizationLogicCustomizer(evaluator);
         }
 
         @Bean
@@ -482,7 +482,7 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        static PermissionEvaluator asteriskPermissionEvaluator(ObjectProvider<PermissionChecker> checkerProvider) {
+        PermissionEvaluator asteriskPermissionEvaluator(ObjectProvider<PermissionChecker> checkerProvider) {
             return new AsteriskPermissionEvaluator(checkerProvider);
         }
 

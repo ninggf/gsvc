@@ -16,16 +16,23 @@
  */
 package com.apzda.cloud.gsvc.security.authorization;
 
+import com.google.common.base.Splitter;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.lang.NonNull;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
@@ -39,27 +46,61 @@ public class AsteriskPermissionEvaluator implements PermissionEvaluator {
 
     private final ObjectProvider<PermissionChecker> checkerProvider;
 
+    private final static LoadingCache<String, Predicate<String>> PERMISSION_PATTERNS_CACHE = CacheBuilder.newBuilder()
+        .maximumSize(500)
+        .build(new CacheLoader<>() {
+            @Override
+            @NonNull
+            public Predicate<String> load(@NonNull String key) {
+                boolean suffix = false;
+                if (org.apache.commons.lang3.StringUtils.endsWith(key, ".*")) {
+                    key = key.substring(0, key.length() - 2);
+                    suffix = true;
+                }
+
+                key = Pattern.compile("([a-z0-9_-]+)(,[a-z0-9_-]+)+", Pattern.CASE_INSENSITIVE)
+                    .matcher(key)
+                    .replaceAll((mr) -> "(" + mr.group(0).replace(',', '|') + ")");
+
+                val strings = new ArrayList<>(Splitter.on(":").trimResults().omitEmptyStrings().splitToList(key));
+                if (strings.size() == 1) {
+                    strings.add(0, "*");
+                }
+
+                var pattern = String.join(":", strings).replace(".", "\\.").replace("*", "(.+?)");
+                if (suffix) {
+                    pattern += ".*";
+                }
+                return Pattern.compile("^" + pattern + "$").asMatchPredicate();
+            }
+        });
+
     @Override
     public boolean hasPermission(Authentication authentication, Object targetDomainObject, Object permission) {
-        if ((authentication == null) || (targetDomainObject == null) || !(permission instanceof String)) {
+        if ((authentication == null) || !(permission instanceof String)) {
             return false;
         }
         if (targetDomainObject instanceof Boolean allow) {
             return allow;
         }
-        val aClass = targetDomainObject.getClass();
-        val checkers = checkerProvider.orderedStream().toList();
+        if (targetDomainObject != null) {
+            val aClass = targetDomainObject.getClass();
+            val checkers = checkerProvider.orderedStream().toList();
 
-        for (PermissionChecker checker : checkers) {
-            if (checker.supports(aClass)) {
-                val allowed = checker.check(authentication, targetDomainObject, (String) permission);
-                if (allowed != null) {
-                    return allowed;
+            for (PermissionChecker checker : checkers) {
+                if (checker.supports(aClass)) {
+                    val allowed = checker.check(authentication, targetDomainObject, (String) permission);
+                    if (allowed != null) {
+                        return allowed;
+                    }
                 }
             }
-        }
 
-        return hasPrivilege(authentication, targetDomainObject.toString(), (String) permission);
+            return hasPrivilege(authentication, targetDomainObject.toString(), (String) permission);
+        }
+        else {
+            return hasPrivilege(authentication, null, (String) permission);
+        }
     }
 
     @Override
@@ -84,34 +125,26 @@ public class AsteriskPermissionEvaluator implements PermissionEvaluator {
     private boolean hasPrivilege(Authentication auth, String id, String permission) {
         var authority = permission;
         if (StringUtils.hasText(id)) {
-            authority += "/" + id;
+            authority += "." + id;
         }
-        for (GrantedAuthority grantedAuth : auth.getAuthorities()) {
-            val granted = grantedAuth.getAuthority();
-            val asterisk = granted.contains("*");
 
-            if (!asterisk && granted.equalsIgnoreCase(authority)) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Permit for: {} equals {}", authority, granted);
+        for (GrantedAuthority grantedAuthority : auth.getAuthorities()) {
+            val granted = grantedAuthority.getAuthority();
+            try {
+                val pattern = PERMISSION_PATTERNS_CACHE.get(granted);
+                if (pattern.test(authority)) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("{} matched {}", authority, granted);
+                    }
+                    return true;
                 }
-                return true;
             }
-
-            if (asterisk && match(granted, authority)) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Permit for: {} matched {}", authority, granted);
-                }
-                return true;
+            catch (Exception e) {
+                log.warn("Cannot parse authority({}) to ant pattern: {}", granted, e.getMessage());
             }
         }
 
         return false;
-    }
-
-    private static boolean match(String authority, String toBeChecked) {
-        val pattern = authority.replace("*", "(.+?)");
-        val compile = Pattern.compile("^" + pattern + "$");
-        return compile.asMatchPredicate().test(toBeChecked);
     }
 
 }

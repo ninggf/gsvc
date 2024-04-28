@@ -27,6 +27,6 @@ import lombok.Data;
 @Data
 public class CardDto implements OwnerAware<String> {
 
-    private String uid;
+    private String createdBy;
 
 }

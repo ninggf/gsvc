@@ -36,10 +36,22 @@ public class TestController {
         return currentUser.getUid();
     }
 
+    @GetMapping("/test/authority")
+    @PreAuthorize("@authz.iCan('view:gsvc.user')")
+    public String hasAuthority(CurrentUser currentUser) {
+        return currentUser.getUid();
+    }
+
+    @GetMapping("/test/ican/{id}")
+    @PreAuthorize("@authz.iCan('view:gsvc.user',#id)")
+    public String hasAuthority(CurrentUser currentUser, @PathVariable("id") String id) {
+        return id;
+    }
+
     @PostMapping("/test/card")
     @PreAuthorize("@authz.isMine(#card)")
     public String isMine(@RequestBody CardDto card) {
-        return card.getUid();
+        return card.getCreatedBy();
     }
 
     @GetMapping("/test/card/{id}")
@@ -49,13 +61,13 @@ public class TestController {
     }
 
     @PostMapping("/test/staff")
-    @PreAuthorize("authenticated && @authz.isOwned(#staffDto)")
+    @PreAuthorize("authenticated && @authz.isTenanted(#staffDto)")
     public String isOwned(@RequestBody StaffDto staffDto) {
         return staffDto.getTenantId().toString();
     }
 
     @GetMapping("/test/staff/{id}")
-    @PreAuthorize("authenticated && @authz.isOwned(#id)")
+    @PreAuthorize("authenticated && @authz.isTenanted(#id)")
     public String isOwned(@PathVariable String id) {
         return id;
     }
