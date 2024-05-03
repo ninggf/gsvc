@@ -444,6 +444,28 @@ Accept: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.errMsg === 'UNAUTHORIZED - Unauthorized', 'Response is not "UNAUTHORIZED - Unauthorized"')
+    });
+%}
+
+### BarService err
+//@no-redirect
+POST http://{{barService}}/~barService/err
+Content-Type: application/json
+X-Gsvc-Caller: gtw
+Accept: application/json
+Accept-Language: zh-CN
+
+{
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is '" + response.status + "' not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.errMsg === '未授权 - Unauthorized', 'Response is not "未授权 - Unauthorized"')
     });
 %}
 
