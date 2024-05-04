@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.security.filter;
 
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetailsSource;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -56,21 +57,19 @@ public abstract class AbstractProcessingFilter extends AbstractAuthenticationPro
         }
     }
 
-    protected <R> R readRequestBody(HttpServletRequest request, Class<R> rClass) {
+    @NonNull
+    protected <R> R readRequestBody(HttpServletRequest request, Class<R> rClass) throws IOException {
         val req = new ContentCachingRequestWrapper(request);
-
         try (val reader = req.getReader()) {
-            val stringBuilder = new StringBuilder();
-            String line = reader.readLine();
-            while (line != null) {
-                stringBuilder.append(line);
-                line = reader.readLine();
-            }
-            return objectMapper.readValue(stringBuilder.toString(), rClass);
+            return objectMapper.readValue(reader, rClass);
         }
-        catch (IOException e) {
-            log.error("Cannot read the request body from: {}", request.getRequestURI());
-            return null;
+    }
+
+    @NonNull
+    protected <R> R readRequestBody(HttpServletRequest request, TypeReference<R> rClass) throws IOException {
+        val req = new ContentCachingRequestWrapper(request);
+        try (val reader = req.getReader()) {
+            return objectMapper.readValue(reader, rClass);
         }
     }
 
