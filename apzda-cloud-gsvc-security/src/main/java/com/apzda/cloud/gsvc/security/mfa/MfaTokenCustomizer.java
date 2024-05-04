@@ -22,7 +22,6 @@ import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.Ordered;
 import org.springframework.security.core.Authentication;
 
 /**
@@ -33,20 +32,16 @@ import org.springframework.security.core.Authentication;
 @Slf4j
 @RequiredArgsConstructor
 public class MfaTokenCustomizer implements JwtTokenCustomizer {
+
     private final SecurityConfigProperties properties;
 
     @Override
     public JwtToken customize(Authentication authentication, JwtToken token) {
-        if (properties.isMfaEnabled()
-            && token.getMfa() == null
-            && authentication.getPrincipal() instanceof UserDetailsMeta userDetailsMeta) {
+        if (properties.isMfaEnabled() && token.getMfa() == null
+                && authentication.getPrincipal() instanceof UserDetailsMeta userDetailsMeta) {
             token.setMfa(userDetailsMeta.get(UserDetailsMeta.MFA_STATUS_KEY, authentication, MfaStatus.DISABLED));
         }
         return token;
     }
 
-    @Override
-    public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE;
-    }
 }
