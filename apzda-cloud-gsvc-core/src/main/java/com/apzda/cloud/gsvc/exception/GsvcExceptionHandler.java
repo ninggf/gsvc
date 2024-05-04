@@ -27,6 +27,7 @@ import org.springframework.web.ErrorResponseException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -120,7 +121,8 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
             violations.put(typeMismatchException.getName(), e.getMessage());
             return Response.error(ServiceError.BIND_ERROR, violations);
         }
-        else if (e instanceof TimeoutException || e instanceof io.netty.handler.timeout.TimeoutException) {
+        else if (e instanceof TimeoutException || e instanceof io.netty.handler.timeout.TimeoutException
+                || e instanceof AsyncRequestTimeoutException) {
             return Response.error(ServiceError.SERVICE_TIMEOUT);
         }
         else if (e instanceof WebClientRequestException || e instanceof UnknownHostException
@@ -234,7 +236,8 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
             responseWrapper = ResponseWrapper.status(HttpStatus.SERVICE_UNAVAILABLE).body(handle(error));
             responseWrapper.headers(gsvcException.getHeaders());
         }
-        else if (error instanceof TimeoutException || error instanceof io.netty.handler.timeout.TimeoutException) {
+        else if (error instanceof TimeoutException || error instanceof io.netty.handler.timeout.TimeoutException
+                || error instanceof AsyncRequestTimeoutException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.GATEWAY_TIMEOUT).body(handle(error));
 
             return responseWrapper.unwrap(rClazz, error);
