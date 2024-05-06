@@ -80,6 +80,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.ArrayList;
@@ -495,11 +496,57 @@ public class GsvcSecurityAutoConfiguration {
     }
 
     @Configuration
+    @RequiredArgsConstructor
     static class WebMvcConfigure implements WebMvcConfigurer {
+
+        private final SecurityConfigProperties properties;
 
         @Override
         public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
             resolvers.add(new CurrentUserParamResolver());
+        }
+
+        @Override
+        public void addCorsMappings(@NonNull CorsRegistry registry) {
+            val cors = properties.getCors();
+            if (CollectionUtils.isEmpty(cors)) {
+                return;
+            }
+            log.trace("Add CORS mappings for cors: {}", cors);
+            cors.forEach((url, cfg) -> {
+                val registration = registry.addMapping(url);
+
+                if (!CollectionUtils.isEmpty(cfg.getOrigins())) {
+                    registration.allowedOrigins(cfg.getOrigins().toArray(new String[0]));
+                }
+                else if (!CollectionUtils.isEmpty(cfg.getOriginPatterns())) {
+                    registration.allowedOriginPatterns(cfg.getOriginPatterns().toArray(new String[0]));
+                }
+
+                if (!CollectionUtils.isEmpty(cfg.getHeaders())) {
+                    registration.allowedHeaders(cfg.getHeaders().toArray(new String[0]));
+                }
+
+                if (!CollectionUtils.isEmpty(cfg.getMethods())) {
+                    registration.allowedMethods(cfg.getMethods().toArray(new String[0]));
+                }
+
+                if (cfg.getMaxAge() != null) {
+                    registration.maxAge(cfg.getMaxAge().toSeconds());
+                }
+
+                if (cfg.getCredentials() != null) {
+                    registration.allowCredentials(cfg.getCredentials());
+                }
+
+                if (!CollectionUtils.isEmpty(cfg.getExposed())) {
+                    registration.exposedHeaders(cfg.getExposed().toArray(new String[0]));
+                }
+
+                if (cfg.getAllowPrivateNetwork() != null) {
+                    registration.allowPrivateNetwork(cfg.getAllowPrivateNetwork());
+                }
+            });
         }
 
     }

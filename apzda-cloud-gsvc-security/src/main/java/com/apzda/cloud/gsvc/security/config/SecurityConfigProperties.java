@@ -20,10 +20,7 @@ import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -69,6 +66,8 @@ public class SecurityConfigProperties {
     private List<String> resetCredentialsPath = new ArrayList<>();
 
     private List<ACL> acl = new ArrayList<>();
+
+    private Map<String, CorsConfig> cors = new LinkedHashMap<>();
 
     private List<String> allowedDevices = new ArrayList<>();
 
@@ -153,6 +152,27 @@ public class SecurityConfigProperties {
         private String path;
 
         private String access;
+
+    }
+
+    @Data
+    public static class CorsConfig {
+
+        private List<String> headers;
+
+        private List<String> exposed;
+
+        private Boolean credentials;
+
+        private List<String> origins;
+
+        private List<String> originPatterns;
+
+        private Boolean allowPrivateNetwork;
+
+        private List<String> methods;
+
+        private Duration maxAge;
 
     }
 
