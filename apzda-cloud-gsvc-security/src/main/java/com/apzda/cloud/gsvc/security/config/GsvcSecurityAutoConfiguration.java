@@ -49,6 +49,7 @@ import org.springframework.security.access.expression.method.DefaultMethodSecuri
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.authentication.*;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -150,7 +151,12 @@ public class GsvcSecurityAutoConfiguration {
             });
 
             http.csrf(AbstractHttpConfigurer::disable);
-            // http.cors(AbstractHttpConfigurer::disable);
+            if (CollectionUtils.isEmpty(properties.getCors())) {
+                http.cors(AbstractHttpConfigurer::disable);
+            }
+            else {
+                http.cors(Customizer.withDefaults());
+            }
             http.anonymous(AbstractHttpConfigurer::disable);
             http.rememberMe(AbstractHttpConfigurer::disable);
             http.formLogin(AbstractHttpConfigurer::disable);
