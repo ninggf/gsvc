@@ -225,7 +225,7 @@ public class GsvcSecurityAutoConfiguration {
                 exception.authenticationEntryPoint(authenticationHandler);
             });
 
-            String error = this.errorPath;
+            // String error = this.errorPath;
             http.authorizeHttpRequests((authorize) -> {
                 val excludes = properties.getExclude();
                 log.debug("ACL: Permit{}", excludes);
@@ -236,8 +236,8 @@ public class GsvcSecurityAutoConfiguration {
                 val aclLists = properties.getAcl();
                 for (SecurityConfigProperties.ACL acl : aclLists) {
                     val path = acl.getPath();
-                    val matcher = antMatcher(path);
                     if (StringUtils.isNotBlank(path)) {
+                        val matcher = antMatcher(path);
                         var access = acl.getAccess();
                         if (StringUtils.isNotBlank(access)) {
                             access = access.replace("r(", "hasRole(")
@@ -257,10 +257,10 @@ public class GsvcSecurityAutoConfiguration {
                 for (AuthorizeCustomizer customizer : customizers) {
                     customizer.customize(authorize);
                 }
-                authorize.requestMatchers(antMatcher(error)).permitAll();
+                // authorize.requestMatchers(antMatcher(error)).permitAll();
                 authorize.anyRequest().permitAll();
             });
-            log.debug("SecurityFilterChain Initialized");
+            log.trace("SecurityFilterChain Initialized");
             return http.build();
         }
 
