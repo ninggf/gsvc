@@ -26,6 +26,12 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
 
     protected Collection<? extends GrantedAuthority> authorities;
 
+    protected String openId;
+
+    protected String unionId;
+
+    protected String provider;
+
     public DefaultUserDetailsMeta(@NonNull UserDetails userDetails,
             @NonNull UserDetailsMetaRepository userDetailsMetaRepository) {
         if (userDetails instanceof UserDetailsMeta userDetailsMeta) {
@@ -36,6 +42,9 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
         }
 
         this.userDetailsMetaRepository = userDetailsMetaRepository;
+        this.openId = this.userDetails.getUsername();
+        this.unionId = this.openId;
+        this.provider = "db";
     }
 
     @Override
@@ -115,6 +124,36 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
             authorities = Collections.emptyList();
         }
         return this.authorities;
+    }
+
+    @Override
+    public void setOpenId(String openId) {
+        this.openId = openId;
+    }
+
+    @Override
+    public void setProvider(String provider) {
+        this.provider = provider;
+    }
+
+    @Override
+    public String getOpenId() {
+        return this.openId;
+    }
+
+    @Override
+    public String getProvider() {
+        return this.provider;
+    }
+
+    @Override
+    public void setUnionId(String unionId) {
+        this.unionId = unionId;
+    }
+
+    @Override
+    public String getUnionId() {
+        return this.unionId;
     }
 
 }

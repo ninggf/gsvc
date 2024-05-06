@@ -32,13 +32,17 @@ public interface UserDetailsMeta extends UserDetails {
     @NonNull
     UserDetails getUserDetails();
 
-    default String getOpenId() {
-        return getUserDetails().getUsername();
-    }
+    void setOpenId(String openId);
 
-    default String getProvider() {
-        return "db";
-    }
+    String getOpenId();
+
+    void setProvider(String provider);
+
+    String getProvider();
+
+    void setUnionId(String unionId);
+
+    String getUnionId();
 
     void set(String key, Object value);
 
