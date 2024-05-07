@@ -9,6 +9,7 @@ import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
 import com.apzda.cloud.gsvc.plugin.IForwardPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
+import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -21,26 +22,25 @@ import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.lang.NonNull;
-import org.springframework.util.StopWatch;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.function.ServerRequest;
 import org.springframework.web.servlet.function.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.netty.http.client.HttpClientRequest;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.apzda.cloud.gsvc.core.GtwRouterFunctionFactoryBean.ATTR_MATCHED_SEGMENTS;
 
@@ -142,11 +142,6 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         }).body(body).exchangeToFlux(response -> {
             context.restore();
 
-            val responseStatus = response.statusCode();
-            if (responseStatus == HttpStatus.UNAUTHORIZED) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-            }
-
             val headers = HttpHeadersFilter.filter(getHeadersFilters(), response.headers().asHttpHeaders(),
                     servletServerHttpRequest, HttpHeadersFilter.Type.RESPONSE);
 
@@ -162,15 +157,22 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 httpHeaders.remove(HttpHeaders.TRANSFER_ENCODING);
             }
 
-            val serverResponse = ServerResponse.status(responseStatus)
-                .headers(httpHeaders1 -> httpHeaders1.addAll(httpHeaders));
-            val stopWatch = new StopWatch("Transform Response to stream");
-            stopWatch.start();
+            val responseStatus = response.statusCode();
+            ServerResponse.BodyBuilder serverResponse = ServerResponse.status(responseStatus);
+            if (responseStatus == HttpStatus.UNAUTHORIZED) {
+                val loginURL = ResponseUtils.getLoginUrl(request.headers().accept());
+                if (loginURL != null) {
+                    // renew a ServerResponse
+                    serverResponse = ServerResponse.status(HttpStatus.TEMPORARY_REDIRECT);
+                    serverResponse.location(URI.create(loginURL));
+                    serverResponse.contentType(MediaType.TEXT_HTML);
+                    httpHeaders.remove("Content-Type");
+                }
+            }
+
+            serverResponse.headers(httpHeaders1 -> httpHeaders1.addAll(httpHeaders));
             // 缓存响应流
             val dataBuffers = response.body(BodyExtractors.toDataBuffers()).toStream();
-            stopWatch.stop();
-            log.trace("{}", stopWatch.prettyPrint(TimeUnit.MILLISECONDS));
-
             val resp = serverResponse.build((req, res) -> {
                 try (val writer = res.getOutputStream()) {
                     dataBuffers.forEach(dataBuffer -> {

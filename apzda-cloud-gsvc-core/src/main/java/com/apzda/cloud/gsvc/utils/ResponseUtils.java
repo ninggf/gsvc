@@ -157,10 +157,9 @@ public abstract class ResponseUtils {
 
     public static MediaType isCompatibleWith(MediaType mediaType, List<MediaType> mediaTypes) {
         if (mediaType != null && !CollectionUtils.isEmpty(mediaTypes)) {
-            for (MediaType contentType : mediaTypes) {
-                if (contentType.isCompatibleWith(mediaType)) {
-                    return contentType;
-                }
+            val contentType = mediaTypes.get(0);
+            if (contentType.isCompatibleWith(mediaType)) {
+                return contentType;
             }
         }
         return null;
@@ -183,7 +182,7 @@ public abstract class ResponseUtils {
     }
 
     public static String getLoginUrl(List<MediaType> contentTypes) {
-        if (gsvcConfig != null) {
+        if (gsvcConfig != null && !CollectionUtils.isEmpty(contentTypes)) {
             val loginUrl = gsvcConfig.getLoginPage();
             val compatibleWith = isCompatibleWith(TEXT_MASK, contentTypes);
             if (loginUrl != null && compatibleWith != null) {

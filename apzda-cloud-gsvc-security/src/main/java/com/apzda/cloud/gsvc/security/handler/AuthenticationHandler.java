@@ -81,12 +81,12 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
             logger.debug("Authentication Exception caught and handled: {}", exception.getMessage());
             if (exception instanceof UsernameNotFoundException) {
                 val error = Response.error(ServiceError.USER_PWD_INCORRECT);
-                error.setHttpCode(401);
+                error.setHttpCode(403);
                 ResponseUtils.respond(request, response, error);
             }
             else if (exception instanceof AuthenticationError authenticationError) {
                 val error = Response.error(authenticationError.getError());
-                error.setHttpCode(401);
+                error.setHttpCode(403);
                 ResponseUtils.respond(request, response, error);
             }
             else if (exception instanceof AccountStatusException statusException) {
@@ -94,14 +94,18 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
             }
             else if (exception instanceof GsvcException gsvcException) {
                 val error = Response.error(gsvcException.getError());
-                error.setHttpCode(401);
+                error.setHttpCode(403);
                 ResponseUtils.respond(request, response, error);
             }
             else if (exception instanceof InsufficientAuthenticationException) {
-                ResponseUtils.respond(request, response, Response.error(ServiceError.UNAUTHORIZED));
+                val error = Response.error(ServiceError.UNAUTHORIZED);
+                error.setHttpCode(401);
+                ResponseUtils.respond(request, response, error);
             }
             else {
-                ResponseUtils.respond(request, response, Response.error(ServiceError.UNAUTHORIZED));
+                val error = Response.error(ServiceError.UNAUTHORIZED);
+                error.setHttpCode(401);
+                ResponseUtils.respond(request, response, error);
             }
         }
         else {
@@ -128,7 +132,7 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
             error = ServiceError.ACCOUNT_DISABLED;
         }
         val resp = Response.error(error);
-        resp.setHttpCode(401);
+        resp.setHttpCode(403);
         ResponseUtils.respond(request, response, resp);
     }
 

@@ -405,7 +405,7 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401 || response.status === 500, "Response status is not 500 or 401");
+        client.assert(response.status === 403 || response.status === 500, "Response status is not 500 or 401");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'text/plain' but received '" + type + "'");
         // client.assert(request.body.errCode === 500,"status != 500")
@@ -567,7 +567,7 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401, "Response status is not 401");
+        client.assert(response.status === 403, "Response status is not 401");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === -815, "出错啦: " + response.body.errMsg);
@@ -629,7 +629,7 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401, "Response status is not 401");
+        client.assert(response.status === 403, "Response status is not 401");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === -813, "出错啦: " + response.body.errMsg);
@@ -692,7 +692,7 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401, "Response status is not 401");
+        client.assert(response.status === 403, "Response status is not 401");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === -801, "出错啦: " + response.body.errMsg);

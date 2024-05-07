@@ -199,7 +199,10 @@ public class DefaultRemoteServiceCaller implements IServiceCaller {
                             context.restore();
                             val exception = new ErrorResponseException(response.statusCode());
                             exception.getHeaders().putAll(response.headers().asHttpHeaders());
-                            return Mono.just(exception);
+                            return response.bodyToMono(String.class).map((body) -> {
+                                exception.setDetail(body);
+                                return exception;
+                            });
                         });
         }
         catch (JsonProcessingException e) {
