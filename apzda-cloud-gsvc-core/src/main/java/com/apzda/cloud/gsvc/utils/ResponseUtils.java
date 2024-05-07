@@ -121,9 +121,13 @@ public abstract class ResponseUtils {
         val errCode = Math.abs(data.getHttpCode() != null ? data.getHttpCode() : data.getErrCode());
         val serverHttpRequest = new ServletServerHttpRequest(request);
         val mediaTypes = serverHttpRequest.getHeaders().getAccept();
+        val jsonCompatible = isCompatibleWith(MediaType.APPLICATION_JSON, mediaTypes);
         val compatibleWith = isCompatibleWith(TEXT_MASK, mediaTypes);
-        if (compatibleWith != null) {
-            response.setContentType(MediaType.TEXT_PLAIN_VALUE);
+        if (jsonCompatible != null) {
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=utf-8");
+        }
+        else if (compatibleWith != null) {
+            response.setContentType(MediaType.TEXT_PLAIN_VALUE + ";charset=utf-8");
             if (errCode == 401) {
                 val loginUrl = getLoginUrl(mediaTypes);
                 if (StringUtils.isNotBlank(loginUrl)) {
@@ -133,7 +137,7 @@ public abstract class ResponseUtils {
             }
         }
         else {
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE + "; charset=utf-8");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=utf-8");
         }
 
         if (ServiceError.isHttpError(errCode)) {
@@ -145,7 +149,6 @@ public abstract class ResponseUtils {
 
         // tbd contentNegotiation?
         val jsonStr = OBJECT_MAPPER.writeValueAsString(data);
-        // response.setContentLength(jsonStr.length());
 
         try (val writer = response.getWriter()) {
             writer.write(jsonStr);
