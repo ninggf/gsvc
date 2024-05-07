@@ -5,6 +5,7 @@ import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
+import com.apzda.cloud.gsvc.security.HttpSecurityCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.AsteriskPermissionEvaluator;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizationLogicCustomizer;
 import com.apzda.cloud.gsvc.security.authorization.AuthorizeCustomizer;
@@ -56,6 +57,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.AuthenticationException;
@@ -106,6 +108,62 @@ public class GsvcSecurityAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @EnableConfigurationProperties(SecurityConfigProperties.class)
+    @RequiredArgsConstructor
+    static class WebMvcConfigure implements WebMvcConfigurer {
+
+        private final SecurityConfigProperties properties;
+
+        @Override
+        public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
+            resolvers.add(new CurrentUserParamResolver());
+        }
+
+        @Override
+        public void addCorsMappings(@NonNull CorsRegistry registry) {
+            val cors = properties.getCors();
+            if (CollectionUtils.isEmpty(cors)) {
+                return;
+            }
+            log.trace("Add CORS mappings for cors: {}", cors);
+            cors.forEach((url, cfg) -> {
+                val registration = registry.addMapping(url);
+
+                if (!CollectionUtils.isEmpty(cfg.getOrigins())) {
+                    registration.allowedOrigins(cfg.getOrigins().toArray(new String[0]));
+                }
+                else if (!CollectionUtils.isEmpty(cfg.getOriginPatterns())) {
+                    registration.allowedOriginPatterns(cfg.getOriginPatterns().toArray(new String[0]));
+                }
+
+                if (!CollectionUtils.isEmpty(cfg.getHeaders())) {
+                    registration.allowedHeaders(cfg.getHeaders().toArray(new String[0]));
+                }
+
+                if (!CollectionUtils.isEmpty(cfg.getMethods())) {
+                    registration.allowedMethods(cfg.getMethods().toArray(new String[0]));
+                }
+
+                if (cfg.getMaxAge() != null) {
+                    registration.maxAge(cfg.getMaxAge().toSeconds());
+                }
+
+                if (cfg.getCredentials() != null) {
+                    registration.allowCredentials(cfg.getCredentials());
+                }
+
+                if (!CollectionUtils.isEmpty(cfg.getExposed())) {
+                    registration.exposedHeaders(cfg.getExposed().toArray(new String[0]));
+                }
+
+                if (cfg.getAllowPrivateNetwork() != null) {
+                    registration.allowPrivateNetwork(cfg.getAllowPrivateNetwork());
+                }
+            });
+        }
+
+    }
+
+    @Configuration(proxyBeanMethods = false)
     @EnableMethodSecurity
     @EnableWebSecurity
     @RequiredArgsConstructor
@@ -123,8 +181,7 @@ public class GsvcSecurityAutoConfiguration {
 
         private final ObjectProvider<SecurityFilterRegistrationBean<? extends AbstractAuthenticatedFilter>> authenticatedFilterProvider;
 
-        @Value("${server.error.path:/error}")
-        private String errorPath;
+        private final ObjectProvider<HttpSecurityCustomizer> httpSecurityCustomizers;
 
         @Value("${apzda.cloud.security.role-prefix:ROLE_}")
         private String rolePrefix;
@@ -161,6 +218,21 @@ public class GsvcSecurityAutoConfiguration {
             http.rememberMe(AbstractHttpConfigurer::disable);
             http.formLogin(AbstractHttpConfigurer::disable);
             http.httpBasic(AbstractHttpConfigurer::disable);
+            http.headers(headers -> {
+                val cfg = properties.getHeaders();
+                if (!cfg.isHsts()) {
+                    headers.httpStrictTransportSecurity(HeadersConfigurer.HstsConfig::disable);
+                }
+                if (!cfg.isXss()) {
+                    headers.xssProtection(HeadersConfigurer.XXssConfig::disable);
+                }
+                if (!cfg.isFrame()) {
+                    headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable);
+                }
+                if (!cfg.isContentType()) {
+                    headers.contentTypeOptions(HeadersConfigurer.ContentTypeOptionsConfig::disable);
+                }
+            });
 
             val logoutPath = svcProperties.getConfig().getLogoutPath();
             if (StringUtils.isNotBlank(logoutPath)) {
@@ -225,16 +297,15 @@ public class GsvcSecurityAutoConfiguration {
                 exception.authenticationEntryPoint(authenticationHandler);
             });
 
-            // String error = this.errorPath;
             http.authorizeHttpRequests((authorize) -> {
                 val excludes = properties.getExclude();
-                log.debug("ACL: Permit{}", excludes);
-                for (String exclude : excludes) {
+                log.trace("ACL: Permit{}", excludes);
+                for (val exclude : excludes) {
                     authorize.requestMatchers(antMatcher(exclude)).permitAll();
                 }
 
                 val aclLists = properties.getAcl();
-                for (SecurityConfigProperties.ACL acl : aclLists) {
+                for (val acl : aclLists) {
                     val path = acl.getPath();
                     if (StringUtils.isNotBlank(path)) {
                         val matcher = antMatcher(path);
@@ -243,23 +314,27 @@ public class GsvcSecurityAutoConfiguration {
                             access = access.replace("r(", "hasRole(")
                                 .replace("a(", "hasAuthority(")
                                 .replace("p(", "hasPermission(");
-                            log.debug("ACL: {}(access={})", path, access);
+                            log.trace("ACL: {}(access={})", path, access);
                             authorize.requestMatchers(matcher).access(new WebExpressionAuthorizationManager(access));
                         }
                         else {
-                            log.debug("ACL: {}", path);
+                            log.trace("ACL: {}", path);
                             authorize.requestMatchers(matcher).authenticated();
                         }
                     }
                 }
 
                 val customizers = authorizeCustomizer.orderedStream().toList();
-                for (AuthorizeCustomizer customizer : customizers) {
+                for (val customizer : customizers) {
                     customizer.customize(authorize);
                 }
-                // authorize.requestMatchers(antMatcher(error)).permitAll();
                 authorize.anyRequest().permitAll();
             });
+
+            for (HttpSecurityCustomizer customizer : httpSecurityCustomizers.orderedStream().toList()) {
+                customizer.customize(http);
+            }
+
             log.trace("SecurityFilterChain Initialized");
             return http.build();
         }
@@ -497,62 +572,6 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnMissingBean
         CurrentUserProvider springSecurityCurrentUserProvider() {
             return new SpringSecurityUserProvider();
-        }
-
-    }
-
-    @Configuration
-    @RequiredArgsConstructor
-    static class WebMvcConfigure implements WebMvcConfigurer {
-
-        private final SecurityConfigProperties properties;
-
-        @Override
-        public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
-            resolvers.add(new CurrentUserParamResolver());
-        }
-
-        @Override
-        public void addCorsMappings(@NonNull CorsRegistry registry) {
-            val cors = properties.getCors();
-            if (CollectionUtils.isEmpty(cors)) {
-                return;
-            }
-            log.trace("Add CORS mappings for cors: {}", cors);
-            cors.forEach((url, cfg) -> {
-                val registration = registry.addMapping(url);
-
-                if (!CollectionUtils.isEmpty(cfg.getOrigins())) {
-                    registration.allowedOrigins(cfg.getOrigins().toArray(new String[0]));
-                }
-                else if (!CollectionUtils.isEmpty(cfg.getOriginPatterns())) {
-                    registration.allowedOriginPatterns(cfg.getOriginPatterns().toArray(new String[0]));
-                }
-
-                if (!CollectionUtils.isEmpty(cfg.getHeaders())) {
-                    registration.allowedHeaders(cfg.getHeaders().toArray(new String[0]));
-                }
-
-                if (!CollectionUtils.isEmpty(cfg.getMethods())) {
-                    registration.allowedMethods(cfg.getMethods().toArray(new String[0]));
-                }
-
-                if (cfg.getMaxAge() != null) {
-                    registration.maxAge(cfg.getMaxAge().toSeconds());
-                }
-
-                if (cfg.getCredentials() != null) {
-                    registration.allowCredentials(cfg.getCredentials());
-                }
-
-                if (!CollectionUtils.isEmpty(cfg.getExposed())) {
-                    registration.exposedHeaders(cfg.getExposed().toArray(new String[0]));
-                }
-
-                if (cfg.getAllowPrivateNetwork() != null) {
-                    registration.allowPrivateNetwork(cfg.getAllowPrivateNetwork());
-                }
-            });
         }
 
     }

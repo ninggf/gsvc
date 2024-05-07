@@ -69,6 +69,8 @@ public class SecurityConfigProperties {
 
     private Map<String, CorsConfig> cors = new LinkedHashMap<>();
 
+    private HeadersConfig headers = new HeadersConfig();
+
     private List<String> allowedDevices = new ArrayList<>();
 
     @DurationUnit(ChronoUnit.MINUTES)
@@ -173,6 +175,19 @@ public class SecurityConfigProperties {
         private List<String> methods;
 
         private Duration maxAge;
+
+    }
+
+    @Data
+    public static class HeadersConfig {
+
+        private boolean hsts = false;
+
+        private boolean xss = false;
+
+        private boolean frame = false;
+
+        private boolean contentType = false;
 
     }
 
