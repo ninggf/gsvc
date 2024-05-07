@@ -34,14 +34,14 @@ public class RemoveHopByHopHeadersFilter implements HttpHeadersFilter, Ordered {
     /**
      * Headers to remove as the result of applying the filter.
      */
-    public static final Set<String> HEADERS_REMOVED_ON_REQUEST = new HashSet<>(
-            Arrays.asList("connection", "keep-alive", "transfer-encoding", "te", "trailer", "proxy-authorization",
-                    "proxy-authenticate", "x-application-context", "upgrade", "vary", "x-request-id"
-            // these two are not listed in
-            // https://tools.ietf.org/html/draft-ietf-httpbis-p1-messaging-14#section-7.1.3
-            // "proxy-connection",
-            // "content-length",
-            ));
+    public static final Set<String> HEADERS_REMOVED_ON_REQUEST = new HashSet<>(Arrays.asList("connection", "keep-alive",
+            "transfer-encoding", "te", "trailer", "proxy-authorization", "proxy-authenticate", "x-application-context",
+            "upgrade", "vary", "x-request-id", "expires", "pragma", "cache-control"
+    // these two are not listed in
+    // https://tools.ietf.org/html/draft-ietf-httpbis-p1-messaging-14#section-7.1.3
+    // "proxy-connection",
+    // "content-length",
+    ));
 
     @Setter
     private int order = Ordered.LOWEST_PRECEDENCE - 1;
