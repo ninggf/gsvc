@@ -443,7 +443,7 @@ Accept: application/json
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.errMsg === 'UNAUTHORIZED - Unauthorized', 'Response is not "UNAUTHORIZED - Unauthorized"')
+        client.assert(response.body.errMsg === 'UNAUTHORIZED', 'Response is not "UNAUTHORIZED"')
     });
 %}
 
@@ -464,7 +464,7 @@ Accept-Language: zh-CN
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
-        client.assert(response.body.errMsg === '未授权 - Unauthorized', 'Response is not "未授权 - Unauthorized"')
+        client.assert(response.body.errMsg === '未授权', 'Response is not "未授权"')
     });
 %}
 
