@@ -17,6 +17,7 @@
 package com.apzda.cloud.gsvc.security.grpc;
 
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.security.exception.AuthenticationError;
 import io.grpc.Status;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -24,7 +25,6 @@ import net.devh.boot.grpc.server.advice.GrpcAdvice;
 import net.devh.boot.grpc.server.advice.GrpcExceptionHandler;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -35,23 +35,24 @@ import org.springframework.security.core.context.SecurityContextHolder;
 @Slf4j
 public class SecurityAdvice {
 
+    @GrpcExceptionHandler(AuthenticationError.class)
+    public Status handleException(AuthenticationError e) {
+        val context = GsvcContextHolder.getContext();
+        log.trace("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
+        return Status.PERMISSION_DENIED.withDescription(e.getMessage()).withCause(e);
+    }
+
     @GrpcExceptionHandler(AuthenticationException.class)
     public Status handleException(AuthenticationException e) {
         val context = GsvcContextHolder.getContext();
-        log.error("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
+        log.trace("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
         return Status.UNAUTHENTICATED.withDescription(e.getMessage()).withCause(e);
     }
 
     @GrpcExceptionHandler(AccessDeniedException.class)
     public Status handleException(AccessDeniedException e) {
         val context = GsvcContextHolder.getContext();
-        try {
-            log.error("gRPC({}) error: {} - {}", context.getSvcName(), e.getMessage(),
-                    SecurityContextHolder.getContext().getAuthentication().getName());
-        }
-        catch (Exception ve) {
-            log.error("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
-        }
+        log.trace("gRPC({}) error: {}", context.getSvcName(), e.getMessage());
         return Status.PERMISSION_DENIED.withDescription(e.getMessage()).withCause(e);
     }
 

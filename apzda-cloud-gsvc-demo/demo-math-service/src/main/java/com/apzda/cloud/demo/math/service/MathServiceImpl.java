@@ -130,4 +130,16 @@ public class MathServiceImpl implements MathService {
         return GsvcExt.CommonRes.newBuilder().setErrCode(0).setErrMsg(GsvcContextHolder.getRemoteIp()).build();
     }
 
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public GsvcExt.CommonRes authed(Empty request) {
+        return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
+    }
+
+    @Override
+    @PreAuthorize("hasRole('sa')")
+    public GsvcExt.CommonRes deny(Empty request) {
+        return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
+    }
+
 }

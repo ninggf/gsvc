@@ -16,7 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.*;
+import org.springframework.security.authentication.AccountExpiredException;
+import org.springframework.security.authentication.AccountStatusException;
+import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -95,11 +98,6 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
             else if (exception instanceof GsvcException gsvcException) {
                 val error = Response.error(gsvcException.getError());
                 error.setHttpCode(403);
-                ResponseUtils.respond(request, response, error);
-            }
-            else if (exception instanceof InsufficientAuthenticationException) {
-                val error = Response.error(ServiceError.UNAUTHORIZED);
-                error.setHttpCode(401);
                 ResponseUtils.respond(request, response, error);
             }
             else {

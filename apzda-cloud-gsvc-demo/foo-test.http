@@ -350,6 +350,18 @@ age = 18
     });
 %}
 
+### FooService setup - authenticated
+POST http://{{fooService}}/~fooService/setup
+Accept: application/json
+X-Gsvc-Caller: gtw
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 403, "Response status is not 403");
+    });
+%}
+
 ### FooService Err
 POST http://{{fooService}}/~fooService/err
 //@no-redirect

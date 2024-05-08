@@ -129,4 +129,9 @@ public class FooServiceImpl implements FooService {
         return barService.ipAddr(request);
     }
 
+    @Override
+    public GsvcExt.CommonRes setup(Empty request) {
+        return saService.deny(request);
+    }
+
 }

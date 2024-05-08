@@ -116,4 +116,10 @@ public class SaServiceImpl implements SaService {
         return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
     }
 
+    @Override
+    @PreAuthorize("hasRole('sa')")
+    public GsvcExt.CommonRes deny(Empty request) {
+        return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
+    }
+
 }

@@ -59,4 +59,8 @@ service MathService {
   rpc translate(Request) returns(Result);
 
   rpc ipAddr(google.protobuf.Empty) returns (gsvc.CommonRes);
+
+  rpc authed(google.protobuf.Empty) returns (gsvc.CommonRes);
+
+  rpc deny(google.protobuf.Empty) returns (gsvc.CommonRes);
 }

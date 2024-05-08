@@ -121,17 +121,13 @@ public abstract class ResponseUtils {
         val errCode = Math.abs(data.getHttpCode() != null ? data.getHttpCode() : data.getErrCode());
         val serverHttpRequest = new ServletServerHttpRequest(request);
         val mediaTypes = serverHttpRequest.getHeaders().getAccept();
-        val jsonCompatible = isCompatibleWith(MediaType.APPLICATION_JSON, mediaTypes);
         val compatibleWith = isCompatibleWith(TEXT_MASK, mediaTypes);
-        if (jsonCompatible != null) {
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=utf-8");
-        }
-        else if (compatibleWith != null) {
+        if (compatibleWith != null) {
             response.setContentType(MediaType.TEXT_PLAIN_VALUE + ";charset=utf-8");
             if (errCode == 401) {
                 val loginUrl = getLoginUrl(mediaTypes);
                 if (StringUtils.isNotBlank(loginUrl)) {
-                    response.sendRedirect(loginUrl);
+                    response.sendRedirect(loginUrl); // status is 302
                     return;
                 }
             }

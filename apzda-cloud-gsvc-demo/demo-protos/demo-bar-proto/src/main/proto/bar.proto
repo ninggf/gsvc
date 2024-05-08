@@ -84,6 +84,7 @@ service SaService {
   rpc active(google.protobuf.Empty) returns(gsvc.CommonRes);
   rpc reset(google.protobuf.Empty) returns(gsvc.CommonRes);
   rpc setup(google.protobuf.Empty) returns(gsvc.CommonRes);
+  rpc deny(google.protobuf.Empty) returns(gsvc.CommonRes);
 }
 
 message FileReq {

@@ -31,26 +31,6 @@ Cookie: lang=en
     });
 %}
 
-### Route - SaService - /sa/login
-POST http://{{barService}}/sa/login
-Content-Type: application/json
-
-{
-    "username": "admin",
-    "password": "123456"
-}
-
-> {%
-    client.test("Request executed successfully", function () {
-        client.assert(response.status === 200, "Response status is not 200");
-        const type = response.contentType.mimeType;
-        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
-        client.global.set("accessToken", response.body.data.accessToken)
-        client.global.set("refreshToken", response.body.data.refreshToken)
-    });
-%}
-
 ### BarService Greeting
 //@no-redirect
 POST http://{{barService}}/~barService/greeting
@@ -134,41 +114,6 @@ X-Gsvc-Caller: gtw
         });
     })
 %}
-
-### Route - BooService bar/hi
-POST http://{{barService}}/bar/hi
-Content-Type: application/json
-Authorization: Bearer {{accessToken}}
-
-{
-    "name": "gsvc",
-    "age": 18
-}
-
-> {%
-    client.test("Request executed successfully", function () {
-        client.assert(response.status === 200, "Response status is not 200");
-        const type = response.contentType.mimeType;
-        client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
-    });
-    var threeCnt = 0;
-    var sevenCnt = 0;
-    response.body.onEachLine((line, unsubscribe) => {
-        if (line && line.indexOf("\"fileCount\":3") > 0) {
-            threeCnt = threeCnt + 1;
-        } else if (line && line.indexOf("\"fileCount\":7") > 0) {
-            sevenCnt = sevenCnt + 1;
-        }
-    }, () => {
-        client.test("fileCount is 3", function () {
-            client.assert(threeCnt === 1, threeCnt + " != 1");
-        });
-        client.test("fileCount is 7", function () {
-            client.assert(sevenCnt === 1, sevenCnt + " != 1");
-        });
-    })
-%}
-
 
 ### Route - BooService bar/hello
 POST http://{{barService}}/bar/hello
@@ -259,6 +204,60 @@ Content-Type: application/json
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
         client.assert(response.body.data.name === "gsvc.bar@greeting", "响应不等于'gsvc.bar@greeting'")
     });
+%}
+
+### Route - SaService - /sa/login
+POST http://{{barService}}/sa/login
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "123456"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.global.set("accessToken", response.body.data.accessToken)
+        client.global.set("refreshToken", response.body.data.refreshToken)
+    });
+%}
+
+### Route - BooService bar/hi
+POST http://{{barService}}/bar/hi
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "name": "gsvc",
+    "age": 18
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "text/event-stream", "Expected 'text/event-stream' but received '" + type + "'");
+    });
+    var threeCnt = 0;
+    var sevenCnt = 0;
+    response.body.onEachLine((line, unsubscribe) => {
+        if (line && line.indexOf("\"fileCount\":3") > 0) {
+            threeCnt = threeCnt + 1;
+        } else if (line && line.indexOf("\"fileCount\":7") > 0) {
+            sevenCnt = sevenCnt + 1;
+        }
+    }, () => {
+        client.test("fileCount is 3", function () {
+            client.assert(threeCnt === 1, threeCnt + " != 1");
+        });
+        client.test("fileCount is 7", function () {
+            client.assert(sevenCnt === 1, sevenCnt + " != 1");
+        });
+    })
 %}
 
 ### Route - SaService - /sa/info
@@ -385,12 +384,12 @@ Authorization: Bearer {{accessToken}}
     client.test("Request executed successfully", function () {
         client.assert(response.status === 302, "Response status is not 302");
         const type = response.contentType.mimeType;
-        client.assert(type === "text/html", "Expected 'text/plain' but received '" + type + "'");
+        client.assert(type === "text/html", "Expected 'text/html' but received '" + type + "'");
         client.assert(response.headers.valueOf("Location").endsWith("/home"), "'" + response.headers.valueOf('Location') + " not end with /home")
     });
 %}
 
-### Auth - API - /token/refresh#after-login
+### Auth - API - /token/refresh#after-logout
 //@no-redirect
 POST http://{{barService}}/token/refresh
 Content-Type: application/json
@@ -405,7 +404,7 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 403 || response.status === 500, "Response status is not 500 or 401");
+        client.assert(response.status === 401, "Response status is not 401");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'text/plain' but received '" + type + "'");
         // client.assert(request.body.errCode === 500,"status != 500")
@@ -716,5 +715,262 @@ Authorization: Bearer {{accessToken}}
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
         client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.global.set("accessToken", null)
+        client.global.set("refreshToken", null)
     });
+%}
+
+### BarService Unauthorized - /bar/acl/hello
+// @no-redirect
+GET http://{{barService}}/bar/acl/hello?name=Gsvc
+Accept: application/json
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService Unauthorized - /bar/acl/hi
+// @no-redirect
+GET http://{{barService}}/bar/acl/hi?name=Gsvc
+Accept: application/json
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService Unauthorized - /bar/method/gretting
+// @no-redirect
+GET http://{{barService}}/bar/method/greeting?name=Gsvc
+Accept: application/json
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService Unauthorized - /bar/method/hi
+// @no-redirect
+GET http://{{barService}}/bar/method/hi?name=Gsvc
+Accept: application/json
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService Unauthorized - /bar/rpc/hi
+// @no-redirect
+GET http://{{barService}}/bar/rpc/hi?name=Gsvc
+Accept: application/json
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+
+### BarService Authorized - /sa/login/admin
+POST http://{{barService}}/sa/login
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "123456"
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === 0, "出错啦: " + response.body.errMsg);
+        client.global.set("accessToken", response.body.data.accessToken)
+        client.global.set("refreshToken", response.body.data.refreshToken)
+    });
+%}
+
+### BarService Authorized - /bar/acl/hello
+// @no-redirect
+GET http://{{barService}}/bar/acl/hello?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200")
+    });
+%}
+
+### BarService Authorized - /bar/acl/hi
+// @no-redirect
+GET http://{{barService}}/bar/acl/hi?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 403, "Response status is not 403");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -403, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService Authorized - /bar/method/gretting
+// @no-redirect
+GET http://{{barService}}/bar/method/greeting?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200")
+    });
+%}
+
+### BarService Authorized - /bar/method/hi
+// @no-redirect
+GET http://{{barService}}/bar/method/hi?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 403, "Response status is not 403");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -403, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService Authorized - /bar/rpc/hi
+// @no-redirect
+GET http://{{barService}}/bar/rpc/hi?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200")
+    });
+%}
+
+### BarService Authorized - /bar/rpc/deny
+// @no-redirect
+GET http://{{barService}}/bar/rpc/deny?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 403, "Response status is not 403");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -403, "出错啦: " + response.body.errMsg);
+    });
+    client.global.set("accessToken", "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyNCIsImV4cCI6MTcxNTEyMzYxMn0.j9WhnMFXxx42vNyZzdhxld6aYSyMlP_KLAt10Ysm4Pw")
+%}
+
+### BarService Expired - /bar/acl/hello
+// @no-redirect
+GET http://{{barService}}/bar/acl/hello?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 403");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService Expired - /bar/acl/hi
+// @no-redirect
+GET http://{{barService}}/bar/acl/hi?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 401, "Response status is not 403");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+    });
+%}
+
+### BarService Expired - /bar/method/gretting
+// @no-redirect
+GET http://{{barService}}/bar/method/greeting?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.assert(response.status === 401, "Response status is not 403");
+    const type = response.contentType.mimeType;
+    client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+    client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+%}
+
+### BarService Expired - /bar/method/hi
+// @no-redirect
+GET http://{{barService}}/bar/method/hi?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.assert(response.status === 401, "Response status is not 403");
+    const type = response.contentType.mimeType;
+    client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+    client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+%}
+
+### BarService Expired - /bar/rpc/hi
+// @no-redirect
+GET http://{{barService}}/bar/rpc/hi?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.assert(response.status === 401, "Response status is not 403");
+    const type = response.contentType.mimeType;
+    client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+    client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+%}
+
+### BarService Expired - /bar/rpc/deny
+// @no-redirect
+GET http://{{barService}}/bar/rpc/deny?name=Gsvc
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+> {%
+    client.assert(response.status === 401, "Response status is not 403");
+    const type = response.contentType.mimeType;
+    client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
+    client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
 %}
