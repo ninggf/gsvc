@@ -18,6 +18,7 @@ package com.apzda.cloud.gsvc.security.resolver;
 
 import com.apzda.cloud.gsvc.dto.CurrentUser;
 import com.apzda.cloud.gsvc.security.authentication.AuthenticationDetails;
+import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.core.MethodParameter;
@@ -75,6 +76,13 @@ public class CurrentUserParamResolver implements HandlerMethodArgumentResolver {
             builder.deviceId(device.getDeviceId());
             builder.remoteAddress(device.getRemoteAddress());
             builder.meta(device.getAppMeta());
+        }
+
+        if (authentication instanceof JwtAuthenticationToken token) {
+            val jwtToken = token.getJwtToken();
+            if (jwtToken != null) {
+                builder.id(jwtToken.getUid());
+            }
         }
 
         return builder;

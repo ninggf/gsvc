@@ -51,7 +51,7 @@ public abstract class CurrentUserProvider implements InitializingBean {
 
     @NonNull
     public Optional<String> getCurrentAuditor() {
-        return Optional.ofNullable(getCurrentUser().getUid());
+        return Optional.ofNullable(getCurrentUser().getId());
     }
 
     @Nullable

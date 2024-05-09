@@ -4,7 +4,6 @@ import com.apzda.cloud.demo.bar.proto.*;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
-import com.apzda.cloud.gsvc.security.token.JwtToken;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.google.protobuf.Empty;
@@ -58,12 +57,6 @@ public class SaServiceImpl implements SaService {
                 SecurityContextHolder.setContext(context);
                 securityContextRepository.saveContext(context, GsvcContextHolder.getRequest().get(),
                         GsvcContextHolder.getResponse().get());
-
-                JwtToken newToken = jwtToken;
-
-                for (JwtTokenCustomizer customizer : customizers.orderedStream().toList()) {
-                    newToken = customizer.customize(authenticate, newToken);
-                }
 
                 return LoginRes.newBuilder()
                     .setErrCode(0)

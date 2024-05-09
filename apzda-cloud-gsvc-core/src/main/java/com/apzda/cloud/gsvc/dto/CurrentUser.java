@@ -23,6 +23,9 @@ public class CurrentUser implements Serializable {
     @Serial
     private static final long serialVersionUID = -8353034394933412487L;
 
+    private String id;
+
+    // alias of name/username
     private String uid;
 
     private String device;

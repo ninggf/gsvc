@@ -41,6 +41,8 @@ import java.util.Optional;
 @Slf4j
 public class JwtTokenManager implements TokenManager {
 
+    private final static String PAYLOAD_UID = "uid";
+
     protected final UserDetailsService userDetailsService;
 
     protected final UserDetailsMetaRepository userDetailsMetaRepository;
@@ -121,6 +123,11 @@ public class JwtTokenManager implements TokenManager {
                 .accessToken(accessToken)
                 .name((String) jwt.getPayload(JWT.SUBJECT))
                 .build();
+
+            if (jwt.getPayload(PAYLOAD_UID) != null) {
+                jwtToken.setUid((String) jwt.getPayload(PAYLOAD_UID));
+            }
+
             val username = jwtToken.getName();
             val tmpUser = User.withUsername(username).password("").build();
 
@@ -182,25 +189,36 @@ public class JwtTokenManager implements TokenManager {
             throw TokenException.DEVICE_NOT_ALLOWED;
         }
 
-        val token = JWT.create();
         val name = authentication.getName();
+        JwtToken jwtToken = SimpleJwtToken.builder().name(name).build();
+        val cs = customizers.orderedStream().toList();
+
+        for (JwtTokenCustomizer c : cs) {
+            jwtToken = c.customize(authentication, jwtToken);
+        }
+
+        val token = JWT.create();
+        if (StringUtils.isNotBlank(jwtToken.getUid())) {
+            token.setPayload(PAYLOAD_UID, jwtToken.getUid());
+        }
         token.setSubject(name);
         token.setSigner(jwtSigner);
         val accessExpireAt = DateUtil.date()
             .offset(DateField.MINUTE, (int) properties.getAccessTokenTimeout().toMinutes());
-
         token.setExpiresAt(accessExpireAt);
 
         val accessToken = token.sign();
-        var refreshToken = createRefreshToken(accessToken, authentication);
+        jwtToken.setAccessToken(accessToken);
 
-        return SimpleJwtToken.builder().refreshToken(refreshToken).accessToken(accessToken).name(name).build();
+        var refreshToken = createRefreshToken(accessToken, authentication);
+        jwtToken.setRefreshToken(refreshToken);
+
+        return jwtToken;
     }
 
     @Override
     public JwtToken refreshAccessToken(@NonNull JwtToken jwtToken) {
         try {
-            val requestId = GsvcContextHolder.getRequestId();
             val name = jwtToken.getName();
             if (StringUtils.isBlank(name)) {
                 throw new InsufficientAuthenticationException("Username is blank");
@@ -246,21 +264,13 @@ public class JwtTokenManager implements TokenManager {
                 authentication.setJwtToken(jwtToken);
 
                 if (!authentication.isLogin()) {
-                    throw new InvalidSessionException("[" + requestId + "] Not Login");
+                    throw new InvalidSessionException("Not Login");
                 }
 
                 val newJwtToken = createJwtToken(authentication);
                 authentication.login(newJwtToken);
                 save(authentication, GsvcContextHolder.getRequest().orElse(null));
-
-                JwtToken newToken = newJwtToken;
-                val cs = customizers.orderedStream().toList();
-
-                for (JwtTokenCustomizer c : cs) {
-                    newToken = c.customize(authentication, newToken);
-                }
-
-                return newToken;
+                return newJwtToken;
             }
 
             log.error("refreshToken({}) is invalid: accessToken or password does not match", refreshToken);

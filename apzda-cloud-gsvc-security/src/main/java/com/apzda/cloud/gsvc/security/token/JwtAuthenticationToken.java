@@ -104,6 +104,9 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         this.jwtToken = jwtToken;
         if (jwtToken != null) {
             super.setAuthenticated(true);
+            if (principal instanceof UserDetailsMeta meta) {
+                meta.setUid(jwtToken.getUid());
+            }
         }
     }
 

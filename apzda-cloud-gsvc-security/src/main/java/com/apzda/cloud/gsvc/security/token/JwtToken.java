@@ -11,6 +11,10 @@ import org.springframework.lang.Nullable;
 
 public interface JwtToken {
 
+    void setUid(String uid);
+
+    String getUid();
+
     String getName();
 
     void setName(String name);

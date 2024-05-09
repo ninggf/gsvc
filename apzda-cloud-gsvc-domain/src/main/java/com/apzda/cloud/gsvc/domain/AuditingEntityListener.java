@@ -41,10 +41,10 @@ public class AuditingEntityListener {
 
     @PrePersist
     @PreUpdate
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void fillMetaData(Object o) {
         if (o instanceof Auditable entity) {
-            val userId = CurrentUserProvider.getCurrentUser().getUid();
+            val userId = CurrentUserProvider.getCurrentUser().getId();
 
             val resolvableType = ResolvableType.forClass(Auditable.class, o.getClass());
 
@@ -53,13 +53,17 @@ public class AuditingEntityListener {
             Object uid;
             if (userIdClz == null) {
                 uid = null;
-            } else if (Long.class.isAssignableFrom(userIdClz)) {
+            }
+            else if (Long.class.isAssignableFrom(userIdClz)) {
                 uid = Long.parseLong(userId);
-            } else if (Integer.class.isAssignableFrom(userIdClz)) {
+            }
+            else if (Integer.class.isAssignableFrom(userIdClz)) {
                 uid = Integer.parseInt(userId);
-            } else if (StringUtils.isNotBlank(userId)) {
+            }
+            else if (StringUtils.isNotBlank(userId)) {
                 uid = userId;
-            } else {
+            }
+            else {
                 uid = null;
             }
 
@@ -74,13 +78,17 @@ public class AuditingEntityListener {
             Object current;
             if (timeType == null || Long.class.isAssignableFrom(timeType)) {
                 current = System.currentTimeMillis();
-            } else if (Date.class.isAssignableFrom(timeType)) {
+            }
+            else if (Date.class.isAssignableFrom(timeType)) {
                 current = new Date();
-            } else if (LocalDate.class.isAssignableFrom(timeType)) {
+            }
+            else if (LocalDate.class.isAssignableFrom(timeType)) {
                 current = LocalDate.now();
-            } else if (LocalDateTime.class.isAssignableFrom(timeType)) {
+            }
+            else if (LocalDateTime.class.isAssignableFrom(timeType)) {
                 current = LocalDateTime.now();
-            } else {
+            }
+            else {
                 current = DateUtil.now();
             }
 

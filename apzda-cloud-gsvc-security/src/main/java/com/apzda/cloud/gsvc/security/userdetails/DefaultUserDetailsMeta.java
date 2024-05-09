@@ -26,6 +26,8 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
 
     protected Collection<? extends GrantedAuthority> authorities;
 
+    protected String uid;
+
     protected String openId;
 
     protected String unionId;
@@ -154,6 +156,16 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
     @Override
     public String getUnionId() {
         return this.unionId;
+    }
+
+    @Override
+    public String getUid() {
+        return uid;
+    }
+
+    @Override
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
 }

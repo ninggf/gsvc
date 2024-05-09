@@ -5,7 +5,6 @@ import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.event.AuthenticationCompleteEvent;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
-import com.apzda.cloud.gsvc.security.token.JwtToken;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
@@ -66,13 +65,8 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler, Appl
                 }
 
                 authenticationToken.login(jwtToken);
-                JwtToken newToken = jwtToken;
-                val cs = customizers.orderedStream().toList();
-                for (JwtTokenCustomizer c : cs) {
-                    newToken = c.customize(authentication, newToken);
-                }
-                this.applicationEventPublisher.publishEvent(new AuthenticationCompleteEvent(authentication, newToken));
-                ResponseUtils.respond(request, response, Response.success(newToken));
+                this.applicationEventPublisher.publishEvent(new AuthenticationCompleteEvent(authentication, jwtToken));
+                ResponseUtils.respond(request, response, Response.success(jwtToken));
             }
             catch (Exception e) {
                 log.error("Create token failed: {}", e.getMessage(), e);

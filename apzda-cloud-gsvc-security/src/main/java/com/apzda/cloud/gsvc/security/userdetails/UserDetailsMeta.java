@@ -32,6 +32,10 @@ public interface UserDetailsMeta extends UserDetails {
     @NonNull
     UserDetails getUserDetails();
 
+    String getUid();
+
+    void setUid(String uid);
+
     void setOpenId(String openId);
 
     String getOpenId();

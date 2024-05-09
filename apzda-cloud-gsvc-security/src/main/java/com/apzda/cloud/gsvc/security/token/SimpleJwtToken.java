@@ -36,6 +36,8 @@ public class SimpleJwtToken implements JwtToken, Serializable {
     @Serial
     private static final long serialVersionUID = -2763131228048354173L;
 
+    private String uid;
+
     private String name;
 
     private String accessToken;

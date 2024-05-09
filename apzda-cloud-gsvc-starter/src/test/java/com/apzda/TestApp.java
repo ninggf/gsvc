@@ -37,7 +37,7 @@ public class TestApp {
             @Override
             @NonNull
             protected String[] getTenantIds() {
-                return new String[]{"123456789"};
+                return new String[] { "123456789" };
             }
         };
     }
@@ -47,7 +47,7 @@ public class TestApp {
         return new CurrentUserProvider() {
             @Override
             protected CurrentUser currentUser() {
-                return CurrentUser.builder().uid("1").build();
+                return CurrentUser.builder().id("1").uid("1").build();
             }
         };
     }

@@ -18,18 +18,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 1.0.0
  **/
 class AuditingEntityListenerTest {
+
     @Test
     void fillMetaData() {
-        //given
+        // given
         val listener = new AuditingEntityListener();
         val entity = new TestEntity();
         try (val ms = Mockito.mockStatic(CurrentUserProvider.class); val ts = Mockito.mockStatic(TenantManager.class)) {
-            ms.when(CurrentUserProvider::getCurrentUser).thenReturn(CurrentUser.builder().uid("1").build());
+            ms.when(CurrentUserProvider::getCurrentUser).thenReturn(CurrentUser.builder().id("1").uid("1").build());
             ms.when(TenantManager::tenantId).thenReturn(2L);
             // when
             listener.fillMetaData(entity);
 
-            //then
+            // then
             assertThat(entity.getCreatedBy()).isEqualTo("1");
             assertThat(entity.getUpdatedBy()).isEqualTo("1");
             assertThat(entity.getUpdatedAt()).isNotNull();
@@ -40,16 +41,16 @@ class AuditingEntityListenerTest {
 
     @Test
     void fillMetaData2() {
-        //given
+        // given
         val listener = new AuditingEntityListener();
         val entity = new TestEntity2();
         try (val ms = Mockito.mockStatic(CurrentUserProvider.class); val ts = Mockito.mockStatic(TenantManager.class)) {
-            ms.when(CurrentUserProvider::getCurrentUser).thenReturn(CurrentUser.builder().uid("1").build());
+            ms.when(CurrentUserProvider::getCurrentUser).thenReturn(CurrentUser.builder().id("1").uid("1").build());
             ms.when(TenantManager::tenantId).thenReturn("2L");
             // when
             listener.fillMetaData(entity);
 
-            //then
+            // then
             assertThat(entity.getCreatedBy()).isEqualTo("1");
             assertThat(entity.getUpdatedBy()).isEqualTo("1");
             assertThat(entity.getUpdatedAt()).isNotNull();
@@ -60,12 +61,12 @@ class AuditingEntityListenerTest {
 
     @Test
     void fillMetaData3() {
-        //given
+        // given
         val listener = new AuditingEntityListener();
         val entity = new TestEntity2();
         // when
         listener.fillMetaData(entity);
-        //then
+        // then
         assertThat(entity.getCreatedBy()).isNull();
         assertThat(entity.getUpdatedBy()).isNull();
         assertThat(entity.getUpdatedAt()).isNotNull();
@@ -77,14 +78,21 @@ class AuditingEntityListenerTest {
     @EqualsAndHashCode(callSuper = true)
     @Data
     static class TestEntity extends AuditableEntity<Long, String, Long> implements Tenantable<Long> {
+
         private Long id;
+
         private Long tenantId;
+
     }
 
     @EqualsAndHashCode(callSuper = true)
     @Data
     static class TestEntity2 extends AuditableEntity<Long, String, Long> implements Tenantable<String> {
+
         private Long id;
+
         private String tenantId;
+
     }
+
 }
