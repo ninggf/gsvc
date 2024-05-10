@@ -63,6 +63,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
+    @SuppressWarnings("unchecked")
     public ServerResponse handle(ServerRequest request, Route route, ServiceInfo serviceInfo) {
         val context = GsvcContextHolder.getContext();
         context.setAttributes(RequestContextHolder.getRequestAttributes());
@@ -109,6 +110,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             plugins = serviceMethod.getPlugins();
         }
         else {
+            filtered.remove("X-Gsvc-Caller");
             plugins = serviceConfigure.getGlobalPlugins();
         }
 
