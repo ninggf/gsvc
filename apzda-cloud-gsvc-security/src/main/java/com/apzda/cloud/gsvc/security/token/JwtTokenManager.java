@@ -261,6 +261,11 @@ public class JwtTokenManager implements TokenManager {
             val sign = MD5.create().digestHex(accessToken + password);
 
             if (Objects.equals(oldSign, sign)) {
+                val provider = jwt.getPayload(PAYLOAD_PD);
+                if (provider != null) {
+                    jwtToken.setProvider((String) provider);
+                }
+
                 val authentication = JwtAuthenticationToken
                     .unauthenticated(userDetailsMetaRepository.create(userDetails), userDetails.getPassword());
 
