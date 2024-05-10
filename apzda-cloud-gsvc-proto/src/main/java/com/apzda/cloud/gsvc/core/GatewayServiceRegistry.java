@@ -3,12 +3,14 @@ package com.apzda.cloud.gsvc.core;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.apzda.cloud.gsvc.gtw.RouteMeta;
 import com.google.common.base.Splitter;
+import io.grpc.MethodDescriptor;
 import io.grpc.ServiceDescriptor;
 import io.grpc.protobuf.ProtoFileDescriptorSupplier;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -74,6 +76,23 @@ public abstract class GatewayServiceRegistry {
                 if (StringUtils.isNotBlank(svcName)) {
                     val configName = cfgName(interfaceName);
                     SERVICE_ALIAS.put(configName, svcName);
+                }
+            }
+
+            val methodMeta = new HashMap<String, Object[]>();
+            val methods = descriptor.getMethods();
+            if (!CollectionUtils.isEmpty(methods)) {
+                for (MethodDescriptor<?, ?> method : methods) {
+                    val name = method.getBareMethodName();
+                    if (method.getRequestMarshaller() instanceof MethodDescriptor.ReflectableMarshaller<?> marshaller) {
+                        val reqT = marshaller.getMessageClass();
+                        val resT = ((MethodDescriptor.ReflectableMarshaller<?>) method.getResponseMarshaller())
+                            .getMessageClass();
+                        methodMeta.put(name, new Object[] { method.getType(), reqT, resT });
+                    }
+                }
+                if (!methodMeta.isEmpty()) {
+                    GatewayServiceRegistry.register(interfaceName, methodMeta);
                 }
             }
             return descriptor;
