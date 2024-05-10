@@ -22,6 +22,7 @@ import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 
 /**
@@ -36,7 +37,8 @@ public class MfaTokenCustomizer implements JwtTokenCustomizer {
     private final SecurityConfigProperties properties;
 
     @Override
-    public JwtToken customize(Authentication authentication, JwtToken token) {
+    @NonNull
+    public JwtToken customize(@NonNull Authentication authentication, @NonNull JwtToken token) {
         if (properties.isMfaEnabled() && token.getMfa() == null
                 && authentication.getPrincipal() instanceof UserDetailsMeta userDetailsMeta) {
             token.setMfa(userDetailsMeta.get(UserDetailsMeta.MFA_STATUS_KEY, authentication, MfaStatus.DISABLED));

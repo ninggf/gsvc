@@ -24,6 +24,7 @@ import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.val;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +40,8 @@ import java.io.Serializable;
 public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
 
     @Override
-    public JwtToken customize(Authentication authentication, JwtToken token) {
+    @NonNull
+    public JwtToken customize(@NonNull Authentication authentication, @NonNull JwtToken token) {
         val data = BeanUtil.copyProperties(token, FooLoginData.class);
         data.setUid(token.getName());
         if (authentication.getPrincipal() instanceof UserDetailsMeta udm) {
@@ -58,15 +60,17 @@ public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
         @Serial
         private static final long serialVersionUID = -2763131228048354173L;
 
+        private String uid;
+
         private String name;
+
+        private String provider;
 
         private String accessToken;
 
         private String refreshToken;
 
         private String mfa;
-
-        private String uid;
 
         private Long lastLoginTime;
 

@@ -19,6 +19,10 @@ public interface JwtToken {
 
     void setName(String name);
 
+    String getProvider();
+
+    void setProvider(String provider);
+
     String getAccessToken();
 
     void setAccessToken(String accessToken);

@@ -40,6 +40,8 @@ public class SimpleJwtToken implements JwtToken, Serializable {
 
     private String name;
 
+    private String provider;
+
     private String accessToken;
 
     private String refreshToken;

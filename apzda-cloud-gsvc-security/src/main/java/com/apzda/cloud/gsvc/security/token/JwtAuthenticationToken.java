@@ -148,7 +148,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     public void login(@NonNull JwtToken jwtToken) {
         Assert.notNull(jwtToken, "JwtToken must not be null");
-        this.jwtToken = jwtToken;
+        setJwtToken(jwtToken);
         login();
     }
 

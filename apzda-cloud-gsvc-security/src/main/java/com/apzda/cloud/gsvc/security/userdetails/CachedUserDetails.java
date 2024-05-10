@@ -16,7 +16,6 @@
  */
 package com.apzda.cloud.gsvc.security.userdetails;
 
-import com.apzda.cloud.gsvc.dto.CurrentUser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
@@ -49,8 +48,6 @@ public class CachedUserDetails implements UserDetails {
     boolean credentialsNonExpired;
 
     boolean enabled;
-
-    private CurrentUser user;
 
     public static CachedUserDetails from(UserDetails userDetails) {
         val ud = new CachedUserDetails();

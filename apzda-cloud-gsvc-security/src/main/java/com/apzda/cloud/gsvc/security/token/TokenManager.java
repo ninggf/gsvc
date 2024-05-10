@@ -27,6 +27,7 @@ public interface TokenManager {
     default void verify(@NonNull Authentication authentication) throws SessionAuthenticationException {
     }
 
-    String createRefreshToken(String accessToken, Authentication authentication);
+    @NonNull
+    String createRefreshToken(@NonNull JwtToken jwtToken, @NonNull Authentication authentication);
 
 }

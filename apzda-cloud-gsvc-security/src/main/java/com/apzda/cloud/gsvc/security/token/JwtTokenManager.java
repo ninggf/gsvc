@@ -43,6 +43,8 @@ public class JwtTokenManager implements TokenManager {
 
     private final static String PAYLOAD_UID = "uid";
 
+    private final static String PAYLOAD_PD = "pd";
+
     protected final UserDetailsService userDetailsService;
 
     protected final UserDetailsMetaRepository userDetailsMetaRepository;
@@ -128,6 +130,10 @@ public class JwtTokenManager implements TokenManager {
                 jwtToken.setUid((String) jwt.getPayload(PAYLOAD_UID));
             }
 
+            if (jwt.getPayload(PAYLOAD_PD) != null) {
+                jwtToken.setProvider((String) jwt.getPayload(PAYLOAD_PD));
+            }
+
             val username = jwtToken.getName();
             val tmpUser = User.withUsername(username).password("").build();
 
@@ -172,11 +178,6 @@ public class JwtTokenManager implements TokenManager {
     public void save(Authentication authentication, HttpServletRequest request) {
         if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
             val cachedUser = CachedUserDetails.from(userDetails);
-            val details = authentication.getDetails();
-            if (details instanceof AuthenticationDetails) {
-                val user = ((AuthenticationDetails) details).create(userDetails.getUsername());
-                cachedUser.setUser(user);
-            }
             userDetailsMetaRepository.setMetaData(userDetails, UserDetailsMeta.CACHED_USER_DETAILS_KEY, cachedUser);
             log.trace("Authentication Saved: {}", authentication);
         }
@@ -193,13 +194,16 @@ public class JwtTokenManager implements TokenManager {
         JwtToken jwtToken = SimpleJwtToken.builder().name(name).build();
         val cs = customizers.orderedStream().toList();
 
-        for (JwtTokenCustomizer c : cs) {
+        for (val c : cs) {
             jwtToken = c.customize(authentication, jwtToken);
         }
 
         val token = JWT.create();
         if (StringUtils.isNotBlank(jwtToken.getUid())) {
             token.setPayload(PAYLOAD_UID, jwtToken.getUid());
+        }
+        if (StringUtils.isNotBlank(jwtToken.getProvider())) {
+            token.setPayload(PAYLOAD_PD, jwtToken.getProvider());
         }
         token.setSubject(name);
         token.setSigner(jwtSigner);
@@ -209,8 +213,7 @@ public class JwtTokenManager implements TokenManager {
 
         val accessToken = token.sign();
         jwtToken.setAccessToken(accessToken);
-
-        var refreshToken = createRefreshToken(accessToken, authentication);
+        var refreshToken = createRefreshToken(jwtToken, authentication);
         jwtToken.setRefreshToken(refreshToken);
 
         return jwtToken;
@@ -284,7 +287,9 @@ public class JwtTokenManager implements TokenManager {
     }
 
     @Override
-    public String createRefreshToken(String accessToken, Authentication authentication) {
+    @NonNull
+    public String createRefreshToken(@NonNull JwtToken jwtToken, @NonNull Authentication authentication) {
+        val accessToken = jwtToken.getAccessToken();
         val principal = authentication.getPrincipal();
         if (principal instanceof UserDetails userDetails) {
             val password = userDetails.getPassword();
@@ -293,6 +298,9 @@ public class JwtTokenManager implements TokenManager {
             val token = JWT.create();
             val refreshToken = MD5.create().digestHex(accessToken + password);
             token.setSubject(refreshToken);
+            if (StringUtils.isNotBlank(jwtToken.getProvider())) {
+                token.setPayload(PAYLOAD_PD, jwtToken.getProvider());
+            }
             token.setExpiresAt(accessExpireAt);
             token.setSigner(jwtSigner);
             return token.sign();
