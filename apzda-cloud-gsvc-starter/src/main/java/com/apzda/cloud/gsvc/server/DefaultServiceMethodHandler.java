@@ -461,6 +461,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
                     objectNode.set("errMsg", new TextNode(errMsg));
                 }
             }
+            resp = objectNode;
         }
 
         val respStr = objectMapper.writeValueAsString(resp);
