@@ -14,11 +14,14 @@ import com.apzda.cloud.gsvc.exception.MessageValidationException;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.plugin.IPostInvoke;
 import com.apzda.cloud.gsvc.plugin.IPreInvoke;
+import com.apzda.cloud.gsvc.utils.I18nUtils;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.protobuf.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -424,21 +427,39 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
     private String createResponse(Object resp, ServiceMethod serviceMethod) throws JsonProcessingException {
         val context = GsvcContextHolder.getContext();
         val flat = svcConfigure.isFlatResponse();
+        val node = objectMapper.convertValue(resp, JsonNode.class);
         if (!flat && GTW.equals(context.getCaller())) {
             // bookmark: wrap response for the request from gateway.
-            val node = objectMapper.convertValue(resp, JsonNode.class);
             if (node instanceof ObjectNode objectNode) {
                 val wrappedResp = new Response<JsonNode>();
-                val errCode = objectNode.get("errCode").asInt();
+                val errCode = Optional.ofNullable(objectNode.get("errCode")).orElse(new IntNode(0)).asInt();
                 objectNode.remove("errCode");
                 wrappedResp.setErrCode(errCode);
                 if (objectNode.has("errMsg")) {
                     val errMsg = objectNode.get("errMsg").asText();
                     objectNode.remove("errMsg");
-                    wrappedResp.setErrMsg(errMsg);
+                    if (StringUtils.hasText(errMsg)) {
+                        wrappedResp.setErrMsg(errMsg);
+                    }
                 }
-                wrappedResp.setData(node);
+                else {
+                    val errMsg = I18nUtils.t("error." + errCode, "");
+                    if (StringUtils.hasText(errMsg)) {
+                        wrappedResp.setErrMsg(errMsg);
+                    }
+                }
+                wrappedResp.setData(objectNode);
                 resp = wrappedResp;
+            }
+        }
+        else if (node instanceof ObjectNode objectNode) {
+            val errCode = Optional.ofNullable(objectNode.get("errCode")).orElse(new IntNode(0)).asInt();
+            objectNode.set("errCode", new IntNode(errCode));
+            if (!objectNode.has("errMsg")) {
+                val errMsg = I18nUtils.t("error." + errCode, "");
+                if (StringUtils.hasText(errMsg)) {
+                    objectNode.set("errMsg", new TextNode(errMsg));
+                }
             }
         }
 
