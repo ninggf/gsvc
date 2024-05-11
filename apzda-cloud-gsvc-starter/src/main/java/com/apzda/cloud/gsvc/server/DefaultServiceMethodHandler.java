@@ -443,7 +443,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
                     }
                 }
                 else {
-                    val errMsg = I18nUtils.t("error." + errCode, "");
+                    val errMsg = I18nUtils.t("error." + Math.abs(errCode), "");
                     if (StringUtils.hasText(errMsg)) {
                         wrappedResp.setErrMsg(errMsg);
                     }
@@ -456,7 +456,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             val errCode = Optional.ofNullable(objectNode.get("errCode")).orElse(new IntNode(0)).asInt();
             objectNode.set("errCode", new IntNode(errCode));
             if (!objectNode.has("errMsg")) {
-                val errMsg = I18nUtils.t("error." + errCode, "");
+                val errMsg = I18nUtils.t("error." + Math.abs(errCode), "");
                 if (StringUtils.hasText(errMsg)) {
                     objectNode.set("errMsg", new TextNode(errMsg));
                 }
