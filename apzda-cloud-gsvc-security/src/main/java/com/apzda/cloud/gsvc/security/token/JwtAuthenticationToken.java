@@ -5,6 +5,7 @@ package com.apzda.cloud.gsvc.security.token;
 
 import com.apzda.cloud.gsvc.security.authentication.AuthenticationDetails;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
+import com.apzda.cloud.gsvc.security.userdetails.CachedUserDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -161,6 +162,9 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             userDetailsMeta.set(key, this, jwtToken.getAccessToken());
 
             userDetailsMeta.remove(UserDetailsMeta.AUTHORITY_META_KEY);
+
+            val cachedUser = CachedUserDetails.from(userDetailsMeta);
+            userDetailsMeta.set(UserDetailsMeta.CACHED_USER_DETAILS_KEY, cachedUser);
 
             val loginKey = UserDetailsMeta.LOGIN_TIME_META_KEY;
             if (userDetailsMeta.get(loginKey, this, 0L) == 0) {

@@ -158,15 +158,6 @@ public class JwtTokenManager implements TokenManager {
     }
 
     @Override
-    public void save(Authentication authentication, HttpServletRequest request) {
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetails userDetails) {
-            val cachedUser = CachedUserDetails.from(userDetails);
-            userDetailsMetaRepository.setMetaData(userDetails, UserDetailsMeta.CACHED_USER_DETAILS_KEY, cachedUser);
-            log.trace("Authentication Saved: {}", authentication);
-        }
-    }
-
-    @Override
     public JwtToken createJwtToken(Authentication authentication) {
         if (authentication.getDetails() instanceof AuthenticationDetails device
                 && !properties.deviceIsAllowed(device.getDevice())) {
