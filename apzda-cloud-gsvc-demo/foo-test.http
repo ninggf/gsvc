@@ -40,7 +40,7 @@ password = 123456
 //@no-redirect
 POST http://{{fooService}}/foo/hai
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 Accept: application/json
 
@@ -80,7 +80,7 @@ password = 123456
 ### FooService Greeting
 POST http://{{fooService}}/~fooService/greeting
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Accept: application/json
 
 {
@@ -101,7 +101,7 @@ Accept: application/json
 ### FooService Greeting - Age is invalid
 POST http://{{fooService}}/~fooService/greeting
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Cookie: lang=zh_CN
 Accept: application/json
 
@@ -123,7 +123,7 @@ Accept: application/json
 ### FooService Hello
 POST http://{{fooService}}/~fooService/hello
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Accept: text/event-stream
 
 {
@@ -152,7 +152,7 @@ Accept: text/event-stream
 ### FooService Hi
 POST http://{{fooService}}/~fooService/hi
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 Accept: text/event-stream
 
@@ -182,7 +182,7 @@ Accept: text/event-stream
 ### FooService Hi - POST - URLENCODE
 POST http://{{fooService}}/~fooService/hi?a=1
 Content-Type: application/x-www-form-urlencoded
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 Accept: text/event-stream
 
@@ -210,7 +210,7 @@ age = 18
 ### FooService SaInfo - POST - URLENCODE
 POST http://{{fooService}}/~fooService/saInfo
 Content-Type: application/x-www-form-urlencoded
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 Accept: application/json
 
@@ -277,7 +277,7 @@ Accept: text/event-stream
 
 ### Route - FooService hey - GET
 GET http://{{fooService}}/foo/hey?name=gsvc&age=18
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Accept: text/event-stream
 
 > {%
@@ -319,7 +319,7 @@ password = 123456
 ### FooService SaInfo - User - View Gsvc
 POST http://{{fooService}}/~fooService/saInfo
 Content-Type: application/x-www-form-urlencoded
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 
 name = gsvc &
@@ -334,7 +334,7 @@ age = 18
 ### FooService SaInfo - User - View user
 POST http://{{fooService}}/~fooService/saInfo
 Content-Type: application/x-www-form-urlencoded
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 
 name = user &
@@ -353,7 +353,7 @@ age = 18
 ### FooService setup - authenticated
 POST http://{{fooService}}/~fooService/setup
 Accept: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 
 > {%
@@ -366,7 +366,7 @@ Authorization: Bearer {{accessToken}}
 POST http://{{fooService}}/~fooService/err
 //@no-redirect
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Accept: application/json
 
 {

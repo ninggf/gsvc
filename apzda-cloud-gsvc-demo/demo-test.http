@@ -146,7 +146,7 @@ GET http://{{demoService}}/demo/m/add?num1=1&num2=18
 ### DemoService Err
 POST http://{{demoService}}/demo/~demoService/err
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Accept: application/json
 
 {
@@ -165,7 +165,7 @@ Accept: application/json
 //@no-redirect
 POST http://{{demoService}}/demo/~demoService/err
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Accept: text/html
 
 {
@@ -383,7 +383,7 @@ POST http://{{demoService}}/demo/foo/sleep3
 ### DemoService /demo/~demoService/ipAddr
 POST http://{{demoService}}/demo/~demoService/ipAddr
 X-Real-IP: 8.8.8.8
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 
 > {%
     client.test("Remote Ip is 8.8.8.8", function () {
@@ -395,7 +395,7 @@ X-Gsvc-Caller: gtw
 ### DemoService fw:/demo/bar-service/bar/ipAddr
 POST http://{{demoService}}/demo/bar-service/bar/ipAddr
 X-Real-IP: 8.8.8.8
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 
 > {%
     client.test("Remote Ip is 8.8.8.8", function () {
@@ -407,7 +407,7 @@ X-Gsvc-Caller: gtw
 ### DemoService fw:/demo/bar-service/ipAddr
 GET http://{{demoService}}/demo/bar-service/ipAddr
 X-Real-IP: 6.6.6.6
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 
 > {%
     client.test("Remote Ip is 6.6.6.6", function () {

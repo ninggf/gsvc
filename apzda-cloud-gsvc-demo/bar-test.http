@@ -35,7 +35,7 @@ Cookie: lang=en
 //@no-redirect
 POST http://{{barService}}/~barService/greeting
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 
 {
     "name": "gsvc",
@@ -55,7 +55,7 @@ X-Gsvc-Caller: gtw
 ### BooService Hello
 POST http://{{barService}}/~barService/hello
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 
 {
     "name": "gsvc",
@@ -84,7 +84,7 @@ X-Gsvc-Caller: gtw
 ### BooService Hi
 POST http://{{barService}}/~barService/hi
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 
 {
     "name": "gsvc",
@@ -431,7 +431,7 @@ Authorization: Bearer {{accessToken}}
 //@no-redirect
 POST http://{{barService}}/~barService/err
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Accept: application/json
 
 {
@@ -451,7 +451,7 @@ Accept: application/json
 //@no-redirect
 POST http://{{barService}}/~barService/err
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Accept: application/json
 Accept-Language: zh-CN
 
@@ -472,7 +472,7 @@ Accept-Language: zh-CN
 //@no-redirect
 POST http://{{barService}}/~barService/rpcErr
 Content-Type: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Accept: application/json
 
 {
@@ -556,7 +556,7 @@ Content-Type: application/json
 POST http://{{barService}}/~barService/greeting
 Content-Type: application/json
 Accept: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 
 {
@@ -578,7 +578,7 @@ Authorization: Bearer {{accessToken}}
 POST http://{{barService}}/~saService/active
 Content-Type: application/json
 Accept: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 
 {
@@ -618,7 +618,7 @@ Content-Type: application/json
 POST http://{{barService}}/~barService/greeting
 Content-Type: application/json
 Accept: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 
 {
@@ -640,7 +640,7 @@ Authorization: Bearer {{accessToken}}
 POST http://{{barService}}/~saService/reset
 Content-Type: application/json
 Accept: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 
 {
@@ -681,7 +681,7 @@ Content-Type: application/json
 POST http://{{barService}}/~barService/greeting
 Content-Type: application/json
 Accept: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 
 {
@@ -703,7 +703,7 @@ Authorization: Bearer {{accessToken}}
 POST http://{{barService}}/~saService/setup
 Content-Type: application/json
 Accept: application/json
-X-Gsvc-Caller: gtw
+X-Gsvc-Caller: g-t-w
 Authorization: Bearer {{accessToken}}
 
 {
