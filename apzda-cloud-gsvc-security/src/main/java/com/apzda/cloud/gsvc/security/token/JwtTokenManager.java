@@ -28,11 +28,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * @author fengz
@@ -136,28 +134,13 @@ public class JwtTokenManager implements TokenManager {
 
             val username = jwtToken.getName();
             val tmpUser = User.withUsername(username).password("").build();
-
-            Optional<CachedUserDetails> cachedUserDetails = userDetailsMetaRepository.getMetaData(tmpUser,
-                    UserDetailsMeta.CACHED_USER_DETAILS_KEY, CachedUserDetails.class);
-
-            val userDetails = cachedUserDetails.orElseGet(() -> {
-                try {
-                    log.trace("Try to load userDetails from userDetailsService: {}", username);
-                    val ud = userDetailsService.loadUserByUsername(username);
-                    if (ud != null) {
-                        UserDetailsMeta.checkUserDetails(ud);
-                        return CachedUserDetails.from(ud);
-                    }
-                }
-                catch (Exception e) {
-                    log.warn("Cannot load UserDetails from userDetailsService: {} - {}", username, e.getMessage());
-                }
-                return null;
-            });
+            val userDetails = userDetailsMetaRepository
+                .getMetaData(tmpUser, UserDetailsMeta.CACHED_USER_DETAILS_KEY, CachedUserDetails.class)
+                .orElse(null);
 
             if (userDetails == null) {
                 log.trace("UserDetails of accessToken({}) not found!", accessToken);
-                throw new UsernameNotFoundException(username + " not found!");
+                throw new InvalidSessionException("UserDetails of session is gone");
             }
 
             // 使用空的authorities.
