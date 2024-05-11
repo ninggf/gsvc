@@ -8,6 +8,7 @@ import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
+import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -55,8 +56,8 @@ public class TransHeadersPlugin implements IGlobalPlugin, IPreCall {
         headers.remove("Accept");
         headers.remove("Content-Type");
         headers.remove("Content-Length");
-        headers.remove("X-Gsvc-Caller");
-        headers.add("X-Gsvc-Caller", appName);
+        headers.remove(IServiceMethodHandler.CALLER_HEADER);
+        headers.add(IServiceMethodHandler.CALLER_HEADER, appName);
         headers.remove(HttpHeaders.HOST);
 
         val requestId = GsvcContextHolder.getRequestId();

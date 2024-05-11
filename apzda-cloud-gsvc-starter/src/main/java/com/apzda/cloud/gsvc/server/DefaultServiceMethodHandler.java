@@ -73,7 +73,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             if (serviceMethod == null) {
                 throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
             }
-            val caller = func == null ? "gtw" : request.headers().firstHeader("X-Gsvc-Caller");
+            val caller = func == null ? GTW : request.headers().firstHeader(IServiceMethodHandler.CALLER_HEADER);
             val requestObj = createRequestObj(request, serviceMethod, caller);
             return doUnaryCall(request, requestObj, serviceMethod, func);
         }
@@ -93,7 +93,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             if (serviceMethod == null) {
                 throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
             }
-            val caller = func == null ? "gtw" : request.headers().firstHeader("X-Gsvc-Caller");
+            val caller = func == null ? GTW : request.headers().firstHeader(IServiceMethodHandler.CALLER_HEADER);
             val requestObj = createRequestObj(request, serviceMethod, caller);
             return doStreamingCall(request, requestObj, serviceMethod, func);
         }
@@ -424,7 +424,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
     private String createResponse(Object resp, ServiceMethod serviceMethod) throws JsonProcessingException {
         val context = GsvcContextHolder.getContext();
         val flat = svcConfigure.isFlatResponse();
-        if (!flat && "gtw".equals(context.getCaller())) {
+        if (!flat && GTW.equals(context.getCaller())) {
             // bookmark: wrap response for the request from gateway.
             val node = objectMapper.convertValue(resp, JsonNode.class);
             if (node instanceof ObjectNode objectNode) {

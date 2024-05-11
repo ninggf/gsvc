@@ -2,6 +2,7 @@ package com.apzda.cloud.gsvc.filter;
 
 import cn.hutool.core.lang.UUID;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +24,9 @@ import java.io.IOException;
 public class GsvcServletFilter extends OncePerRequestFilter {
 
     private final LocaleResolver localeResolver;
+
     private final String serviceName;
+
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
@@ -33,7 +36,7 @@ public class GsvcServletFilter extends OncePerRequestFilter {
 
         val requestId = StringUtils.defaultIfBlank(request.getHeader("X-Request-ID"),
                 StringUtils.defaultIfBlank(MDC.get("traceId"), UUID.randomUUID().toString(true)));
-        val caller = request.getHeader("X-Gsvc-Caller");
+        val caller = request.getHeader(IServiceMethodHandler.CALLER_HEADER);
 
         request.setAttribute("X-Request-ID", requestId);
         response.setHeader("X-Request-ID", requestId);

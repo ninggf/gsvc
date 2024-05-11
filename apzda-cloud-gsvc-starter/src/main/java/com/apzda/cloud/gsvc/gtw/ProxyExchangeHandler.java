@@ -9,6 +9,7 @@ import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
 import com.apzda.cloud.gsvc.plugin.IForwardPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
+import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.apzda.cloud.gsvc.core.GtwRouterFunctionFactoryBean.ATTR_MATCHED_SEGMENTS;
+import static com.apzda.cloud.gsvc.server.IServiceMethodHandler.GTW;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -106,11 +108,11 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 return ServerResponse.status(HttpStatus.NOT_FOUND).build();
             }
             uri = "/~" + serviceName + "/" + uri;
-            filtered.add("X-Gsvc-Caller", "gtw");
+            filtered.add(IServiceMethodHandler.CALLER_HEADER, GTW);
             plugins = serviceMethod.getPlugins();
         }
         else {
-            filtered.remove("X-Gsvc-Caller");
+            filtered.remove(IServiceMethodHandler.CALLER_HEADER);
             plugins = serviceConfigure.getGlobalPlugins();
         }
 

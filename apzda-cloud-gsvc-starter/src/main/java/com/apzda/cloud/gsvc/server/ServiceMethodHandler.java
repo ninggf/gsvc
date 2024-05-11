@@ -46,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.apzda.cloud.gsvc.server.IServiceMethodHandler.GTW;
+
 /**
  * @author ninggf
  * @deprecated use {@link DefaultServiceMethodHandler}.
@@ -87,7 +89,7 @@ public class ServiceMethodHandler {
             ApplicationContext applicationContext) {
 
         if (!StringUtils.hasText(caller)) {
-            caller = request.headers().firstHeader("X-Gsvc-Caller");
+            caller = request.headers().firstHeader(IServiceMethodHandler.CALLER_HEADER);
         }
         if (StringUtils.hasText(caller)) {
             GsvcContextHolder.getContext().setCaller(caller);
@@ -371,7 +373,7 @@ public class ServiceMethodHandler {
     }
 
     private String createResponse(Object resp) throws JsonProcessingException {
-        if ("gtw".equals(this.caller)) {
+        if (GTW.equals(this.caller)) {
             // bookmark: wrap response for the request from gateway.
             val node = objectMapper.convertValue(resp, JsonNode.class);
             if (node instanceof ObjectNode objectNode) {
