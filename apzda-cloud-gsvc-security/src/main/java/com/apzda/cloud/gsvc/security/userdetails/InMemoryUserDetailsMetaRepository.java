@@ -56,7 +56,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     @Override
     @SuppressWarnings("unchecked")
     @NonNull
-    protected <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
+    public <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
             TypeReference<R> typeReference) {
         try {
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
@@ -76,7 +76,7 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
 
     @Override
     @NonNull
-    protected <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
+    public <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
         try {
             val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
             val meta = userMeta.get(key);

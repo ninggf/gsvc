@@ -91,13 +91,20 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
     }
 
     @Override
-    public <R> Optional<R> get(String key, String metaKey, Class<R> rClass) {
+    public <R> Optional<R> get(String key, String metaKey, Class<R> rClass, boolean cached) {
         if (metas.containsKey(key)) {
             return Optional.of(rClass.cast(metas.get(key)));
         }
-        val meta = this.userDetailsMetaRepository.getMetaData(this.userDetails, key, metaKey, rClass);
-        meta.ifPresent(r -> metas.put(key, r));
-        return meta;
+        if (cached) {
+            val cachedMeta = this.userDetailsMetaRepository.getCachedMetaData(this.userDetails, key, metaKey, rClass);
+            cachedMeta.ifPresent(r -> metas.put(key, r));
+            return cachedMeta;
+        }
+        else {
+            val meta = this.userDetailsMetaRepository.getMetaData(this.userDetails, key, metaKey, rClass);
+            meta.ifPresent(r -> metas.put(key, r));
+            return meta;
+        }
     }
 
     @Override

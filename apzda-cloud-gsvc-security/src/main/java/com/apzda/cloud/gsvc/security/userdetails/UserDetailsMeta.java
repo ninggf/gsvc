@@ -4,6 +4,7 @@ import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
@@ -59,21 +60,44 @@ public interface UserDetailsMeta extends UserDetails {
         }
     }
 
-    <R> Optional<R> get(String key, String metaKey, Class<R> rClass);
+    <R> Optional<R> get(String key, String metaKey, Class<R> rClass, boolean cached);
 
-    default String getString(String key) {
-        return getString(key, key, "");
+    @NonNull
+    default <R> Optional<R> cached(String key, Class<R> rClass) {
+        return get(key, key, rClass, true);
     }
 
-    default String getString(String key, String metaKey, @NonNull String defaultValue) {
-        return get(key, metaKey, defaultValue);
+    @NonNull
+    default <R> Optional<R> get(String key, Class<R> rClass) {
+        return get(key, key, rClass);
     }
 
-    default String getString(String key, @NonNull Authentication authentication) {
+    @NonNull
+    default <R> Optional<R> get(String key, String metaKey, Class<R> rClass) {
+        return get(key, metaKey, rClass, false);
+    }
+
+    @NonNull
+    @SuppressWarnings("unchecked")
+    default <R> R cached(String key, @NonNull R defaultValue) {
+        Optional<R> meta = (Optional<R>) cached(key, defaultValue.getClass());
+        return meta.orElse(defaultValue);
+    }
+
+    @NonNull
+    default <R> R cached(@NonNull String key, @NonNull Authentication authentication, @NonNull R defaultValue) {
         if (authentication instanceof JwtAuthenticationToken token) {
-            return getString(token.deviceAwareMetaKey(key), key, "");
+            return cached(token.deviceAwareMetaKey(key), defaultValue);
         }
-        return getString(key, key, "");
+        return cached(key, defaultValue);
+    }
+
+    @Nullable
+    default String cached(@NonNull String key, @NonNull Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken token) {
+            return cached(token.deviceAwareMetaKey(key), String.class).orElse(null);
+        }
+        return cached(key, String.class).orElse(null);
     }
 
     @SuppressWarnings("unchecked")
@@ -82,11 +106,33 @@ public interface UserDetailsMeta extends UserDetails {
         return meta.orElse(defaultValue);
     }
 
+    default <R> R get(String key, @NonNull R defaultValue) {
+        return get(key, key, defaultValue);
+    }
+
+    @Nullable
+    default String get(String key) {
+        return get(key, key, String.class).orElse(null);
+    }
+
+    @Nullable
+    default String get(String key, String metaKey) {
+        return get(key, metaKey, String.class).orElse(null);
+    }
+
     default <R> R get(@NonNull String key, @NonNull Authentication authentication, @NonNull R defaultValue) {
         if (authentication instanceof JwtAuthenticationToken token) {
             return get(token.deviceAwareMetaKey(key), key, defaultValue);
         }
         return get(key, key, defaultValue);
+    }
+
+    @Nullable
+    default String get(String key, @NonNull Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken token) {
+            return get(token.deviceAwareMetaKey(key), key, String.class).orElse(null);
+        }
+        return get(key, key, String.class).orElse(null);
     }
 
     void remove(String key);

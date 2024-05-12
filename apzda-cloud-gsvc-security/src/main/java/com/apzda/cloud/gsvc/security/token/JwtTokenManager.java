@@ -135,7 +135,8 @@ public class JwtTokenManager implements TokenManager {
             val username = jwtToken.getName();
             val tmpUser = User.withUsername(username).password("").build();
             val userDetails = userDetailsMetaRepository
-                .getMetaData(tmpUser, UserDetailsMeta.CACHED_USER_DETAILS_KEY, CachedUserDetails.class)
+                .getCachedMetaData(tmpUser, UserDetailsMeta.CACHED_USER_DETAILS_KEY,
+                        UserDetailsMeta.CACHED_USER_DETAILS_KEY, CachedUserDetails.class)
                 .orElse(null);
 
             if (userDetails == null) {

@@ -98,12 +98,4 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
         return Collections.emptyList();
     }
 
-    @NonNull
-    protected abstract <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
-            TypeReference<R> typeReference);
-
-    @NonNull
-    protected abstract <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
-            Class<R> rClass);
-
 }

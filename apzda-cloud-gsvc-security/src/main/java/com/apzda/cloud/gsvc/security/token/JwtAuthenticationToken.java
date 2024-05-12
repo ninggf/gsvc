@@ -130,7 +130,6 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             val accessToken = jwtToken.getAccessToken();
             val principal = getPrincipal();
             if (principal instanceof UserDetailsMeta userDetailsMeta) {
-
                 try {
                     val key = UserDetailsMeta.ACCESS_TOKEN_META_KEY;
                     userDetailsMeta.remove(key, this);
@@ -167,7 +166,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             userDetailsMeta.set(UserDetailsMeta.CACHED_USER_DETAILS_KEY, cachedUser);
 
             val loginKey = UserDetailsMeta.LOGIN_TIME_META_KEY;
-            if (userDetailsMeta.get(loginKey, this, 0L) == 0) {
+            if (userDetailsMeta.cached(loginKey, this, 0L) == 0) {
                 userDetailsMeta.set(loginKey, this, System.currentTimeMillis());
             }
         }
@@ -181,7 +180,8 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         if (principal instanceof UserDetailsMeta userDetailsMeta) {
             val accessToken = jwtToken.getAccessToken();
             val key = UserDetailsMeta.ACCESS_TOKEN_META_KEY;
-            return Objects.equals(accessToken, userDetailsMeta.getString(key, this));
+            val cached = userDetailsMeta.cached(key, this);
+            return Objects.equals(accessToken, cached);
         }
         return false;
     }

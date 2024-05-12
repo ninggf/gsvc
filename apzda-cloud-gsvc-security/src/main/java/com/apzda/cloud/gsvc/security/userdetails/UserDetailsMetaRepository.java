@@ -66,4 +66,11 @@ public interface UserDetailsMetaRepository {
 
     Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails);
 
+    @NonNull
+    <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
+            TypeReference<R> typeReference);
+
+    @NonNull
+    <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass);
+
 }

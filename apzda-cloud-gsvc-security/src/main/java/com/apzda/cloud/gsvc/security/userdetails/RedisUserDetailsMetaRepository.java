@@ -61,7 +61,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     @Override
     @NonNull
-    protected <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
+    public <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
             if (value != null) {
@@ -79,7 +79,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     @Override
     @NonNull
-    protected <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
+    public <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
             TypeReference<R> typeReference) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
