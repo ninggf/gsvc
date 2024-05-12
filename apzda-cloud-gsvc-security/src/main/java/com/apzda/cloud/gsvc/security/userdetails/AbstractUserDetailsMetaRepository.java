@@ -12,6 +12,7 @@ import org.springframework.util.CollectionUtils;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 /**
  * @author fengz
@@ -44,8 +45,33 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
     }
 
     @Override
+    @NonNull
+    public <R> Optional<R> getMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
+        val cached = getCachedMetaData(userDetails, key, metaKey, rClass);
+        if (cached.isPresent()) {
+            return cached;
+        }
+        val metaData = userDetailsMetaService.getMetaData(userDetails, metaKey, rClass);
+        metaData.ifPresent(r -> setMetaData(userDetails, key, r));
+        return metaData;
+    }
+
+    @Override
+    @NonNull
+    public <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, String metaKey,
+            TypeReference<R> typeReference) {
+        val meta = getCachedMetaData(userDetails, key, metaKey, typeReference);
+        if (meta.isPresent()) {
+            return meta;
+        }
+        val metaData = userDetailsMetaService.getMultiMetaData(userDetails, metaKey, typeReference);
+        metaData.ifPresent(r -> setMetaData(userDetails, key, r));
+        return metaData;
+    }
+
+    @Override
     public Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails) {
-        val authorityMeta = getMultiMetaData(userDetails, UserDetailsMeta.AUTHORITY_META_KEY,
+        val authorityMeta = getCachedMetaData(userDetails, UserDetailsMeta.AUTHORITY_META_KEY,
                 UserDetailsMeta.AUTHORITY_META_KEY, typeReference);
 
         if (authorityMeta.isPresent()) {
@@ -71,5 +97,13 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
         }
         return Collections.emptyList();
     }
+
+    @NonNull
+    protected abstract <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
+            TypeReference<R> typeReference);
+
+    @NonNull
+    protected abstract <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
+            Class<R> rClass);
 
 }

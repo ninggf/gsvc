@@ -40,54 +40,6 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     }
 
     @Override
-    @NonNull
-    public <R> Optional<R> getMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
-        try {
-            val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
-            val meta = userMeta.get(key);
-            if (meta != null) {
-                if (log.isTraceEnabled()) {
-                    log.trace("User meta '{}' of '{}' loaded from Memory", key, userDetails.getUsername());
-                }
-                return Optional.of(rClass.cast(meta));
-            }
-            val metaData = userDetailsMetaService.getMetaData(userDetails, metaKey, rClass);
-            metaData.ifPresent(r -> setMetaData(userDetails, key, r));
-            return metaData;
-        }
-        catch (Exception e) {
-            log.error("Cannot load user meta for {}.{} - {}", userDetails.getUsername(), key, e.getMessage());
-
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    @NonNull
-    @SuppressWarnings("unchecked")
-    public <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, String metaKey,
-            TypeReference<R> typeReference) {
-        try {
-            val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
-            val meta = userMeta.get(key);
-            if (meta != null) {
-                if (log.isTraceEnabled()) {
-                    log.trace("User metas '{}' of '{}' loaded from Memory", key, userDetails.getUsername());
-                }
-                return Optional.of((R) meta);
-            }
-            val metaData = userDetailsMetaService.getMultiMetaData(userDetails, metaKey, typeReference);
-            metaData.ifPresent(r -> setMetaData(userDetails, key, r));
-            return metaData;
-        }
-        catch (Exception e) {
-            log.error("Cannot load user metas for {}.{} - {}", userDetails.getUsername(), key, e.getMessage());
-
-        }
-        return Optional.empty();
-    }
-
-    @Override
     public void removeMetaData(UserDetails userDetails, String key) {
         val meta = userDetailsMetaCache.getIfPresent(userDetails.getUsername());
         if (meta != null) {
@@ -99,6 +51,46 @@ public class InMemoryUserDetailsMetaRepository extends AbstractUserDetailsMetaRe
     @Override
     public void removeMetaData(UserDetails userDetails) {
         userDetailsMetaCache.invalidate(userDetails.getUsername());
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    @NonNull
+    protected <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
+            TypeReference<R> typeReference) {
+        try {
+            val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
+            val meta = userMeta.get(key);
+            if (meta != null) {
+                if (log.isTraceEnabled()) {
+                    log.trace("User metas '{}' of '{}' loaded from Memory", key, userDetails.getUsername());
+                }
+                return Optional.of((R) meta);
+            }
+        }
+        catch (Exception e) {
+            log.error("Cannot load user metas for {}.{} - {}", userDetails.getUsername(), key, e.getMessage());
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    @NonNull
+    protected <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
+        try {
+            val userMeta = userDetailsMetaCache.get(userDetails.getUsername());
+            val meta = userMeta.get(key);
+            if (meta != null) {
+                if (log.isTraceEnabled()) {
+                    log.trace("User meta '{}' of '{}' loaded from Memory", key, userDetails.getUsername());
+                }
+                return Optional.of(rClass.cast(meta));
+            }
+        }
+        catch (Exception e) {
+            log.error("Cannot load user meta for {}.{} - {}", userDetails.getUsername(), key, e.getMessage());
+        }
+        return Optional.empty();
     }
 
     static class UserMeta extends ConcurrentHashMap<String, Object> {

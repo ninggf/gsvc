@@ -50,8 +50,18 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
     }
 
     @Override
+    public void removeMetaData(UserDetails userDetails, String key) {
+        redisTemplate.opsForHash().delete(thenMetaKey(userDetails), key);
+    }
+
+    @Override
+    public void removeMetaData(UserDetails userDetails) {
+        redisTemplate.delete(thenMetaKey(userDetails));
+    }
+
+    @Override
     @NonNull
-    public <R> Optional<R> getMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
+    protected <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
             if (value != null) {
@@ -60,9 +70,6 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
                 }
                 return Optional.of(objectMapper.readValue(value, rClass));
             }
-            val metaData = userDetailsMetaService.getMetaData(userDetails, metaKey, rClass);
-            metaData.ifPresent(r -> setMetaData(userDetails, key, r));
-            return metaData;
         }
         catch (Exception e) {
             log.error("Cannot load user meta for {}.{} - {}", thenMetaKey(userDetails), key, e.getMessage());
@@ -72,7 +79,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     @Override
     @NonNull
-    public <R> Optional<R> getMultiMetaData(UserDetails userDetails, String key, String metaKey,
+    protected <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
             TypeReference<R> typeReference) {
         try {
             val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
@@ -82,24 +89,11 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
                 }
                 return Optional.of(objectMapper.readValue(value, typeReference));
             }
-            val metaData = userDetailsMetaService.getMultiMetaData(userDetails, metaKey, typeReference);
-            metaData.ifPresent(r -> setMetaData(userDetails, key, r));
-            return metaData;
         }
         catch (Exception e) {
             log.error("Cannot load user metas for {}.{} - {}", thenMetaKey(userDetails), key, e.getMessage());
         }
         return Optional.empty();
-    }
-
-    @Override
-    public void removeMetaData(UserDetails userDetails, String key) {
-        redisTemplate.opsForHash().delete(thenMetaKey(userDetails), key);
-    }
-
-    @Override
-    public void removeMetaData(UserDetails userDetails) {
-        redisTemplate.delete(thenMetaKey(userDetails));
     }
 
     protected String thenMetaKey(UserDetails userDetails) {
