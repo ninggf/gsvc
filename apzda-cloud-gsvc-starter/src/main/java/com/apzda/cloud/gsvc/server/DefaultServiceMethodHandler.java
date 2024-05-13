@@ -7,7 +7,6 @@ import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
-import com.apzda.cloud.gsvc.dto.MessageType;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.dto.UploadFile;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
@@ -433,12 +432,10 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             // bookmark: wrap response for the request from gateway.
             if (node instanceof ObjectNode objectNode) {
                 val wrappedResp = new Response<JsonNode>();
-                val errCode = Optional.ofNullable(objectNode.get("errCode")).orElse(new IntNode(0)).asInt();
-                objectNode.remove("errCode");
+                val errCode = Optional.ofNullable(objectNode.remove("errCode")).orElse(new IntNode(0)).asInt();
                 wrappedResp.setErrCode(errCode);
                 if (objectNode.has("errMsg")) {
-                    val errMsg = objectNode.get("errMsg").asText();
-                    objectNode.remove("errMsg");
+                    val errMsg = objectNode.remove("errMsg").asText();
                     if (StringUtils.hasText(errMsg)) {
                         wrappedResp.setErrMsg(errMsg);
                     }
@@ -450,12 +447,6 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
                     }
                 }
 
-                if (objectNode.has("type")) {
-                    val type = objectNode.remove("type").asText();
-                    if (StringUtils.hasText(type)) {
-                        wrappedResp.setType(MessageType.fromString(type));
-                    }
-                }
                 wrappedResp.setData(objectNode);
                 resp = wrappedResp;
             }
