@@ -79,4 +79,5 @@ message PageInfo {
 message CommonRes {
   int32 err_code = 1;
   optional string err_msg = 2;
+  optional string  type = 3;
 }

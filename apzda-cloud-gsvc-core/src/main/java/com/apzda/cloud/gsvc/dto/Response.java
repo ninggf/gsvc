@@ -117,7 +117,7 @@ public class Response<T> implements Serializable {
                 resp.errMsg = msg;
             }
         }
-        else {
+        else if (StringUtils.isBlank(errMsg)) {
             val msg = I18nUtils.t("error." + Math.abs(code), "");
             if (StringUtils.isNotBlank(msg)) {
                 resp.errMsg = msg;
