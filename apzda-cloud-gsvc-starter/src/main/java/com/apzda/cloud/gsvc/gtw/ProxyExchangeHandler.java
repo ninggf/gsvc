@@ -73,7 +73,6 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         context.setSvcName(serviceName);
 
         val httpRequest = request.servletRequest();
-
         val cfgName = serviceInfo.getCfgName();
         val client = this.applicationContext.getBean(ServiceMethod.getStubClientBeanName(cfgName), WebClient.class);
         val pattern = route.getMethod();
@@ -99,19 +98,29 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             }
             return template;
         }).orElse(pattern);
-
         List<? extends IPlugin> plugins;
 
         if (pattern.charAt(0) != '/') {
+            val excludes = serviceConfigure.getExcludes(serviceName);
+            if (excludes.contains(uri)) {
+                return ServerResponse.status(HttpStatus.NOT_FOUND).build();
+            }
+
             val serviceMethod = GatewayServiceRegistry.getServiceMethod(serviceInfo.getClazz(), uri);
             if (serviceMethod == null) {
-                return ServerResponse.status(HttpStatus.NOT_FOUND).build();
+                plugins = serviceConfigure.getGlobalPlugins();
+            }
+            else {
+                plugins = serviceMethod.getPlugins();
             }
             uri = "/~" + serviceName + "/" + uri;
             filtered.add(IServiceMethodHandler.CALLER_HEADER, GTW);
-            plugins = serviceMethod.getPlugins();
         }
         else {
+            val excludes = serviceConfigure.getExcludes(serviceName);
+            if (excludes.contains(uri)) {
+                return ServerResponse.status(HttpStatus.NOT_FOUND).build();
+            }
             filtered.remove(IServiceMethodHandler.CALLER_HEADER);
             plugins = serviceConfigure.getGlobalPlugins();
         }

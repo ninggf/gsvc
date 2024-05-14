@@ -130,7 +130,6 @@ GET http://{{demoService}}/demo/d/hello?name=hello&age=18
     });
 %}
 
-
 ### DemoService /m/add
 GET http://{{demoService}}/demo/m/add?num1=1&num2=18
 

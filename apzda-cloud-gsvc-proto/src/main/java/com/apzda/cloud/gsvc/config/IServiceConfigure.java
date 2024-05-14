@@ -17,8 +17,11 @@
 package com.apzda.cloud.gsvc.config;
 
 import com.apzda.cloud.gsvc.core.ServiceMethod;
+import org.springframework.lang.NonNull;
 
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -32,5 +35,10 @@ public interface IServiceConfigure {
     Duration getReadTimeout(String svcName, boolean isRef);
 
     Duration getReadTimeout(ServiceMethod method, boolean isRef);
+
+    @NonNull
+    default List<String> getExcludes(String svcName) {
+        return Collections.emptyList();
+    }
 
 }

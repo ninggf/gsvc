@@ -11,9 +11,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.lang.NonNull;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -69,6 +72,16 @@ public class GatewayServiceConfigure implements IServiceConfigure {
             }
         }
         return getReadTimeout(svcName, isRef);
+    }
+
+    @Override
+    @NonNull
+    public List<String> getExcludes(String svcName) {
+        val routeConfig = serviceConfig.getGateway().get(svcName);
+        if (routeConfig != null && !CollectionUtils.isEmpty(routeConfig.getExcludes())) {
+            return routeConfig.getExcludes();
+        }
+        return Collections.emptyList();
     }
 
     public Duration getReadTimeout(ServiceMethod method) {

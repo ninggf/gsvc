@@ -15,9 +15,15 @@ import java.util.Set;
 @Data
 @Validated
 public class GatewayRouteConfig {
+
     private String prefix;
+
     private Boolean enabled = false;
+
     private final Set<String> filters = new HashSet<>();
+
+    private final List<String> excludes = new ArrayList<>();
+
     /**
      * 南北流量路由。
      */
