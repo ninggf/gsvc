@@ -34,8 +34,9 @@ import static com.apzda.cloud.gsvc.domain.SnowflakeIdGenerator.NAME;
 @Getter
 @Setter
 @MappedSuperclass
-@EntityListeners({AuditingEntityListener.class})
+@EntityListeners({ AuditingEntityListener.class })
 public abstract class AuditableEntity<ID, U, T> implements Auditable<ID, U, T> {
+
     private U createdBy;
 
     private T createdAt;
@@ -43,4 +44,5 @@ public abstract class AuditableEntity<ID, U, T> implements Auditable<ID, U, T> {
     private U updatedBy;
 
     private T updatedAt;
+
 }

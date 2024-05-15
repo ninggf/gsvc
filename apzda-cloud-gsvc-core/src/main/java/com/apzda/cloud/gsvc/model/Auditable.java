@@ -25,7 +25,6 @@ import org.springframework.lang.Nullable;
  **/
 public interface Auditable<ID, U, T> extends OwnerAware<U> {
 
-    @Nullable
     ID getId();
 
     @Nullable
