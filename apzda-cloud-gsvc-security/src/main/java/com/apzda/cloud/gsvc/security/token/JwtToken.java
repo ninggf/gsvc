@@ -40,4 +40,12 @@ public interface JwtToken {
 
     void setStatus(String status);
 
+    boolean isLocked();
+
+    void setLocked(boolean locked);
+
+    boolean isCredentialsExpired();
+
+    void setCredentialsExpired(boolean credentialsExpired);
+
 }

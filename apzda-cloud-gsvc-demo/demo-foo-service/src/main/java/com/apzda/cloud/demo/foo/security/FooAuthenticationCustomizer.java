@@ -76,6 +76,10 @@ public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
 
         private String status;
 
+        private boolean locked;
+
+        private boolean credentialsExpired;
+
     }
 
 }

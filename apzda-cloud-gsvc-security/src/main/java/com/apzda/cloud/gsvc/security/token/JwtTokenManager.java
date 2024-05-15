@@ -167,8 +167,15 @@ public class JwtTokenManager implements TokenManager {
 
         val name = authentication.getName();
         JwtToken jwtToken = SimpleJwtToken.builder().name(name).build();
-        if (authentication instanceof JwtAuthenticationToken token && token.getJwtToken() != null) {
-            jwtToken = token.getJwtToken();
+        if (authentication instanceof JwtAuthenticationToken token) {
+            if (token.getJwtToken() != null) {
+                jwtToken = token.getJwtToken();
+            }
+            if (token.getUserDetails().isPresent()) {
+                val ud = token.getUserDetails().get();
+                jwtToken.setLocked(!ud.isAccountNonLocked());
+                jwtToken.setCredentialsExpired(!ud.isCredentialsNonExpired());
+            }
         }
 
         val cs = customizers.orderedStream().toList();

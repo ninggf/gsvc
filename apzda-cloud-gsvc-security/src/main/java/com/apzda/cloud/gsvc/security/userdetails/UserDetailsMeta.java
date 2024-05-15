@@ -160,11 +160,11 @@ public interface UserDetailsMeta extends UserDetails {
         }
 
         if (!userDetails.isEnabled()) {
-            throw new DisabledException(String.format("%s is disabled", username));
+            throw new DisabledException(String.format("%s Disabled", username));
         }
 
         if (!userDetails.isAccountNonExpired()) {
-            throw new AccountExpiredException(String.format("%s's account is expired", username));
+            throw new AccountExpiredException(String.format("%s's Account Expired", username));
         }
     }
 

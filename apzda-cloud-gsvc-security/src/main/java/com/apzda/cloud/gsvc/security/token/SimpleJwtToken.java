@@ -50,4 +50,8 @@ public class SimpleJwtToken implements JwtToken, Serializable {
 
     private String status;
 
+    private boolean locked;
+
+    private boolean credentialsExpired;
+
 }
