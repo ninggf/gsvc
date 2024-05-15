@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.security.repository;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,8 +36,12 @@ public class JwtContextRepository implements SecurityContextRepository {
     public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
         log.trace("Start loading SecurityContext");
         val request = requestResponseHolder.getRequest();
-        val storedContext = request.getAttribute(CONTEXT_ATTR_NAME);
+        val gsvcContext = request.getAttribute("GSVC.CONTEXT");
+        if (gsvcContext instanceof GsvcContextHolder.GsvcContext gContext) {
+            gContext.restore();
+        }
 
+        val storedContext = request.getAttribute(CONTEXT_ATTR_NAME);
         if (storedContext != null) {
             log.trace("Context Loaded from request attribute");
             return (SecurityContext) storedContext;

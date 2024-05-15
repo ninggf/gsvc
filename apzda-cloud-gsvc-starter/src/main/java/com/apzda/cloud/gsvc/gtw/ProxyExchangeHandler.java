@@ -127,7 +127,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
 
         val readTimeout = route.getReadTimeout();
 
-        log.trace("Proxy {} to {}{} with: readTimeout({}), charset({}), param({}), headers({})", request.path(),
+        log.trace("Proxy {} to {}:{} with: readTimeout({}), charset({}), param({}), headers({})", request.path(),
                 cfgName, uri, readTimeout, charset, params, filtered);
 
         val body = BodyInserters.fromDataBuffers(DataBufferUtils.readInputStream(httpRequest::getInputStream,
@@ -220,6 +220,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         }).onErrorComplete();
 
         // the proxyResponse must have only one ServerResponse
+        request.servletRequest().setAttribute("GSVC.CONTEXT", context);
         return ServerResponse.async(proxyResponse.elementAt(0));
     }
 
