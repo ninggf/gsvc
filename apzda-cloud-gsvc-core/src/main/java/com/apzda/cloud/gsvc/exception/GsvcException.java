@@ -16,9 +16,13 @@ public class GsvcException extends RuntimeException {
     private final HttpHeaders headers;
 
     public GsvcException(IServiceError error, HttpHeaders headers, Throwable e) {
-        super(error.message(), e);
+        super(error.localMessage(), e);
         this.error = error;
         this.headers = headers == null ? HttpHeaders.EMPTY : headers;
+    }
+
+    public GsvcException(IServiceError error, HttpHeaders headers) {
+        this(error, headers, null);
     }
 
     public GsvcException(IServiceError error, Throwable e) {
@@ -31,7 +35,9 @@ public class GsvcException extends RuntimeException {
 
     @Override
     public String toString() {
-        return new ToStringCreator(this).append("errCode", error.code()).append("errMsg", error.message()).toString();
+        return new ToStringCreator(this).append("errCode", error.code())
+            .append("errMsg", error.localMessage())
+            .toString();
     }
 
 }

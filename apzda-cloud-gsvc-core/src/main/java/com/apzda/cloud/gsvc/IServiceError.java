@@ -2,6 +2,9 @@ package com.apzda.cloud.gsvc;
 
 import com.apzda.cloud.gsvc.dto.MessageType;
 import com.apzda.cloud.gsvc.exception.GsvcException;
+import com.apzda.cloud.gsvc.utils.I18nUtils;
+import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 
 /**
@@ -9,9 +12,25 @@ import org.springframework.http.HttpHeaders;
  */
 public interface IServiceError {
 
+    Object[] emptyArgs = new Object[] {};
+
     int code();
 
-    String message();
+    default String message() {
+        return "";
+    }
+
+    default String localMessage() {
+        val message = message();
+        if (StringUtils.isBlank(message)) {
+            return I18nUtils.t("error." + Math.abs(code()), args());
+        }
+        return message;
+    }
+
+    default Object[] args() {
+        return emptyArgs;
+    }
 
     default MessageType type() {
         return null;
