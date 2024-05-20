@@ -414,3 +414,48 @@ X-Gsvc-Caller: g-t-w
         client.assert(response.body.message === "6.6.6.6", response.body.errMsg)
     });
 %}
+
+### DemoService i18n:/demo/ill-error
+GET http://{{demoService}}/demo/ill-error
+Accept: application/json
+
+> {%
+    client.test("Illegal parameter: Test", function () {
+        client.assert(response.status === 503, "Response status is not 503");
+        client.assert(response.body.errMsg === "Illegal parameter: Test", response.body.errMsg)
+    });
+%}
+
+### DemoService i18n:/demo/ill-error
+GET http://{{demoService}}/demo/ill-error
+Accept: application/json
+
+> {%
+    client.test("Illegal parameter: Test", function () {
+        client.assert(response.status === 503, "Response status is not 503");
+        client.assert(response.body.errMsg === "Illegal parameter: Test", response.body.errMsg)
+    });
+%}
+
+### DemoService i18n:/demo/not-found-error
+GET http://{{demoService}}/demo/not-found-error
+Accept: application/json
+
+> {%
+    client.test("not-found-error", function () {
+        client.assert(response.status === 503, "Response status is not 503");
+        client.assert(response.body.errMsg === "demo.Test(abc) not found", response.body.errMsg)
+    });
+%}
+
+### DemoService i18n:/demo/not-blank-error
+GET http://{{demoService}}/demo/not-blank-error
+Accept: application/json
+Accept-Language: zh-CN
+
+> {%
+    client.test("not-blank-error", function () {
+        client.assert(response.status === 503, "Response status is not 503");
+        client.assert(response.body.errMsg === "参数'Test'不能为空", response.body.errMsg)
+    });
+%}

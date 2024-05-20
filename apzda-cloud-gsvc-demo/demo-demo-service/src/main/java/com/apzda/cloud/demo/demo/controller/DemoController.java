@@ -13,6 +13,10 @@ import com.apzda.cloud.demo.foo.proto.FooService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.demo.math.proto.OpNum;
 import com.apzda.cloud.gsvc.dto.Response;
+import com.apzda.cloud.gsvc.error.IllegalParameterError;
+import com.apzda.cloud.gsvc.error.NotBlankError;
+import com.apzda.cloud.gsvc.error.NotFoundError;
+import com.apzda.cloud.gsvc.exception.GsvcException;
 import com.apzda.cloud.gsvc.ext.FileUploadUtils;
 import com.google.common.base.Joiner;
 import lombok.RequiredArgsConstructor;
@@ -144,6 +148,21 @@ public class DemoController {
     @PostMapping("/upload")
     public Response<String> uploadLocal(MultipartFile file) throws IOException {
         return Response.ok(file.getOriginalFilename());
+    }
+
+    @GetMapping("/not-found-error")
+    public Response<String> notFoundError() {
+        throw new GsvcException(new NotFoundError("{demo.Test}", "abc"));
+    }
+
+    @GetMapping("/not-blank-error")
+    public Response<String> notBlankError() {
+        throw new GsvcException(new NotBlankError("Test"));
+    }
+
+    @GetMapping("/ill-error")
+    public Response<String> illError() {
+        throw new GsvcException(new IllegalParameterError("Test"));
     }
 
 }

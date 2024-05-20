@@ -95,13 +95,13 @@ public class Response<T> implements Serializable {
     }
 
     public static <T> Response<T> error(IServiceError error) {
-        Response<T> resp = error(error.code(), error.message());
+        Response<T> resp = error(error.code(), error.localMessage());
         resp.type = error.type();
         return resp;
     }
 
     public static <T> Response<T> error(IServiceError error, T data) {
-        Response<T> resp = error(error.code(), error.message());
+        Response<T> resp = error(error.code(), error.localMessage());
         resp.type = error.type();
         resp.data = data;
         return resp;
