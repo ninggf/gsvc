@@ -456,6 +456,6 @@ Accept-Language: zh-CN
 > {%
     client.test("not-blank-error", function () {
         client.assert(response.status === 503, "Response status is not 503");
-        client.assert(response.body.errMsg === "参数'Test'不能为空", response.body.errMsg)
+        client.assert(response.body.errMsg === "参数“Test”不能为空", response.body.errMsg)
     });
 %}
