@@ -44,6 +44,9 @@ public class Response<T> implements Serializable {
     @Schema(description = "When the errMsg(message) is not blank, client show the errMsg by 'type' method")
     private MessageType type;
 
+    @JsonIgnore
+    private String errType;
+
     @Schema(description = "The business data")
     private T data;
 
@@ -84,6 +87,11 @@ public class Response<T> implements Serializable {
         this.type = MessageType.NONE;
         setMessage(message);
         return this;
+    }
+
+    public void setErrType(String errType) {
+        this.errType = errType;
+        this.type = MessageType.fromString(errType);
     }
 
     public static <T> Response<T> wrap(T data) {

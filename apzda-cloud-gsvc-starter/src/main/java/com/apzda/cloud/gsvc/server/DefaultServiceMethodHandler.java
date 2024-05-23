@@ -7,6 +7,7 @@ import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
+import com.apzda.cloud.gsvc.dto.MessageType;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.dto.UploadFile;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
@@ -445,6 +446,11 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
                     if (StringUtils.hasText(errMsg)) {
                         wrappedResp.setErrMsg(errMsg);
                     }
+                }
+
+                val errType = objectNode.remove("errType");
+                if (errType != null) {
+                    wrappedResp.setType(MessageType.fromString(errType.asText()));
                 }
 
                 wrappedResp.setData(objectNode);

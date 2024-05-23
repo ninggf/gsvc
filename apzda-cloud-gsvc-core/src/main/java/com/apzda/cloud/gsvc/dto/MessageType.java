@@ -22,10 +22,13 @@ public enum MessageType {
         else if ("notify".equalsIgnoreCase(text)) {
             return NOTIFY;
         }
+        else if ("none".equalsIgnoreCase(text)) {
+            return NONE;
+        }
         else if (StringUtils.isNoneBlank(text)) {
             return NOTIFY;
         }
-        return NONE;
+        return null;
     }
 
 }
