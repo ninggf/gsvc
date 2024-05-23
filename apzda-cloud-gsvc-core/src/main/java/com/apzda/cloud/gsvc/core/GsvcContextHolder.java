@@ -38,6 +38,8 @@ public abstract class GsvcContextHolder {
 
     private static final ThreadLocal<GsvcContext> CONTEXT_BOX = new ThreadLocal<>();
 
+    private static String appName;
+
     public static Optional<HttpServletRequest> getRequest() {
         val requestAttributes = RequestContextHolder.getRequestAttributes();
         if (requestAttributes instanceof ServletRequestAttributes request) {
@@ -181,10 +183,15 @@ public abstract class GsvcContextHolder {
     public static GsvcContext getContext() {
         var context = CONTEXT_BOX.get();
         if (context == null) {
-            context = new GsvcContext("", null, "main");
+            context = new GsvcContext("", null, getAppName());
             CONTEXT_BOX.set(context);
         }
         return context;
+    }
+
+    public static String getAppName() {
+        return org.apache.commons.lang3.StringUtils.defaultIfBlank(appName,
+                System.getProperty("spring.application.name", System.getenv("SPRING_APPLICATION_NAME")));
     }
 
     @Deprecated
@@ -261,6 +268,10 @@ public abstract class GsvcContextHolder {
 
         context.remoteIp = remoteAddr;
         return context.remoteIp;
+    }
+
+    static void setAppName(String appName) {
+        GsvcContextHolder.appName = appName;
     }
 
     @Data

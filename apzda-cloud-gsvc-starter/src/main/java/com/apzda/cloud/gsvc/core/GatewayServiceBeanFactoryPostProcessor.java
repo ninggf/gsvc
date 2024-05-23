@@ -47,6 +47,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
     public void postProcessBeanFactory(@NonNull ConfigurableListableBeanFactory beanFactory) throws BeansException {
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) beanFactory;
         Environment environment = (Environment) bf.getBean("environment");
+        GsvcContextHolder.setAppName(environment.getProperty("spring.application.name"));
 
         val services = Arrays.stream(beanFactory.getBeanDefinitionNames())
             .filter(n -> StringUtils.endsWith(n, "Gsvc"))
