@@ -16,13 +16,23 @@
  */
 package com.apzda.cloud.gsvc.security.context;
 
+import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.lang.NonNull;
+
+import java.util.Optional;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class SpringDataAuditor extends SpringSecurityUserProvider implements AuditorAware<String> {
+public class SpringDataAuditor implements AuditorAware<String> {
+
+    @Override
+    @NonNull
+    public Optional<String> getCurrentAuditor() {
+        return Optional.ofNullable(CurrentUserProvider.getCurrentUser().getId());
+    }
 
 }
