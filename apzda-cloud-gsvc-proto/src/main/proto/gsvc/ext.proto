@@ -33,6 +33,7 @@ message CurrentUser {
   optional string os_ver = 5;
   optional string  app = 6;
   optional string id = 7;
+  optional string run_as = 8;
 }
 
 message UploadFile {

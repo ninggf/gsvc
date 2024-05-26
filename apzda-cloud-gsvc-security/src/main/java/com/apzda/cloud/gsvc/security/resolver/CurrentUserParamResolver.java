@@ -82,6 +82,7 @@ public class CurrentUserParamResolver implements HandlerMethodArgumentResolver {
             val jwtToken = token.getJwtToken();
             if (jwtToken != null) {
                 builder.id(jwtToken.getUid());
+                builder.runAs(jwtToken.getRunAs());
             }
         }
 

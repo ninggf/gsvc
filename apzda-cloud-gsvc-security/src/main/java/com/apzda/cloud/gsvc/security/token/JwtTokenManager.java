@@ -43,6 +43,8 @@ public class JwtTokenManager implements TokenManager {
 
     private final static String PAYLOAD_PD = "pd";
 
+    private final static String PAYLOAD_RUNAS = "rs";
+
     protected final UserDetailsService userDetailsService;
 
     protected final UserDetailsMetaRepository userDetailsMetaRepository;
@@ -93,7 +95,6 @@ public class JwtTokenManager implements TokenManager {
             }
             return authentication;
         }
-        // log.trace("No token found of request!");
         return null;
     }
 
@@ -127,9 +128,11 @@ public class JwtTokenManager implements TokenManager {
             if (jwt.getPayload(PAYLOAD_UID) != null) {
                 jwtToken.setUid((String) jwt.getPayload(PAYLOAD_UID));
             }
-
             if (jwt.getPayload(PAYLOAD_PD) != null) {
                 jwtToken.setProvider((String) jwt.getPayload(PAYLOAD_PD));
+            }
+            if (jwt.getPayload(PAYLOAD_RUNAS) != null) {
+                jwtToken.setRunAs((String) jwt.getPayload(PAYLOAD_RUNAS));
             }
 
             val username = jwtToken.getName();
@@ -190,6 +193,9 @@ public class JwtTokenManager implements TokenManager {
         if (StringUtils.isNotBlank(jwtToken.getProvider())) {
             token.setPayload(PAYLOAD_PD, jwtToken.getProvider());
         }
+        if (StringUtils.isNotBlank(jwtToken.getRunAs())) {
+            token.setPayload(PAYLOAD_RUNAS, jwtToken.getRunAs());
+        }
         token.setSubject(name);
         token.setSigner(jwtSigner);
         val accessExpireAt = DateUtil.date()
@@ -246,11 +252,15 @@ public class JwtTokenManager implements TokenManager {
             val sign = MD5.create().digestHex(accessToken + password);
 
             if (Objects.equals(oldSign, sign)) {
-                val provider = jwt.getPayload(PAYLOAD_PD);
-                if (provider != null) {
-                    jwtToken.setProvider((String) provider);
+                if (jwt.getPayload(PAYLOAD_PD) != null) {
+                    jwtToken.setProvider((String) jwt.getPayload(PAYLOAD_PD));
                 }
-
+                if (jwt.getPayload(PAYLOAD_UID) != null) {
+                    jwtToken.setUid((String) jwt.getPayload(PAYLOAD_UID));
+                }
+                if (jwt.getPayload(PAYLOAD_RUNAS) != null) {
+                    jwtToken.setRunAs((String) jwt.getPayload(PAYLOAD_RUNAS));
+                }
                 val authentication = JwtAuthenticationToken
                     .unauthenticated(userDetailsMetaRepository.create(userDetails), userDetails.getPassword());
 
@@ -290,6 +300,12 @@ public class JwtTokenManager implements TokenManager {
             token.setSubject(refreshToken);
             if (StringUtils.isNotBlank(jwtToken.getProvider())) {
                 token.setPayload(PAYLOAD_PD, jwtToken.getProvider());
+            }
+            if (StringUtils.isNotBlank(jwtToken.getUid())) {
+                token.setPayload(PAYLOAD_UID, jwtToken.getUid());
+            }
+            if (StringUtils.isNotBlank(jwtToken.getRunAs())) {
+                token.setPayload(PAYLOAD_RUNAS, jwtToken.getRunAs());
             }
             token.setExpiresAt(accessExpireAt);
             token.setSigner(jwtSigner);

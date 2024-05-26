@@ -64,6 +64,8 @@ public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
 
         private String name;
 
+        private String runAs;
+
         private String provider;
 
         private String accessToken;

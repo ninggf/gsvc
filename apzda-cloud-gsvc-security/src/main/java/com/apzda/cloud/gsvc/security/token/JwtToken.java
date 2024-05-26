@@ -15,37 +15,45 @@ public interface JwtToken {
 
     String getUid();
 
-    String getName();
-
     void setName(String name);
 
-    String getProvider();
+    String getName();
+
+    default void setRunAs(String runAs) {
+    }
+
+    @Nullable
+    default String getRunAs() {
+        return null;
+    }
 
     void setProvider(String provider);
 
-    String getAccessToken();
+    String getProvider();
 
     void setAccessToken(String accessToken);
 
-    String getRefreshToken();
+    String getAccessToken();
 
     void setRefreshToken(String RefreshToken);
 
-    String getMfa();
+    String getRefreshToken();
 
     void setMfa(String mfa);
+
+    String getMfa();
+
+    void setStatus(String status);
 
     @Nullable
     String getStatus();
 
-    void setStatus(String status);
+    void setLocked(boolean locked);
 
     boolean isLocked();
 
-    void setLocked(boolean locked);
+    void setCredentialsExpired(boolean credentialsExpired);
 
     boolean isCredentialsExpired();
-
-    void setCredentialsExpired(boolean credentialsExpired);
 
 }

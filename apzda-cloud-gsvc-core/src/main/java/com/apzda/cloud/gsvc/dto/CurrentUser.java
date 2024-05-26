@@ -25,8 +25,10 @@ public class CurrentUser implements Serializable {
 
     private String id;
 
-    // alias of name/username
+    // alias of username
     private String uid;
+
+    private String runAs;
 
     private String device;
 
