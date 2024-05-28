@@ -25,12 +25,15 @@ import com.apzda.cloud.gsvc.error.ServiceError;
  * @since 1.0.0
  **/
 public class TokenException extends AuthenticationError {
-    public final static AuthenticationError EXPIRED = new TokenException(ServiceError.TOKEN_EXPIRED);
-    public static final AuthenticationError INVALID_TOKEN = new TokenException(ServiceError.TOKEN_INVALID);
-    public static final AuthenticationError DEVICE_NOT_ALLOWED = new TokenException(ServiceError.DEVICE_NOT_ALLOWED);
 
+    public final static AuthenticationError EXPIRED = new TokenException(ServiceError.TOKEN_EXPIRED);
+
+    public static final AuthenticationError INVALID_TOKEN = new TokenException(ServiceError.TOKEN_INVALID);
+
+    public static final AuthenticationError DEVICE_NOT_ALLOWED = new TokenException(ServiceError.DEVICE_NOT_ALLOWED);
 
     TokenException(IServiceError error) {
         super(error);
     }
+
 }

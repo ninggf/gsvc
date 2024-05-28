@@ -281,7 +281,7 @@ public class GsvcSecurityAutoConfiguration {
                     processingFilter.setApplicationContext(applicationContext);
                 }
 
-                http.addFilterBefore(filter, SessionManagementFilter.class);
+                http.addFilterBefore(filter, ExceptionTranslationFilter.class);
             }
             // 用于处理Session加载过程,CredentialsExpiredFilter,AccountLockedFilter,MfaAuthenticationFilter中的异常
             http.addFilterBefore(new AuthenticationExceptionFilter(), SessionManagementFilter.class);
@@ -299,7 +299,7 @@ public class GsvcSecurityAutoConfiguration {
 
             http.authorizeHttpRequests((authorize) -> {
                 val excludes = properties.getExclude();
-                log.trace("ACL: Permit{}", excludes);
+                log.debug("ACL: Permit{}", excludes);
                 for (val exclude : excludes) {
                     authorize.requestMatchers(antMatcher(exclude)).permitAll();
                 }
@@ -314,11 +314,11 @@ public class GsvcSecurityAutoConfiguration {
                             access = access.replace("r(", "hasRole(")
                                 .replace("a(", "hasAuthority(")
                                 .replace("p(", "hasPermission(");
-                            log.trace("ACL: {}(access={})", path, access);
+                            log.debug("ACL: {}(access={})", path, access);
                             authorize.requestMatchers(matcher).access(new WebExpressionAuthorizationManager(access));
                         }
                         else {
-                            log.trace("ACL: {}", path);
+                            log.debug("ACL: {}", path);
                             authorize.requestMatchers(matcher).authenticated();
                         }
                     }
@@ -534,7 +534,7 @@ public class GsvcSecurityAutoConfiguration {
                 expressionHandler.setRoleHierarchy(roleHierarchy);
             }
             catch (Exception ignored) {
-                log.debug("No RoleHierarchy found");
+                log.trace("No RoleHierarchy found");
             }
             expressionHandler.setPermissionEvaluator(permissionEvaluator);
             expressionHandler.setDefaultRolePrefix(grantedAuthorityDefaults.getRolePrefix());

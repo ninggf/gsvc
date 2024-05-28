@@ -23,7 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -106,7 +105,7 @@ public class JwtTokenManager implements TokenManager {
         }
         catch (Exception e) {
             if (log.isTraceEnabled()) {
-                log.trace("accessToken({}) is invalid: {}", accessToken, e.getMessage());
+                log.trace("accessToken is invalid: {} - {}", accessToken, e.getMessage());
             }
             throw TokenException.INVALID_TOKEN;
         }
@@ -116,7 +115,7 @@ public class JwtTokenManager implements TokenManager {
             jwt.setSigner(jwtSigner);
             val jwtLeeway = properties.getJwtLeeway();
             if (!jwt.validate(jwtLeeway.toSeconds())) {
-                log.trace("accessToken({}) is expired!", accessToken);
+                log.trace("accessToken is expired: {}", accessToken);
                 throw TokenException.EXPIRED;
             }
 
@@ -143,7 +142,7 @@ public class JwtTokenManager implements TokenManager {
                 .orElse(null);
 
             if (userDetails == null) {
-                log.trace("UserDetails of accessToken({}) not found!", accessToken);
+                log.trace("UserDetails of accessToken not found: {}", accessToken);
                 throw new InvalidSessionException("UserDetails of session is gone");
             }
 
@@ -152,11 +151,11 @@ public class JwtTokenManager implements TokenManager {
                     userDetails.getPassword());
 
             authentication.setJwtToken(jwtToken);
-            log.trace("Authentication is restored from accessToken({})", accessToken);
+            log.trace("Authentication is restored from accessToken: {}", accessToken);
             return authentication;
         }
         else {
-            log.trace("accessToken({}) is invalid", accessToken);
+            log.trace("accessToken is invalid: {}", accessToken);
             throw TokenException.INVALID_TOKEN;
         }
     }
@@ -215,12 +214,13 @@ public class JwtTokenManager implements TokenManager {
         try {
             val name = jwtToken.getName();
             if (StringUtils.isBlank(name)) {
-                throw new InsufficientAuthenticationException("Username is blank");
+                log.trace("refreshToken is invalid: {} - Username is blank", jwtToken.getRefreshToken());
+                throw TokenException.INVALID_TOKEN;
             }
 
             val refreshToken = jwtToken.getRefreshToken();
             if (StringUtils.isBlank(refreshToken)) {
-                log.error("refreshToken is empty!");
+                log.trace("refreshToken is empty!");
                 throw TokenException.INVALID_TOKEN;
             }
 
@@ -228,7 +228,7 @@ public class JwtTokenManager implements TokenManager {
                 JWTUtil.verify(refreshToken, jwtSigner);
             }
             catch (Exception e) {
-                log.error("refreshToken({}) is invalid: {}", refreshToken, e.getMessage());
+                log.trace("refreshToken is invalid: {} - {}", refreshToken, e.getMessage());
                 throw TokenException.INVALID_TOKEN;
             }
 
@@ -237,8 +237,7 @@ public class JwtTokenManager implements TokenManager {
 
             val jwtLeeway = properties.getJwtLeeway();
             if (!jwt.validate(jwtLeeway.toSeconds())) {
-                log.trace("refreshToken({}) is expired!", refreshToken);
-
+                log.trace("refreshToken is expired: {}", refreshToken);
                 throw TokenException.EXPIRED;
             }
 
@@ -276,11 +275,11 @@ public class JwtTokenManager implements TokenManager {
                 return newJwtToken;
             }
 
-            log.error("refreshToken({}) is invalid: accessToken or password does not match", refreshToken);
+            log.trace("refreshToken is invalid: {} - accessToken or password does not match", refreshToken);
             throw TokenException.INVALID_TOKEN;
         }
         catch (Exception e) {
-            log.warn("Cannot refresh accessToken: {}", e.getMessage());
+            log.trace("Cannot refresh accessToken: {}", e.getMessage());
         }
 
         return null;

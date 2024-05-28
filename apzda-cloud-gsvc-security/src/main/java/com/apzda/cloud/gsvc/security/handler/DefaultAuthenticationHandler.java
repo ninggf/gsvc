@@ -116,11 +116,11 @@ public class DefaultAuthenticationHandler implements AuthenticationHandler, Appl
     @Override
     public void onAuthentication(Authentication authentication, HttpServletRequest request,
             HttpServletResponse response) throws SessionAuthenticationException {
-        if (log.isTraceEnabled()) {
-            log.trace("Do Session check: {}", authentication);
-        }
         // note: run before onAuthenticationSuccess
         tokenManager.verify(authentication);
+        if (log.isTraceEnabled()) {
+            log.trace("Session is valid: {}", authentication);
+        }
     }
 
     @Override

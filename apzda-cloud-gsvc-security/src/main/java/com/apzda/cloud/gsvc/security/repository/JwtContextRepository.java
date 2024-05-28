@@ -23,6 +23,8 @@ public class JwtContextRepository implements SecurityContextRepository {
 
     private static final String CONTEXT_ATTR_LOADING = "GSVC.SECURITY.LOADING";
 
+    public static final String CONTEXT_ATTR_EXCEPTION = "GSVC.SECURITY.EXCEPTION";
+
     private static final SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder
         .getContextHolderStrategy();
 
@@ -34,12 +36,12 @@ public class JwtContextRepository implements SecurityContextRepository {
 
     @Override
     public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
-        log.trace("Start loading SecurityContext");
         val request = requestResponseHolder.getRequest();
         val gsvcContext = request.getAttribute("GSVC.CONTEXT");
         if (gsvcContext instanceof GsvcContextHolder.GsvcContext gContext) {
             gContext.restore();
         }
+        log.trace("Start loading SecurityContext");
 
         val storedContext = request.getAttribute(CONTEXT_ATTR_NAME);
         if (storedContext != null) {
@@ -63,13 +65,15 @@ public class JwtContextRepository implements SecurityContextRepository {
                 log.trace("Context loaded from TokenManager: {}", tokenManager);
             }
         }
-        catch (AuthenticationException ignored) {
+        catch (AuthenticationException authenticationException) {
+            request.setAttribute(CONTEXT_ATTR_EXCEPTION, authenticationException);
         }
         catch (Exception e) {
             log.error("Error happened while loading Context: {}", e.getMessage());
         }
         request.setAttribute(CONTEXT_ATTR_NAME, context);
         request.removeAttribute(CONTEXT_ATTR_LOADING);
+        log.trace("End loading SecurityContext: {}", context);
         return context;
     }
 
@@ -86,9 +90,7 @@ public class JwtContextRepository implements SecurityContextRepository {
 
     @Override
     public boolean containsContext(HttpServletRequest request) {
-        val containsContext = request.getAttribute(CONTEXT_ATTR_NAME) != null;
-        log.trace("SecurityContext is loaded: {}", containsContext);
-        return containsContext;
+        return request.getAttribute(CONTEXT_ATTR_NAME) != null;
     }
 
 }

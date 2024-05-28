@@ -22,6 +22,7 @@ import com.apzda.cloud.gsvc.security.mfa.MfaStatus;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -68,6 +69,11 @@ public class MfaAuthenticationFilter extends AbstractAuthenticatedFilter {
         }
 
         return true;
+    }
+
+    @Override
+    public int getOrder() {
+        return Ordered.HIGHEST_PRECEDENCE + 2;
     }
 
 }

@@ -6,6 +6,7 @@ import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcException;
 import com.apzda.cloud.gsvc.security.exception.AuthenticationError;
 import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
+import com.apzda.cloud.gsvc.security.exception.TokenException;
 import com.apzda.cloud.gsvc.security.exception.UnRealAuthenticatedException;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import jakarta.servlet.ServletException;
@@ -34,6 +35,8 @@ import org.springframework.security.web.session.InvalidSessionStrategy;
 
 import java.io.IOException;
 
+import static com.apzda.cloud.gsvc.security.repository.JwtContextRepository.CONTEXT_ATTR_EXCEPTION;
+
 /**
  * @author fengz
  */
@@ -52,8 +55,13 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
     @Override
     default void commence(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
-        logger.trace("Need User provided his/her more data");
-        onUnauthorized(request, response, authException);
+        val exception = request.getAttribute(CONTEXT_ATTR_EXCEPTION);
+        if (exception != null) {
+            onUnauthorized(request, response, (AuthenticationException) exception);
+        }
+        else {
+            onUnauthorized(request, response, authException);
+        }
     }
 
     @Override
@@ -81,10 +89,16 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
     static void handleAuthenticationException(HttpServletRequest request, HttpServletResponse response,
             @NonNull Exception exception) throws IOException {
         if (!response.isCommitted()) {
-            logger.debug("Authentication Exception caught and handled: {}", exception.getMessage());
+            logger.trace("Authentication Exception caught and handled: {}", exception.getMessage());
             if (exception instanceof UsernameNotFoundException) {
                 val error = Response.error(ServiceError.USER_PWD_INCORRECT);
                 error.setHttpCode(403);
+                ResponseUtils.respond(request, response, error);
+            }
+            else if (exception instanceof TokenException tokenException) {
+                val err = tokenException.getError();
+                val error = Response.error(err);
+                error.setHttpCode(err == ServiceError.TOKEN_EXPIRED ? 401 : 403);
                 ResponseUtils.respond(request, response, error);
             }
             else if (exception instanceof AuthenticationError authenticationError) {
@@ -107,7 +121,7 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
             }
         }
         else {
-            logger.error("Authentication Exception cannot be handled for response was commited", exception);
+            logger.error("Authentication Exception cannot be handled for response which was commited", exception);
         }
     }
 

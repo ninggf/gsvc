@@ -90,13 +90,6 @@
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <optional>true</optional>
         </dependency>
-        <!--
-        <dependency>
-            <artifactId>mybatis-spring</artifactId>
-            <groupId>org.mybatis</groupId>
-            <optional>true</optional>
-        </dependency>
-        -->
         <dependency>
             <artifactId>springdoc-openapi-starter-common</artifactId>
             <groupId>org.springdoc</groupId>
