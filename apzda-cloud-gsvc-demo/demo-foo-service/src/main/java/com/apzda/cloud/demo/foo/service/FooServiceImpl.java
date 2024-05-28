@@ -10,6 +10,7 @@ import com.apzda.cloud.demo.foo.proto.FooService;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import com.apzda.cloud.gsvc.security.utils.SecurityUtils;
 import com.google.protobuf.Empty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +69,10 @@ public class FooServiceImpl implements FooService {
     @Override
     @PreAuthorize("hasPermission(#request.name,'view:/foo/info')")
     public FooRes saInfo(FooReq request) {
+        if (!SecurityUtils.security().hasPermission(request.getName(), "view:/foo/info")) {
+            return FooRes.newBuilder().setErrCode(200).build();
+        }
+
         val currentUser = CurrentUserProvider.getCurrentUser();
         val cu = GsvcExt.CurrentUser.newBuilder().setUid(currentUser.getUid()).buildPartial();
         val saReq = SaReq.newBuilder().setName(request.getName()).setCurrentUser(cu).buildPartial();

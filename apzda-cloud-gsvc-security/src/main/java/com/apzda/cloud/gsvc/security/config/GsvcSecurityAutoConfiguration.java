@@ -24,6 +24,7 @@ import com.apzda.cloud.gsvc.security.token.TokenManager;
 import com.apzda.cloud.gsvc.security.userdetails.InMemoryUserDetailsMetaRepository;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaService;
+import com.apzda.cloud.gsvc.security.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -363,6 +364,20 @@ public class GsvcSecurityAutoConfiguration {
         }
 
         @Bean
+        SecurityUtils.DefaultSecurityExpressionHandler gsvcSecurityExpressionHandler(
+                ApplicationContext applicationContext, PermissionEvaluator permissionEvaluator,
+                GrantedAuthorityDefaults grantedAuthorityDefaults) {
+            RoleHierarchy roleHierarchy = null;
+            try {
+                roleHierarchy = applicationContext.getBean(RoleHierarchy.class);
+            }
+            catch (Exception ignored) {
+            }
+            return new SecurityUtils.DefaultSecurityExpressionHandler(permissionEvaluator, grantedAuthorityDefaults,
+                    roleHierarchy);
+        }
+
+        @Bean
         @ConditionalOnMissingBean(GrantedAuthorityDefaults.class)
         static GrantedAuthorityDefaults grantedAuthorityDefaults(SecurityConfigProperties properties) {
             val rolePrefix = StringUtils.defaultIfBlank(properties.getRolePrefix(), "ROLE_");
@@ -526,7 +541,7 @@ public class GsvcSecurityAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        static MethodSecurityExpressionHandler methodSecurityExpressionHandler(ApplicationContext applicationContext,
+        MethodSecurityExpressionHandler methodSecurityExpressionHandler(ApplicationContext applicationContext,
                 PermissionEvaluator permissionEvaluator, GrantedAuthorityDefaults grantedAuthorityDefaults) {
             DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
             try {
