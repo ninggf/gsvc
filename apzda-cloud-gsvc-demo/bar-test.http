@@ -901,10 +901,10 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401, "Response status is not 403");
+        client.assert(response.status === 401, "Response status is not 401");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.errCode === -810, "出错啦: " + response.body.errMsg);
     });
 %}
 
@@ -916,10 +916,10 @@ Authorization: Bearer {{accessToken}}
 
 > {%
     client.test("Request executed successfully", function () {
-        client.assert(response.status === 401, "Response status is not 403");
+        client.assert(response.status === 401, "Response status is not 401");
         const type = response.contentType.mimeType;
         client.assert(type === "application/json", "Expected 'application/json' but received '" + type + "'");
-        client.assert(response.body.errCode === -401, "出错啦: " + response.body.errMsg);
+        client.assert(response.body.errCode === -810, "出错啦: " + response.body.errMsg);
     });
 %}
 
