@@ -163,10 +163,6 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
 
             if (!httpHeaders.containsKey(HttpHeaders.TRANSFER_ENCODING)
                     && httpHeaders.containsKey(HttpHeaders.CONTENT_LENGTH)) {
-                // It is not valid to have both the transfer-encoding header and
-                // the content-length header.
-                // Remove the transfer-encoding header in the response if the
-                // content-length header is present.
                 httpHeaders.remove(HttpHeaders.TRANSFER_ENCODING);
             }
 
@@ -187,6 +183,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             // 缓存响应流
             val dataBuffers = response.body(BodyExtractors.toDataBuffers()).toStream();
             val resp = serverResponse.build((req, res) -> {
+                context.restore();
                 try (val writer = res.getOutputStream()) {
                     dataBuffers.forEach(dataBuffer -> {
                         log.trace("Read data from downstream: {}", dataBuffer.capacity());
