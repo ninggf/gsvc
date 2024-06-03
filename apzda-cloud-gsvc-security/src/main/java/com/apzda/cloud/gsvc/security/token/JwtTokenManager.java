@@ -322,7 +322,7 @@ public class JwtTokenManager implements TokenManager {
             if (log.isTraceEnabled()) {
                 log.trace("Current Session is not login");
             }
-            throw new InvalidSessionException("Not login");
+            authentication.setAuthenticated(false);
         }
 
         if (log.isTraceEnabled()) {
