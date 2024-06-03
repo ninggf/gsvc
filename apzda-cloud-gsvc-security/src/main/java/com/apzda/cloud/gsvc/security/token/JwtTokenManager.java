@@ -251,6 +251,12 @@ public class JwtTokenManager implements TokenManager {
             val sign = MD5.create().digestHex(accessToken + password);
 
             if (Objects.equals(oldSign, sign)) {
+                val meta = userDetailsMetaRepository.create(userDetails);
+                val authentication = JwtAuthenticationToken.unauthenticated(meta, userDetails.getPassword());
+                val oldAccessKey = meta.get(UserDetailsMeta.ACCESS_TOKEN_META_KEY, authentication);
+                if (!Objects.equals(accessToken, oldAccessKey)) {
+                    throw new InvalidSessionException("invalid session");
+                }
                 if (jwt.getPayload(PAYLOAD_PD) != null) {
                     jwtToken.setProvider((String) jwt.getPayload(PAYLOAD_PD));
                 }
@@ -260,8 +266,6 @@ public class JwtTokenManager implements TokenManager {
                 if (jwt.getPayload(PAYLOAD_RUNAS) != null) {
                     jwtToken.setRunAs((String) jwt.getPayload(PAYLOAD_RUNAS));
                 }
-                val authentication = JwtAuthenticationToken
-                    .unauthenticated(userDetailsMetaRepository.create(userDetails), userDetails.getPassword());
 
                 authentication.setJwtToken(jwtToken);
 
