@@ -38,12 +38,17 @@ public class TokenController {
 
     @PostMapping("/refresh")
     public ResponseEntity<Response<?>> refresh(@RequestBody SimpleJwtToken token) {
-        val jwtToken = tokenManager.refreshAccessToken(token);
-        if (jwtToken != null) {
-            return ResponseEntity.ok(Response.success(jwtToken));
+        try {
+            val jwtToken = tokenManager.refreshAccessToken(token);
+            if (jwtToken != null) {
+                return ResponseEntity.ok(Response.success(jwtToken));
+            }
+            else {
+                return ResponseEntity.status(403).body(Response.error(500, "Cannot refresh accessToken"));
+            }
         }
-        else {
-            return ResponseEntity.status(500).body(Response.error(500, "Cannot refresh accessToken"));
+        catch (Exception e) {
+            return ResponseEntity.status(403).body(Response.error(500, e.getMessage()));
         }
     }
 
@@ -81,6 +86,7 @@ public class TokenController {
         mathService.authz(OpNum.newBuilder().setNum1(1).setNum2(1).build());
         return Response.success("ok");
     }
+
     @GetMapping("/ip-addr")
     public Response<String> ipAddr() {
         return Response.ok(GsvcContextHolder.getRemoteIp());
