@@ -133,6 +133,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
                 try {
                     val key = UserDetailsMeta.ACCESS_TOKEN_META_KEY;
                     userDetailsMeta.remove(key, this);
+                    this.setAuthenticated(false);
 
                     if (log.isTraceEnabled()) {
                         log.trace("accessToken({}) now is logout", accessToken);
