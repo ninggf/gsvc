@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>3.2.6</version>
+        <version>3.3.0</version>
     </parent>
     <groupId>com.apzda.cloud</groupId>
     <artifactId>gsvc</artifactId>
-    <version>1.2.20-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Gsvc</name>
     <description>A Toy Based on Spring Boot and Grpc-Java</description>
@@ -44,7 +45,7 @@
         <cs.check.skip>false</cs.check.skip>
         <!-- dependencies versions -->
         <javax.annotation.version>1.3.2</javax.annotation.version>
-        <spring-boot.version>3.2.6</spring-boot.version>
+        <spring-boot.version>3.3.0</spring-boot.version>
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <mybatis-plus.version>3.5.6</mybatis-plus.version>
         <hutool.version>5.8.27</hutool.version>
@@ -127,52 +128,52 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-core</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-parent</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-proto</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-security</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-starter</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-tracing</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>domain</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>xxl-job-adapter</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-test</artifactId>
-                <version>1.2.20-SNAPSHOT</version>
+                <version>3.3.0-SNAPSHOT</version>
             </dependency>
             <!-- javax -->
             <dependency>
