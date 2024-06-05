@@ -24,6 +24,8 @@ public interface TokenManager {
 
     JwtToken refreshAccessToken(@NonNull JwtToken jwtToken);
 
+    JwtAuthenticationToken refreshAuthentication(@NonNull JwtToken jwtToken);
+
     default void verify(@NonNull Authentication authentication) throws SessionAuthenticationException {
     }
 
