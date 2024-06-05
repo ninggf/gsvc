@@ -26,6 +26,8 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
 
     protected final TypeReference<Collection<? extends GrantedAuthority>> typeReference;
 
+    private final ThreadLocal<Boolean> loading = new ThreadLocal<>();
+
     protected AbstractUserDetailsMetaRepository(UserDetailsMetaService userDetailsMetaService,
             Class<? extends GrantedAuthority> authorityClass) {
         this.userDetailsMetaService = userDetailsMetaService;
@@ -82,6 +84,11 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
         }
 
         try {
+            val isLoading = loading.get();
+            if (Boolean.TRUE.equals(isLoading)) {
+                return Collections.emptyList();
+            }
+            loading.set(true);
             var authorities = userDetailsMetaService.getAuthorities(userDetails);
             if (CollectionUtils.isEmpty(authorities)) {
                 authorities = Collections.emptyList();
@@ -94,6 +101,9 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
         }
         catch (Exception e) {
             log.warn("Cannot load user's authorities: {} - {}", userDetails.getUsername(), e.getMessage());
+        }
+        finally {
+            loading.remove();
         }
         return Collections.emptyList();
     }
