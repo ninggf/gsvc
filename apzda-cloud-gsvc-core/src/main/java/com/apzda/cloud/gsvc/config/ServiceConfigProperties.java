@@ -35,6 +35,8 @@ public final class ServiceConfigProperties {
 
     private Config config;
 
+    private ModemConfig modem = new ModemConfig();
+
     private Registry registry = new Registry();
 
     private MybatisPlus mybatisPlus;
@@ -161,6 +163,27 @@ public final class ServiceConfigProperties {
         private int port = 8080;
 
         private boolean ssl = false;
+
+    }
+
+    @Data
+    public static final class ModemConfig {
+
+        private Algorithm algorithm = Algorithm.AES;
+
+        private String mode = "CBC";
+
+        private String padding = "PKCS5Padding";
+
+        private String iv = "0102030405060708";
+
+        private String key = "0CoJUm6Qyw8W8jud";
+
+    }
+
+    public enum Algorithm {
+
+        AES, DES
 
     }
 
