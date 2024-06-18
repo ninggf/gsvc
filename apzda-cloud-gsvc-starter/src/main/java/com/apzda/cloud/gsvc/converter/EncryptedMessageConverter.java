@@ -44,12 +44,14 @@ import java.nio.charset.StandardCharsets;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class EncryptedMessageConverter extends AbstractHttpMessageConverter<Object> {
 
+    private static final String subType = "encrypted+json";
+
     private final ObjectMapper objectMapper;
 
     private final Modem modem;
 
     public EncryptedMessageConverter(ObjectMapper objectMapper, Modem modem) {
-        super(StandardCharsets.UTF_8, new MediaType("application", "encrypted+json"));
+        super(StandardCharsets.UTF_8, new MediaType("application", subType));
         this.objectMapper = objectMapper;
         this.modem = modem;
     }
@@ -76,6 +78,38 @@ public class EncryptedMessageConverter extends AbstractHttpMessageConverter<Obje
 
     public String encrypt(HttpHeaders headers, String response) throws IOException, HttpMessageNotWritableException {
         return new String(modem.encode(headers, response), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    protected boolean canRead(MediaType mediaType) {
+        if (mediaType == null) {
+            return false;
+        }
+        if (!subType.equals(mediaType.getSubtype())) {
+            return false;
+        }
+        for (MediaType supportedMediaType : getSupportedMediaTypes()) {
+            if (supportedMediaType.includes(mediaType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected boolean canWrite(MediaType mediaType) {
+        if (mediaType == null || MediaType.ALL.equalsTypeAndSubtype(mediaType)) {
+            return false;
+        }
+        if (!subType.equals(mediaType.getSubtype())) {
+            return false;
+        }
+        for (MediaType supportedMediaType : getSupportedMediaTypes()) {
+            if (supportedMediaType.isCompatibleWith(mediaType)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
