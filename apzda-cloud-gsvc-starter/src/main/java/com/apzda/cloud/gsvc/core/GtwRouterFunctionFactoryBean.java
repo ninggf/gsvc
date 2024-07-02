@@ -30,7 +30,10 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.function.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.springdoc.core.utils.Constants.OPERATION_ATTRIBUTE;
 
@@ -91,6 +94,10 @@ public class GtwRouterFunctionFactoryBean
 
     private void setupRoute(@NonNull RouterFunctions.Builder builder, @NonNull Route route, ServiceInfo serviceInfo) {
         val actions = route.getActions();
+        val consumes = Optional.ofNullable(route.getConsumes())
+            .map(c -> Stream.of(c).map(MediaType::valueOf).toList())
+            .orElse(Collections.emptyList());
+
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.absPath();
         val method = serviceMethod.getDmName();
@@ -109,7 +116,7 @@ public class GtwRouterFunctionFactoryBean
             };
         };
 
-        builder.route((request -> match(request, path, actions)), func);
+        builder.route((request -> match(request, path, actions, consumes)), func);
 
         val apiDocEnabled = applicationContext.getEnvironment()
             .getProperty("springdoc.api-docs.enabled", Boolean.class, true);
@@ -128,6 +135,9 @@ public class GtwRouterFunctionFactoryBean
     private void setupForward(RouterFunctions.Builder builder, Route route, ServiceInfo serviceInfo) {
         val actions = route.getActions();
         val path = route.absPath();
+        val consumes = Optional.ofNullable(route.getConsumes())
+            .map(c -> Stream.of(c).map(MediaType::valueOf).toList())
+            .orElse(Collections.emptyList());
 
         if (log.isDebugEnabled()) {
             log.debug("FW Route {} to {}.{}({})", path, serviceInfo.getServiceName(), route.getMethod(), route.meta());
@@ -136,7 +146,7 @@ public class GtwRouterFunctionFactoryBean
         final HandlerFunction<ServerResponse> func = request -> proxyExchangeHandler.handle(request, route,
                 serviceInfo);
 
-        builder.route(request -> match(request, path, actions), func);
+        builder.route(request -> match(request, path, actions, consumes), func);
 
         RouteRegistry.register(path);
     }
@@ -185,12 +195,24 @@ public class GtwRouterFunctionFactoryBean
         return RouterFunction.class;
     }
 
-    private boolean match(ServerRequest request, String path, List<HttpMethod> actions) {
+    private boolean match(ServerRequest request, String path, List<HttpMethod> actions, List<MediaType> consumes) {
         val reqPath = request.path();
         boolean matched = RouteRegistry.pathMatcher.match(path, reqPath);
         if (matched && !actions.isEmpty()) {
             matched = actions.contains(request.method());
         }
+
+        if (matched && !consumes.isEmpty()) {
+            val contentType = request.headers().contentType();
+            if (contentType.isEmpty()) {
+                return false;
+            }
+            val mediaType = contentType.get();
+            if (consumes.parallelStream().noneMatch(mediaType::isCompatibleWith)) {
+                return false;
+            }
+        }
+
         val httpServletRequest = request.servletRequest();
 
         if (matched && httpServletRequest.getAttribute(ATTR_MATCHED_SEGMENTS) == null) {

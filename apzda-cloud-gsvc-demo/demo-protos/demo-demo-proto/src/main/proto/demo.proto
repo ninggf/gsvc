@@ -30,4 +30,10 @@ service DemoService {
   }
   rpc err(google.protobuf.Empty) returns(gsvc.CommonRes);
   rpc ipAddr(google.protobuf.Empty) returns (gsvc.CommonRes);
+  rpc enc(DemoReq) returns(DemoRes){
+    option(gsvc.route) = {
+      path: "/enc"
+      consumes: "application/encrypted+json"
+    };
+  }
 }

@@ -8,6 +8,8 @@ import com.google.protobuf.Descriptors;
 import io.grpc.MethodDescriptor;
 import io.grpc.ServiceDescriptor;
 import io.grpc.protobuf.ProtoMethodDescriptorSupplier;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
@@ -226,7 +228,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         return groupRoutes;
     }
 
-    private Route createRoute(String prefix, int index, Environment environment, Route parent) {
+    @Nullable
+    private Route createRoute(String prefix, int index, @Nonnull Environment environment, Route parent) {
         prefix = prefix + "[" + index + "]";
         val path = environment.getProperty(prefix + ".path");
         if (StringUtils.isBlank(path)) {
@@ -239,6 +242,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val summary = environment.getProperty(prefix + ".summary");
         val desc = environment.getProperty(prefix + ".desc");
         val tags = environment.getProperty(prefix + ".tags");
+        val consumes = environment.getProperty(prefix + ".consumes");
         val readTimeout = environment.getProperty(prefix + ".read-timeout", Duration.class, Duration.ZERO);
         var filters = environment.getProperty(prefix + ".filters");
 
@@ -264,15 +268,18 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .readTimeout(readTimeout)
             .summary(summary)
             .tags(tags)
+            .consumes(consumes)
             .desc(desc)
             .filters(filters);
     }
 
-    private Route createRoute(Descriptors.MethodDescriptor methodDescriptor, String defaultFilters) {
+    @Nullable
+    private Route createRoute(@Nonnull Descriptors.MethodDescriptor methodDescriptor, String defaultFilters) {
         val options = methodDescriptor.getOptions();
         val api = options.getExtension(GsvcExt.route);
         var path = api.getPath().trim();
         var methods = api.getMethods().trim();
+        var consumes = api.getConsumes().trim();
         if (StringUtils.isBlank(path)) {
             val http = options.getExtension(AnnotationsProto.http);
             val number = http.getPatternCase().getNumber();
@@ -300,7 +307,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 default:
                     return null;
             }
-
+            consumes = http.getBody();
             if (StringUtils.isBlank(path)) {
                 return null;
             }
@@ -330,6 +337,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         route.filters(filters);
         route.actions(StringUtils.defaultIfBlank(methods, "post"));
         route.setLogin(login);
+        route.consumes(consumes);
         route.access(access);
         if (api.getTimeout() > 0) {
             route.readTimeout(Duration.ofMillis(api.getTimeout()));

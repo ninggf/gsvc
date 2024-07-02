@@ -33,6 +33,8 @@ public class Route {
 
     private String desc;
 
+    private String[] consumes;
+
     private String[] tags;
 
     @DurationUnit(ChronoUnit.MILLIS)
@@ -197,6 +199,24 @@ public class Route {
         return this;
     }
 
+    public Route consumes(String consumes) {
+        if (StringUtils.isNotBlank(consumes)) {
+            val consumesList = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(consumes);
+            this.consumes = new String[consumesList.size()];
+
+            for (int i = 0; i < this.consumes.length; i++) {
+                this.consumes[i] = consumesList.get(i);
+            }
+        }
+        else if (this.parent != null) {
+            this.consumes = this.parent.consumes;
+        }
+        else {
+            this.consumes = new String[] {};
+        }
+        return this;
+    }
+
     public Route tags(String tags) {
         if (StringUtils.isNotBlank(tags)) {
             val tagList = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(tags);
@@ -237,6 +257,7 @@ public class Route {
             .append("login", login)
             .append("access", access)
             .append("actions", actions)
+            .append("consumes", consumes)
             .append("filters", filters);
 
         return str.toString();

@@ -33,4 +33,10 @@ public class DemoServiceImpl implements DemoService {
         return fooService.ipAddr(request);
     }
 
+    @Override
+    public DemoRes enc(DemoReq request) {
+        DemoRes.Builder builder = DemoRes.newBuilder();
+        return builder.setName("Hello " + request.getName()).build();
+    }
+
 }
