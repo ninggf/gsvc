@@ -240,7 +240,7 @@ public class {{className}} {
         String cfgName = GatewayServiceRegistry.cfgName({{interfaceClassName}}.class);
         String serviceName = GatewayServiceRegistry.svcName({{interfaceClassName}}.class);
         String path = "/~" + serviceName + "/";
-        if (GatewayServiceRegistry.getDeclaredServiceMethods(MerchantServiceGsvc.class).isEmpty()) {
+        if (GatewayServiceRegistry.getDeclaredServiceMethods({{interfaceClassName}}.class).isEmpty()) {
             route.path(path, () -> (request) -> Optional.empty());
         }
         else {
