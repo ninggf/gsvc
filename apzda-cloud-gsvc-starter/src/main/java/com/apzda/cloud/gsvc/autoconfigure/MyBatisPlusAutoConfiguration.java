@@ -17,9 +17,9 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
 import cn.hutool.core.date.DateUtil;
-import com.apzda.cloud.db.MybatisCustomizer;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.context.TenantManager;
+import com.apzda.cloud.gsvc.mybatis.MybatisCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusPropertiesCustomizer;

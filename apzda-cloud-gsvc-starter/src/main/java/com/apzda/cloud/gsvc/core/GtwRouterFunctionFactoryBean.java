@@ -10,7 +10,7 @@ import com.apzda.cloud.gsvc.gtw.Route;
 import com.apzda.cloud.gsvc.gtw.RouteRegistry;
 import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
-import com.apzda.cloud.swagger.ProtobufMsgHelper;
+import com.apzda.cloud.gsvc.swagger.ProtobufMsgHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import lombok.RequiredArgsConstructor;
