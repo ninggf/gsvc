@@ -9,8 +9,8 @@ import com.apzda.cloud.gsvc.gtw.ProxyExchangeHandler;
 import com.apzda.cloud.gsvc.gtw.Route;
 import com.apzda.cloud.gsvc.gtw.RouteRegistry;
 import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
-import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.apzda.cloud.gsvc.swagger.ProtobufMsgHelper;
+import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import lombok.RequiredArgsConstructor;
@@ -73,7 +73,7 @@ public class GtwRouterFunctionFactoryBean
         val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceClass);
         val router = RouterFunctions.route();
         val preChar = route.getMethod().charAt(0);
-        if (preChar == '/' || preChar == '{' || "http".equals(serviceInfo.type)) {
+        if ("http".equals(serviceInfo.type)) {
             setupForward(router, route, serviceInfo);
         }
         else {
