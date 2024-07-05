@@ -22,6 +22,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -76,7 +77,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         val cfgName = serviceInfo.getCfgName();
         val client = this.applicationContext.getBean(ServiceMethod.getStubClientBeanName(cfgName), WebClient.class);
         val pattern = route.getMethod();
-        val method = request.method();
+        var method = request.method();
         val params = request.uri().getQuery();
         val charset = Optional.ofNullable(httpRequest.getCharacterEncoding()).map(encoding -> {
             try {
@@ -114,6 +115,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 plugins = serviceMethod.getPlugins();
             }
             uri = "/~" + serviceName + "/" + uri;
+            method = HttpMethod.POST; // Internal calls between microservices
             filtered.add(IServiceMethodHandler.CALLER_HEADER, GTW);
         }
         else {
