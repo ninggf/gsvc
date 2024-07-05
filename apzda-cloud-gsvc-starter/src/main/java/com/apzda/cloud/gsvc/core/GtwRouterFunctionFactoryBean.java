@@ -80,6 +80,11 @@ public class GtwRouterFunctionFactoryBean
             setupForward(router, route, serviceInfo);
         }
         else if (StringUtils.startsWith(route.getMethod(), "/")) {
+            if (log.isWarnEnabled()) {
+                log.warn("Ignore Route {} to {}.{}({})", route.absPath(), serviceInfo.getServiceName(),
+                        route.getMethod(), route.meta());
+            }
+
             router.path(route.absPath(), () -> request -> {
                 throw new ErrorResponseException(HttpStatus.NOT_FOUND);
             });
