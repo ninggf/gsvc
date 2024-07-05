@@ -72,7 +72,6 @@ public class GtwRouterFunctionFactoryBean
         servletContext = StringUtils.stripEnd(servletContext, "/");
         val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceClass);
         val router = RouterFunctions.route();
-        val preChar = route.getMethod().charAt(0);
         if ("http".equals(serviceInfo.type)) {
             setupForward(router, route, serviceInfo);
         }
