@@ -28,8 +28,6 @@ public class ServiceMethod {
 
     private final String serviceName;
 
-    private final String dmName;
-
     private final String clientBeanName;
 
     private final Class<?> interfaceName;
@@ -46,6 +44,8 @@ public class ServiceMethod {
 
     private final List<IPlugin> plugins = new ArrayList<>();
 
+    private String dmName;
+
     private Object bean;
 
     public ServiceMethod(Method method, String cfgName, String serviceName, Object[] meta, Object bean) {
@@ -61,6 +61,11 @@ public class ServiceMethod {
         this.returnType = (Class<?>) meta[2];
         this.requestType = (Class<?>) meta[1];
         this.type = (MethodDescriptor.MethodType) meta[0];
+    }
+
+    public ServiceMethod(ServiceMethod method, String dmName) {
+        this(method.getMethod(), method.getCfgName(), method.getServiceName(), method.getMeta(), method.getBean());
+        this.dmName = dmName;
     }
 
     void setBean(Object bean) {

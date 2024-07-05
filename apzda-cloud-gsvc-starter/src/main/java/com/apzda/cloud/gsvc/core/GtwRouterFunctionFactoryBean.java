@@ -13,6 +13,7 @@ import com.apzda.cloud.gsvc.swagger.ProtobufMsgHelper;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -24,14 +25,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.function.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -104,14 +108,36 @@ public class GtwRouterFunctionFactoryBean
             log.debug("SN Route {} to {}.{}({})", path, serviceMethod.getServiceName(), method, route.meta());
         }
 
+        @SuppressWarnings("unchecked")
         HandlerFunction<ServerResponse> func = request -> {
-            val type = serviceMethod.getType();
+            ServiceMethod realServiceMethod = serviceMethod;
+            String dmName = realServiceMethod.getDmName();
+
+            if ("*".equals(method)) {
+                val pattern = route.getMethod();
+                dmName = request.attribute(ATTR_MATCHED_SEGMENTS).map((segments) -> {
+                    var template = pattern;
+                    for (val sg : ((Map<String, String>) segments).entrySet()) {
+                        template = template.replace("{" + sg.getKey() + "}", sg.getValue());
+                    }
+                    return template;
+                }).orElse(pattern);
+
+                try {
+                    realServiceMethod = getServiceMethod(dmName, serviceInfo);
+                }
+                catch (IllegalStateException e) {
+                    throw new ErrorResponseException(HttpStatus.NOT_FOUND);
+                }
+            }
+
+            val type = realServiceMethod.getType();
 
             return switch (type) {
-                case UNARY -> serviceMethodHandler.handleUnary(request, serviceClass, method, null);
+                case UNARY -> serviceMethodHandler.handleUnary(request, serviceClass, dmName, null);
                 case SERVER_STREAMING ->
-                    serviceMethodHandler.handleServerStreaming(request, serviceClass, method, null);
-                default -> serviceMethodHandler.handleBidStreaming(request, serviceClass, method, null);
+                    serviceMethodHandler.handleServerStreaming(request, serviceClass, dmName, null);
+                default -> serviceMethodHandler.handleBidStreaming(request, serviceClass, dmName, null);
             };
         };
 
@@ -155,7 +181,7 @@ public class GtwRouterFunctionFactoryBean
         val svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
         val globalFilters = svcConfigure.getGlobalFilters();
         if (!globalFilters.isEmpty()) {
-            log.debug("Setup global filters for {}: {}", route, globalFilters);
+            log.trace("Setup global filters for {}: {}", route, globalFilters);
             for (HandlerFilterFunction<ServerResponse, ServerResponse> filter : globalFilters) {
                 router.filter(filter);
             }
@@ -166,7 +192,7 @@ public class GtwRouterFunctionFactoryBean
             return;
         }
 
-        log.debug("Setup filters for {}: {}", route, filters);
+        log.trace("Setup filters for {}: {}", route, filters);
 
         val filtersBean = filters.stream()
             .map(filter -> applicationContext.getBean(filter, HandlerFilterFunction.class))
@@ -179,8 +205,20 @@ public class GtwRouterFunctionFactoryBean
         }
     }
 
+    @Nonnull
     private ServiceMethod getServiceMethod(Route route, ServiceInfo serviceInfo) {
+        val methods = GatewayServiceRegistry.getDeclaredServiceMethods(serviceInfo);
         val method = route.getMethod();
+        if (method.charAt(0) == '{') {
+            val serviceMethod = methods.values().stream().toList().get(0);
+            return new ServiceMethod(serviceMethod, "*");
+        }
+
+        return getServiceMethod(method, serviceInfo);
+    }
+
+    @Nonnull
+    private ServiceMethod getServiceMethod(String method, ServiceInfo serviceInfo) {
         val methods = GatewayServiceRegistry.getDeclaredServiceMethods(serviceInfo);
         val serviceMethod = methods.get(method);
         if (serviceMethod == null) {
