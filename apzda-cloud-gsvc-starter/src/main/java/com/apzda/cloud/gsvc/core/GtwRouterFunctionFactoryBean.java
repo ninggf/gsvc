@@ -79,6 +79,11 @@ public class GtwRouterFunctionFactoryBean
         if ("http".equals(serviceInfo.type)) {
             setupForward(router, route, serviceInfo);
         }
+        else if (StringUtils.startsWith(route.getMethod(), "/")) {
+            router.path(route.absPath(), () -> request -> {
+                throw new ErrorResponseException(HttpStatus.NOT_FOUND);
+            });
+        }
         else {
             setupRoute(router, route, serviceInfo);
         }
@@ -209,7 +214,8 @@ public class GtwRouterFunctionFactoryBean
     private ServiceMethod getServiceMethod(Route route, ServiceInfo serviceInfo) {
         val methods = GatewayServiceRegistry.getDeclaredServiceMethods(serviceInfo);
         val method = route.getMethod();
-        if (method.charAt(0) == '{') {
+
+        if (StringUtils.endsWith(method, "}")) {
             val serviceMethod = methods.values().stream().toList().get(0);
             return new ServiceMethod(serviceMethod, "*");
         }
