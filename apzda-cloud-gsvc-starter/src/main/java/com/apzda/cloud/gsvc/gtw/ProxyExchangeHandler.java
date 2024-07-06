@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
@@ -51,6 +53,8 @@ import static com.apzda.cloud.gsvc.server.IServiceMethodHandler.GTW;
 @RequiredArgsConstructor
 public class ProxyExchangeHandler implements ApplicationContextAware {
 
+    private static final Logger webLog = LoggerFactory.getLogger("org.springframework.web");
+
     private final ObjectProvider<List<HttpHeadersFilter>> headersFiltersProvider;
 
     private final GsvcExceptionHandler exceptionHandler;
@@ -84,7 +88,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 return Charset.forName(encoding);
             }
             catch (Exception e) {
-                log.warn("Cannot use charset({}) for {}, use UTF-8 instead: {}", encoding, request.path(),
+                webLog.warn("Cannot use charset({}) for {}, use UTF-8 instead: {}", encoding, request.path(),
                         e.getMessage());
                 return StandardCharsets.UTF_8;
             }
@@ -128,8 +132,9 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         }
 
         val readTimeout = route.getReadTimeout();
+        val requestUri = uri;
 
-        log.trace("Proxy {} to {}:{} with: readTimeout({}), charset({}), param({}), headers({})", request.path(),
+        webLog.debug("Proxy {} to {}:{} with: readTimeout({}), charset({}), param({}), headers({})", request.path(),
                 cfgName, uri, readTimeout, charset, params, filtered);
 
         val body = BodyInserters.fromDataBuffers(DataBufferUtils.readInputStream(httpRequest::getInputStream,
@@ -188,7 +193,8 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 context.restore();
                 try (val writer = res.getOutputStream()) {
                     dataBuffers.forEach(dataBuffer -> {
-                        log.trace("Read data from downstream: {}", dataBuffer.capacity());
+                        webLog.trace("Read data from downstream({}:{}): {}", cfgName, requestUri,
+                                dataBuffer.capacity());
                         try (val input = dataBuffer.asInputStream()) {
                             writer.write(input.readAllBytes());
                         }

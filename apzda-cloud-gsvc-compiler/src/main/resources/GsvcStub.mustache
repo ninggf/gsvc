@@ -31,7 +31,7 @@ import java.util.Optional;
 {{/deprecated}}
 @Configuration(proxyBeanMethods = false)
 public class {{className}} {
-    private static final Logger log = LoggerFactory.getLogger({{className}}.class);
+    private static final Logger log = LoggerFactory.getLogger("com.apzda.cloud.gsvc");
     private static final java.util.Map<String, Object[]> METHOD_META_INFO = new java.util.HashMap<>();
 
     static {
@@ -245,28 +245,28 @@ public class {{className}} {
         }
         else {
     {{#unaryMethods}}
-        log.debug("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
+        log.trace("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
         route.POST(path+"{{methodName}}",
         (request) -> serviceMethodHandler.handleUnary(request, {{interfaceClassName}}.class, "{{methodName}}", (param) -> {
             return serviceImpl.{{methodName}}(({{inputType}}) param);
         }));
     {{/unaryMethods}}
     {{#serverStreamingMethods}}
-        log.debug("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
+        log.trace("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
         route.POST(path+"{{methodName}}",
         (request) -> serviceMethodHandler.handleServerStreaming(request, {{interfaceClassName}}.class, "{{methodName}}", (param) -> {
             return serviceImpl.{{methodName}}(({{inputType}}) param);
         }));
     {{/serverStreamingMethods}}
     {{#clientStreamingMethods}}
-        log.debug("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
+        log.trace("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
         route.POST(path+"{{methodName}}",
         (request) -> serviceMethodHandler.handleBidStreaming(request, {{interfaceClassName}}.class, "{{methodName}}", (param) -> {
             return serviceImpl.{{methodName}}((reactor.core.publisher.Flux<{{inputType}}>) param);
         }));
     {{/clientStreamingMethods}}
     {{#biStreamingWithoutClientStreamMethods}}
-        log.debug("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
+        log.trace("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
         route.POST(path+"{{methodName}}",
         (request) -> serviceMethodHandler.handleBidStreaming(request, {{interfaceClassName}}.class, "{{methodName}}", (param) -> {
             return serviceImpl.{{methodName}}((reactor.core.publisher.Flux<{{inputType}}>) param);

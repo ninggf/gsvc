@@ -18,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springdoc.core.fn.builders.operation.Builder;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
@@ -51,6 +53,8 @@ public class GtwRouterFunctionFactoryBean
 
     public static final String ATTR_MATCHED_SEGMENTS = "GSVC_ATTR_MATCHED_SEGMENTS";
 
+    private static final Logger webLog = LoggerFactory.getLogger("org.springframework.web");
+
     private final Route route;
 
     private final Class<?> serviceClass;
@@ -80,8 +84,8 @@ public class GtwRouterFunctionFactoryBean
             setupForward(router, route, serviceInfo);
         }
         else if (StringUtils.startsWith(route.getMethod(), "/")) {
-            if (log.isWarnEnabled()) {
-                log.warn("Ignore Route {} to {}.{}({})", route.absPath(), serviceInfo.getServiceName(),
+            if (webLog.isWarnEnabled()) {
+                webLog.warn("Ignore Route {} to {}.{}({})", route.absPath(), serviceInfo.getServiceName(),
                         route.getMethod(), route.meta());
             }
 
@@ -114,8 +118,8 @@ public class GtwRouterFunctionFactoryBean
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.absPath();
         val method = serviceMethod.getDmName();
-        if (log.isDebugEnabled()) {
-            log.debug("SN Route {} to {}.{}({})", path, serviceMethod.getServiceName(), method, route.meta());
+        if (webLog.isDebugEnabled()) {
+            webLog.debug("SN Route {} to {}.{}({})", path, serviceMethod.getServiceName(), method, route.meta());
         }
 
         @SuppressWarnings("unchecked")
@@ -162,7 +166,7 @@ public class GtwRouterFunctionFactoryBean
                 builder.withAttribute(OPERATION_ATTRIBUTE, operationBuilder);
             }
             catch (Exception e) {
-                log.warn("Cannot create swagger document for: {} - {}", path, e.getMessage());
+                webLog.warn("Cannot create swagger document for: {} - {}", path, e.getMessage());
             }
         }
     }
@@ -174,8 +178,9 @@ public class GtwRouterFunctionFactoryBean
             .map(c -> Stream.of(c).map(MediaType::valueOf).toList())
             .orElse(Collections.emptyList());
 
-        if (log.isDebugEnabled()) {
-            log.debug("FW Route {} to {}.{}({})", path, serviceInfo.getServiceName(), route.getMethod(), route.meta());
+        if (webLog.isDebugEnabled()) {
+            webLog.debug("FW Route {} to {}.{}({})", path, serviceInfo.getServiceName(), route.getMethod(),
+                    route.meta());
         }
 
         final HandlerFunction<ServerResponse> func = request -> proxyExchangeHandler.handle(request, route,
@@ -191,7 +196,7 @@ public class GtwRouterFunctionFactoryBean
         val svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
         val globalFilters = svcConfigure.getGlobalFilters();
         if (!globalFilters.isEmpty()) {
-            log.trace("Setup global filters for {}: {}", route, globalFilters);
+            webLog.trace("Setup global filters for {}: {}", route, globalFilters);
             for (HandlerFilterFunction<ServerResponse, ServerResponse> filter : globalFilters) {
                 router.filter(filter);
             }
@@ -202,7 +207,7 @@ public class GtwRouterFunctionFactoryBean
             return;
         }
 
-        log.trace("Setup filters for {}: {}", route, filters);
+        webLog.trace("Setup filters for {}: {}", route, filters);
 
         val filtersBean = filters.stream()
             .map(filter -> applicationContext.getBean(filter, HandlerFilterFunction.class))
@@ -269,7 +274,7 @@ public class GtwRouterFunctionFactoryBean
             segments.put("segment", segment);
             httpServletRequest.setAttribute(ATTR_MATCHED_SEGMENTS, segments);
             httpServletRequest.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, path);
-            log.trace("{} matched '{}' with segments: {}", reqPath, path, segments);
+            webLog.trace("{} matched '{}' with segments: {}", reqPath, path, segments);
         }
         return matched;
     }

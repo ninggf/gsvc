@@ -13,6 +13,8 @@ import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.FactoryBean;
@@ -43,6 +45,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
     private static final Map<String, Boolean> REGISTERED = new HashMap<>();
 
+    private static final Logger webLog = LoggerFactory.getLogger("org.springframework.web");
+
     private String defaultRouteGlobalFilters;
 
     @Override
@@ -66,7 +70,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     return Tuples.of(GatewayServiceRegistry.cfgName(n), aClass);
                 }
                 catch (NoSuchBeanDefinitionException | NullPointerException | ClassNotFoundException e) {
-                    log.trace("{} is not a Gsvc Service since '{}', skip it.", n, e.getMessage());
+                    log.debug("{} is not a Gsvc Service since '{}', skip it.", n, e.getMessage());
                     return null;
                 }
                 catch (Exception e) {
@@ -210,7 +214,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 break;
             }
 
-            log.debug("Found Route: {}[{}] -> {}", prefix, i, route);
+            webLog.debug("Found Route: {}[{}] -> {}", prefix, i, route);
             List<Route> subRoutes = new ArrayList<>();
             for (int j = 0; j < 10000; j++) {
                 val subPrefix = prefix + "[" + i + "].routes";
@@ -218,7 +222,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 if (subRoute == null) {
                     break;
                 }
-                log.debug("Found Route: {}[{}] -> {}", subPrefix, j, subRoute);
+                webLog.debug("Found Route: {}[{}] -> {}", subPrefix, j, subRoute);
                 subRoutes.add(subRoute);
             }
             val groupRoute = GroupRoute.valueOf(route);
@@ -348,7 +352,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
     private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> serviceInterface, Route route) {
         val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceInterface);
         if (serviceInfo == null) {
-            log.warn("Service not found for route: {} ", route);
+            webLog.warn("Service not found for route: {} ", route);
             return;
         }
         val method = route.getMethod();
