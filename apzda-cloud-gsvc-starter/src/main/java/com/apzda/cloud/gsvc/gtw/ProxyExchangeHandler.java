@@ -96,16 +96,12 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         val servletServerHttpRequest = new ServletServerHttpRequest(request.servletRequest());
         val filtered = HttpHeadersFilter.filterRequest(getHeadersFilters(), servletServerHttpRequest);
 
-        String uri = request.attribute(ATTR_MATCHED_SEGMENTS).map((segments) -> {
-            var template = pattern;
-            for (val sg : ((Map<String, String>) segments).entrySet()) {
-                template = template.replace("{" + sg.getKey() + "}", sg.getValue());
-            }
-            return template;
-        }).orElse(pattern);
+        String uri;
+
         List<? extends IPlugin> plugins;
 
         if (pattern.charAt(0) != '/') {
+            uri = parseUri(request, pattern, !StringUtils.startsWith(pattern, "{"));
             val excludes = serviceConfigure.getExcludes(serviceName);
             if (excludes.contains(uri)) {
                 return ServerResponse.status(HttpStatus.NOT_FOUND).build();
@@ -123,6 +119,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             filtered.add(IServiceMethodHandler.CALLER_HEADER, GTW);
         }
         else {
+            uri = parseUri(request, pattern, false);
             val excludes = serviceConfigure.getExcludes(serviceName);
             if (excludes.contains(uri)) {
                 return ServerResponse.status(HttpStatus.NOT_FOUND).build();
@@ -234,6 +231,18 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             headersFilters = headersFiltersProvider.getIfAvailable();
         }
         return headersFilters;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static String parseUri(ServerRequest request, String pattern, boolean upper) {
+        return request.attribute(ATTR_MATCHED_SEGMENTS).map((segments) -> {
+            var template = pattern;
+            for (val sg : ((Map<String, String>) segments).entrySet()) {
+                val value = sg.getValue();
+                template = template.replace("{" + sg.getKey() + "}", upper ? StringUtils.capitalize(value) : value);
+            }
+            return template;
+        }).orElse(pattern);
     }
 
 }

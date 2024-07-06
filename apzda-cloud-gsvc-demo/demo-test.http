@@ -563,3 +563,30 @@ Content-Type: application/encrypted+json
         client.assert(response.status === 404, "Response status is not 404");
     });
 %}
+
+### DemoService /demo/d/api/enc
+POST http://{{demoService}}/demo/d/api/enc
+Content-Type: application/encrypted+json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("encrypted request body is required", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data.name === "Hello encrypted data", response.body.errMsg)
+    });
+%}
+
+### DemoService /demo/foo/api/enc
+POST http://{{demoService}}/demo/foo/api/enc
+Content-Type: application/json
+Accept: application/json
+
+{}
+
+> {%
+    client.test("remote api forward", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.errMsg === "ok", response.body.errMsg)
+    });
+%}

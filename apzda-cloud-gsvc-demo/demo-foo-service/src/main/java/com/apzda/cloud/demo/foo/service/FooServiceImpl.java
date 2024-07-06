@@ -139,4 +139,9 @@ public class FooServiceImpl implements FooService {
         return saService.deny(request);
     }
 
+    @Override
+    public GsvcExt.CommonRes apiEnc(Empty request) {
+        return GsvcExt.CommonRes.newBuilder().setErrMsg("ok").build();
+    }
+
 }

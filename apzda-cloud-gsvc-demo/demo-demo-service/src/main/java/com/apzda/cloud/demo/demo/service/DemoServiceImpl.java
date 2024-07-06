@@ -39,4 +39,10 @@ public class DemoServiceImpl implements DemoService {
         return builder.setName("Hello " + request.getName()).build();
     }
 
+    @Override
+    public DemoRes apiEnc(DemoReq request) {
+        DemoRes.Builder builder = DemoRes.newBuilder();
+        return builder.setName("Hello " + request.getName()).build();
+    }
+
 }

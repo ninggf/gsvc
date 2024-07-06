@@ -36,4 +36,5 @@ service DemoService {
       consumes: "application/encrypted+json"
     };
   }
+  rpc apiEnc(DemoReq) returns(DemoRes);
 }

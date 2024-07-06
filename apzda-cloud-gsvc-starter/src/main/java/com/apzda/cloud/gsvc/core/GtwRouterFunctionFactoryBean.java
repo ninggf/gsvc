@@ -37,10 +37,10 @@ import org.springframework.web.servlet.function.*;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static com.apzda.cloud.gsvc.gtw.ProxyExchangeHandler.parseUri;
 import static org.springdoc.core.utils.Constants.OPERATION_ATTRIBUTE;
 
 /**
@@ -122,21 +122,14 @@ public class GtwRouterFunctionFactoryBean
             webLog.debug("SN Route {} to {}.{}({})", path, serviceMethod.getServiceName(), method, route.meta());
         }
 
-        @SuppressWarnings("unchecked")
         HandlerFunction<ServerResponse> func = request -> {
             ServiceMethod realServiceMethod = serviceMethod;
             String dmName = realServiceMethod.getDmName();
 
             if ("*".equals(method)) {
                 val pattern = route.getMethod();
-                dmName = request.attribute(ATTR_MATCHED_SEGMENTS).map((segments) -> {
-                    var template = pattern;
-                    for (val sg : ((Map<String, String>) segments).entrySet()) {
-                        template = template.replace("{" + sg.getKey() + "}", sg.getValue());
-                    }
-                    return template;
-                }).orElse(pattern);
-
+                val upper = !StringUtils.startsWith(pattern, "{");
+                dmName = parseUri(request, pattern, upper);
                 try {
                     realServiceMethod = getServiceMethod(dmName, serviceInfo);
                 }
