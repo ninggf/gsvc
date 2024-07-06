@@ -30,7 +30,6 @@ import org.springframework.lang.NonNull;
 
 import java.lang.annotation.*;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -50,8 +49,15 @@ public @interface ConditionalOnLocalImpl {
 
         @Override
         public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            if (metadata == null) {
+                return ConditionOutcome.noMatch("ignore");
+            }
             val ann = metadata.getAnnotations().get(ConditionalOnLocalImpl.class);
-            val names = Objects.requireNonNull(context.getBeanFactory()).getBeanNamesForType(ann.synthesize().value());
+            val beanFactory = context.getBeanFactory();
+            if (beanFactory == null) {
+                return ConditionOutcome.noMatch("ignore");
+            }
+            val names = beanFactory.getBeanNamesForType(ann.synthesize().value());
             if (Arrays.stream(names)
                 .anyMatch((name) -> StringUtils.startsWithAny(name, "gsvc", "grpc")
                         && StringUtils.endsWith(name, "Stub"))) {
