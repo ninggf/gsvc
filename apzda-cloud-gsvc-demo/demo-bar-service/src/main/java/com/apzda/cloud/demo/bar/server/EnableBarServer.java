@@ -17,10 +17,6 @@
 package com.apzda.cloud.demo.bar.server;
 
 import com.apzda.cloud.demo.bar.config.BarConfiguration;
-import com.apzda.cloud.demo.bar.proto.BarServiceGsvc;
-import com.apzda.cloud.demo.bar.proto.FileServiceGsvc;
-import com.apzda.cloud.demo.bar.proto.SaServiceGsvc;
-import com.apzda.cloud.demo.math.proto.MathServiceGsvc;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
@@ -35,8 +31,7 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @PropertySource({ "classpath:BarService.gateway.properties", "classpath:SaService.gateway.properties" })
-@Import({ BarConfiguration.class, BarServiceGsvc.class, SaServiceGsvc.class, FileServiceGsvc.class,
-        MathServiceGsvc.class })
+@Import(BarConfiguration.class)
 @ComponentScan(basePackages = { "com.apzda.cloud.demo.bar.controller", "com.apzda.cloud.demo.bar.facade" })
 @Documented
 public @interface EnableBarServer {

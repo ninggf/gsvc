@@ -4,7 +4,6 @@ import com.apzda.cloud.demo.bar.server.EnableBarServer;
 import com.apzda.cloud.demo.foo.server.EnableFooServer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 /**
  * @author fengz

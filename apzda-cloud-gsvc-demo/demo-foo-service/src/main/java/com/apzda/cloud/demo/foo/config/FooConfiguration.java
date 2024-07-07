@@ -16,12 +16,16 @@
  */
 package com.apzda.cloud.demo.foo.config;
 
+import com.apzda.cloud.demo.bar.proto.BarService;
+import com.apzda.cloud.demo.bar.proto.SaService;
 import com.apzda.cloud.demo.foo.security.FooLoginFilter;
+import com.apzda.cloud.gsvc.config.EnableGsvcServices;
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
 import com.apzda.cloud.gsvc.security.filter.AbstractProcessingFilter;
 import com.apzda.cloud.gsvc.security.filter.SecurityFilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -29,6 +33,8 @@ import org.springframework.context.annotation.Configuration;
  * @since 1.0.0
  **/
 @Configuration(proxyBeanMethods = false)
+@EnableGsvcServices({ BarService.class, SaService.class })
+@EnableMethodSecurity
 public class FooConfiguration {
 
     @Bean("foo.MessageSourceNameResolver")

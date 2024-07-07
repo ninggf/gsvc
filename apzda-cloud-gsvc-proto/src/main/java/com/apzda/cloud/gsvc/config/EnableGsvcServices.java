@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.demo.foo.server;
+package com.apzda.cloud.gsvc.config;
 
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.*;
 
@@ -29,14 +27,10 @@ import java.lang.annotation.*;
  **/
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@PropertySource({ "classpath:FooService.gateway.properties" })
-@ComponentScan(basePackages = { "com.apzda.cloud.demo.foo" },
-        excludeFilters = @ComponentScan.Filter(classes = SpringBootApplication.class))
 @Documented
-public @interface EnableFooServer {
+@Import(GsvcServicesRegistrar.class)
+public @interface EnableGsvcServices {
 
-    // boolean proxyTargetClass() default false;
-
-    // AdviceMode mode() default AdviceMode.PROXY;
+    Class<?>[] value();
 
 }
