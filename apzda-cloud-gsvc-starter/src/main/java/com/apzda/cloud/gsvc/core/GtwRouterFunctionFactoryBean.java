@@ -53,7 +53,7 @@ public class GtwRouterFunctionFactoryBean
 
     public static final String ATTR_MATCHED_SEGMENTS = "GSVC_ATTR_MATCHED_SEGMENTS";
 
-    private static final Logger webLog = LoggerFactory.getLogger("org.springframework.web");
+    private static final Logger webLog = LoggerFactory.getLogger(GtwRouterFunctionFactoryBean.class);
 
     private final Route route;
 

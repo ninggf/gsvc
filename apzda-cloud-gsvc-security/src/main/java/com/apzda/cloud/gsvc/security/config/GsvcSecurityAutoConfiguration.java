@@ -243,7 +243,7 @@ public class GsvcSecurityAutoConfiguration {
 
                     val homePage = svcProperties.getConfig().getHomePage();
                     if (StringUtils.isNotBlank(homePage)) {
-                        log.debug("Redirect to {} when logout", homePage);
+                        log.debug("Redirect to {} when logout successfully", homePage);
                         logout.logoutSuccessUrl(homePage);
                     }
 

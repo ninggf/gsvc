@@ -45,7 +45,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
     private static final Map<String, Boolean> REGISTERED = new HashMap<>();
 
-    private static final Logger webLog = LoggerFactory.getLogger("org.springframework.web");
+    private static final Logger webLog = LoggerFactory.getLogger(GatewayServiceBeanFactoryPostProcessor.class);
 
     private String defaultRouteGlobalFilters;
 

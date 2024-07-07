@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class WebclientFactoryBean implements FactoryBean<WebClient>, ApplicationContextAware {
 
-    private static final Logger webLog = LoggerFactory.getLogger("org.springframework.web");
+    private static final Logger webLog = LoggerFactory.getLogger(WebclientFactoryBean.class);
 
     private final String cfgName;
 

@@ -50,21 +50,22 @@ public @interface ConditionalOnLocalImpl {
         @Override
         public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
             if (metadata == null) {
-                return ConditionOutcome.noMatch("ignore");
+                throw new IllegalStateException("Metadata is null");
             }
             val ann = metadata.getAnnotations().get(ConditionalOnLocalImpl.class);
             val beanFactory = context.getBeanFactory();
             if (beanFactory == null) {
                 return ConditionOutcome.noMatch("ignore");
             }
-            val names = beanFactory.getBeanNamesForType(ann.synthesize().value());
+            val svc = ann.synthesize().value();
+            val names = beanFactory.getBeanNamesForType(svc);
             if (Arrays.stream(names)
                 .anyMatch((name) -> StringUtils.startsWithAny(name, "gsvc", "grpc")
                         && StringUtils.endsWith(name, "Stub"))) {
                 return ConditionOutcome.noMatch("");
             }
             else {
-                return ConditionOutcome.match();
+                return ConditionOutcome.match(names[0]);
             }
         }
 

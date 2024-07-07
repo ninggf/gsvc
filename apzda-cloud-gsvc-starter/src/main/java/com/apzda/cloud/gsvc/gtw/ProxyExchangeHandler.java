@@ -53,7 +53,7 @@ import static com.apzda.cloud.gsvc.server.IServiceMethodHandler.GTW;
 @RequiredArgsConstructor
 public class ProxyExchangeHandler implements ApplicationContextAware {
 
-    private static final Logger webLog = LoggerFactory.getLogger("org.springframework.web");
+    private static final Logger webLog = LoggerFactory.getLogger(ProxyExchangeHandler.class);
 
     private final ObjectProvider<List<HttpHeadersFilter>> headersFiltersProvider;
 
@@ -70,7 +70,6 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
-    @SuppressWarnings("unchecked")
     public ServerResponse handle(ServerRequest request, Route route, ServiceInfo serviceInfo) {
         val context = GsvcContextHolder.getContext();
         context.setAttributes(RequestContextHolder.getRequestAttributes());
