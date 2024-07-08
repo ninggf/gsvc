@@ -85,11 +85,11 @@ public class GtwRouterFunctionFactoryBean
         }
         else if (StringUtils.startsWith(route.getMethod(), "/")) {
             if (webLog.isWarnEnabled()) {
-                webLog.warn("Ignore Route {} to {}.{}({})", route.absPath(), serviceInfo.getServiceName(),
+                webLog.warn("Route {} to {}.{}({}) skipped.", route.absPath(), serviceInfo.getServiceName(),
                         route.getMethod(), route.meta());
             }
-
-            router.path(route.absPath(), () -> request -> {
+            // prefixed .ig for response 404
+            router.path(".ig" + route.absPath(), () -> request -> {
                 throw new ErrorResponseException(HttpStatus.NOT_FOUND);
             });
         }
