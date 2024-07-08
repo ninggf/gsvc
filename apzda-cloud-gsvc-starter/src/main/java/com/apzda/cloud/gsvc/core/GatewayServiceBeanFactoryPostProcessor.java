@@ -247,6 +247,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val desc = environment.getProperty(prefix + ".desc");
         val tags = environment.getProperty(prefix + ".tags");
         val consumes = environment.getProperty(prefix + ".consumes");
+        val excludes = environment.getProperty(prefix + ".excludes");
         val readTimeout = environment.getProperty(prefix + ".read-timeout", Duration.class, Duration.ZERO);
         var filters = environment.getProperty(prefix + ".filters");
 
@@ -273,6 +274,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .summary(summary)
             .tags(tags)
             .consumes(consumes)
+            .excludes(excludes)
             .desc(desc)
             .filters(filters);
     }
@@ -342,6 +344,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         route.actions(StringUtils.defaultIfBlank(methods, "post"));
         route.setLogin(login);
         route.consumes(consumes);
+        route.excludes("");
         route.access(access);
         if (api.getTimeout() > 0) {
             route.readTimeout(Duration.ofMillis(api.getTimeout()));

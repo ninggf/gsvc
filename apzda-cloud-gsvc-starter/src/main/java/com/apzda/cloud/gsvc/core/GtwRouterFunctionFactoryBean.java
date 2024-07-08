@@ -35,6 +35,7 @@ import org.springframework.web.ErrorResponseException;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.function.*;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -114,7 +115,7 @@ public class GtwRouterFunctionFactoryBean
         val consumes = Optional.ofNullable(route.getConsumes())
             .map(c -> Stream.of(c).map(MediaType::valueOf).toList())
             .orElse(Collections.emptyList());
-
+        val excludes = Arrays.stream(route.getExcludes()).toList();
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.absPath();
         val method = serviceMethod.getDmName();
@@ -148,7 +149,7 @@ public class GtwRouterFunctionFactoryBean
             };
         };
 
-        builder.route((request -> match(request, path, actions, consumes)), func);
+        builder.route((request -> match(request, path, actions, consumes, excludes)), func);
 
         val apiDocEnabled = applicationContext.getEnvironment()
             .getProperty("springdoc.api-docs.enabled", Boolean.class, true);
@@ -170,6 +171,7 @@ public class GtwRouterFunctionFactoryBean
         val consumes = Optional.ofNullable(route.getConsumes())
             .map(c -> Stream.of(c).map(MediaType::valueOf).toList())
             .orElse(Collections.emptyList());
+        val excludes = Arrays.stream(route.getExcludes()).toList();
 
         if (webLog.isDebugEnabled()) {
             webLog.debug("FW Route {} to {}.{}({})", path, serviceInfo.getServiceName(), route.getMethod(),
@@ -179,7 +181,7 @@ public class GtwRouterFunctionFactoryBean
         final HandlerFunction<ServerResponse> func = request -> proxyExchangeHandler.handle(request, route,
                 serviceInfo);
 
-        builder.route(request -> match(request, path, actions, consumes), func);
+        builder.route(request -> match(request, path, actions, consumes, excludes), func);
 
         RouteRegistry.register(path);
     }
@@ -241,9 +243,16 @@ public class GtwRouterFunctionFactoryBean
         return RouterFunction.class;
     }
 
-    private boolean match(ServerRequest request, String path, List<HttpMethod> actions, List<MediaType> consumes) {
+    private boolean match(ServerRequest request, String path, List<HttpMethod> actions, List<MediaType> consumes,
+            List<String> excludes) {
         val reqPath = request.path();
+
+        if (excludes.contains(reqPath)) {
+            return false;
+        }
+
         boolean matched = RouteRegistry.pathMatcher.match(path, reqPath);
+
         if (matched && !actions.isEmpty()) {
             matched = actions.contains(request.method());
         }

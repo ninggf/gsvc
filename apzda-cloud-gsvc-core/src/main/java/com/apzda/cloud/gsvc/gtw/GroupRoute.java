@@ -29,7 +29,8 @@ public class GroupRoute extends Route {
         gr.setDesc(route.getDesc());
         gr.setTags(route.getTags());
         gr.setConsumes(route.getConsumes());
-
+        gr.setExcludes(route.getExcludes());
+        
         return gr;
     }
 

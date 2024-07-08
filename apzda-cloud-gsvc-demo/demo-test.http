@@ -577,6 +577,19 @@ Content-Type: application/encrypted+json
     });
 %}
 
+### DemoService /demo/d/api/enc1
+POST http://{{demoService}}/demo/d/api/enc1
+Content-Type: application/encrypted+json
+Accept: application/json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("encrypted request body is required - 404", function () {
+        client.assert(response.status === 404, "Response status is not 404");
+    });
+%}
+
 ### DemoService /demo/foo/api/enc
 POST http://{{demoService}}/demo/foo/api/enc
 Content-Type: application/json
