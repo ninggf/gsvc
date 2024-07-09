@@ -498,7 +498,7 @@ POST http://{{demoService}}/demo/d/enc
 > {%
     client.test("encrypted request body is required", function () {
         client.assert(response.status === 404, "Response status is not 404");
-        client.assert(response.body.errCode === 404, response.body.errMsg)
+        client.assert(response.body.errCode === -404, response.body.errMsg)
     });
 %}
 
@@ -522,7 +522,7 @@ POST http://{{demoService}}/demo/d/enc1
 > {%
     client.test("encrypted request body is required", function () {
         client.assert(response.status === 404, "Response status is not 404");
-        client.assert(response.body.errCode === 404, response.body.errMsg)
+        client.assert(response.body.errCode === -404, response.body.errMsg)
     });
 %}
 
