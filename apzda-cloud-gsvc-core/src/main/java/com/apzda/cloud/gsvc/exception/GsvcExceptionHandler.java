@@ -23,7 +23,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.ErrorResponse;
-import org.springframework.web.ErrorResponseException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -138,12 +137,9 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         else if (e instanceof DegradedException) {
             return Response.error(ServiceError.DEGRADE);
         }
-        else if (e instanceof ErrorResponseException codeException) {
-            return handleHttpStatusError(codeException.getStatusCode(), codeException.getBody().getDetail());
-        }
         else if (e instanceof ErrorResponse errorResponse) {
             val body = errorResponse.getBody();
-            return Response.error(body.getStatus(), body.getDetail());
+            return handleHttpStatusError(errorResponse.getStatusCode(), body.getDetail());
         }
 
         return Response.error(ServiceError.SERVICE_ERROR);
@@ -158,7 +154,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         // bookmark: Gateway Redirect to Login Page
         HttpStatusCode status = HttpStatusCode.valueOf(500);
         HttpHeaders headers = new HttpHeaders();
-        if (e instanceof ErrorResponseException statusException) {
+        if (e instanceof ErrorResponse statusException) {
             status = statusException.getStatusCode();
             headers = new HttpHeaders(statusException.getHeaders());
         }
@@ -255,7 +251,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
 
             return responseWrapper.unwrap(rClazz, error);
         }
-        else if (error instanceof ErrorResponseException responseException) {
+        else if (error instanceof ErrorResponse responseException) {
             responseWrapper = ResponseWrapper.status(responseException.getStatusCode()).body(handle(error));
             responseWrapper.headers(responseException.getHeaders());
 
@@ -271,12 +267,6 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
                 || error instanceof HttpMessageConversionException
                 || error instanceof MethodArgumentTypeMismatchException) {
             responseWrapper = ResponseWrapper.status(HttpStatus.BAD_REQUEST).body(handle(error));
-
-            return responseWrapper.unwrap(rClazz, error);
-        }
-        else if (error instanceof ErrorResponse errorResponse) {
-            responseWrapper = ResponseWrapper.status(errorResponse.getBody().getStatus()).body(handle(error));
-            responseWrapper.headers(errorResponse.getHeaders());
 
             return responseWrapper.unwrap(rClazz, error);
         }
@@ -316,6 +306,9 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         }
         else if (statusCode == HttpStatus.FORBIDDEN) {
             return Response.error(ServiceError.FORBIDDEN);
+        }
+        else if (statusCode == HttpStatus.NOT_FOUND) {
+            return Response.error(ServiceError.NOT_FOUND);
         }
         else if (statusCode == HttpStatus.BAD_GATEWAY) {
             return Response.error(ServiceError.REMOTE_SERVICE_NO_INSTANCE);

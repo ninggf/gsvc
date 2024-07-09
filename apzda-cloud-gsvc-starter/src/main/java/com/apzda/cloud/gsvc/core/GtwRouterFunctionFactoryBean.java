@@ -247,10 +247,6 @@ public class GtwRouterFunctionFactoryBean
             List<String> excludes) {
         val reqPath = request.path();
 
-        if (excludes.contains(reqPath)) {
-            return false;
-        }
-
         boolean matched = RouteRegistry.pathMatcher.match(path, reqPath);
 
         if (matched && !actions.isEmpty()) {
@@ -273,6 +269,9 @@ public class GtwRouterFunctionFactoryBean
         if (matched && httpServletRequest.getAttribute(ATTR_MATCHED_SEGMENTS) == null) {
             val segments = RouteRegistry.pathMatcher.extractUriTemplateVariables(path, reqPath);
             val segment = RouteRegistry.pathMatcher.extractPathWithinPattern(path, reqPath);
+            if (excludes.contains(segment)) {
+                return false;
+            }
             segments.put("segment", segment);
             httpServletRequest.setAttribute(ATTR_MATCHED_SEGMENTS, segments);
             httpServletRequest.setAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE, path);
