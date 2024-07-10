@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.gsvc.server;
 
+import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionOutcome;
@@ -62,6 +63,7 @@ public @interface ConditionalOnLocalImpl {
             if (Arrays.stream(names)
                 .anyMatch((name) -> StringUtils.startsWithAny(name, "gsvc", "grpc")
                         && StringUtils.endsWith(name, "Stub"))) {
+                GatewayServiceRegistry.registerProxy(svc, "http");
                 return ConditionOutcome.noMatch("");
             }
             else {
