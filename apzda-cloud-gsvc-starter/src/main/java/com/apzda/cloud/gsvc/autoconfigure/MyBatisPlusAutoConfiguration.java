@@ -42,7 +42,6 @@ import net.sf.jsqlparser.expression.StringValue;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -185,10 +184,8 @@ public class MyBatisPlusAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(CurrentUserProvider.class)
     @ConditionalOnMissingBean
-    MetaObjectHandler metaObjectHandler(CurrentUserProvider currentUserProvider,
-            ObjectProvider<TenantManager<?>> tenantManagers) {
+    MetaObjectHandler metaObjectHandler(ObjectProvider<TenantManager<?>> tenantManagers) {
         val stringBuffer = new StringBuffer();
         tenantManagers.ifAvailable(tenantManager -> {
             val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(tenantManager.getTenantIdColumn(),
@@ -207,7 +204,7 @@ public class MyBatisPlusAutoConfiguration {
                     fills.add(ctime.changeFieldName("updatedAt"));
                 }
 
-                val currentAuditor = currentUserProvider.getCurrentAuditor();
+                val currentAuditor = Optional.ofNullable(CurrentUserProvider.getCurrentUser().getId());
                 val uidType = metaObject.getGetterType("createdBy");
                 if (uidType != null && currentAuditor.isPresent()
                         && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
@@ -240,7 +237,7 @@ public class MyBatisPlusAutoConfiguration {
                     val ctime = getTime("updatedAt", timeType);
                     fills.add(ctime);
                 }
-                val currentAuditor = currentUserProvider.getCurrentAuditor();
+                val currentAuditor = Optional.ofNullable(CurrentUserProvider.getCurrentUser().getId());
                 val uidType = metaObject.getGetterType("updatedBy");
                 if (uidType != null && currentAuditor.isPresent()
                         && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
