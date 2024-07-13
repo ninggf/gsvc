@@ -45,6 +45,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -64,7 +65,7 @@ import static com.apzda.cloud.gsvc.utils.SnowflakeUtil.SNOWFLAKE;
  * @since 1.0.0
  **/
 @Slf4j
-@AutoConfiguration(before = MybatisPlusAutoConfiguration.class, after = GsvcCoreAutoConfiguration.class)
+@AutoConfiguration(before = MybatisPlusAutoConfiguration.class)
 @ConditionalOnClass(MybatisConfiguration.class)
 public class MyBatisPlusAutoConfiguration {
 

@@ -6,6 +6,7 @@ import com.apzda.boot.entity.Role;
 import com.apzda.boot.entity.User;
 import com.apzda.boot.mybatis.service.UserService;
 import com.apzda.cloud.gsvc.autoconfigure.MyBatisPlusAutoConfiguration;
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.TenantManager;
 import com.apzda.module.test.abc.def.a.mapper.UserMapper;
 import com.apzda.neti.test.mapper.RoleMapper;
@@ -19,7 +20,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
@@ -27,9 +30,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 
+import java.time.Clock;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 /**
  * Created at 2023/7/7 13:45.
@@ -41,16 +46,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @MybatisPlusTest
 @ContextConfiguration(classes = TestApp.class)
-@ComponentScan({"com.apzda.boot.mybatis.service"})
+@ComponentScan({ "com.apzda.boot.mybatis.service" })
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ImportAutoConfiguration(MyBatisPlusAutoConfiguration.class)
+@ImportAutoConfiguration({ MyBatisPlusAutoConfiguration.class })
 @Import(MyBatisPlusConfig.class)
 @Sql("classpath:/schema.sql")
-@TestPropertySource(properties = {
-    "apzda.cloud.mybatis-plus.disable-tenant-plugin=false",
-    "apzda.cloud.mybatis-plus.tenant-id-column=merchant_id"
-})
+@TestPropertySource(properties = { "apzda.cloud.mybatis-plus.disable-tenant-plugin=false",
+        "apzda.cloud.mybatis-plus.tenant-id-column=merchant_id" })
+@EnableConfigurationProperties(ServiceConfigProperties.class)
 class MybatisPlusConfigurationTest {
+
+    // @MockBean
+    // private ServiceConfigProperties serviceConfigProperties;
+
+    @MockBean
+    private Clock clock;
 
     @Autowired
     private ApplicationContext context;
@@ -69,6 +79,9 @@ class MybatisPlusConfigurationTest {
 
     @BeforeEach
     void create() {
+        when(clock.millis()).thenReturn(System.currentTimeMillis());
+        val p = new ServiceConfigProperties();
+        //when(serviceConfigProperties.getMybatisPlus()).thenAnswer(invocation -> p.getMybatisPlus());
 
         {
             var user = new User();
@@ -160,7 +173,8 @@ class MybatisPlusConfigurationTest {
         val user7 = userMapper.getUserByName("7");
         if (tenantManager.disableTenantPlugin()) {
             assertThat(user7.getMerchantId()).isEqualTo("987654321");
-        } else {
+        }
+        else {
             assertThat(user7).isNull();
         }
     }
