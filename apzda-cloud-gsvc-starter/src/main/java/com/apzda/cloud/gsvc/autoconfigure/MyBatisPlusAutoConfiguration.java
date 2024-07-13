@@ -64,7 +64,7 @@ import static com.apzda.cloud.gsvc.utils.SnowflakeUtil.SNOWFLAKE;
  * @since 1.0.0
  **/
 @Slf4j
-@AutoConfiguration(before = MybatisPlusAutoConfiguration.class)
+@AutoConfiguration(before = MybatisPlusAutoConfiguration.class, after = GsvcCoreAutoConfiguration.class)
 @ConditionalOnClass(MybatisConfiguration.class)
 public class MyBatisPlusAutoConfiguration {
 
@@ -263,7 +263,7 @@ public class MyBatisPlusAutoConfiguration {
                         fills.add(getTime(column, timeType));
                     }
                 }
-                
+
                 val currentAuditor = Optional.ofNullable(CurrentUserProvider.getCurrentUser().getId());
                 if (currentAuditor.isPresent()
                         && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
