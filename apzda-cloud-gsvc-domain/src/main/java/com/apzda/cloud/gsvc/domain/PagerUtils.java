@@ -17,14 +17,19 @@
 package com.apzda.cloud.gsvc.domain;
 
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.metadata.OrderItem;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.val;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -46,7 +51,7 @@ public class PagerUtils extends PageRequest {
         super(pageNumber, pageSize, sort);
     }
 
-    @NonNull
+    @Nonnull
     public static PageRequest of(@Nullable GsvcExt.Pager pager) {
         if (pager == null) {
             return PageRequest.of(0, DEFAULT_PAGE_SIZE);
@@ -70,7 +75,7 @@ public class PagerUtils extends PageRequest {
         return PageRequest.of(pageNumber, pageSize);
     }
 
-    @NonNull
+    @Nonnull
     public static GsvcExt.Pager to(@Nullable Pageable pager) {
         val builder = GsvcExt.Pager.newBuilder();
         if (pager == null) {
@@ -91,8 +96,8 @@ public class PagerUtils extends PageRequest {
         return builder.build();
     }
 
-    @NonNull
-    public static GsvcExt.PageInfo of(@NonNull Page<?> page) {
+    @Nonnull
+    public static GsvcExt.PageInfo of(@Nonnull Page<?> page) {
         val builder = GsvcExt.PageInfo.newBuilder();
         builder.setPageNumber(page.getNumber());
         builder.setTotalPages(page.getTotalPages());
@@ -105,7 +110,88 @@ public class PagerUtils extends PageRequest {
         return builder.build();
     }
 
-    @NonNull
+    /**
+     * 将请求中的分页参数转为MyBatis Plus分页器{@link IPage}。
+     * @param pager 分页参数
+     * @return MyBatis Plus 分页器
+     */
+    @Nonnull
+    public static <T> IPage<T> of(@Nullable GsvcExt.Pager pager, Class<T> tClass) {
+        val page = new com.baomidou.mybatisplus.extension.plugins.pagination.Page<T>();
+        if (pager != null) {
+            int pageSize = pager.hasPageSize() ? pager.getPageSize() : DEFAULT_PAGE_SIZE;
+
+            page.setCurrent(pager.getPageNumber() + 1);
+            page.setSize(pageSize);
+            if (pager.hasSort()) {
+                val sort = pager.getSort();
+                if (sort.getOrderCount() > 0) {
+                    var orders = new ArrayList<OrderItem>();
+                    for (GsvcExt.Sorter.Order order : sort.getOrderList()) {
+                        val o = new OrderItem();
+                        o.setAsc(order.getDirection() == GsvcExt.Sorter.Direction.ASC);
+                        o.setColumn(order.getField());
+                        orders.add(o);
+                    }
+                    page.setOrders(orders);
+                }
+            }
+        }
+        else {
+            page.setSize(DEFAULT_PAGE_SIZE);
+        }
+        return page;
+    }
+
+    /**
+     * 将MyBatis Plus分页器{@link IPage}转换为Gsvc请求分页器{@link GsvcExt.Pager}。
+     * @param page MyBatis Plus分页器
+     * @return Gsvc请求分页器实例.
+     */
+    @Nonnull
+    public static GsvcExt.Pager to(@Nullable IPage<?> page) {
+        val builder = GsvcExt.Pager.newBuilder();
+        if (page == null) {
+            builder.setPageNumber(0);
+            builder.setPageSize(DEFAULT_PAGE_SIZE);
+        }
+        else {
+            builder.setPageNumber(Math.max(0, (int) page.getCurrent() - 1));
+            if (page.getSize() > 0) {
+                builder.setPageSize((int) page.getSize());
+            }
+            if (page.offset() > 0) {
+                builder.setOffset(page.offset());
+            }
+            builder.setSort(convertSort(page.orders()));
+        }
+
+        return builder.build();
+    }
+
+    /**
+     * 将MyBatis Plus分页结果{@link IPage}转换为Gsvc分页结果{@link GsvcExt.PageInfo}。
+     * @param page MyBatis Plus分页结果
+     * @return Gsvc分页结果
+     */
+    @Nonnull
+    public static GsvcExt.PageInfo of(@Nonnull IPage<?> page) {
+        val current = page.getCurrent();
+        val pages = page.getPages();
+        val builder = GsvcExt.PageInfo.newBuilder();
+        builder.setPageNumber(Math.max(0, (int) (current - 1)));
+        builder.setTotalPages((int) pages);
+        builder.setTotalElements(page.getTotal());
+        builder.setNumberOfElements(page.getRecords().size());
+        builder.setPageSize((int) page.getSize());
+        builder.setFirst(current == 1);
+        builder.setLast(current == pages);
+        builder.setSort(convertSort(page.orders()));
+
+        return builder.build();
+    }
+
+    @Nonnull
     public static GsvcExt.Sorter.Builder convertSort(@Nullable Sort sort) {
         val sb = GsvcExt.Sorter.newBuilder();
         if (sort != null) {
@@ -120,6 +206,25 @@ public class PagerUtils extends PageRequest {
             });
         }
         return sb;
+    }
+
+    @Nonnull
+    public static GsvcExt.Sorter.Builder convertSort(@Nullable List<OrderItem> orders) {
+        val builder = GsvcExt.Sorter.newBuilder();
+
+        if (!CollectionUtils.isEmpty(orders)) {
+            for (OrderItem order : orders) {
+                val ob = GsvcExt.Sorter.Order.newBuilder().setField(order.getColumn());
+                if (order.isAsc()) {
+                    builder.addOrder(ob.setDirection(GsvcExt.Sorter.Direction.ASC));
+                }
+                else {
+                    builder.addOrder(ob.setDirection(GsvcExt.Sorter.Direction.DESC));
+                }
+            }
+        }
+
+        return builder;
     }
 
 }
