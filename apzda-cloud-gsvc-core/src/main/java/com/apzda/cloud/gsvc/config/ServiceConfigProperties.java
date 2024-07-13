@@ -10,7 +10,9 @@ import org.springframework.core.style.ToStringCreator;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,34 +35,13 @@ public final class ServiceConfigProperties {
 
     private final Map<String, GatewayRouteConfig> gateway = new LinkedHashMap<>();
 
-    private Config config;
+    private final Config config = new Config();
 
-    private ModemConfig modem = new ModemConfig();
+    private final ModemConfig modem = new ModemConfig();
 
-    private Registry registry = new Registry();
+    private final Registry registry = new Registry();
 
-    private MybatisPlus mybatisPlus;
-
-    public Config getConfig() {
-        if (config == null) {
-            config = new Config();
-        }
-        return config;
-    }
-
-    public Registry getRegistry() {
-        if (registry == null) {
-            registry = new Registry();
-        }
-        return registry;
-    }
-
-    public MybatisPlus getMybatisPlus() {
-        if (mybatisPlus == null) {
-            mybatisPlus = new MybatisPlus();
-        }
-        return mybatisPlus;
-    }
+    private final MybatisPlus mybatisPlus = new MybatisPlus();
 
     public ServiceConfig svcConfig(String name) {
         return svcConfig(name, service, SERVICE_DEFAULT);
@@ -150,6 +131,14 @@ public final class ServiceConfigProperties {
         private String tenantIdColumn;
 
         private boolean disableTenantPlugin = true;
+
+        private List<String> createdAtColumns = new ArrayList<>(List.of("createdAt"));
+
+        private List<String> createdByColumns = new ArrayList<>(List.of("createdBy"));
+
+        private List<String> updatedAtColumns = new ArrayList<>(List.of("updatedAt"));
+
+        private List<String> updatedByColumns = new ArrayList<>(List.of("updatedBy"));
 
     }
 
