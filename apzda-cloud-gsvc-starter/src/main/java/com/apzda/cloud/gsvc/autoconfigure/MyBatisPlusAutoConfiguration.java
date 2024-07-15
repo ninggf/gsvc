@@ -24,7 +24,6 @@ import com.apzda.cloud.gsvc.mybatis.MybatisCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusPropertiesCustomizer;
-import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.core.handlers.StrictFill;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
@@ -65,7 +64,7 @@ import static com.apzda.cloud.gsvc.utils.SnowflakeUtil.SNOWFLAKE;
  **/
 @Slf4j
 @AutoConfiguration(before = MybatisPlusAutoConfiguration.class)
-@ConditionalOnClass(MybatisConfiguration.class)
+@ConditionalOnClass(MybatisPlusAutoConfiguration.class)
 public class MyBatisPlusAutoConfiguration {
 
     private static final Pattern PATTERN = Pattern.compile("_([a-z])");
