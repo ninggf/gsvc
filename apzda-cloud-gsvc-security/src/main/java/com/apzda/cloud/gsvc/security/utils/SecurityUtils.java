@@ -16,7 +16,11 @@
  */
 package com.apzda.cloud.gsvc.security.utils;
 
+import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
+import com.apzda.cloud.gsvc.security.token.JwtToken;
+import jakarta.annotation.Nonnull;
 import lombok.val;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.access.expression.SecurityExpressionRoot;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -37,8 +41,52 @@ public abstract class SecurityUtils {
 
     private static DefaultSecurityExpressionHandler handler;
 
+    @Nonnull
     public static SecurityExpressionRoot security() {
         return handler.create();
+    }
+
+    @Nonnull
+    public static JwtAuthenticationToken getAuthentication() {
+        if (handler.create().getAuthentication() instanceof JwtAuthenticationToken token) {
+            return token;
+        }
+        throw new AccessDeniedException("Current authentication is not a JwtAuthenticationToken instance");
+    }
+
+    @Nonnull
+    public static JwtToken getCurrentToken() {
+        return getAuthentication().getJwtToken();
+    }
+
+    public static boolean hasAuthority(@Nonnull String authority) {
+        val root = handler.create();
+        return root.hasAuthority(authority);
+    }
+
+    public static boolean hasAnyAuthority(String... authority) {
+        val root = handler.create();
+        return root.hasAnyAuthority(authority);
+    }
+
+    public static boolean hasRole(@Nonnull String role) {
+        val root = handler.create();
+        return root.hasRole(role);
+    }
+
+    public static boolean hasAnyRole(String... role) {
+        val root = handler.create();
+        return root.hasAnyRole(role);
+    }
+
+    public static boolean hasPermission(@Nonnull String permission) {
+        val root = handler.create();
+        return root.hasPermission(null, permission);
+    }
+
+    public static boolean hasPermission(@Nonnull Object target, @Nonnull String permission) {
+        val root = handler.create();
+        return root.hasPermission(target, permission);
     }
 
     public static class DefaultSecurityExpressionHandler {
