@@ -118,6 +118,14 @@ public class GtwRouterFunctionFactoryBean
         val excludes = Arrays.stream(route.getExcludes()).toList();
         val serviceMethod = getServiceMethod(route, serviceInfo);
         val path = route.absPath();
+
+        if (serviceMethod == null) {
+            builder.path(".ig" + path, () -> request -> {
+                throw new ErrorResponseException(HttpStatus.NOT_FOUND);
+            });
+            return;
+        }
+
         val method = serviceMethod.getDmName();
         if (webLog.isDebugEnabled()) {
             webLog.debug("SN Route {} to {}.{}({})", path, serviceMethod.getServiceName(), method, route.meta());
@@ -215,12 +223,14 @@ public class GtwRouterFunctionFactoryBean
         }
     }
 
-    @Nonnull
     private ServiceMethod getServiceMethod(Route route, ServiceInfo serviceInfo) {
         val methods = GatewayServiceRegistry.getDeclaredServiceMethods(serviceInfo);
         val method = route.getMethod();
 
         if (StringUtils.endsWith(method, "}")) {
+            if (methods.isEmpty()) {
+                return null;
+            }
             val serviceMethod = methods.values().stream().toList().get(0);
             return new ServiceMethod(serviceMethod, "*");
         }
