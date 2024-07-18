@@ -17,7 +17,7 @@
 package com.apzda.cloud.gsvc.security.filter;
 
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
-import com.apzda.cloud.gsvc.security.mfa.MfaException;
+import com.apzda.cloud.gsvc.security.exception.MfaException;
 import com.apzda.cloud.gsvc.security.mfa.MfaStatus;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +73,7 @@ public class MfaAuthenticationFilter extends AbstractAuthenticatedFilter {
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE + 2;
+        return Ordered.HIGHEST_PRECEDENCE + 40;
     }
 
 }

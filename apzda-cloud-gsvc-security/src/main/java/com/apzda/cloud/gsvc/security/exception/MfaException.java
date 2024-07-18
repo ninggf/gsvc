@@ -14,11 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.mfa;
+package com.apzda.cloud.gsvc.security.exception;
 
 import com.apzda.cloud.gsvc.IServiceError;
 import com.apzda.cloud.gsvc.error.ServiceError;
-import com.apzda.cloud.gsvc.security.exception.AuthenticationError;
 
 /**
  * @author fengz (windywany@gmail.com)

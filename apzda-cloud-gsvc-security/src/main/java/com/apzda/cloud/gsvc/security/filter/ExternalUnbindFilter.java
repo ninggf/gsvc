@@ -16,10 +16,12 @@
  */
 package com.apzda.cloud.gsvc.security.filter;
 
-import lombok.extern.slf4j.Slf4j;
+import com.apzda.cloud.gsvc.security.exception.ExternalUnbindException;
+import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
+import jakarta.annotation.Nonnull;
+import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.Ordered;
-import org.springframework.lang.NonNull;
-import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -31,24 +33,26 @@ import java.util.Set;
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Slf4j
-public class CredentialsExpiredFilter extends AbstractAuthenticatedFilter {
+public class ExternalUnbindFilter extends AbstractAuthenticatedFilter {
 
-    public CredentialsExpiredFilter(Set<RequestMatcher> excludes) {
+    public ExternalUnbindFilter(Set<RequestMatcher> excludes) {
         super(excludes);
     }
 
     @Override
-    protected boolean doFilter(@NonNull Authentication authentication, @NonNull UserDetails userDetails) {
-        if (!userDetails.isCredentialsNonExpired()) {
-            throw new CredentialsExpiredException(String.format("%s's password is expired", userDetails.getUsername()));
+    protected boolean doFilter(@Nonnull Authentication authentication, @Nonnull UserDetails userDetails) {
+        if (authentication instanceof JwtAuthenticationToken jwtAuthenticationToken) {
+            val jwtToken = jwtAuthenticationToken.getJwtToken();
+            if (StringUtils.isBlank(jwtToken.getUid()) || "0".equals(jwtToken.getUid())) {
+                throw new ExternalUnbindException();
+            }
         }
         return true;
     }
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE + 30;
+        return Ordered.HIGHEST_PRECEDENCE + 10;
     }
 
 }

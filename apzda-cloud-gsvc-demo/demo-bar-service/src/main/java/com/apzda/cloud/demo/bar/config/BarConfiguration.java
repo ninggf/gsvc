@@ -55,6 +55,9 @@ public class BarConfiguration {
     JwtTokenCustomizer customizer2() {
         return (authentication, token) -> {
             token.setStatus("2");
+            if (!"user5".equals(token.getName())) {
+                token.setUid(token.getName());
+            }
             return token;
         };
     }

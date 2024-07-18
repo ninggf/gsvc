@@ -356,6 +356,13 @@ public class GsvcSecurityAutoConfiguration {
         }
 
         @Bean
+        @ConditionalOnMissingBean(name = UNBIND_CHECK_FILTER)
+        @ConditionalOnProperty(name = "apzda.cloud.security.bind-enabled", havingValue = "true", matchIfMissing = true)
+        SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> externalUnbindFilter() {
+            return new SecurityFilterRegistrationBean<>(new ExternalUnbindFilter(properties.bindExcludes()));
+        }
+
+        @Bean
         @ConditionalOnMissingBean(name = MFA_FILTER)
         @ConditionalOnProperty(name = "apzda.cloud.security.mfa-enabled", havingValue = "true")
         SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> mfaAuthenticationFilter() {
@@ -486,6 +493,9 @@ public class GsvcSecurityAutoConfiguration {
 
             val user4 = User.withUsername("user4").password(encodedPwd).build();
             manager.createUser(user4);
+
+            val user5 = User.withUsername("user5").password(encodedPwd).build();
+            manager.createUser(user5);
             return manager;
         }
 
