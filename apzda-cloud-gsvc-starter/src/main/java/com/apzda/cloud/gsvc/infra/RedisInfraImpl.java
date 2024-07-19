@@ -49,13 +49,23 @@ public class RedisInfraImpl implements Counter, TempStorage {
         val a = DateUtil.currentSeconds() / interval;
         val id = "counter." + key + "." + a;
         try {
-            val intExact = Math.toIntExact(Objects.requireNonNull(stringRedisTemplate.opsForValue().increment(id)));
-            stringRedisTemplate.expire(id, interval + 1, TimeUnit.SECONDS);
-            return intExact;
+            var increment = stringRedisTemplate.opsForValue().increment(id);
+            if (increment == null) {
+                increment = Long.parseLong(Objects.requireNonNull(stringRedisTemplate.opsForValue().get(id)));
+            }
+            return Math.toIntExact(increment);
         }
         catch (Exception e) {
             log.warn("Cannot get try count for {} - {}", id, e.getMessage());
             return Integer.MAX_VALUE;
+        }
+        finally {
+            try {
+                stringRedisTemplate.expire(id, interval + 1, TimeUnit.SECONDS);
+            }
+            catch (Exception e) {
+                log.warn("Cannot set expired time of the key of count {} - {}", id, e.getMessage());
+            }
         }
     }
 
