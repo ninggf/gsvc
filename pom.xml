@@ -28,6 +28,7 @@
         <module>apzda-cloud-gsvc-domain</module>
         <module>apzda-cloud-xxl-job-adapter</module>
         <module>apzda-cloud-gsvc-test</module>
+        <module>apzda-cloud-gsvc-boot</module>
     </modules>
 
     <properties>
@@ -128,6 +129,11 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-core</artifactId>
+                <version>1.2.20-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
+                <artifactId>apzda-cloud-gsvc-boot</artifactId>
                 <version>1.2.20-SNAPSHOT</version>
             </dependency>
             <dependency>

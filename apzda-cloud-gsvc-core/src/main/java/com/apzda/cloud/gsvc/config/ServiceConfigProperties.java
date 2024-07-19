@@ -99,6 +99,18 @@ public final class ServiceConfigProperties {
 
         private String realIpFrom;
 
+        private String dictItemTable = "sys_dict_item";
+
+        private String dictCodeColumn = "dict_code";
+
+        private String dictLabelColumn = "dict_label";
+
+        private String dictValueColumn = "dict_value";
+
+        private String dictDelColumn;
+
+        private String dictDelValue;
+
         @DurationUnit(ChronoUnit.HOURS)
         private Duration tempExpireTime = Duration.ofHours(168);
 
@@ -128,7 +140,7 @@ public final class ServiceConfigProperties {
     @Data
     public static final class MybatisPlus {
 
-        private String tenantIdColumn;
+        private String tenantIdColumn = "tenant_id";
 
         private boolean disableTenantPlugin = true;
 
