@@ -22,6 +22,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.Serializable;
 import java.util.List;
@@ -59,6 +60,9 @@ public interface DomainService<D extends Serializable, T extends IEntity<D>> ext
         return null;
     }
 
-    boolean deleteByEntities(List<T> entities);
+    @Transactional
+    default boolean deleteByEntities(List<T> entities) {
+        return removeBatchByIds(entities.stream().map(IEntity::getId).toList());
+    }
 
 }
