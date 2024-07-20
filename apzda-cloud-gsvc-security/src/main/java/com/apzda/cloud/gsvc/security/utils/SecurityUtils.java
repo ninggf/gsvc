@@ -16,6 +16,8 @@
  */
 package com.apzda.cloud.gsvc.security.utils;
 
+import com.apzda.cloud.gsvc.error.ServiceError;
+import com.apzda.cloud.gsvc.security.exception.AuthenticationError;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import com.apzda.cloud.gsvc.security.token.JwtToken;
 import jakarta.annotation.Nonnull;
@@ -108,7 +110,12 @@ public abstract class SecurityUtils {
         }
 
         SecurityExpressionRoot create() {
-            val root = new GsvcSecurityExpressionRoot(() -> SecurityContextHolder.getContext().getAuthentication());
+            val authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                throw new AuthenticationError(ServiceError.UNAUTHORIZED);
+            }
+
+            val root = new GsvcSecurityExpressionRoot(() -> authentication);
             root.setDefaultRolePrefix(grantedAuthorityDefaults.getRolePrefix());
             root.setPermissionEvaluator(permissionEvaluator);
             root.setRoleHierarchy(roleHierarchy);

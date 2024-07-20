@@ -38,10 +38,14 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.ResolvableType;
+import org.springframework.http.MediaType;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -98,9 +102,11 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
     public Response<IPage<T>> list(T entity, GsvcExt.Pager pager, HttpServletRequest req) {
         QueryWrapper<T> query = QueryGenerator.initQueryWrapper(entity, req.getParameterMap());
         IPage<T> page = PagerUtils.iPage(pager);
+
         if (StringUtils.isNotBlank(readOp)) {
             aclChecker.check(entity, readOp);
         }
+
         return Response.success(serviceImpl.read(page, query));
     }
 
@@ -126,9 +132,8 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         if (entity != null) {
             return Response.success(entity);
         }
-        else {
-            return Response.error(500);
-        }
+
+        return Response.error(-995);
     }
 
     @PatchMapping("/{id}")
@@ -145,7 +150,7 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
             return Response.success(entity);
         }
 
-        return Response.error(500);
+        return Response.error(-995);
     }
 
     @DeleteMapping("/{id}")
@@ -162,7 +167,32 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         if (serviceImpl.delete(id)) {
             return Response.success(o);
         }
-        return Response.error(500);
+
+        return Response.error(-995);
+    }
+
+    @DeleteMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Response<List<T>> delete(@RequestBody List<D> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Response.success(Collections.emptyList());
+        }
+
+        val entities = serviceImpl.listByIds(ids);
+        if (CollectionUtils.isEmpty(entities)) {
+            return Response.success(Collections.emptyList());
+        }
+
+        if (StringUtils.isNotBlank(deleteOp)) {
+            for (T entity : entities) {
+                aclChecker.check(entity, deleteOp);
+            }
+        }
+
+        if (serviceImpl.deleteByEntities(entities)) {
+            return Response.success(entities);
+        }
+
+        return Response.error(-995);
     }
 
 }

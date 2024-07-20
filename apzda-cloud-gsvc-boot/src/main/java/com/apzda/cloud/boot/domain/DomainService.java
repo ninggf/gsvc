@@ -20,8 +20,11 @@ import com.apzda.cloud.gsvc.model.IEntity;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -30,7 +33,8 @@ import java.io.Serializable;
  **/
 public interface DomainService<D extends Serializable, T extends IEntity<D>> extends IService<T> {
 
-    default IPage<T> read(IPage<T> page, QueryWrapper<T> query) {
+    @Nonnull
+    default IPage<T> read(@Nonnull IPage<T> page, @Nonnull QueryWrapper<T> query) {
         return page(page, query);
     }
 
@@ -38,20 +42,23 @@ public interface DomainService<D extends Serializable, T extends IEntity<D>> ext
         return getById(id);
     }
 
-    default boolean delete(Serializable id) {
+    default boolean delete(@Nonnull Serializable id) {
         return removeById(id);
     }
 
-    default boolean update(D id, T entity) {
+    default boolean update(@Nonnull D id, @Nonnull T entity) {
         entity.setId(id);
         return updateById(entity);
     }
 
-    default T create(T entity) {
+    @Nullable
+    default T create(@Nonnull T entity) {
         if (save(entity)) {
             return entity;
         }
         return null;
     }
+
+    boolean deleteByEntities(List<T> entities);
 
 }

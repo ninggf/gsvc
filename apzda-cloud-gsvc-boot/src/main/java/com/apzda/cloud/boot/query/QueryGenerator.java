@@ -110,12 +110,12 @@ public class QueryGenerator {
      * @return QueryWrapper实例
      */
     public static <T> QueryWrapper<T> initQueryWrapper(T searchObj, Map<String, String[]> parameterMap) {
-        val stopWatch = new StopWatch(StrUtil.format("查询条件构造器({})", searchObj.getClass()));
-        stopWatch.start("初始化");
+        val stopWatch = new StopWatch(StrUtil.format("查询条件构造器({})计时器", searchObj.getClass()));
+        stopWatch.start();
         QueryWrapper<T> queryWrapper = new QueryWrapper<T>();
         install(queryWrapper, searchObj, parameterMap);
         stopWatch.stop();
-        log.debug("{}", stopWatch.prettyPrint());
+        log.trace("{}", stopWatch.shortSummary());
         return queryWrapper;
     }
 
