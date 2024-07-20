@@ -3,6 +3,9 @@
  */
 package com.apzda.cloud.boot.entity;
 
+import com.apzda.cloud.boot.dict.Dict;
+import com.apzda.cloud.gsvc.acl.Resource;
+import com.apzda.cloud.gsvc.model.IEntity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
@@ -15,10 +18,11 @@ import lombok.Data;
  **/
 @Data
 @TableName(value = "t_users", autoResultMap = true)
-public class User {
+@Resource
+public class User implements IEntity<String> {
 
-    @TableId(type = IdType.ASSIGN_ID)
-    private String uid;
+    @TableId(type = IdType.ASSIGN_ID, value = "uid")
+    private String id;
 
     @TableField(fill = FieldFill.INSERT)
     private String createdBy;
@@ -43,6 +47,10 @@ public class User {
     @TableLogic
     private Integer del;
 
+    @Dict(entity = Role.class, code = "rid", value = "name")
     private String roles;
+
+    @Dict(code = "test")
+    private String type;
 
 }

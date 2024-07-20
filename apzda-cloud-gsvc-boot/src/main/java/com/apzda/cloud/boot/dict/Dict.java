@@ -34,4 +34,6 @@ public @interface Dict {
 
     String table() default "";
 
+    Class<?> entity() default Void.class;
+
 }

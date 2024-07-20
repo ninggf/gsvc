@@ -7,6 +7,7 @@ import com.apzda.cloud.gsvc.error.GsvcErrorController;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.filter.GsvcServletFilter;
+import com.apzda.cloud.gsvc.resolver.PagerResolver;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
@@ -29,6 +30,8 @@ import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.lang.NonNull;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.LocaleResolver;
@@ -74,6 +77,11 @@ public class GsvcWebMvcConfigure implements WebMvcConfigurer, InitializingBean {
         }
 
         log.debug("ResponseUtils and ObjectMapper configured: {}", config);
+    }
+
+    @Override
+    public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(new PagerResolver(this.serviceConfigProperties.getConfig()));
     }
 
     @Bean

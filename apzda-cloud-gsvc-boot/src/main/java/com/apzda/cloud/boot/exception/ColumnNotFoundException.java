@@ -14,16 +14,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.service;
+package com.apzda.cloud.boot.exception;
 
-import com.apzda.cloud.boot.domain.DomainService;
-import com.apzda.cloud.boot.entity.User;
+import cn.hutool.core.util.StrUtil;
+import com.apzda.cloud.gsvc.exception.NoStackLogError;
+import org.springframework.dao.DataAccessException;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface IUserService extends DomainService<String, User> {
+public class ColumnNotFoundException extends DataAccessException implements NoStackLogError {
+
+    public ColumnNotFoundException(String column, String entity) {
+        super(StrUtil.format("Column({}) not found on {}", column, entity));
+    }
 
 }

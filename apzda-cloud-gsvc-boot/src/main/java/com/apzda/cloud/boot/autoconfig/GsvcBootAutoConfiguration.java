@@ -16,21 +16,43 @@
  */
 package com.apzda.cloud.boot.autoconfig;
 
-import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
+import com.apzda.cloud.boot.security.AclChecker;
+import com.apzda.cloud.boot.security.NoChecker;
+import com.apzda.cloud.boot.utils.DataSourceUtils;
+import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
+import jakarta.annotation.Nonnull;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.BeansException;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
+
+import javax.sql.DataSource;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@AutoConfiguration
+@AutoConfiguration(after = MybatisPlusAutoConfiguration.class)
 @ComponentScan({ "com.apzda.cloud.boot.aop" })
 @MapperScan("com.apzda.cloud.boot.mapper")
-@EnableConfigurationProperties(ServiceConfigProperties.class)
-public class GsvcBootAutoConfiguration {
+@Import(SecurityAclCheckerConfiguration.class)
+public class GsvcBootAutoConfiguration implements ApplicationContextAware {
+
+    @Override
+    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
+        DataSourceUtils.setDataSource(applicationContext.getBean(DataSource.class));
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    AclChecker aclPermissionChecker() {
+        return new NoChecker();
+    }
 
 }

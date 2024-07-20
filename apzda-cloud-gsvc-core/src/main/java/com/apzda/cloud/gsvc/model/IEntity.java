@@ -14,16 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.service;
+package com.apzda.cloud.gsvc.model;
 
-import com.apzda.cloud.boot.domain.DomainService;
-import com.apzda.cloud.boot.entity.User;
+import java.io.Serializable;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface IUserService extends DomainService<String, User> {
+public interface IEntity<T extends Serializable> {
+
+    T getId();
+
+    void setId(T id);
 
 }

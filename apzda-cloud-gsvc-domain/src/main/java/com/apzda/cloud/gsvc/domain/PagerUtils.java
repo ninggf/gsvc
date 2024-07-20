@@ -143,6 +143,11 @@ public class PagerUtils extends PageRequest {
         return page;
     }
 
+    @Nonnull
+    public static <T> IPage<T> iPage(@Nullable GsvcExt.Pager pager) {
+        return of(pager, null);
+    }
+
     /**
      * 将MyBatis Plus分页器{@link IPage}转换为Gsvc请求分页器{@link GsvcExt.Pager}。
      * @param page MyBatis Plus分页器

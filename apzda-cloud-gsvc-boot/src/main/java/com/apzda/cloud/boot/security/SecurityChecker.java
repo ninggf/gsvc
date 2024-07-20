@@ -14,16 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.service;
+package com.apzda.cloud.boot.security;
 
-import com.apzda.cloud.boot.domain.DomainService;
-import com.apzda.cloud.boot.entity.User;
+import com.apzda.cloud.gsvc.security.utils.SecurityUtils;
+import org.springframework.security.access.AccessDeniedException;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface IUserService extends DomainService<String, User> {
+public class SecurityChecker implements AclChecker {
+
+    @Override
+    public void check(Object entity, String permission) {
+        if (!SecurityUtils.hasPermission(entity, permission)) {
+            throw new AccessDeniedException("You do not have permission: " + permission);
+        }
+    }
 
 }

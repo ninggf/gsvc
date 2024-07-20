@@ -14,16 +14,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.service;
+package com.apzda.cloud.gsvc.acl;
 
-import com.apzda.cloud.boot.domain.DomainService;
-import com.apzda.cloud.boot.entity.User;
+import java.lang.annotation.*;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface IUserService extends DomainService<String, User> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Documented
+public @interface Resource {
+
+    String id() default "";
+
+    String name() default "";
+
+    String read() default "r";
+
+    String create() default "c";
+
+    String update() default "u";
+
+    String delete() default "d";
 
 }

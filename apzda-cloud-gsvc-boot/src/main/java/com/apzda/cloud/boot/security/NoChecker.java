@@ -14,16 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.service;
-
-import com.apzda.cloud.boot.domain.DomainService;
-import com.apzda.cloud.boot.entity.User;
+package com.apzda.cloud.boot.security;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface IUserService extends DomainService<String, User> {
+public class NoChecker implements AclChecker {
+
+    @Override
+    public void check(Object entity, String permission) {
+
+    }
 
 }
+

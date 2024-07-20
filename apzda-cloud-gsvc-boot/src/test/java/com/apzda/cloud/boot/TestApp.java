@@ -16,7 +16,9 @@
  */
 package com.apzda.cloud.boot;
 
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -24,6 +26,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @since 1.0.0
  **/
 @SpringBootApplication
+@EnableConfigurationProperties(ServiceConfigProperties.class)
 public class TestApp {
 
 }

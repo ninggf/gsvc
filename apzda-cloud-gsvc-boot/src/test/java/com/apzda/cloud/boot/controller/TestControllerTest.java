@@ -17,35 +17,57 @@
 package com.apzda.cloud.boot.controller;
 
 import com.apzda.cloud.boot.TestApp;
+import com.apzda.cloud.boot.autoconfig.GsvcBootAutoConfiguration;
+import com.apzda.cloud.gsvc.security.config.GsvcSecurityAutoConfiguration;
+import com.apzda.cloud.test.autoconfig.AutoConfigureGsvcTest;
+import com.baomidou.mybatisplus.test.autoconfigure.AutoConfigureMybatisPlus;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@WebMvcTest(TestController.class)
 @ContextConfiguration(classes = TestApp.class)
-@ImportAutoConfiguration(classes = { AopAutoConfiguration.class })
+@ImportAutoConfiguration(classes = { GsvcBootAutoConfiguration.class, GsvcSecurityAutoConfiguration.class })
+@ComponentScan(basePackageClasses = TestApp.class)
 @AutoConfigureMockMvc
+@AutoConfigureMybatisPlus
+@AutoConfigureGsvcTest
+@Sql("classpath:/schema.sql")
 public class TestControllerTest {
 
+    @Autowired
+    private MockMvc mvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Test
-    void test(@Autowired WebTestClient webClient) {
-        webClient.post()
-            .uri("/user/list")
-            .exchange()
-            .expectStatus()
-            .isOk()
-            .expectBody(String.class)
-            .isEqualTo("hello ya:1");
+    @WithMockUser(authorities = "r:user.*")
+    void test() throws Exception {
+        val content = mvc
+            .perform(post("/user").contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .content("pageSize=10&pageNumber=0&pageSorts=uid|desc,createdAt|asc&id=gt 1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.records[0].id").value("2"));
     }
 
 }

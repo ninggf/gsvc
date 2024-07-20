@@ -3,6 +3,7 @@
  */
 package com.apzda.cloud.boot.entity;
 
+import com.apzda.cloud.boot.dict.Dict;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
@@ -28,6 +29,7 @@ public class Role {
     @TableLogic
     private Integer del;
 
-    private Double dd;
+    @Dict(code = "test")
+    private String type;
 
 }

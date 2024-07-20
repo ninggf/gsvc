@@ -16,10 +16,13 @@
  */
 package com.apzda.cloud.boot.mapper;
 
+import com.apzda.cloud.boot.dict.DictItem;
 import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -46,11 +49,10 @@ public interface DictItemMapper {
         return getDictItemLabel(table, idField, id, labelField);
     }
 
-    @Select("SELECT ${labelField} from ${table} WHERE ${codeField} = #{code} AND ${idField} = #{id}")
-    String getTextFromDictItemTable(String table, String codeField, String code, String idField, String id,
-            String labelField);
+    @Select("SELECT ${labelField} as label, ${idField} as val from ${table} WHERE ${codeField} = #{code}")
+    List<DictItem> getFromDictItemTable(String table, String codeField, String code, String idField, String labelField);
 
-    default String getDictLabel(String table, String codeField, String code, String idField, String id,
+    default List<DictItem> getDictLabel(String table, String codeField, String code, String idField,
             String labelField) {
         if (SqlInjectionUtils.check(table)) {
             throw new MybatisPlusException("Discovering SQL injection table: " + table);
@@ -64,14 +66,14 @@ public interface DictItemMapper {
         if (SqlInjectionUtils.check(labelField)) {
             throw new MybatisPlusException("Discovering SQL injection column: " + labelField);
         }
-        return getTextFromDictItemTable(table, codeField, code, idField, id, labelField);
+        return getFromDictItemTable(table, codeField, code, idField, labelField);
     }
 
-    @Select("SELECT ${labelField} from ${table} WHERE ${codeField} = #{code} AND ${idField} = #{id} AND ${delField} = #{delValue}")
-    String getTextFromDictItemTable(String table, String codeField, String code, String idField, String id,
+    @Select("SELECT ${labelField} AS label,${idField} as val from ${table} WHERE ${codeField} = #{code} AND ${delField} = #{delValue}")
+    List<DictItem> getFromDictItemTableIgnoreDeleted(String table, String codeField, String code, String idField,
             String delField, String delValue, String labelField);
 
-    default String getDictLabel(String table, String codeField, String code, String idField, String id, String delField,
+    default List<DictItem> getDictLabel(String table, String codeField, String code, String idField, String delField,
             String delValue, String labelField) {
         if (SqlInjectionUtils.check(table)) {
             throw new MybatisPlusException("Discovering SQL injection table: " + table);
@@ -89,7 +91,7 @@ public interface DictItemMapper {
             throw new MybatisPlusException("Discovering SQL injection column: " + delField);
         }
 
-        return getTextFromDictItemTable(table, codeField, code, idField, id, delField, delValue, labelField);
+        return getFromDictItemTableIgnoreDeleted(table, codeField, code, idField, delField, delValue, labelField);
     }
 
 }

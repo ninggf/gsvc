@@ -24,10 +24,15 @@ import com.apzda.cloud.boot.enums.TestStatus3;
 import com.apzda.cloud.boot.service.IUserService;
 import com.apzda.cloud.boot.vo.TestVo;
 import com.apzda.cloud.gsvc.dto.Response;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -36,7 +41,10 @@ import org.springframework.web.bind.annotation.RestController;
  **/
 @RestController
 @RequestMapping("/user")
-public class TestController extends BaseCrudController<User, IUserService> {
+public class TestController extends CrudController<String, User, IUserService> {
+
+    @Autowired
+    private IUserService userService;
 
     @Dictionary
     @GetMapping("/test/{id}")
@@ -49,11 +57,17 @@ public class TestController extends BaseCrudController<User, IUserService> {
         return Response.success(testVo);
     }
 
-    @GetMapping("/test1/{id}")
-    public Response<TestVo> testVoResponse1(@PathVariable String id) {
-        TestVo testVo = new TestVo();
-        testVo.setName("test1 = " + id);
-        return Response.success(testVo);
+    @Dictionary
+    public Response<List<User>> getUserList() {
+        return Response.success(userService.list());
+    }
+
+    @Dictionary
+    public Response<IPage<User>> getUserPage() {
+        IPage<User> page = new Page<>();
+        page.setSize(100L);
+        page.setCurrent(1L);
+        return Response.success(userService.page(page));
     }
 
 }

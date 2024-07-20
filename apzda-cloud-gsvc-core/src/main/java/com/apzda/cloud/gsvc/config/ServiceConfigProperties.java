@@ -107,9 +107,17 @@ public final class ServiceConfigProperties {
 
         private String dictValueColumn = "dict_value";
 
-        private String dictDelColumn;
+        private String dictDeletedColumn;
 
-        private String dictDelValue;
+        private String dictNotDeletedValue;
+
+        private String dictLabelSuffix = "Text";
+
+        private String pageNumber = "pageNumber";
+
+        private String pageSize = "pageSize";
+
+        private String pageSorts = "pageSorts";
 
         @DurationUnit(ChronoUnit.HOURS)
         private Duration tempExpireTime = Duration.ofHours(168);
