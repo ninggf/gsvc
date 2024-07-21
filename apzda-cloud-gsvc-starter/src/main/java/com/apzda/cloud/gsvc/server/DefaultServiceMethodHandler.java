@@ -285,6 +285,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         }
     }
 
+    @SuppressWarnings("all")
     protected Mono<JsonNode> deserializeRequest(ServerRequest request, ServiceMethod serviceMethod) {
         val contentType = request.headers().contentType().orElse(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -320,7 +321,14 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         else if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
             var mono = Mono.<JsonNode>create(sink -> {
                 try {
-                    val requestBody = objectMapper.readTree(httpServletRequest.getReader());
+                    JsonNode requestBody;
+                    if (httpServletRequest.getContentLength() == 0) {
+                        requestBody = objectMapper.readTree("{}");
+                    }
+                    else {
+                        requestBody = objectMapper.readTree(httpServletRequest.getReader());
+                    }
+
                     if (log.isTraceEnabled()) {
                         context.restore();
                         log.trace("Request({}) resolved: {}", contentType, requestBody);
