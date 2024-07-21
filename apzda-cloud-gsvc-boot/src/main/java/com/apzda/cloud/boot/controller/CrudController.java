@@ -97,7 +97,15 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         }
     }
 
-    @PostMapping
+    /**
+     * 分页查询列表.
+     * @param entity 查询实体
+     * @param pager 分页器
+     * @param req 原生请求
+     * @return 查询结果
+     */
+    @ResponseBody
+    @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Dictionary
     public Response<IPage<T>> list(T entity, GsvcExt.Pager pager, HttpServletRequest req) {
         QueryWrapper<T> query = QueryGenerator.initQueryWrapper(entity, req.getParameterMap());
@@ -110,7 +118,14 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         return Response.success(serviceImpl.read(page, query));
     }
 
-    @GetMapping("/{id}")
+    /**
+     * 获取实体实例.
+     * @param id 实体ID
+     * @return 实体实例
+     */
+    @ResponseBody
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Dictionary
     public Response<T> read(@PathVariable D id) {
         val entity = serviceImpl.read(id);
         if (entity == null) {
@@ -122,7 +137,14 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         return Response.success(entity);
     }
 
-    @PutMapping
+    /**
+     * 新增实体.
+     * @param entity 要新增的实体实例.
+     * @return 新增后的实体实例.
+     */
+    @ResponseBody
+    @PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Dictionary
     @Validated(Group.New.class)
     public Response<T> add(@RequestBody T entity) {
         if (StringUtils.isNotBlank(createOp)) {
@@ -136,7 +158,16 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         return Response.error(-995);
     }
 
-    @PatchMapping("/{id}")
+    /**
+     * 修改实体.
+     * @param id 实体ID
+     * @param entity 新的实体实例.
+     * @return 修改后的实体实例.
+     */
+    @ResponseBody
+    @PatchMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @Dictionary
     @Validated(Group.Update.class)
     public Response<T> updateById(@PathVariable D id, @RequestBody T entity) {
         val o = serviceImpl.read(id);
@@ -147,13 +178,20 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
             aclChecker.check(entity, updateOp);
         }
         if (serviceImpl.update(id, entity)) {
-            return Response.success(entity);
+            return Response.success(serviceImpl.read(id));
         }
 
         return Response.error(-995);
     }
 
-    @DeleteMapping("/{id}")
+    /**
+     * 删除实体.
+     * @param id 实体ID.
+     * @return 被删除的实体.
+     */
+    @ResponseBody
+    @DeleteMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Dictionary
     public Response<T> deleteById(@PathVariable D id) {
         val o = serviceImpl.read(id);
         if (o == null) {
@@ -171,7 +209,14 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         return Response.error(-995);
     }
 
-    @DeleteMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    /**
+     * 批量删除实体.
+     * @param ids 要删除的实体ID列表
+     * @return 被删除的实体列表
+     */
+    @ResponseBody
+    @DeleteMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Dictionary
     public Response<List<T>> delete(@RequestBody List<D> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return Response.success(Collections.emptyList());

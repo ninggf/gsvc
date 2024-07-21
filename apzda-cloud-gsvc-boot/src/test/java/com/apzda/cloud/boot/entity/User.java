@@ -7,6 +7,7 @@ import com.apzda.cloud.boot.dict.Dict;
 import com.apzda.cloud.gsvc.acl.Resource;
 import com.apzda.cloud.gsvc.model.IEntity;
 import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 /**
@@ -19,6 +20,7 @@ import lombok.Data;
 @Data
 @TableName(value = "t_users", autoResultMap = true)
 @Resource
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class User implements IEntity<String> {
 
     @TableId(type = IdType.ASSIGN_ID, value = "uid")
