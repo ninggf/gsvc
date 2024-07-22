@@ -150,7 +150,7 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         if (StringUtils.isNotBlank(createOp)) {
             aclChecker.check(entity, createOp);
         }
-        entity = serviceImpl.create(entity);
+        entity = serviceImpl.create(alter(entity));
         if (entity != null) {
             return Response.success(entity);
         }
@@ -177,7 +177,7 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         if (StringUtils.isNotBlank(updateOp)) {
             aclChecker.check(entity, updateOp);
         }
-        if (serviceImpl.update(id, entity)) {
+        if (serviceImpl.update(id, alter(o, entity))) {
             return Response.success(serviceImpl.read(id));
         }
 
@@ -238,6 +238,27 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         }
 
         return Response.error(-995);
+    }
+
+    /**
+     * 对即将新增的实体进行调整.
+     * @param entity 即将新增的实体
+     * @return 调整后的实体
+     */
+    @Nonnull
+    protected T alter(T entity) {
+        return entity;
+    }
+
+    /**
+     * 对即将修改的实体进行调整.
+     * @param old 原实体
+     * @param entity 新实体
+     * @return 调整后的实体
+     */
+    @Nonnull
+    protected T alter(@Nonnull T old, @Nonnull T entity) {
+        return entity;
     }
 
 }
