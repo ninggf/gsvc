@@ -14,24 +14,45 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.security;
+package com.apzda.cloud.gsvc.dto;
 
-import com.apzda.cloud.gsvc.security.utils.SecurityUtils;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
+import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class SecurityChecker implements AclChecker {
+@Data
+public class Audit {
 
-    @Override
-    public void check(Object entity, String permission) throws AuthenticationException, AccessDeniedException {
-        if (!SecurityUtils.hasPermission(entity, permission)) {
-            throw new AccessDeniedException("You do not have permission: " + permission);
-        }
-    }
+    private String userId;
+
+    private String tenantId;
+
+    private Boolean template;
+
+    private Long logTime;
+
+    private String activity;
+
+    private String runas;
+
+    private String level;
+
+    private String ip;
+
+    private String device;
+
+    private String message;
+
+    private List<String> args = new ArrayList<>();
+
+    private Object oldValue;
+
+    private Object newValue;
 
 }

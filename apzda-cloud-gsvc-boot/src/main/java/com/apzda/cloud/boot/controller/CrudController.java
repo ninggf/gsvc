@@ -22,11 +22,14 @@ import com.apzda.cloud.boot.query.QueryGenerator;
 import com.apzda.cloud.boot.security.AclChecker;
 import com.apzda.cloud.boot.validate.Group;
 import com.apzda.cloud.gsvc.domain.PagerUtils;
+import com.apzda.cloud.gsvc.dto.Audit;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.NotFoundError;
+import com.apzda.cloud.gsvc.event.AuditEvent;
 import com.apzda.cloud.gsvc.exception.GsvcException;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.apzda.cloud.gsvc.model.IEntity;
+import com.apzda.cloud.gsvc.utils.I18nUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.annotation.Nonnull;
@@ -35,15 +38,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.ResolvableType;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.Serializable;
+import java.time.Clock;
 import java.util.Collections;
 import java.util.List;
 
@@ -60,15 +68,21 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
     @Resource
     private AclChecker aclChecker;
 
+    @Autowired(required = false)
+    private ApplicationEventPublisher eventPublisher;
+
+    @Autowired(required = false)
+    private Clock clock;
+
     private String resourceId;
 
-    private String createOp;
+    private String createPermission;
 
-    private String readOp;
+    private String readPermission;
 
-    private String updateOp;
+    private String updatePermission;
 
-    private String deleteOp;
+    private String deletePermission;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -83,16 +97,16 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
             resourceId = StringUtils.defaultIfBlank(resource.id(), StringUtils.uncapitalize(entityClz.getSimpleName()));
 
             if (StringUtils.isNotBlank(resource.create())) {
-                createOp = resource.create() + ":" + resourceId;
+                createPermission = resource.create() + ":" + resourceId;
             }
             if (StringUtils.isNotBlank(resource.read())) {
-                readOp = resource.read() + ":" + resourceId;
+                readPermission = resource.read() + ":" + resourceId;
             }
             if (StringUtils.isNotBlank(resource.update())) {
-                updateOp = resource.update() + ":" + resourceId;
+                updatePermission = resource.update() + ":" + resourceId;
             }
             if (StringUtils.isNotBlank(resource.delete())) {
-                deleteOp = resource.delete() + ":" + resourceId;
+                deletePermission = resource.delete() + ":" + resourceId;
             }
         }
     }
@@ -108,12 +122,12 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
     @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Dictionary
     public Response<IPage<T>> list(T entity, GsvcExt.Pager pager, HttpServletRequest req) {
-        QueryWrapper<T> query = QueryGenerator.initQueryWrapper(entity, req.getParameterMap());
-        IPage<T> page = PagerUtils.iPage(pager);
-
-        if (StringUtils.isNotBlank(readOp)) {
-            aclChecker.check(entity, readOp);
+        if (StringUtils.isNotBlank(readPermission)) {
+            aclChecker.check(entity, readPermission);
         }
+
+        IPage<T> page = PagerUtils.iPage(pager);
+        QueryWrapper<T> query = alter(QueryGenerator.initQueryWrapper(entity, req.getParameterMap()), entity, req);
 
         return Response.success(serviceImpl.read(page, query));
     }
@@ -131,8 +145,8 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         if (entity == null) {
             throw new GsvcException(new NotFoundError(resourceId, String.valueOf(id)));
         }
-        if (StringUtils.isNotBlank(readOp)) {
-            aclChecker.check(entity, readOp);
+        if (StringUtils.isNotBlank(readPermission)) {
+            aclChecker.check(entity, readPermission);
         }
         return Response.success(entity);
     }
@@ -147,15 +161,35 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
     @Dictionary
     @Validated(Group.New.class)
     public Response<T> add(@RequestBody T entity) {
-        if (StringUtils.isNotBlank(createOp)) {
-            aclChecker.check(entity, createOp);
+        val audit = new Audit();
+        audit.setActivity("Create Entity");
+        audit.setTemplate(true);
+        try {
+            audit.setNewValue(entity);
+            if (StringUtils.isNotBlank(createPermission)) {
+                aclChecker.check(entity, createPermission);
+            }
+            val inst = serviceImpl.create(alter(entity));
+            if (inst != null) {
+                audit.setOldValue(entity);
+                audit.setNewValue(inst);
+                audit.setMessage("entity created successfully");
+                return Response.success(inst);
+            }
+            audit.setMessage("entity not created: {}");
+            audit.setLevel("warn");
+            audit.getArgs().add(I18nUtils.t("error.995"));
+            return Response.error(-995);
         }
-        entity = serviceImpl.create(alter(entity));
-        if (entity != null) {
-            return Response.success(entity);
+        catch (AccessDeniedException | AuthenticationException ae) {
+            audit.setMessage("entity not created: {}");
+            audit.setLevel("warn");
+            audit.getArgs().add(ae.getMessage());
+            throw ae;
         }
-
-        return Response.error(-995);
+        finally {
+            publishAuditEvent(audit);
+        }
     }
 
     /**
@@ -170,18 +204,37 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
     @Dictionary
     @Validated(Group.Update.class)
     public Response<T> updateById(@PathVariable D id, @RequestBody T entity) {
-        val o = serviceImpl.read(id);
-        if (o == null) {
-            throw new GsvcException(new NotFoundError(resourceId, String.valueOf(id)));
+        val audit = new Audit();
+        audit.setActivity("Update Entity");
+        audit.setTemplate(true);
+        try {
+            audit.setNewValue(entity);
+            val o = serviceImpl.read(id);
+            if (o == null) {
+                throw new GsvcException(new NotFoundError(resourceId, String.valueOf(id)));
+            }
+            audit.setOldValue(o);
+            if (StringUtils.isNotBlank(updatePermission)) {
+                aclChecker.check(entity, updatePermission);
+            }
+            if (serviceImpl.update(id, alter(o, entity))) {
+                audit.setMessage("entity updated successfully");
+                return Response.success(serviceImpl.read(id));
+            }
+            audit.setMessage("entity not updated: {}");
+            audit.setLevel("warn");
+            audit.getArgs().add(I18nUtils.t("error.995"));
+            return Response.error(-995);
         }
-        if (StringUtils.isNotBlank(updateOp)) {
-            aclChecker.check(entity, updateOp);
+        catch (AccessDeniedException | AuthenticationException ae) {
+            audit.setMessage("entity not updated: {}");
+            audit.setLevel("warn");
+            audit.getArgs().add(ae.getMessage());
+            throw ae;
         }
-        if (serviceImpl.update(id, alter(o, entity))) {
-            return Response.success(serviceImpl.read(id));
+        finally {
+            publishAuditEvent(audit);
         }
-
-        return Response.error(-995);
     }
 
     /**
@@ -193,20 +246,37 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
     @DeleteMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Dictionary
     public Response<T> deleteById(@PathVariable D id) {
-        val o = serviceImpl.read(id);
-        if (o == null) {
-            throw new GsvcException(new NotFoundError(resourceId, String.valueOf(id)));
-        }
+        val audit = new Audit();
+        audit.setActivity("Delete Entity");
+        audit.setTemplate(true);
+        try {
+            val o = serviceImpl.read(id);
+            if (o == null) {
+                throw new GsvcException(new NotFoundError(resourceId, String.valueOf(id)));
+            }
+            audit.setOldValue(o);
+            if (StringUtils.isNotBlank(deletePermission)) {
+                aclChecker.check(o, deletePermission);
+            }
 
-        if (StringUtils.isNotBlank(deleteOp)) {
-            aclChecker.check(o, deleteOp);
+            if (serviceImpl.delete(id)) {
+                audit.setMessage("entity deleted successfully");
+                return Response.success(o);
+            }
+            audit.setMessage("entity not deleted: {}");
+            audit.setLevel("warn");
+            audit.getArgs().add(I18nUtils.t("error.995"));
+            return Response.error(-995);
         }
-
-        if (serviceImpl.delete(id)) {
-            return Response.success(o);
+        catch (AccessDeniedException | AuthenticationException ae) {
+            audit.setMessage("entity not deleted: {}");
+            audit.setLevel("warn");
+            audit.getArgs().add(ae.getMessage());
+            throw ae;
         }
-
-        return Response.error(-995);
+        finally {
+            publishAuditEvent(audit);
+        }
     }
 
     /**
@@ -221,23 +291,42 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
         if (CollectionUtils.isEmpty(ids)) {
             return Response.success(Collections.emptyList());
         }
-
         val entities = serviceImpl.listByIds(ids);
         if (CollectionUtils.isEmpty(entities)) {
             return Response.success(Collections.emptyList());
         }
 
-        if (StringUtils.isNotBlank(deleteOp)) {
-            for (T entity : entities) {
-                aclChecker.check(entity, deleteOp);
+        val audit = new Audit();
+        audit.setActivity("Delete Entity");
+        audit.setTemplate(true);
+
+        try {
+            audit.setOldValue(entities);
+            if (StringUtils.isNotBlank(deletePermission)) {
+                for (T entity : entities) {
+                    aclChecker.check(entity, deletePermission);
+                }
             }
-        }
 
-        if (serviceImpl.deleteByEntities(entities)) {
-            return Response.success(entities);
-        }
+            if (serviceImpl.deleteByEntities(entities)) {
+                audit.setMessage("entity deleted successfully");
+                return Response.success(entities);
+            }
 
-        return Response.error(-995);
+            audit.setMessage("entity not deleted: {}");
+            audit.setLevel("warn");
+            audit.getArgs().add(I18nUtils.t("error.995"));
+            return Response.error(-995);
+        }
+        catch (AccessDeniedException | AuthenticationException ae) {
+            audit.setMessage("entity not deleted: {}");
+            audit.setLevel("warn");
+            audit.getArgs().add(ae.getMessage());
+            throw ae;
+        }
+        finally {
+            publishAuditEvent(audit);
+        }
     }
 
     /**
@@ -259,6 +348,22 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
     @Nonnull
     protected T alter(@Nonnull T old, @Nonnull T entity) {
         return entity;
+    }
+
+    @Nonnull
+    protected QueryWrapper<T> alter(QueryWrapper<T> query, T entity, HttpServletRequest req) {
+        return query;
+    }
+
+    private void publishAuditEvent(Audit audit) {
+        if (eventPublisher != null) {
+            if (clock == null) {
+                eventPublisher.publishEvent(new AuditEvent(audit));
+            }
+            else {
+                eventPublisher.publishEvent(new AuditEvent(audit, clock));
+            }
+        }
     }
 
 }

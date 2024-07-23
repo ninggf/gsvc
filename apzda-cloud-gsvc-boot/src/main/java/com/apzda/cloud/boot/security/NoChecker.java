@@ -16,6 +16,9 @@
  */
 package com.apzda.cloud.boot.security;
 
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
@@ -24,9 +27,8 @@ package com.apzda.cloud.boot.security;
 public class NoChecker implements AclChecker {
 
     @Override
-    public void check(Object entity, String permission) {
+    public void check(Object entity, String permission) throws AuthenticationException, AccessDeniedException {
 
     }
 
 }
-

@@ -14,24 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.security;
+package com.apzda.cloud.gsvc.event;
 
-import com.apzda.cloud.gsvc.security.utils.SecurityUtils;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
+import com.apzda.cloud.gsvc.dto.Audit;
+import jakarta.annotation.Nonnull;
+import org.springframework.context.ApplicationEvent;
+
+import java.time.Clock;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class SecurityChecker implements AclChecker {
+public class AuditEvent extends ApplicationEvent {
 
-    @Override
-    public void check(Object entity, String permission) throws AuthenticationException, AccessDeniedException {
-        if (!SecurityUtils.hasPermission(entity, permission)) {
-            throw new AccessDeniedException("You do not have permission: " + permission);
-        }
+    public AuditEvent(@Nonnull Audit source) {
+        super(source);
+    }
+
+    public AuditEvent(@Nonnull Audit source, @Nonnull Clock clock) {
+        super(source, clock);
+    }
+
+    public Audit getAudit() {
+        return (Audit) source;
     }
 
 }
