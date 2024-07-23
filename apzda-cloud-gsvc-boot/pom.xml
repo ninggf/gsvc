@@ -54,12 +54,6 @@
             <artifactId>spring-boot-starter-security</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>com.apzda.cloud</groupId>
-            <artifactId>audit-client</artifactId>
-            <version>1.0.4-SNAPSHOT</version>
-            <optional>true</optional>
-        </dependency>
         <!-- unit test -->
         <dependency>
             <groupId>com.apzda.cloud</groupId>
