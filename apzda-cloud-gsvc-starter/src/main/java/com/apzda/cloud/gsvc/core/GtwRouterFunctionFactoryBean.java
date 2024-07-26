@@ -83,6 +83,7 @@ public class GtwRouterFunctionFactoryBean
         val router = RouterFunctions.route();
         if ("http".equals(serviceInfo.type)) {
             setupForward(router, route, serviceInfo);
+            setupFilter(router, route);
         }
         else if (StringUtils.startsWith(route.getMethod(), "/")) {
             if (webLog.isWarnEnabled()) {
@@ -96,12 +97,12 @@ public class GtwRouterFunctionFactoryBean
         }
         else {
             setupRoute(router, route, serviceInfo);
+            setupFilter(router, route);
         }
-        setupFilter(router, route);
 
-        val path = route.absPath();
         val meta = route.meta();
         if (meta.isLogin()) {
+            val path = route.absPath();
             GatewayServiceRegistry.registerRouteMeta(path, meta);
         }
 
