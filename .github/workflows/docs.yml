@@ -2,6 +2,9 @@
 name: Deploy Docs to Pages
 
 on:
+  push:
+    branches: [ "docs" ]
+
   workflow_dispatch:
 
 permissions:
@@ -27,7 +30,7 @@ jobs:
           node-version: 20
           cache: npm
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
       - name: Install dependencies
         run: yarn install
       - name: Build with VitePress
@@ -35,7 +38,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/.vitepress/dist
+          path: ./docs/.vitepress/dist
 
   # Deployment job
   deploy:
