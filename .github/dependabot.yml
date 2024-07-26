@@ -11,6 +11,9 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-dependencies"
+        versions: [ "3.3.*" ]
+      - dependency-name: "org.apache.dubbo:dubbo-compiler"
       - dependency-name: "com.google.protobuf:protobuf-java"
       - dependency-name: "org.apache.maven.plugins:*"
   - package-ecosystem: "npm"
