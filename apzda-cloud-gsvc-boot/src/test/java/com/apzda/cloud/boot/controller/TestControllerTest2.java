@@ -23,10 +23,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.WebTestClient;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -53,6 +56,19 @@ public class TestControllerTest2 {
             .exchange()
             .expectStatus()
             .isUnauthorized();
+    }
+
+    @Test
+    void testExport() throws Exception {
+        webTestClient.get()
+            .uri("/user/export")
+            .exchange()
+            .expectStatus()
+            .isOk()
+            .expectHeader()
+            .contentDisposition(ContentDisposition.attachment().filename("test.xlsx", StandardCharsets.UTF_8).build())
+            .expectHeader()
+            .contentTypeCompatibleWith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     }
 
 }
