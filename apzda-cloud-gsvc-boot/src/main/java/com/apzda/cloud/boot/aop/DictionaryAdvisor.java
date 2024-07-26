@@ -75,7 +75,7 @@ public class DictionaryAdvisor {
     }
 
     @Around("dictionaryPointcut()")
-    public Object dictionaryAdvice(ProceedingJoinPoint pjp) throws Throwable {
+    Object dictionaryAdvice(@Nonnull ProceedingJoinPoint pjp) throws Throwable {
         val returnObj = pjp.proceed();
 
         if (returnObj instanceof Response<?> response) {
