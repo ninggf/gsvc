@@ -11,14 +11,5 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
-      - dependency-name: "protobuf-java"
-        group: "com.google.protobuf"
-      - dependency-name: "*"
-        group: "org.apache.maven.plugins"
-  - package-ecosystem: "npm"
-    directory: "/"
-    target-branch: docs
-    schedule:
-      interval: "weekly"
-    ignore:
-      - dependency-name: "vitepress"
+      - dependency-name: "com.google.protobuf:protobuf-java"
+      - dependency-name: "org.apache.maven.plugins:*"
