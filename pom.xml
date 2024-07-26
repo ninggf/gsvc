@@ -67,7 +67,7 @@
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <micrometer-propagation.version>1.1.1</micrometer-propagation.version>
         <brave.version>5.17.0</brave.version>
-        <springdoc.version>2.5.0</springdoc.version>
+        <springdoc.version>2.6.0</springdoc.version>
         <swagger-annotations.version>2.2.22</swagger-annotations.version>
         <!-- plugins versions -->
         <maven-gpg-plugin.version>3.2.4</maven-gpg-plugin.version>
