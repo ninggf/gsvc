@@ -50,7 +50,7 @@ public class AccountLockedFilter extends AbstractAuthenticatedFilter {
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE;
+        return Ordered.HIGHEST_PRECEDENCE + 20;
     }
 
 }

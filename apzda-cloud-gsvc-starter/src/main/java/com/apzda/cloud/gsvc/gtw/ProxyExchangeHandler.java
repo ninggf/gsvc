@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationContext;
@@ -22,6 +24,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -50,6 +53,8 @@ import static com.apzda.cloud.gsvc.server.IServiceMethodHandler.GTW;
 @RequiredArgsConstructor
 public class ProxyExchangeHandler implements ApplicationContextAware {
 
+    private static final Logger webLog = LoggerFactory.getLogger(ProxyExchangeHandler.class);
+
     private final ObjectProvider<List<HttpHeadersFilter>> headersFiltersProvider;
 
     private final GsvcExceptionHandler exceptionHandler;
@@ -65,7 +70,6 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         this.applicationContext = applicationContext;
     }
 
-    @SuppressWarnings("unchecked")
     public ServerResponse handle(ServerRequest request, Route route, ServiceInfo serviceInfo) {
         val context = GsvcContextHolder.getContext();
         context.setAttributes(RequestContextHolder.getRequestAttributes());
@@ -76,14 +80,14 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         val cfgName = serviceInfo.getCfgName();
         val client = this.applicationContext.getBean(ServiceMethod.getStubClientBeanName(cfgName), WebClient.class);
         val pattern = route.getMethod();
-        val method = request.method();
+        var method = request.method();
         val params = request.uri().getQuery();
         val charset = Optional.ofNullable(httpRequest.getCharacterEncoding()).map(encoding -> {
             try {
                 return Charset.forName(encoding);
             }
             catch (Exception e) {
-                log.warn("Cannot use charset({}) for {}, use UTF-8 instead: {}", encoding, request.path(),
+                webLog.warn("Cannot use charset({}) for {}, use UTF-8 instead: {}", encoding, request.path(),
                         e.getMessage());
                 return StandardCharsets.UTF_8;
             }
@@ -91,16 +95,12 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         val servletServerHttpRequest = new ServletServerHttpRequest(request.servletRequest());
         val filtered = HttpHeadersFilter.filterRequest(getHeadersFilters(), servletServerHttpRequest);
 
-        String uri = request.attribute(ATTR_MATCHED_SEGMENTS).map((segments) -> {
-            var template = pattern;
-            for (val sg : ((Map<String, String>) segments).entrySet()) {
-                template = template.replace("{" + sg.getKey() + "}", sg.getValue());
-            }
-            return template;
-        }).orElse(pattern);
+        String uri;
+
         List<? extends IPlugin> plugins;
 
         if (pattern.charAt(0) != '/') {
+            uri = parseUri(request, pattern, !StringUtils.startsWith(pattern, "{"));
             val excludes = serviceConfigure.getExcludes(serviceName);
             if (excludes.contains(uri)) {
                 return ServerResponse.status(HttpStatus.NOT_FOUND).build();
@@ -114,9 +114,11 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 plugins = serviceMethod.getPlugins();
             }
             uri = "/~" + serviceName + "/" + uri;
+            method = HttpMethod.POST; // Internal calls between microservices
             filtered.add(IServiceMethodHandler.CALLER_HEADER, GTW);
         }
         else {
+            uri = parseUri(request, pattern, false);
             val excludes = serviceConfigure.getExcludes(serviceName);
             if (excludes.contains(uri)) {
                 return ServerResponse.status(HttpStatus.NOT_FOUND).build();
@@ -126,8 +128,9 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         }
 
         val readTimeout = route.getReadTimeout();
+        val requestUri = uri;
 
-        log.trace("Proxy {} to {}:{} with: readTimeout({}), charset({}), param({}), headers({})", request.path(),
+        webLog.debug("Proxy {} to {}:{} with: readTimeout({}), charset({}), param({}), headers({})", request.path(),
                 cfgName, uri, readTimeout, charset, params, filtered);
 
         val body = BodyInserters.fromDataBuffers(DataBufferUtils.readInputStream(httpRequest::getInputStream,
@@ -186,7 +189,8 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 context.restore();
                 try (val writer = res.getOutputStream()) {
                     dataBuffers.forEach(dataBuffer -> {
-                        log.trace("Read data from downstream: {}", dataBuffer.capacity());
+                        webLog.trace("Read data from downstream({}:{}): {}", cfgName, requestUri,
+                                dataBuffer.capacity());
                         try (val input = dataBuffer.asInputStream()) {
                             writer.write(input.readAllBytes());
                         }
@@ -226,6 +230,18 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             headersFilters = headersFiltersProvider.getIfAvailable();
         }
         return headersFilters;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static String parseUri(ServerRequest request, String pattern, boolean upper) {
+        return request.attribute(ATTR_MATCHED_SEGMENTS).map((segments) -> {
+            var template = pattern;
+            for (val sg : ((Map<String, String>) segments).entrySet()) {
+                val value = sg.getValue();
+                template = template.replace("{" + sg.getKey() + "}", upper ? StringUtils.capitalize(value) : value);
+            }
+            return template;
+        }).orElse(pattern);
     }
 
 }

@@ -4,6 +4,7 @@ import build.buf.protovalidate.Validator;
 import build.buf.protovalidate.exceptions.ValidationException;
 import cn.hutool.core.io.FileUtil;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
+import com.apzda.cloud.gsvc.converter.EncryptedMessageConverter;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
@@ -30,6 +31,7 @@ import lombok.val;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FormFieldPart;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.MultiValueMap;
@@ -68,6 +70,8 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
     private final Validator validator;
 
     private final MultipartResolver multipartResolver;
+
+    private final EncryptedMessageConverter encryptedMessageConverter;
 
     @Override
     public ServerResponse handleUnary(ServerRequest request, Class<?> serviceClz, String method,
@@ -210,7 +214,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
             }).subscribe(resp -> {
                 context.restore();
                 try {
-                    val response = createResponse(resp, serviceMethod);
+                    val response = createResponse(request, serviceMethod, resp);
                     sseBuilder.data(response);
                 }
                 catch (Exception e) {
@@ -271,11 +275,17 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
                 returnObj = preInvoke.postInvoke(requestObj, returnObj, serviceMethod);
             }
         }
-
-        val response = createResponse(returnObj, serviceMethod);
-        return ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response);
+        try {
+            val response = createResponse(request, serviceMethod, returnObj);
+            return createServerResponse(request, serviceMethod, response);
+        }
+        catch (IOException e) {
+            log.error("Cannot create response", e);
+            return ServerResponse.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
     }
 
+    @SuppressWarnings("all")
     protected Mono<JsonNode> deserializeRequest(ServerRequest request, ServiceMethod serviceMethod) {
         val contentType = request.headers().contentType().orElse(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -286,10 +296,39 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         val context = GsvcContextHolder.getContext();
         val httpServletRequest = request.servletRequest();
 
-        if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
+        if (encryptedMessageConverter.canRead(serviceMethod.getRequestType(), contentType)) {
             var mono = Mono.<JsonNode>create(sink -> {
                 try {
-                    val requestBody = objectMapper.readTree(httpServletRequest.getReader());
+                    val obj = encryptedMessageConverter.read(serviceMethod.getRequestType(),
+                            new ServletServerHttpRequest(httpServletRequest));
+                    val requestBody = objectMapper.convertValue(obj, JsonNode.class);
+                    if (log.isTraceEnabled()) {
+                        context.restore();
+                        log.trace("Request({}) resolved: {}", contentType, requestBody);
+                    }
+                    sink.success(requestBody);
+                }
+                catch (IOException e) {
+                    sink.error(e);
+                }
+            });
+
+            if (readTimeout.toMillis() > 0) {
+                mono = mono.timeout(readTimeout);
+            }
+            return mono;
+        }
+        else if (contentType.isCompatibleWith(MediaType.APPLICATION_JSON)) {
+            var mono = Mono.<JsonNode>create(sink -> {
+                try {
+                    JsonNode requestBody;
+                    if (httpServletRequest.getContentLength() == 0) {
+                        requestBody = objectMapper.readTree("{}");
+                    }
+                    else {
+                        requestBody = objectMapper.readTree(httpServletRequest.getReader());
+                    }
+
                     if (log.isTraceEnabled()) {
                         context.restore();
                         log.trace("Request({}) resolved: {}", contentType, requestBody);
@@ -425,7 +464,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         }
     }
 
-    private String createResponse(Object resp, ServiceMethod serviceMethod) throws JsonProcessingException {
+    private String createResponse(ServerRequest request, ServiceMethod serviceMethod, Object resp) throws IOException {
         val context = GsvcContextHolder.getContext();
         val flat = svcConfigure.isFlatResponse();
         val node = objectMapper.convertValue(resp, JsonNode.class);
@@ -473,7 +512,27 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
         if (log.isTraceEnabled()) {
             log.trace("Response of {}.{}: {}", serviceMethod.getServiceName(), serviceMethod.getDmName(), respStr);
         }
+
+        val returnType = serviceMethod.getReturnType();
+        val headers = request.headers();
+        val accepts = headers.accept();
+        if (accepts.stream().anyMatch(mediaType -> encryptedMessageConverter.canWrite(returnType, mediaType))) {
+            return encryptedMessageConverter.encrypt(headers.asHttpHeaders(), respStr);
+        }
+
         return respStr;
+    }
+
+    private ServerResponse createServerResponse(ServerRequest request, ServiceMethod serviceMethod, String response) {
+        val returnType = serviceMethod.getReturnType();
+        val accept = request.headers()
+            .accept()
+            .stream()
+            .filter(mediaType -> encryptedMessageConverter.canWrite(returnType, mediaType))
+            .findFirst();
+
+        return accept.map(mediaType -> ServerResponse.ok().contentType(mediaType).body(response))
+            .orElseGet(() -> ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).body(response));
     }
 
 }

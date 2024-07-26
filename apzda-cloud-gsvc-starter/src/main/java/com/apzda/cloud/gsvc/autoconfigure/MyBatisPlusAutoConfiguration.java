@@ -17,13 +17,13 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
 import cn.hutool.core.date.DateUtil;
-import com.apzda.cloud.db.MybatisCustomizer;
+import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.context.TenantManager;
+import com.apzda.cloud.gsvc.mybatis.MybatisCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusPropertiesCustomizer;
-import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.core.handlers.StrictFill;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
@@ -42,13 +42,13 @@ import net.sf.jsqlparser.expression.StringValue;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -64,7 +64,7 @@ import static com.apzda.cloud.gsvc.utils.SnowflakeUtil.SNOWFLAKE;
  **/
 @Slf4j
 @AutoConfiguration(before = MybatisPlusAutoConfiguration.class)
-@ConditionalOnClass(MybatisConfiguration.class)
+@ConditionalOnClass(MybatisPlusAutoConfiguration.class)
 public class MyBatisPlusAutoConfiguration {
 
     private static final Pattern PATTERN = Pattern.compile("_([a-z])");
@@ -185,35 +185,56 @@ public class MyBatisPlusAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(CurrentUserProvider.class)
     @ConditionalOnMissingBean
-    MetaObjectHandler metaObjectHandler(CurrentUserProvider currentUserProvider,
-            ObjectProvider<TenantManager<?>> tenantManagers) {
+    MetaObjectHandler metaObjectHandler(ObjectProvider<TenantManager<?>> tenantManagers,
+            ServiceConfigProperties properties, Clock clock) {
         val stringBuffer = new StringBuffer();
         tenantManagers.ifAvailable(tenantManager -> {
             val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(tenantManager.getTenantIdColumn(),
                     "tenant_id");
             stringBuffer.append(PATTERN.matcher(tenantIdColumn).replaceAll(m -> m.group(1).toUpperCase()));
         });
+
         val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(stringBuffer.toString(), "tenantId");
+        val mybatisPlus = properties.getMybatisPlus();
+        val createdAtColumns = mybatisPlus.getCreatedAtColumns();
+        val createdByColumns = mybatisPlus.getCreatedByColumns();
+        val updatedAtColumns = mybatisPlus.getUpdatedAtColumns();
+        val updatedByColumns = mybatisPlus.getUpdatedByColumns();
+
         return new MetaObjectHandler() {
             @Override
             public void insertFill(MetaObject metaObject) {
                 val fills = new ArrayList<StrictFill<?, ?>>();
-                val timeType = metaObject.getGetterType("createdAt");
-                if (timeType != null) {
-                    val ctime = getTime("createdAt", timeType);
-                    fills.add(ctime);
-                    fills.add(ctime.changeFieldName("updatedAt"));
+                for (String column : createdAtColumns) {
+                    val timeType = metaObject.getGetterType(column);
+                    if (timeType != null) {
+                        fills.add(getTime(column, timeType));
+                    }
+                }
+                for (String column : updatedAtColumns) {
+                    val timeType = metaObject.getGetterType(column);
+                    if (timeType != null) {
+                        fills.add(getTime(column, timeType));
+                    }
                 }
 
-                val currentAuditor = currentUserProvider.getCurrentAuditor();
-                val uidType = metaObject.getGetterType("createdBy");
-                if (uidType != null && currentAuditor.isPresent()
+                val currentAuditor = Optional.ofNullable(CurrentUserProvider.getCurrentUser().getId());
+                if (currentAuditor.isPresent()
                         && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
-                    val uid = getUid("createdBy", uidType, currentAuditor.get());
-                    fills.add(uid);
-                    fills.add(uid.changeFieldName("updatedBy"));
+                    val auditor = currentAuditor.get();
+                    for (String column : createdByColumns) {
+                        val uidType = metaObject.getGetterType(column);
+                        if (uidType != null) {
+                            fills.add(getUid(column, uidType, auditor));
+                        }
+                    }
+                    for (String column : updatedByColumns) {
+                        val uidType = metaObject.getGetterType(column);
+                        if (uidType != null) {
+                            fills.add(getUid(column, uidType, auditor));
+                        }
+                    }
                 }
 
                 if (!fills.isEmpty()) {
@@ -235,17 +256,23 @@ public class MyBatisPlusAutoConfiguration {
             @Override
             public void updateFill(MetaObject metaObject) {
                 val fills = new ArrayList<StrictFill<?, ?>>();
-                val timeType = metaObject.getGetterType("createdAt");
-                if (timeType != null) {
-                    val ctime = getTime("updatedAt", timeType);
-                    fills.add(ctime);
+                for (String column : updatedAtColumns) {
+                    val timeType = metaObject.getGetterType(column);
+                    if (timeType != null) {
+                        fills.add(getTime(column, timeType));
+                    }
                 }
-                val currentAuditor = currentUserProvider.getCurrentAuditor();
-                val uidType = metaObject.getGetterType("updatedBy");
-                if (uidType != null && currentAuditor.isPresent()
+
+                val currentAuditor = Optional.ofNullable(CurrentUserProvider.getCurrentUser().getId());
+                if (currentAuditor.isPresent()
                         && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
-                    val uid = getUid("updatedBy", uidType, currentAuditor.get());
-                    fills.add(uid);
+                    val auditor = currentAuditor.get();
+                    for (String column : updatedByColumns) {
+                        val uidType = metaObject.getGetterType(column);
+                        if (uidType != null) {
+                            fills.add(getUid(column, uidType, auditor));
+                        }
+                    }
                 }
 
                 if (!fills.isEmpty()) {
@@ -276,19 +303,20 @@ public class MyBatisPlusAutoConfiguration {
             private ClonableStrictFill<?, ?> getTime(String name, Class<?> timeType) {
                 ClonableStrictFill<?, ?> current;
                 if (timeType == null || Long.class.isAssignableFrom(timeType)) {
-                    current = new ClonableStrictFill<>(name, Long.class, System::currentTimeMillis);
+                    current = new ClonableStrictFill<>(name, Long.class, clock::millis);
                 }
                 else if (Date.class.isAssignableFrom(timeType)) {
                     current = new ClonableStrictFill<>(name, Date.class, Date::new);
                 }
                 else if (LocalDate.class.isAssignableFrom(timeType)) {
-                    current = new ClonableStrictFill<>(name, LocalDate.class, LocalDate::now);
+                    current = new ClonableStrictFill<>(name, LocalDate.class, () -> LocalDate.now(clock));
                 }
                 else if (LocalDateTime.class.isAssignableFrom(timeType)) {
-                    current = new ClonableStrictFill<>(name, LocalDateTime.class, LocalDateTime::now);
+                    current = new ClonableStrictFill<>(name, LocalDateTime.class, () -> LocalDateTime.now(clock));
                 }
                 else {
-                    current = new ClonableStrictFill<>(name, String.class, DateUtil::now);
+                    current = new ClonableStrictFill<>(name, String.class,
+                            () -> DateUtil.formatLocalDateTime(LocalDateTime.now(clock)));
                 }
                 return current;
             }
@@ -330,7 +358,7 @@ public class MyBatisPlusAutoConfiguration {
 
     }
 
-    static class ClonableStrictFill<T, E extends T> extends StrictFill<T, E> {
+    private static class ClonableStrictFill<T, E extends T> extends StrictFill<T, E> {
 
         public ClonableStrictFill(String fieldName, Class<T> fieldType, Supplier<E> fieldVal) {
             super(fieldName, fieldType, fieldVal);

@@ -33,7 +33,11 @@ public class Route {
 
     private String desc;
 
+    private String[] consumes;
+
     private String[] tags;
+
+    private String[] excludes;
 
     @DurationUnit(ChronoUnit.MILLIS)
     private Duration readTimeout = Duration.ZERO;
@@ -197,6 +201,39 @@ public class Route {
         return this;
     }
 
+    public Route consumes(String consumes) {
+        if (StringUtils.isNotBlank(consumes)) {
+            val consumesList = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(consumes);
+            this.consumes = new String[consumesList.size()];
+
+            for (int i = 0; i < this.consumes.length; i++) {
+                this.consumes[i] = consumesList.get(i);
+            }
+        }
+        else if (this.parent != null) {
+            this.consumes = this.parent.consumes;
+        }
+        else {
+            this.consumes = new String[] {};
+        }
+        return this;
+    }
+
+    public Route excludes(String excludes) {
+        if (StringUtils.isNotBlank(excludes)) {
+            val excludesList = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(excludes);
+            this.excludes = new String[excludesList.size()];
+
+            for (int i = 0; i < this.excludes.length; i++) {
+                this.excludes[i] = excludesList.get(i);
+            }
+        }
+        else {
+            this.excludes = new String[] {};
+        }
+        return this;
+    }
+
     public Route tags(String tags) {
         if (StringUtils.isNotBlank(tags)) {
             val tagList = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(tags);
@@ -237,6 +274,8 @@ public class Route {
             .append("login", login)
             .append("access", access)
             .append("actions", actions)
+            .append("consumes", consumes)
+            .append("excludes", excludes)
             .append("filters", filters);
 
         return str.toString();

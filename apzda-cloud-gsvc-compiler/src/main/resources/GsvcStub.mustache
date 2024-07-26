@@ -24,6 +24,7 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.time.Duration;
+import java.util.Optional;
 
 {{#deprecated}}
 @java.lang.Deprecated
@@ -239,34 +240,39 @@ public class {{className}} {
         String cfgName = GatewayServiceRegistry.cfgName({{interfaceClassName}}.class);
         String serviceName = GatewayServiceRegistry.svcName({{interfaceClassName}}.class);
         String path = "/~" + serviceName + "/";
+        if (GatewayServiceRegistry.getDeclaredServiceMethods({{interfaceClassName}}.class).isEmpty()) {
+            route.path(path, () -> (request) -> Optional.empty());
+        }
+        else {
     {{#unaryMethods}}
-        log.debug("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
+        log.trace("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
         route.POST(path+"{{methodName}}",
         (request) -> serviceMethodHandler.handleUnary(request, {{interfaceClassName}}.class, "{{methodName}}", (param) -> {
             return serviceImpl.{{methodName}}(({{inputType}}) param);
         }));
     {{/unaryMethods}}
     {{#serverStreamingMethods}}
-        log.debug("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
+        log.trace("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
         route.POST(path+"{{methodName}}",
         (request) -> serviceMethodHandler.handleServerStreaming(request, {{interfaceClassName}}.class, "{{methodName}}", (param) -> {
             return serviceImpl.{{methodName}}(({{inputType}}) param);
         }));
     {{/serverStreamingMethods}}
     {{#clientStreamingMethods}}
-        log.debug("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
+        log.trace("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
         route.POST(path+"{{methodName}}",
         (request) -> serviceMethodHandler.handleBidStreaming(request, {{interfaceClassName}}.class, "{{methodName}}", (param) -> {
             return serviceImpl.{{methodName}}((reactor.core.publisher.Flux<{{inputType}}>) param);
         }));
     {{/clientStreamingMethods}}
     {{#biStreamingWithoutClientStreamMethods}}
-        log.debug("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
+        log.trace("EW Route {}{} to {}.{}", path, "{{methodName}}", serviceName, "{{methodName}}");
         route.POST(path+"{{methodName}}",
         (request) -> serviceMethodHandler.handleBidStreaming(request, {{interfaceClassName}}.class, "{{methodName}}", (param) -> {
             return serviceImpl.{{methodName}}((reactor.core.publisher.Flux<{{inputType}}>) param);
         }));
     {{/biStreamingWithoutClientStreamMethods}}
+        }
 
         return route.onError(Exception.class, gsvcExceptionHandler::handle).build();
     }

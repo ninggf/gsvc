@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.gsvc.security.authorization;
 
+import com.apzda.cloud.gsvc.model.IEntity;
 import com.google.common.base.Splitter;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -94,6 +95,10 @@ public class AsteriskPermissionEvaluator implements PermissionEvaluator {
                         return allowed;
                     }
                 }
+            }
+
+            if (targetDomainObject instanceof IEntity<?> entity) {
+                return hasPrivilege(authentication, String.valueOf(entity.getId()), (String) permission);
             }
 
             return hasPrivilege(authentication, targetDomainObject.toString(), (String) permission);

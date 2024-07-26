@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb1
+    driver-class-name: org.h2.Driver
+
+mybatis-plus:
+  global-config:
+    banner: false
+
+apzda:
+  cloud:
+    config:
+      dict-deleted-column:
+      dict-not-deleted-value: 0
+logging:
+  level:
+    com.apzda: debug
+    com.baomidou: debug

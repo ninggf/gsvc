@@ -16,6 +16,11 @@
  */
 package com.apzda.cloud.demo.bar.config;
 
+import com.apzda.cloud.demo.bar.proto.BarService;
+import com.apzda.cloud.demo.bar.proto.FileService;
+import com.apzda.cloud.demo.bar.proto.SaService;
+import com.apzda.cloud.demo.math.proto.MathService;
+import com.apzda.cloud.gsvc.config.EnableGsvcServices;
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +33,7 @@ import org.springframework.core.annotation.Order;
  * @since 1.0.0
  **/
 @Configuration(proxyBeanMethods = false)
+@EnableGsvcServices({ BarService.class, SaService.class, FileService.class, MathService.class })
 public class BarConfiguration {
 
     @Bean("bar.MessageSourceNameResolver")
@@ -49,6 +55,9 @@ public class BarConfiguration {
     JwtTokenCustomizer customizer2() {
         return (authentication, token) -> {
             token.setStatus("2");
+            if (!"user5".equals(token.getName())) {
+                token.setUid(token.getName());
+            }
             return token;
         };
     }

@@ -16,13 +16,9 @@
  */
 package com.apzda.cloud.demo.foo.server;
 
-import com.apzda.cloud.demo.bar.proto.BarServiceGsvc;
-import com.apzda.cloud.demo.bar.proto.SaServiceGsvc;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 import java.lang.annotation.*;
 
@@ -31,15 +27,16 @@ import java.lang.annotation.*;
  * @version 1.0.0
  * @since 1.0.0
  **/
-
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Import({ BarServiceGsvc.class, SaServiceGsvc.class })
 @PropertySource({ "classpath:FooService.gateway.properties" })
 @ComponentScan(basePackages = { "com.apzda.cloud.demo.foo" },
         excludeFilters = @ComponentScan.Filter(classes = SpringBootApplication.class))
-@EnableMethodSecurity
 @Documented
 public @interface EnableFooServer {
+
+    // boolean proxyTargetClass() default false;
+
+    // AdviceMode mode() default AdviceMode.PROXY;
 
 }

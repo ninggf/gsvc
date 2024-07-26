@@ -7,6 +7,7 @@ import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.client.plugin.TransHeadersPlugin;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
+import com.apzda.cloud.gsvc.converter.EncryptedMessageConverter;
 import com.apzda.cloud.gsvc.core.GatewayServiceBeanFactoryPostProcessor;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import com.apzda.cloud.gsvc.core.ServiceInfo;
@@ -20,6 +21,8 @@ import com.apzda.cloud.gsvc.gtw.filter.TransferEncodingNormalizationHeadersFilte
 import com.apzda.cloud.gsvc.gtw.filter.XForwardedHeadersFilter;
 import com.apzda.cloud.gsvc.infra.Counter;
 import com.apzda.cloud.gsvc.infra.LocalInfraImpl;
+import com.apzda.cloud.gsvc.converter.DefaultBase64EncodedModem;
+import com.apzda.cloud.gsvc.modem.Modem;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
 import com.apzda.cloud.gsvc.security.config.GsvcSecurityAutoConfiguration;
@@ -135,9 +138,21 @@ public class GsvcAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     IServiceMethodHandler serviceMethodHandler(GatewayServiceConfigure serviceConfigure, ObjectMapper objectMapper,
-            GsvcExceptionHandler gsvcExceptionHandler, Validator validator, MultipartResolver multipartResolver) {
+            GsvcExceptionHandler gsvcExceptionHandler, Validator validator, MultipartResolver multipartResolver,
+            EncryptedMessageConverter encryptedMessageConverter) {
         return new DefaultServiceMethodHandler(serviceConfigure, objectMapper, gsvcExceptionHandler, validator,
-                multipartResolver);
+                multipartResolver, encryptedMessageConverter);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    Modem modem(ServiceConfigProperties properties) {
+        return new DefaultBase64EncodedModem(properties.getModem());
+    }
+
+    @Bean
+    EncryptedMessageConverter encryptedMessageConverter(ObjectMapper objectMapper, Modem modem) {
+        return new EncryptedMessageConverter(objectMapper, modem);
     }
 
     @Bean

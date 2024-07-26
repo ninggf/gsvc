@@ -211,6 +211,15 @@ public class JwtTokenManager implements TokenManager {
 
     @Override
     public JwtToken refreshAccessToken(@NonNull JwtToken jwtToken) {
+        val authentication = refreshAuthentication(jwtToken);
+        if (authentication != null) {
+            return authentication.getJwtToken();
+        }
+        return null;
+    }
+
+    @Override
+    public JwtAuthenticationToken refreshAuthentication(@NonNull JwtToken jwtToken) {
         try {
             val name = jwtToken.getName();
             if (StringUtils.isBlank(name)) {
@@ -276,7 +285,7 @@ public class JwtTokenManager implements TokenManager {
                 val newJwtToken = createJwtToken(authentication);
                 authentication.login(newJwtToken);
                 save(authentication, GsvcContextHolder.getRequest().orElse(null));
-                return newJwtToken;
+                return authentication;
             }
 
             log.trace("refreshToken is invalid: {} - accessToken or password does not match", refreshToken);

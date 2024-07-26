@@ -165,4 +165,9 @@ public class DemoController {
         throw new GsvcException(new IllegalParameterError("Test"));
     }
 
+    @PostMapping("/hi")
+    public Response<DemoRes> greeting(@RequestBody DemoReq req) {
+        return Response.success(DemoRes.newBuilder().setErrCode(0).setName(req.getName()).setAge(18).build());
+    }
+
 }

@@ -10,6 +10,7 @@ option optimize_for = SPEED;
 
 extend google.protobuf.FileOptions{uint32 serviceId = 50000;}
 extend google.protobuf.FileOptions{string serviceName = 50001;}
+extend google.protobuf.MethodOptions {Route route = 50003;}
 
 message Route {
   optional string path = 1;
@@ -21,9 +22,8 @@ message Route {
   optional string desc = 7;
   optional string tags = 8;
   optional uint64 timeout = 9;
+  optional string consumes = 10;
 }
-
-extend google.protobuf.MethodOptions {Route route = 50003;}
 
 message CurrentUser {
   string uid = 1;
@@ -81,4 +81,9 @@ message CommonRes {
   int32 err_code = 1;
   optional string err_msg = 2;
   optional string  err_type = 3;
+}
+
+message KeyValue {
+  string key = 1;
+  string value = 2;
 }

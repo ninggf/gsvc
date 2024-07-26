@@ -1,15 +1,18 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
+import com.apzda.cloud.gsvc.converter.EncryptedMessageConverter;
 import com.apzda.cloud.gsvc.error.GsvcErrorAttributes;
 import com.apzda.cloud.gsvc.error.GsvcErrorController;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
 import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.filter.GsvcServletFilter;
+import com.apzda.cloud.gsvc.resolver.PagerResolver;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
+import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.InitializingBean;
@@ -27,9 +30,12 @@ import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.lang.NonNull;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import reactor.core.publisher.Hooks;
 
 import java.util.List;
@@ -40,15 +46,19 @@ import java.util.List;
 @Slf4j
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties({ ServiceConfigProperties.class })
-public class GsvcWebMvcConfigure implements InitializingBean {
+public class GsvcWebMvcConfigure implements WebMvcConfigurer, InitializingBean {
 
     private final ServiceConfigProperties serviceConfigProperties;
 
     private final ObjectMapper objectMapper;
 
-    public GsvcWebMvcConfigure(ServiceConfigProperties serviceConfigProperties, ObjectMapper objectMapper) {
+    private final EncryptedMessageConverter encryptedMessageConverter;
+
+    public GsvcWebMvcConfigure(ServiceConfigProperties serviceConfigProperties, ObjectMapper objectMapper,
+            EncryptedMessageConverter encryptedMessageConverter) {
         this.serviceConfigProperties = serviceConfigProperties;
         this.objectMapper = objectMapper;
+        this.encryptedMessageConverter = encryptedMessageConverter;
     }
 
     @Override
@@ -67,6 +77,11 @@ public class GsvcWebMvcConfigure implements InitializingBean {
         }
 
         log.debug("ResponseUtils and ObjectMapper configured: {}", config);
+    }
+
+    @Override
+    public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(new PagerResolver(this.serviceConfigProperties.getConfig()));
     }
 
     @Bean
@@ -109,6 +124,11 @@ public class GsvcWebMvcConfigure implements InitializingBean {
         resolver.setResolveLazily(true);
         log.trace("Use StandardServletMultipartResolver with ResolveLazily!");
         return resolver;
+    }
+
+    @Override
+    public void configureMessageConverters(@Nonnull List<HttpMessageConverter<?>> converters) {
+        converters.add(0, encryptedMessageConverter);
     }
 
 }

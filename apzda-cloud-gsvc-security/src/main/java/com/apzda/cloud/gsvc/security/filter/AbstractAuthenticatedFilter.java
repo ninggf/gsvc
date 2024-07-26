@@ -51,6 +51,8 @@ public abstract class AbstractAuthenticatedFilter extends OncePerRequestFilter i
 
     public static final String ACCOUNT_LOCKED_FILTER = "accountLockedFilter";
 
+    public static final String UNBIND_CHECK_FILTER = "externalUnbindFilter";
+
     public static final String MFA_FILTER = "mfaAuthenticationFilter";
 
     public static final String CREDENTIALS_FILTER = "credentialsExpiredFilter";

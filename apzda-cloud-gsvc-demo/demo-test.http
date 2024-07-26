@@ -459,3 +459,147 @@ Accept-Language: zh-CN
         client.assert(response.body.errMsg === "参数“Test”不能为空", response.body.errMsg)
     });
 %}
+
+### DemoService encrypted /demo/hi
+POST http://{{demoService}}/demo/hi
+Content-Type: application/encrypted+json
+Accept: application/encrypted+json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/encrypted+json", "Expected 'application/encrypted+json' but received '" + type + "'");
+        client.assert(response.body === "yILald+FmOOyr5rZNbScvsKL6SiyxKXKi2X1Zl9ao6W/jX5NBaLgA6J/fdhb6RTMhc6+g1y2BoC+JsbjmjJmm4NsSX4imMBCOVC8b47tta4=", "响应不等于'Hello demo'")
+    });
+%}
+
+### DemoService encrypted /demo/d/hello
+GET http://{{demoService}}/demo/d/hello
+Content-Type: application/encrypted+json
+Accept: application/encrypted+json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        const type = response.contentType.mimeType;
+        client.assert(type === "application/encrypted+json", "Expected 'application/encrypted+json' but received '" + type + "'");
+        client.assert(response.body === "yILald+FmOOyr5rZNbScvn2wMX55lDyBwgbzGpin+hZLNV01x/WIMB3IggoOp8GSStpW9xGntrYlqeU9y+KB7A==", "响应不等于'Hello demo'")
+    });
+%}
+
+### DemoService /demo/d/enc
+POST http://{{demoService}}/demo/d/enc
+
+> {%
+    client.test("encrypted request body is required", function () {
+        client.assert(response.status === 404, "Response status is not 404");
+        client.assert(response.body.errCode === -404, response.body.errMsg)
+    });
+%}
+
+### DemoService /demo/d/enc?encrypted
+POST http://{{demoService}}/demo/d/enc
+Content-Type: application/encrypted+json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("encrypted request body is required", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data.name === "Hello encrypted data", response.body.errMsg)
+    });
+%}
+
+
+### DemoService /demo/d/enc1
+POST http://{{demoService}}/demo/d/enc1
+
+> {%
+    client.test("encrypted request body is required", function () {
+        client.assert(response.status === 404, "Response status is not 404");
+        client.assert(response.body.errCode === -404, response.body.errMsg)
+    });
+%}
+
+### DemoService /demo/d/enc1?encrypted
+POST http://{{demoService}}/demo/d/enc1
+Content-Type: application/encrypted+json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("encrypted request body is required", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data.name === "Hello encrypted data", response.body.errMsg)
+    });
+%}
+
+### DemoService /demo/d/enc12encrypted
+POST http://{{demoService}}/demo/d/enc2/enc
+Content-Type: application/encrypted+json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("encrypted request body is required", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data.name === "Hello encrypted data", response.body.errMsg)
+    });
+%}
+
+### DemoService /demo/d/en22?encrypted
+POST http://{{demoService}}/demo/d/enc2/enc2
+Content-Type: application/encrypted+json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("encrypted request body is required", function () {
+        client.assert(response.status === 404, "Response status is not 404");
+    });
+%}
+
+### DemoService /demo/d/api/enc
+POST http://{{demoService}}/demo/d/api/enc
+Content-Type: application/encrypted+json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("encrypted request body is required", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data.name === "Hello encrypted data", response.body.errMsg)
+    });
+%}
+
+### DemoService /demo/d/api/enc1
+POST http://{{demoService}}/demo/d/api/enc1
+Content-Type: application/encrypted+json
+Accept: application/json
+
+0Q4fZXhR8myKLUElZQ53uhyhEx9BVUimxx5YZJUwG1OTreEjAQBgSwy8cl1GumLR
+
+> {%
+    client.test("encrypted request body is required - 404", function () {
+        client.assert(response.status === 404, "Response status is not 404");
+    });
+%}
+
+### DemoService /demo/foo/api/enc
+POST http://{{demoService}}/demo/foo/api/enc
+Content-Type: application/json
+Accept: application/json
+
+{}
+
+> {%
+    client.test("remote api forward", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.errMsg === "ok", response.body.errMsg)
+    });
+%}

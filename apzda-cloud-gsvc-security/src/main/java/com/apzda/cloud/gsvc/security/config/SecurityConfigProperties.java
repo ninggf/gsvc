@@ -38,6 +38,8 @@ public class SecurityConfigProperties {
 
     private boolean accountLockedEnabled;
 
+    private boolean bindEnabled = true;
+
     private boolean credentialsExpiredEnabled;
 
     private String rolePrefix = "ROLE_";
@@ -62,6 +64,8 @@ public class SecurityConfigProperties {
     private List<String> mfaExclude = new ArrayList<>();
 
     private List<String> activePath = new ArrayList<>();
+
+    private List<String> bindPath = new ArrayList<>();
 
     private List<String> resetCredentialsPath = new ArrayList<>();
 
@@ -93,6 +97,10 @@ public class SecurityConfigProperties {
 
     public Set<RequestMatcher> resetCredentialsExcludes() {
         return antMatchers(resetCredentialsPath, exclude);
+    }
+
+    public Set<RequestMatcher> bindExcludes() {
+        return antMatchers(bindPath, exclude);
     }
 
     public boolean deviceIsAllowed(String device) {

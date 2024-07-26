@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.gsvc.server;
 
+import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionOutcome;
@@ -30,7 +31,6 @@ import org.springframework.lang.NonNull;
 
 import java.lang.annotation.*;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -50,15 +50,24 @@ public @interface ConditionalOnLocalImpl {
 
         @Override
         public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            if (metadata == null) {
+                throw new IllegalStateException("Metadata is null");
+            }
             val ann = metadata.getAnnotations().get(ConditionalOnLocalImpl.class);
-            val names = Objects.requireNonNull(context.getBeanFactory()).getBeanNamesForType(ann.synthesize().value());
+            val beanFactory = context.getBeanFactory();
+            if (beanFactory == null) {
+                return ConditionOutcome.noMatch("ignore");
+            }
+            val svc = ann.synthesize().value();
+            val names = beanFactory.getBeanNamesForType(svc);
             if (Arrays.stream(names)
                 .anyMatch((name) -> StringUtils.startsWithAny(name, "gsvc", "grpc")
                         && StringUtils.endsWith(name, "Stub"))) {
+                GatewayServiceRegistry.registerProxy(svc, "http");
                 return ConditionOutcome.noMatch("");
             }
             else {
-                return ConditionOutcome.match();
+                return ConditionOutcome.match(names[0]);
             }
         }
 

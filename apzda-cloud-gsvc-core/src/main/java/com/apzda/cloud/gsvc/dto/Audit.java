@@ -14,22 +14,45 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.security.mfa;
+package com.apzda.cloud.gsvc.dto;
 
-import com.apzda.cloud.gsvc.IServiceError;
-import com.apzda.cloud.gsvc.error.ServiceError;
-import com.apzda.cloud.gsvc.security.exception.AuthenticationError;
+import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public class MfaException extends AuthenticationError {
-    public final static AuthenticationError UNSET = new MfaException(ServiceError.MFA_NOT_SETUP);
-    public final static AuthenticationError NOT_VERIFIED = new MfaException(ServiceError.MFA_NOT_VERIFIED);
+@Data
+public class Audit {
 
-    MfaException(IServiceError error) {
-        super(error);
-    }
+    private String userId;
+
+    private String tenantId;
+
+    private Boolean template;
+
+    private Long logTime;
+
+    private String activity;
+
+    private String runas;
+
+    private String level;
+
+    private String ip;
+
+    private String device;
+
+    private String message;
+
+    private List<String> args = new ArrayList<>();
+
+    private Object oldValue;
+
+    private Object newValue;
+
 }

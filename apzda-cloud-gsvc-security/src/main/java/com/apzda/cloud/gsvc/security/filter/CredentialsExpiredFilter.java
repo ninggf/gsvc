@@ -48,7 +48,7 @@ public class CredentialsExpiredFilter extends AbstractAuthenticatedFilter {
 
     @Override
     public int getOrder() {
-        return Ordered.HIGHEST_PRECEDENCE + 1;
+        return Ordered.HIGHEST_PRECEDENCE + 30;
     }
 
 }

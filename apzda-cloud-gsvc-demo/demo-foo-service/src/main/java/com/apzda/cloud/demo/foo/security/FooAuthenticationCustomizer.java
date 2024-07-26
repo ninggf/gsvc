@@ -43,7 +43,10 @@ public class FooAuthenticationCustomizer implements JwtTokenCustomizer {
     @NonNull
     public JwtToken customize(@NonNull Authentication authentication, @NonNull JwtToken token) {
         val data = BeanUtil.copyProperties(token, FooLoginData.class);
-        data.setUid(token.getName());
+        if (!"user5".equals(token.getName())) {
+            data.setUid(token.getName());
+        }
+
         if (authentication.getPrincipal() instanceof UserDetailsMeta udm) {
             data.setLastLoginTime(udm.get(UserDetailsMeta.LOGIN_TIME_META_KEY, authentication, 0L));
             if (udm.getUsername().equals("user1")) {

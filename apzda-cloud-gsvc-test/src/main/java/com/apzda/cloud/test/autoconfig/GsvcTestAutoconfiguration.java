@@ -36,6 +36,7 @@ import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.servlet.i18n.FixedLocaleResolver;
 import reactor.core.publisher.Flux;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.util.function.Function;
 
@@ -47,6 +48,12 @@ import java.util.function.Function;
 @AutoConfiguration()
 @AutoConfigureOrder(Ordered.LOWEST_PRECEDENCE)
 class GsvcTestAutoconfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean
+    Clock appClock() {
+        return Clock.systemDefaultZone();
+    }
 
     @Bean
     @ConditionalOnMissingBean

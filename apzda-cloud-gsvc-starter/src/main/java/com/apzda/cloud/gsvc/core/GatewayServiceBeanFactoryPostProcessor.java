@@ -8,9 +8,13 @@ import com.google.protobuf.Descriptors;
 import io.grpc.MethodDescriptor;
 import io.grpc.ServiceDescriptor;
 import io.grpc.protobuf.ProtoMethodDescriptorSupplier;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.FactoryBean;
@@ -41,6 +45,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
 
     private static final Map<String, Boolean> REGISTERED = new HashMap<>();
 
+    private static final Logger webLog = LoggerFactory.getLogger(GatewayServiceBeanFactoryPostProcessor.class);
+
     private String defaultRouteGlobalFilters;
 
     @Override
@@ -64,7 +70,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                     return Tuples.of(GatewayServiceRegistry.cfgName(n), aClass);
                 }
                 catch (NoSuchBeanDefinitionException | NullPointerException | ClassNotFoundException e) {
-                    log.trace("{} is not a Gsvc Service since '{}', skip it.", n, e.getMessage());
+                    log.debug("{} is not a Gsvc Service since '{}', skip it.", n, e.getMessage());
                     return null;
                 }
                 catch (Exception e) {
@@ -208,7 +214,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 break;
             }
 
-            log.debug("Found Route: {}[{}] -> {}", prefix, i, route);
+            webLog.debug("Found Route: {}[{}] -> {}", prefix, i, route);
             List<Route> subRoutes = new ArrayList<>();
             for (int j = 0; j < 10000; j++) {
                 val subPrefix = prefix + "[" + i + "].routes";
@@ -216,7 +222,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 if (subRoute == null) {
                     break;
                 }
-                log.debug("Found Route: {}[{}] -> {}", subPrefix, j, subRoute);
+                webLog.debug("Found Route: {}[{}] -> {}", subPrefix, j, subRoute);
                 subRoutes.add(subRoute);
             }
             val groupRoute = GroupRoute.valueOf(route);
@@ -226,7 +232,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         return groupRoutes;
     }
 
-    private Route createRoute(String prefix, int index, Environment environment, Route parent) {
+    @Nullable
+    private Route createRoute(String prefix, int index, @Nonnull Environment environment, Route parent) {
         prefix = prefix + "[" + index + "]";
         val path = environment.getProperty(prefix + ".path");
         if (StringUtils.isBlank(path)) {
@@ -239,6 +246,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val summary = environment.getProperty(prefix + ".summary");
         val desc = environment.getProperty(prefix + ".desc");
         val tags = environment.getProperty(prefix + ".tags");
+        val consumes = environment.getProperty(prefix + ".consumes");
+        val excludes = environment.getProperty(prefix + ".excludes");
         val readTimeout = environment.getProperty(prefix + ".read-timeout", Duration.class, Duration.ZERO);
         var filters = environment.getProperty(prefix + ".filters");
 
@@ -264,15 +273,19 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
             .readTimeout(readTimeout)
             .summary(summary)
             .tags(tags)
+            .consumes(consumes)
+            .excludes(excludes)
             .desc(desc)
             .filters(filters);
     }
 
-    private Route createRoute(Descriptors.MethodDescriptor methodDescriptor, String defaultFilters) {
+    @Nullable
+    private Route createRoute(@Nonnull Descriptors.MethodDescriptor methodDescriptor, String defaultFilters) {
         val options = methodDescriptor.getOptions();
         val api = options.getExtension(GsvcExt.route);
         var path = api.getPath().trim();
         var methods = api.getMethods().trim();
+        var consumes = api.getConsumes().trim();
         if (StringUtils.isBlank(path)) {
             val http = options.getExtension(AnnotationsProto.http);
             val number = http.getPatternCase().getNumber();
@@ -300,7 +313,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
                 default:
                     return null;
             }
-
+            consumes = http.getBody();
             if (StringUtils.isBlank(path)) {
                 return null;
             }
@@ -330,6 +343,8 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         route.filters(filters);
         route.actions(StringUtils.defaultIfBlank(methods, "post"));
         route.setLogin(login);
+        route.consumes(consumes);
+        route.excludes("");
         route.access(access);
         if (api.getTimeout() > 0) {
             route.readTimeout(Duration.ofMillis(api.getTimeout()));
@@ -340,7 +355,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
     private void registerRouterFunction(BeanDefinitionRegistry registry, Class<?> serviceInterface, Route route) {
         val serviceInfo = GatewayServiceRegistry.getServiceInfo(serviceInterface);
         if (serviceInfo == null) {
-            log.warn("Service not found for route: {} ", route);
+            webLog.warn("Service not found for route: {} ", route);
             return;
         }
         val method = route.getMethod();

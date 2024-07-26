@@ -10,7 +10,9 @@ import org.springframework.core.style.ToStringCreator;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,32 +35,13 @@ public final class ServiceConfigProperties {
 
     private final Map<String, GatewayRouteConfig> gateway = new LinkedHashMap<>();
 
-    private Config config;
+    private final Config config = new Config();
 
-    private Registry registry = new Registry();
+    private final ModemConfig modem = new ModemConfig();
 
-    private MybatisPlus mybatisPlus;
+    private final Registry registry = new Registry();
 
-    public Config getConfig() {
-        if (config == null) {
-            config = new Config();
-        }
-        return config;
-    }
-
-    public Registry getRegistry() {
-        if (registry == null) {
-            registry = new Registry();
-        }
-        return registry;
-    }
-
-    public MybatisPlus getMybatisPlus() {
-        if (mybatisPlus == null) {
-            mybatisPlus = new MybatisPlus();
-        }
-        return mybatisPlus;
-    }
+    private final MybatisPlus mybatisPlus = new MybatisPlus();
 
     public ServiceConfig svcConfig(String name) {
         return svcConfig(name, service, SERVICE_DEFAULT);
@@ -116,6 +99,26 @@ public final class ServiceConfigProperties {
 
         private String realIpFrom;
 
+        private String dictItemTable = "sys_dict_item";
+
+        private String dictCodeColumn = "dict_code";
+
+        private String dictLabelColumn = "dict_label";
+
+        private String dictValueColumn = "dict_value";
+
+        private String dictDeletedColumn;
+
+        private String dictNotDeletedValue;
+
+        private String dictLabelSuffix = "Text";
+
+        private String pageNumber = "pageNumber";
+
+        private String pageSize = "pageSize";
+
+        private String pageSorts = "pageSorts";
+
         @DurationUnit(ChronoUnit.HOURS)
         private Duration tempExpireTime = Duration.ofHours(168);
 
@@ -145,9 +148,17 @@ public final class ServiceConfigProperties {
     @Data
     public static final class MybatisPlus {
 
-        private String tenantIdColumn;
+        private String tenantIdColumn = "tenant_id";
 
         private boolean disableTenantPlugin = true;
+
+        private List<String> createdAtColumns = new ArrayList<>(List.of("createdAt"));
+
+        private List<String> createdByColumns = new ArrayList<>(List.of("createdBy"));
+
+        private List<String> updatedAtColumns = new ArrayList<>(List.of("updatedAt"));
+
+        private List<String> updatedByColumns = new ArrayList<>(List.of("updatedBy"));
 
     }
 
@@ -161,6 +172,27 @@ public final class ServiceConfigProperties {
         private int port = 8080;
 
         private boolean ssl = false;
+
+    }
+
+    @Data
+    public static final class ModemConfig {
+
+        private Algorithm algorithm = Algorithm.AES;
+
+        private String mode = "CBC";
+
+        private String padding = "PKCS5Padding";
+
+        private String iv = "0102030405060708";
+
+        private String key = "0CoJUm6Qyw8W8jud";
+
+    }
+
+    public enum Algorithm {
+
+        AES, DES
 
     }
 

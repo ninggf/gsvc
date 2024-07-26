@@ -4,8 +4,9 @@ import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
-import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.ApplicationContext;
@@ -20,8 +21,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author fengz
  */
-@Slf4j
 public class WebclientFactoryBean implements FactoryBean<WebClient>, ApplicationContextAware {
+
+    private static final Logger webLog = LoggerFactory.getLogger(WebclientFactoryBean.class);
 
     private final String cfgName;
 
@@ -67,7 +69,7 @@ public class WebclientFactoryBean implements FactoryBean<WebClient>, Application
 
         val connector = new ReactorClientHttpConnector(httpClient);
 
-        log.trace("Setup WebClient for {}: BASE={}, ConnectTimeout={}, ReadTimeout={}, WriteTimeout={}", cfgName,
+        webLog.debug("Setup WebClient for {}: BASE={}, ConnectTimeout={}, ReadTimeout={}, WriteTimeout={}", cfgName,
                 baseUrl, connectTimeout, readTimeout, writeTimeout);
 
         return builder.clientConnector(connector).build();

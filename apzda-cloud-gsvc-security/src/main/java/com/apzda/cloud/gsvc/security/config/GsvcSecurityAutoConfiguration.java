@@ -243,7 +243,7 @@ public class GsvcSecurityAutoConfiguration {
 
                     val homePage = svcProperties.getConfig().getHomePage();
                     if (StringUtils.isNotBlank(homePage)) {
-                        log.debug("Redirect to {} when logout", homePage);
+                        log.debug("Redirect to {} when logout successfully", homePage);
                         logout.logoutSuccessUrl(homePage);
                     }
 
@@ -353,6 +353,13 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnProperty(name = "apzda.cloud.security.account-locked-enabled", havingValue = "true")
         SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> accountLockedFilter() {
             return new SecurityFilterRegistrationBean<>(new AccountLockedFilter(properties.activeExcludes()));
+        }
+
+        @Bean
+        @ConditionalOnMissingBean(name = UNBIND_CHECK_FILTER)
+        @ConditionalOnProperty(name = "apzda.cloud.security.bind-enabled", havingValue = "true", matchIfMissing = true)
+        SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> externalUnbindFilter() {
+            return new SecurityFilterRegistrationBean<>(new ExternalUnbindFilter(properties.bindExcludes()));
         }
 
         @Bean
@@ -486,6 +493,9 @@ public class GsvcSecurityAutoConfiguration {
 
             val user4 = User.withUsername("user4").password(encodedPwd).build();
             manager.createUser(user4);
+
+            val user5 = User.withUsername("user5").password(encodedPwd).build();
+            manager.createUser(user5);
             return manager;
         }
 

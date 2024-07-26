@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,26 +14,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.db;
+package com.apzda.cloud.boot.sanitize;
 
-import org.springframework.lang.NonNull;
-
-import java.util.Set;
+import java.lang.annotation.*;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-public interface MybatisCustomizer {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.FIELD, ElementType.METHOD })
+@Documented
+public @interface Sanitized {
 
-    default void addLocation(@NonNull Set<String> locations) {
-    }
+    /**
+     * 消毒器.
+     */
+    Class<? extends Sanitizer> sanitizer() default RegexpSanitizer.class;
 
-    default void addTypeHandlersPackage(@NonNull Set<String> packages) {
-    }
-
-    default void addTenantIgnoreTable(@NonNull Set<String> tables) {
-    }
+    /**
+     * 消毒器配置.
+     */
+    String[] value() default "";
 
 }

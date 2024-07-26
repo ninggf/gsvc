@@ -161,7 +161,7 @@ public class GsvcCoreAutoConfiguration {
             ConfigureHelper.setRealIpHeader(realIpHeader);
             ConfigureHelper.setRealIpFrom(realIpFrom);
             if (StringUtils.hasText(realIpHeader) && !ConfigureHelper.getRealIpFrom().isEmpty()) {
-                log.debug("Will try getting remote ip from header {} which sent by {}", realIpHeader,
+                log.trace("Will try getting remote ip from header {} which sent by {}", realIpHeader,
                         ConfigureHelper.getRealIpFrom());
             }
         }
