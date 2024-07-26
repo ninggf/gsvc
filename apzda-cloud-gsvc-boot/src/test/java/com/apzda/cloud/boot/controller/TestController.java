@@ -54,6 +54,8 @@ public class TestController extends CrudController<String, User, IUserService> {
         testVo.setStatus(TestStatus.T1);
         testVo.setStatus2(TestStatus2.T2);
         testVo.setStatus3(TestStatus3.T3);
+        testVo.setPhone("13166666666");
+        testVo.setPhone1("13166666666");
         return Response.success(testVo);
     }
 

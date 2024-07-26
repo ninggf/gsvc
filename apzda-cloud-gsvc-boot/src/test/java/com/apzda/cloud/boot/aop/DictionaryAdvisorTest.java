@@ -52,11 +52,13 @@ class DictionaryAdvisorTest {
     void testResponse() {
         val testVoResponse = testController.testVoResponse("1");
         val node = objectMapper.convertValue(testVoResponse, JsonNode.class);
-
-        assertThat(node.get("data").get("name").asText()).isEqualTo("test = 1");
-        assertThat(node.get("data").get("statusText").asText()).isEqualTo("status1");
-        assertThat(node.get("data").get("status2Text").asText()).isEqualTo("status2");
-        assertThat(node.get("data").get("status3Text").asText()).isEqualTo("T3");
+        val result = node.get("data");
+        assertThat(result.get("name").asText()).isEqualTo("test = 1");
+        assertThat(result.get("statusText").asText()).isEqualTo("status1");
+        assertThat(result.get("status2Text").asText()).isEqualTo("status2");
+        assertThat(result.get("status3Text").asText()).isEqualTo("T3");
+        assertThat(result.get("phone").asText()).isEqualTo("131****6666");
+        assertThat(result.get("phone1").asText()).isEqualTo("131****6666");
     }
 
     @Test

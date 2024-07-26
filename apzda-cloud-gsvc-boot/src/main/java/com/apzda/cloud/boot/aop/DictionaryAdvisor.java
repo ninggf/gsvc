@@ -27,6 +27,8 @@ import com.apzda.cloud.gsvc.dto.Response;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -47,6 +49,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.apzda.cloud.boot.sanitize.SanitizeUtils.sanitize;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -110,7 +114,11 @@ public class DictionaryAdvisor {
         return returnObj;
     }
 
-    private Object fillDictionary(Object data) {
+    public Object fillDictionary(@Nullable Object data) {
+        if (data == null) {
+            return null;
+        }
+
         if (BeanUtils.isSimpleProperty(data.getClass())) {
             return data;
         }
@@ -121,59 +129,21 @@ public class DictionaryAdvisor {
             return data;
         }
 
+        val fields = com.apzda.cloud.gsvc.utils.BeanUtils.getAllFieldsMap(data);
+
         for (Map.Entry<String, PropertyDescriptor> property : properties.entrySet()) {
             val name = property.getKey();
             val pd = property.getValue();
             val method = pd.getReadMethod();
             if (method != null) {
                 try {
-                    val fields = com.apzda.cloud.gsvc.utils.BeanUtils.getAllFieldsMap(data);
-                    val value = method.invoke(data);
+                    val field = fields.get(name);
+                    val value = sanitize(field, method, method.invoke(data));
                     if (value == null) {
                         continue;
                     }
                     map.put(name, value);
-                    val field = fields.get(name);
-                    val annotation = field.getAnnotation(Dict.class);
-                    if (annotation != null) {
-                        var table = annotation.table();
-                        if (StringUtils.isBlank(table)) {
-                            val entity = annotation.entity();
-                            if (entity.isAnnotationPresent(TableName.class)) {
-                                val ann = entity.getAnnotation(TableName.class);
-                                table = ann.value();
-                            }
-                        }
-                        val realTable = table;
-                        val code = annotation.code();
-                        val label = annotation.value();
-                        val fieldName = name
-                                + StringUtils.defaultIfBlank(this.properties.getConfig().getDictLabelSuffix(), "Text");
-                        if (EnumUtil.isEnum(value)) {
-                            map.put(fieldName, getTextFromEnum((Enum<?>) value, label));
-                        }
-                        else if (StringUtils.isNotBlank(table)) {
-
-                            val dict = caches.get().computeIfAbsent(table + "." + code, (key) -> new HashMap<>());
-                            val dictText = dict.computeIfAbsent(value.toString(),
-                                    (key) -> getTextFromTable(realTable, code, key, label));
-                            map.put(fieldName, dictText);
-                        }
-                        else if (StringUtils.isNotBlank(code)) {
-                            val dict = caches.get().computeIfAbsent("." + code, (key) -> {
-                                val kv = new HashMap<String, String>();
-                                val items = getTextFromDictItemTable(code);
-                                for (DictItem item : items) {
-                                    kv.put(item.getVal(), item.getLabel());
-                                }
-                                return kv;
-                            });
-                            map.put(fieldName, dict.get(value.toString()));
-                        }
-                        else if (StringUtils.isNotBlank(label)) {
-                            map.put(fieldName, label);
-                        }
-                    }
+                    fillDict(field, name, value, map);
                 }
                 catch (IllegalAccessException | InvocationTargetException e) {
                     log.warn("Cannot get value of property [{}] from [{}]", name, data.getClass());
@@ -182,6 +152,48 @@ public class DictionaryAdvisor {
         }
 
         return map;
+    }
+
+    private void fillDict(@Nonnull Field field, String name, Object value, @Nonnull HashMap<String, Object> map) {
+        val annotation = field.getAnnotation(Dict.class);
+        if (annotation == null) {
+            return;
+        }
+        var table = annotation.table();
+        if (StringUtils.isBlank(table)) {
+            val entity = annotation.entity();
+            if (entity.isAnnotationPresent(TableName.class)) {
+                val ann = entity.getAnnotation(TableName.class);
+                table = ann.value();
+            }
+        }
+        val realTable = table;
+        val code = StringUtils.defaultIfBlank(annotation.code(), "id");
+        val label = annotation.value();
+        val dictFieldName = name + StringUtils.defaultIfBlank(this.properties.getConfig().getDictLabelSuffix(), "Text");
+        if (EnumUtil.isEnum(value)) {
+            map.put(dictFieldName, getTextFromEnum((Enum<?>) value, label));
+        }
+        else if (StringUtils.isNotBlank(table)) {
+            val dict = caches.get().computeIfAbsent(table + "." + code, (key) -> new HashMap<>());
+            val dictText = dict.computeIfAbsent(value.toString(),
+                    (key) -> getTextFromTable(realTable, code, key, label));
+            map.put(dictFieldName, dictText);
+        }
+        else if (StringUtils.isNotBlank(code)) {
+            val dict = caches.get().computeIfAbsent("." + code, (key) -> {
+                val kv = new HashMap<String, String>();
+                val items = getTextFromDictItemTable(code);
+                for (DictItem item : items) {
+                    kv.put(item.getVal(), item.getLabel());
+                }
+                return kv;
+            });
+            map.put(dictFieldName, dict.get(value.toString()));
+        }
+        else if (StringUtils.isNotBlank(label)) {
+            map.put(dictFieldName, label);
+        }
     }
 
     private List<DictItem> getTextFromDictItemTable(String code) {

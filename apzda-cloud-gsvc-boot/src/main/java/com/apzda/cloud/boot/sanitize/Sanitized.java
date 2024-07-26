@@ -14,43 +14,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.vo;
+package com.apzda.cloud.boot.sanitize;
 
-import com.apzda.cloud.boot.dict.Dict;
-import com.apzda.cloud.boot.enums.TestStatus;
-import com.apzda.cloud.boot.enums.TestStatus2;
-import com.apzda.cloud.boot.enums.TestStatus3;
-import com.apzda.cloud.boot.sanitize.PhoneNumberSanitizer;
-import com.apzda.cloud.boot.sanitize.Sanitized;
-import lombok.Data;
+import java.lang.annotation.*;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Data
-public class TestVo {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.FIELD, ElementType.METHOD })
+@Documented
+public @interface Sanitized {
 
-    private String name;
+    /**
+     * 消毒器.
+     */
+    Class<? extends Sanitizer> sanitizer() default RegexpSanitizer.class;
 
-    @Dict
-    private TestStatus status;
-
-    @Dict("description")
-    private TestStatus2 status2;
-
-    @Dict
-    private TestStatus3 status3;
-
-    @Sanitized(sanitizer = PhoneNumberSanitizer.class)
-    private String phone;
-
-    private String phone1;
-
-    @Sanitized(sanitizer = PhoneNumberSanitizer.class)
-    public String getPhone1() {
-        return phone1;
-    }
+    /**
+     * 消毒器配置.
+     */
+    String[] value() default "";
 
 }

@@ -14,43 +14,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.vo;
+package com.apzda.cloud.boot.sanitize;
 
-import com.apzda.cloud.boot.dict.Dict;
-import com.apzda.cloud.boot.enums.TestStatus;
-import com.apzda.cloud.boot.enums.TestStatus2;
-import com.apzda.cloud.boot.enums.TestStatus3;
-import com.apzda.cloud.boot.sanitize.PhoneNumberSanitizer;
-import com.apzda.cloud.boot.sanitize.Sanitized;
-import lombok.Data;
+import jakarta.annotation.Nonnull;
+import lombok.val;
+import org.springframework.core.ResolvableType;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Data
-public class TestVo {
+public interface Sanitizer<T> {
 
-    private String name;
+    T sanitize(T text, String[] configure);
 
-    @Dict
-    private TestStatus status;
+    default boolean supports(@Nonnull Object value) {
+        val aClass = value.getClass();
+        val resolvableType = ResolvableType.forClass(Sanitizer.class, this.getClass());
+        val aClass1 = resolvableType.resolveGeneric(0);
 
-    @Dict("description")
-    private TestStatus2 status2;
-
-    @Dict
-    private TestStatus3 status3;
-
-    @Sanitized(sanitizer = PhoneNumberSanitizer.class)
-    private String phone;
-
-    private String phone1;
-
-    @Sanitized(sanitizer = PhoneNumberSanitizer.class)
-    public String getPhone1() {
-        return phone1;
+        return aClass1 != null && aClass1.isAssignableFrom(aClass);
     }
 
 }
