@@ -49,7 +49,7 @@
         <spring-boot.version>3.2.8</spring-boot.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
         <mybatis-plus.version>3.5.7</mybatis-plus.version>
-        <hutool.version>5.8.27</hutool.version>
+        <hutool.version>5.8.29</hutool.version>
         <guava.version>33.2.1-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <protoc.version>3.25.3</protoc.version>
