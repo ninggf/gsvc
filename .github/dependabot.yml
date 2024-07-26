@@ -7,10 +7,18 @@ version: 2
 updates:
   - package-ecosystem: "maven"
     directory: "/"
+    target-branch: main
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "protobuf-java"
+        group: "com.google.protobuf"
+      - dependency-name: "*"
+        group: "org.apache.maven.plugins"
   - package-ecosystem: "npm"
     directory: "/"
     target-branch: docs
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "vitepress"
