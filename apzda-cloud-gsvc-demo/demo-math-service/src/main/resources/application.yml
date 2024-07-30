@@ -6,6 +6,12 @@ spring:
     name: math
   messages:
     basename: messages
+  datasource:
+    url: jdbc:mysql://localhost:3307/demo_db?characterEncoding=UTF-8&useUnicode=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    username: root
+    password: Abc12332!
+  flyway:
+    validate-on-migrate: false
 
 grpc:
   server:
@@ -26,6 +32,9 @@ apzda:
       MathService:
         grpc:
           enabled: true
+      AccountService:
+        grpc:
+          enabled: true
     security:
       meta-repo: redis
       jwt-key: abc12345678
@@ -33,6 +42,9 @@ apzda:
 management:
   tracing:
     enabled: false
+
+seata:
+  tx-service-group: demo
 
 ---
 spring:

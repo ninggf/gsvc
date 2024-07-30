@@ -1,0 +1,18 @@
+### Route - Create Order Sussfully
+POST http://{{barService}}/order/create
+Content-Type: application/json
+Accept: application/json
+
+{
+    "userId": "654321",
+    "commodityCode": "123456",
+    "count": 2,
+    "money": 40
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.message === "成功啦", "出错啦: " + response.body.message + " != '成功啦'");
+    });
+%}

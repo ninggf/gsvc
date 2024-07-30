@@ -9,6 +9,7 @@ option java_package = "com.apzda.cloud.demo.math.proto";
 option java_multiple_files = true;
 option java_outer_classname = "MathProto";
 
+option(gsvc.serviceName) = "MathService";
 
 message Request {
   string key = 1;
@@ -63,4 +64,13 @@ service MathService {
   rpc authed(google.protobuf.Empty) returns (gsvc.CommonRes);
 
   rpc deny(google.protobuf.Empty) returns (gsvc.CommonRes);
+}
+
+message DebitDto {
+  string user_id = 1;
+  uint32 money = 2;
+}
+
+service AccountService {
+  rpc debit (DebitDto) returns (gsvc.CommonRes);
 }

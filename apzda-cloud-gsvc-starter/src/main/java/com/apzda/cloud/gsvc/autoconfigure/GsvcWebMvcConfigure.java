@@ -46,7 +46,7 @@ import java.util.List;
 @Slf4j
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties({ ServiceConfigProperties.class })
-public class GsvcWebMvcConfigure implements WebMvcConfigurer, InitializingBean {
+class GsvcWebMvcConfigure implements WebMvcConfigurer, InitializingBean {
 
     private final ServiceConfigProperties serviceConfigProperties;
 

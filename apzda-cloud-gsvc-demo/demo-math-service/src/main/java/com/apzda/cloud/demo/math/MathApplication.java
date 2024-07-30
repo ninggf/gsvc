@@ -17,8 +17,10 @@
 package com.apzda.cloud.demo.math;
 
 import com.apzda.cloud.demo.foo.proto.FooService;
+import com.apzda.cloud.demo.math.proto.AccountService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.gsvc.config.EnableGsvcServices;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -28,7 +30,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @since 1.0.0
  **/
 @SpringBootApplication
-@EnableGsvcServices({ MathService.class, FooService.class })
+@EnableGsvcServices({ MathService.class, AccountService.class, FooService.class })
+@MapperScan("com.apzda.cloud.demo.math.domain.mapper")
 public class MathApplication {
 
     public static void main(String[] args) {

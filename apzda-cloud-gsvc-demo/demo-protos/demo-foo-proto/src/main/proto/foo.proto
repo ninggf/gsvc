@@ -10,6 +10,8 @@ option java_package = "com.apzda.cloud.demo.foo.proto";
 option java_multiple_files = true;
 option java_outer_classname = "FooProto";
 
+option(gsvc.serviceName) = 'FooService';
+
 message FooReq {
   string name = 1;
   uint32 age = 2 [(buf.validate.field).uint32 = {
@@ -49,4 +51,15 @@ service FooService {
   rpc ipAddr(google.protobuf.Empty) returns (gsvc.CommonRes);
   rpc setup(google.protobuf.Empty) returns (gsvc.CommonRes);
   rpc apiEnc(google.protobuf.Empty) returns(gsvc.CommonRes);
+}
+
+message CreateOrderDto {
+  string user_id = 1;
+  string commodity_code = 2;
+  uint32 order_count = 3;
+  uint32 order_amount = 4;
+}
+
+service OrderService {
+  rpc create(CreateOrderDto) returns (gsvc.CommonRes);
 }

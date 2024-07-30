@@ -114,3 +114,13 @@ message UploadRes {
 service FileService {
   rpc upload(FileReq) returns(UploadRes);
 }
+
+message DeductDto {
+  string commodity_code = 1;
+  uint32 count = 2;
+}
+
+service StorageService {
+
+  rpc deduct(DeductDto) returns(gsvc.CommonRes);
+}

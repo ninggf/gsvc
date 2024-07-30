@@ -19,10 +19,13 @@ package com.apzda.cloud.demo.bar.config;
 import com.apzda.cloud.demo.bar.proto.BarService;
 import com.apzda.cloud.demo.bar.proto.FileService;
 import com.apzda.cloud.demo.bar.proto.SaService;
+import com.apzda.cloud.demo.bar.proto.StorageService;
+import com.apzda.cloud.demo.foo.proto.OrderService;
 import com.apzda.cloud.demo.math.proto.MathService;
 import com.apzda.cloud.gsvc.config.EnableGsvcServices;
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -33,7 +36,9 @@ import org.springframework.core.annotation.Order;
  * @since 1.0.0
  **/
 @Configuration(proxyBeanMethods = false)
-@EnableGsvcServices({ BarService.class, SaService.class, FileService.class, MathService.class })
+@EnableGsvcServices({ BarService.class, SaService.class, FileService.class, MathService.class, StorageService.class,
+        OrderService.class })
+@MapperScan("com.apzda.cloud.demo.bar.domain.mapper")
 public class BarConfiguration {
 
     @Bean("bar.MessageSourceNameResolver")
