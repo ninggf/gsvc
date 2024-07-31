@@ -15,6 +15,7 @@ updates:
         versions: [ "3.3.*" ]
       - dependency-name: "org.apache.dubbo:dubbo-compiler"
       - dependency-name: "com.google.protobuf:protobuf-java"
+      - dependency-name: "com.google.protobuf:protobuf-java-util"
       - dependency-name: "org.apache.maven.plugins:*"
   - package-ecosystem: "npm"
     directory: "/"
