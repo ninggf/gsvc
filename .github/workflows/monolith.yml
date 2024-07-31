@@ -41,6 +41,7 @@ jobs:
           STORE_MODE: file
     env:
       SERVER_PORT_NO: 12560
+      SPRING_PROFILES_ACTIVE: flyway
     steps:
       - name: Checkout
         uses: actions/checkout@v4

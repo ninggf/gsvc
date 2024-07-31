@@ -39,6 +39,8 @@ jobs:
         env:
           SEATA_PORT: 8091
           STORE_MODE: file
+    env:
+      SPRING_PROFILES_ACTIVE: flyway
     steps:
       - name: Checkout
         uses: actions/checkout@v4
