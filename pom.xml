@@ -29,6 +29,7 @@
         <module>apzda-cloud-xxl-job-adapter</module>
         <module>apzda-cloud-gsvc-test</module>
         <module>apzda-cloud-gsvc-boot</module>
+        <module>apzda-cloud-gsvc-seata</module>
     </modules>
 
     <properties>
@@ -61,6 +62,8 @@
         <sentinel.version>1.8.8</sentinel.version>
         <protovalidate.version>0.2.1</protovalidate.version>
         <druid.version>1.2.23</druid.version>
+        <seata.version>2.0.0</seata.version>
+        <seata.cloud.version>2023.0.1.2</seata.cloud.version>
         <easyexcel.version>4.0.1</easyexcel.version>
         <commons-io.version>2.16.1</commons-io.version>
         <jasypt.version>3.0.5</jasypt.version>
@@ -171,6 +174,11 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>domain</artifactId>
+                <version>1.2.20-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
+                <artifactId>apzda-cloud-gsvc-seata</artifactId>
                 <version>1.2.20-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -317,6 +325,22 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>easyexcel</artifactId>
                 <version>${easyexcel.version}</version>
+            </dependency>
+            <!-- seata -->
+            <dependency>
+                <groupId>io.seata</groupId>
+                <artifactId>seata-spring-boot-starter</artifactId>
+                <version>${seata.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+                <version>${seata.cloud.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.seata</groupId>
+                <artifactId>seata-grpc</artifactId>
+                <version>${seata.version}</version>
             </dependency>
             <!-- sentinel -->
             <dependency>

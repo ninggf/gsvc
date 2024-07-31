@@ -31,6 +31,11 @@
             <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>apzda-cloud-gsvc-seata</artifactId>
+            <optional>true</optional>
+        </dependency>
         <!-- spring boot & cloud -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

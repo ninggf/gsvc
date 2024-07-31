@@ -24,6 +24,23 @@ jobs:
         image: redis
         ports:
           - 6379:6379
+      mysql:
+        image: mysql:8.0.35
+        ports:
+          - 3307:3306
+        env:
+          MYSQL_ROOT_PASSWORD: Abc12332!
+          MYSQL_DATABASE: demo_db
+      seata:
+        image: apache/seata-server:2.1.0-slim
+        ports:
+          - 8091:8091
+          - 7091:7091
+        env:
+          SEATA_PORT: 8091
+          STORE_MODE: file
+    env:
+      SPRING_PROFILES_ACTIVE: flyway
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,7 +86,7 @@ jobs:
           #./ijhttp/ijhttp --env-file apzda-cloud-gsvc-demo/http-client.env.json --env dev apzda-cloud-gsvc-demo/foo-test.http
           docker run --rm -v ./apzda-cloud-gsvc-demo:/workdir --add-host host.docker.internal:host-gateway ijhttp -D \
             --env-file http-client.env.json --env dev \
-            demo-test.http bar-test.http foo-test.http
+            demo-test.http bar-test.http foo-test.http seata-test.http
 
   deploy:
     if: ${{ github.ref == 'refs/heads/main' }}

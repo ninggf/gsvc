@@ -78,6 +78,7 @@ public class GsvcLoggingListener implements GenericApplicationListener {
             }
             values.add("com.apzda.cloud.gsvc.domain");
             values.add("com.apzda.cloud.boot.query");
+            values.add("com.apzda.cloud.seata");
             return values;
         });
     }

@@ -18,11 +18,14 @@ package com.apzda.cloud.demo.foo.config;
 
 import com.apzda.cloud.demo.bar.proto.BarService;
 import com.apzda.cloud.demo.bar.proto.SaService;
+import com.apzda.cloud.demo.foo.proto.OrderService;
 import com.apzda.cloud.demo.foo.security.FooLoginFilter;
+import com.apzda.cloud.demo.math.proto.AccountService;
 import com.apzda.cloud.gsvc.config.EnableGsvcServices;
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
 import com.apzda.cloud.gsvc.security.filter.AbstractProcessingFilter;
 import com.apzda.cloud.gsvc.security.filter.SecurityFilterRegistrationBean;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -33,7 +36,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
  * @since 1.0.0
  **/
 @Configuration(proxyBeanMethods = false)
-@EnableGsvcServices({ BarService.class, SaService.class })
+@EnableGsvcServices({ BarService.class, SaService.class, OrderService.class, AccountService.class })
+@MapperScan("com.apzda.cloud.demo.foo.domain.mapper")
 @EnableMethodSecurity
 public class FooConfiguration {
 

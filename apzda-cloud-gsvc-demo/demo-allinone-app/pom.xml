@@ -28,6 +28,16 @@
             <artifactId>demo-bar-service</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>demo-math-service</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>grpc-server-spring-boot-starter</artifactId>
+                    <groupId>net.devh</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
@@ -46,6 +56,18 @@
             <artifactId>spring-boot-configuration-processor</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <!-- seata -->
+        <dependency>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>apzda-cloud-gsvc-seata</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

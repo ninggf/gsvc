@@ -7,6 +7,7 @@ import com.apzda.cloud.gsvc.client.IServiceCaller;
 import com.apzda.cloud.gsvc.client.plugin.TransHeadersPlugin;
 import com.apzda.cloud.gsvc.config.GatewayServiceConfigure;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
+import com.apzda.cloud.gsvc.converter.DefaultBase64EncodedModem;
 import com.apzda.cloud.gsvc.converter.EncryptedMessageConverter;
 import com.apzda.cloud.gsvc.core.GatewayServiceBeanFactoryPostProcessor;
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
@@ -21,7 +22,6 @@ import com.apzda.cloud.gsvc.gtw.filter.TransferEncodingNormalizationHeadersFilte
 import com.apzda.cloud.gsvc.gtw.filter.XForwardedHeadersFilter;
 import com.apzda.cloud.gsvc.infra.Counter;
 import com.apzda.cloud.gsvc.infra.LocalInfraImpl;
-import com.apzda.cloud.gsvc.converter.DefaultBase64EncodedModem;
 import com.apzda.cloud.gsvc.modem.Modem;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
@@ -59,7 +59,7 @@ import java.util.Map;
  */
 @AutoConfiguration(before = { WebMvcAutoConfiguration.class, ErrorMvcAutoConfiguration.class,
         GsvcSecurityAutoConfiguration.class, WebClientAutoConfiguration.class })
-@Import({ GsvcWebMvcConfigure.class, SentinelAutoConfiguration.class, RedisInfraConfiguration.class })
+@Import({ GsvcWebMvcConfigure.class, RedisInfraConfiguration.class })
 @Slf4j
 public class GsvcAutoConfiguration {
 
