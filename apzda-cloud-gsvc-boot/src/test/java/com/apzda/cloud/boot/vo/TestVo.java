@@ -22,6 +22,7 @@ import com.apzda.cloud.boot.enums.TestStatus2;
 import com.apzda.cloud.boot.enums.TestStatus3;
 import com.apzda.cloud.boot.sanitize.PhoneNumberSanitizer;
 import com.apzda.cloud.boot.sanitize.Sanitized;
+import com.apzda.cloud.boot.transformer.TestTransformer;
 import lombok.Data;
 
 /**
@@ -47,6 +48,9 @@ public class TestVo {
     private String phone;
 
     private String phone1;
+
+    @Dict(transformer = TestTransformer.class)
+    private String phone2;
 
     @Sanitized(sanitizer = PhoneNumberSanitizer.class)
     public String getPhone1() {

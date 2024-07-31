@@ -16,26 +16,13 @@
  */
 package com.apzda.cloud.boot.dict;
 
-import java.lang.annotation.*;
-
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Documented
-public @interface Dict {
+public interface Transformer<T> {
 
-    String value() default "";
-
-    String code() default "";
-
-    String table() default "";
-
-    Class<?> entity() default Void.class;
-
-    Class<? extends Transformer> transformer() default Transformer.class;
+    Object transform(T value);
 
 }

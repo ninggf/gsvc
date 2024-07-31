@@ -14,28 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.dict;
+package com.apzda.cloud.boot.transformer;
 
-import java.lang.annotation.*;
+import com.apzda.cloud.boot.dict.Transformer;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Documented
-public @interface Dict {
+public class Upper implements Transformer<String> {
 
-    String value() default "";
-
-    String code() default "";
-
-    String table() default "";
-
-    Class<?> entity() default Void.class;
-
-    Class<? extends Transformer> transformer() default Transformer.class;
+    @Override
+    public Object transform(String value) {
+        return value.toUpperCase();
+    }
 
 }

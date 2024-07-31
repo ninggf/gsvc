@@ -59,6 +59,8 @@ class DictionaryAdvisorTest {
         assertThat(result.get("status3Text").asText()).isEqualTo("T3");
         assertThat(result.get("phone").asText()).isEqualTo("131****6666");
         assertThat(result.get("phone1").asText()).isEqualTo("131****6666");
+        assertThat(result.get("phone2").asText()).isEqualTo("13166666666");
+        assertThat(result.get("phone2Text").asText()).isEqualTo("13166666666-test");
     }
 
     @Test
@@ -71,9 +73,11 @@ class DictionaryAdvisorTest {
         assertThat(data.size()).isEqualTo(3);
         assertThat(data.get(0)).isInstanceOf(Map.class);
         val user1 = (Map<String, String>) data.get(0);
+        assertThat(user1.get("nameText")).isEqualTo("U1");
         assertThat(user1.get("rolesText")).isEqualTo("r1");
         assertThat(user1.get("typeText")).isEqualTo("Test1");
         val user2 = (Map<String, String>) data.get(1);
+        assertThat(user2.get("nameText")).isEqualTo("U2");
         assertThat(user2.get("rolesText")).isEqualTo("r2");
         assertThat(user2.get("typeText")).isEqualTo("test3");
 

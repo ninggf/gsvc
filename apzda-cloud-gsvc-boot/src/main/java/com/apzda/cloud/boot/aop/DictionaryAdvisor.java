@@ -18,9 +18,7 @@ package com.apzda.cloud.boot.aop;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.EnumUtil;
-import com.apzda.cloud.boot.dict.Dict;
-import com.apzda.cloud.boot.dict.DictItem;
-import com.apzda.cloud.boot.dict.DictText;
+import com.apzda.cloud.boot.dict.*;
 import com.apzda.cloud.boot.mapper.DictItemMapper;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.dto.Response;
@@ -154,11 +152,23 @@ public class DictionaryAdvisor {
         return map;
     }
 
+    @SuppressWarnings("unchecked")
     private void fillDict(@Nonnull Field field, String name, Object value, @Nonnull HashMap<String, Object> map) {
         val annotation = field.getAnnotation(Dict.class);
         if (annotation == null) {
             return;
         }
+        val dictFieldName = name + StringUtils.defaultIfBlank(this.properties.getConfig().getDictLabelSuffix(), "Text");
+
+        val transformerClz = annotation.transformer();
+        if (!Transformer.class.equals(transformerClz)) {
+            val transformer = TransformUtils.getTransformer(transformerClz);
+            if (transformer != null) {
+                map.put(dictFieldName, transformer.transform(value));
+            }
+            return;
+        }
+
         var table = annotation.table();
         if (StringUtils.isBlank(table)) {
             val entity = annotation.entity();
@@ -170,7 +180,7 @@ public class DictionaryAdvisor {
         val realTable = table;
         val code = StringUtils.defaultIfBlank(annotation.code(), "id");
         val label = annotation.value();
-        val dictFieldName = name + StringUtils.defaultIfBlank(this.properties.getConfig().getDictLabelSuffix(), "Text");
+
         if (EnumUtil.isEnum(value)) {
             map.put(dictFieldName, getTextFromEnum((Enum<?>) value, label));
         }
