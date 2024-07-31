@@ -71,6 +71,14 @@ message DebitDto {
   uint32 money = 2;
 }
 
+message AccountResp {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  repeated DebitDto account = 3;
+}
+
 service AccountService {
   rpc debit (DebitDto) returns (gsvc.CommonRes);
+  rpc reset(google.protobuf.Empty) returns(gsvc.CommonRes);
+  rpc query(google.protobuf.Empty) returns(AccountResp);
 }

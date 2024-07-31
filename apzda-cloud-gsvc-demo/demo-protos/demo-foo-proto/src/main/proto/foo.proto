@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package foo;
 
+import "math.proto";
 import "gsvc/ext.proto";
 import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
@@ -60,6 +61,15 @@ message CreateOrderDto {
   uint32 order_amount = 4;
 }
 
+message OrderResp {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  repeated CreateOrderDto order = 3;
+  repeated math.DebitDto account = 4;
+}
+
 service OrderService {
   rpc create(CreateOrderDto) returns (gsvc.CommonRes);
+  rpc reset(google.protobuf.Empty) returns(gsvc.CommonRes);
+  rpc query(google.protobuf.Empty) returns(OrderResp);
 }

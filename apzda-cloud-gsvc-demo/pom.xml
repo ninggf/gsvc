@@ -61,6 +61,11 @@
                 <artifactId>demo-bar-service</artifactId>
                 <version>1.2.20-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
+                <artifactId>demo-math-service</artifactId>
+                <version>1.2.20-SNAPSHOT</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

@@ -16,11 +16,16 @@
  */
 package com.apzda.cloud.demo.math.service;
 
+import com.apzda.cloud.demo.math.domain.entity.Account;
 import com.apzda.cloud.demo.math.domain.mapper.AccountMapper;
+import com.apzda.cloud.demo.math.proto.AccountResp;
 import com.apzda.cloud.demo.math.proto.AccountService;
 import com.apzda.cloud.demo.math.proto.DebitDto;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.google.protobuf.Empty;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +48,26 @@ public class AccountServiceImpl implements AccountService {
         }
         return GsvcExt.CommonRes.newBuilder().setErrCode(999999).build();
 
+    }
+
+    @Override
+    @Transactional
+    public GsvcExt.CommonRes reset(Empty request) {
+        if (accountMapper.reset() > 0) {
+            return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
+        }
+
+        return GsvcExt.CommonRes.newBuilder().setErrCode(999999).build();
+    }
+
+    @Override
+    public AccountResp query(Empty request) {
+        val accounts = accountMapper.selectList(Wrappers.lambdaQuery(Account.class).ge(Account::getMoney, 0));
+        val resp = AccountResp.newBuilder();
+        for (Account account : accounts) {
+            resp.addAccount(DebitDto.newBuilder().setMoney(account.getMoney()).setUserId(account.getUserId()).build());
+        }
+        return resp.build();
     }
 
 }

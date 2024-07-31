@@ -28,6 +28,16 @@
             <artifactId>demo-bar-service</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>demo-math-service</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>grpc-server-spring-boot-starter</artifactId>
+                    <groupId>net.devh</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>

@@ -120,7 +120,14 @@ message DeductDto {
   uint32 count = 2;
 }
 
-service StorageService {
+message StorageResp {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  repeated DeductDto storage = 3;
+}
 
+service StorageService {
   rpc deduct(DeductDto) returns(gsvc.CommonRes);
+  rpc reset(google.protobuf.Empty) returns(gsvc.CommonRes);
+  rpc query(google.protobuf.Empty) returns(StorageResp);
 }

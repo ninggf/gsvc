@@ -32,4 +32,7 @@ public interface AccountMapper extends BaseMapper<Account> {
     @Update("UPDATE account_tbl SET money = money - #{money} WHERE user_id = #{userId}")
     int debitByUserId(String userId, int money);
 
+    @Update("UPDATE account_tbl SET money = 100 WHERE user_id = '654321'")
+    int reset();
+
 }

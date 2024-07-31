@@ -18,8 +18,11 @@ package com.apzda.cloud.demo.bar.facade;
 
 import com.apzda.cloud.demo.bar.domain.mapper.StorageMapper;
 import com.apzda.cloud.demo.bar.proto.DeductDto;
+import com.apzda.cloud.demo.bar.proto.StorageResp;
 import com.apzda.cloud.demo.bar.proto.StorageService;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.google.protobuf.Empty;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;
@@ -45,6 +48,28 @@ public class StorageServiceImpl implements StorageService {
             return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
         }
         return GsvcExt.CommonRes.newBuilder().setErrCode(999999).build();
+    }
+
+    @Override
+    @Transactional
+    public GsvcExt.CommonRes reset(Empty request) {
+        if (storageMapper.reset() > 0) {
+            return GsvcExt.CommonRes.newBuilder().setErrCode(0).build();
+        }
+        return GsvcExt.CommonRes.newBuilder().setErrCode(999999).build();
+    }
+
+    @Override
+    public StorageResp query(Empty request) {
+        val storages = storageMapper.selectList(Wrappers.query());
+        val resp = StorageResp.newBuilder();
+        for (val storage : storages) {
+            resp.addStorage(DeductDto.newBuilder()
+                .setCount(storage.getCount())
+                .setCommodityCode(storage.getCommodityCode())
+                .build());
+        }
+        return resp.build();
     }
 
 }

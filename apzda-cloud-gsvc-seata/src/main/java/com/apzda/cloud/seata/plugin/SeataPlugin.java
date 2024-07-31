@@ -19,16 +19,12 @@ package com.apzda.cloud.seata.plugin;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
-import com.apzda.cloud.gsvc.plugin.IPreInvoke;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.seata.core.context.RootContext;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.servlet.function.ServerRequest;
-import reactor.core.publisher.Mono;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -36,7 +32,7 @@ import reactor.core.publisher.Mono;
  * @since 1.0.0
  **/
 @Slf4j
-public class SeataPlugin implements IGlobalPlugin, IPreCall, IPreInvoke {
+public class SeataPlugin implements IGlobalPlugin, IPreCall {
 
     @Override
     @Nonnull
@@ -52,28 +48,6 @@ public class SeataPlugin implements IGlobalPlugin, IPreCall, IPreInvoke {
         else {
             return request;
         }
-    }
-
-    @Override
-    public Mono<JsonNode> preInvoke(ServerRequest request, Mono<JsonNode> data, ServiceMethod method) {
-        try {
-            String xid = RootContext.getXID();
-            String rpcXid = request.headers().asHttpHeaders().getFirst(RootContext.KEY_XID);
-            if (log.isDebugEnabled()) {
-                log.debug("xid in RootContext {} xid in RpcContext {}", xid, rpcXid);
-            }
-
-            if (StringUtils.isBlank(xid) && StringUtils.isNotBlank(rpcXid)) {
-                RootContext.bind(rpcXid);
-                if (log.isDebugEnabled()) {
-                    log.debug("bind {} to RootContext", rpcXid);
-                }
-            }
-        }
-        catch (Exception ignored) {
-        }
-
-        return data;
     }
 
 }

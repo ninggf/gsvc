@@ -18,6 +18,7 @@ package com.apzda.cloud.demo.foo.domain.mapper;
 
 import com.apzda.cloud.demo.foo.domain.entity.Order;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -27,5 +28,8 @@ import org.apache.ibatis.annotations.Mapper;
  **/
 @Mapper
 public interface OrderMapper extends BaseMapper<Order> {
+
+    @Delete("DELETE FROM order_tbl WHERE id > 0")
+    int reset();
 
 }

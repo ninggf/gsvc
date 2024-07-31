@@ -14,25 +14,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.demo.bar.domain.mapper;
+package com.apzda.cloud.demo.bar.dto;
 
-import com.apzda.cloud.demo.bar.domain.entity.Storage;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Update;
+import com.apzda.cloud.demo.bar.proto.DeductDto;
+import com.apzda.cloud.demo.foo.proto.CreateOrderDto;
+import com.apzda.cloud.demo.math.proto.DebitDto;
+import lombok.Data;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Mapper
-public interface StorageMapper extends BaseMapper<Storage> {
+@Data
+public class QueryVo {
 
-    @Update("UPDATE storage_tbl SET cnt = cnt - #{count} WHERE commodity_code = #{commodityCode}")
-    int deductByCommodityCode(String commodityCode, int count);
+    private CreateOrderDto order;
 
-    @Update("UPDATE storage_tbl SET cnt = 10 WHERE commodity_code = '123456'")
-    int reset();
+    private DebitDto account;
+
+    private DeductDto storage;
 
 }

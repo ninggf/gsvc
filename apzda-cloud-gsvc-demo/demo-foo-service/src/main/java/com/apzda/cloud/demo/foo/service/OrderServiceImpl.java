@@ -19,12 +19,15 @@ package com.apzda.cloud.demo.foo.service;
 import com.apzda.cloud.demo.foo.domain.entity.Order;
 import com.apzda.cloud.demo.foo.domain.mapper.OrderMapper;
 import com.apzda.cloud.demo.foo.proto.CreateOrderDto;
+import com.apzda.cloud.demo.foo.proto.OrderResp;
 import com.apzda.cloud.demo.foo.proto.OrderService;
 import com.apzda.cloud.demo.math.proto.AccountService;
 import com.apzda.cloud.demo.math.proto.DebitDto;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcException;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.google.protobuf.Empty;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.stereotype.Service;
@@ -65,6 +68,33 @@ public class OrderServiceImpl implements OrderService {
         else {
             return GsvcExt.CommonRes.newBuilder().setErrCode(999999).build();
         }
+    }
+
+    @Override
+    @Transactional
+    public GsvcExt.CommonRes reset(Empty request) {
+        if (orderMapper.reset() >= 0) {
+            return accountService.reset(Empty.newBuilder().build());
+        }
+
+        return GsvcExt.CommonRes.newBuilder().setErrCode(999999).build();
+    }
+
+    @Override
+    public OrderResp query(Empty request) {
+        val orders = orderMapper.selectList(Wrappers.query());
+        val resp = OrderResp.newBuilder();
+        for (Order order : orders) {
+            resp.addOrder(CreateOrderDto.newBuilder()
+                .setUserId(order.getUserId())
+                .setOrderAmount(order.getMoney())
+                .setOrderCount(order.getCount())
+                .setCommodityCode(order.getCommodityCode())
+                .build());
+        }
+        val accounts = accountService.query(request);
+        resp.addAllAccount(accounts.getAccountList());
+        return resp.build();
     }
 
 }
