@@ -34,11 +34,11 @@ jobs:
       seata:
         image: apache/seata-server:2.1.0-slim
         ports:
-          - "8091:8091"
-          - "7091:7091"
+          - 8091:8091
+          - 7091:7091
         env:
-          - "SEATA_PORT=8091"
-          - "STORE_MODE=file"
+          SEATA_PORT: 8091
+          STORE_MODE: file
     steps:
       - name: Checkout
         uses: actions/checkout@v4
