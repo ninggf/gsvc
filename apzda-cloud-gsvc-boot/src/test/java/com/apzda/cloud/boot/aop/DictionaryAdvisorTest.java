@@ -3,11 +3,14 @@ package com.apzda.cloud.boot.aop;
 import com.apzda.cloud.boot.TestApp;
 import com.apzda.cloud.boot.autoconfig.GsvcBootAutoConfiguration;
 import com.apzda.cloud.boot.controller.TestController;
+import com.apzda.cloud.boot.dict.TransformUtils;
 import com.apzda.cloud.boot.mapper.DictItemMapper;
+import com.apzda.cloud.boot.transformer.Upper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
@@ -23,8 +26,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -66,23 +68,34 @@ class DictionaryAdvisorTest {
     @Test
     @SuppressWarnings("unchecked")
     void getGetUserList() {
-        // when
-        val users = testController.getUserList();
-        // then
-        val data = objectMapper.convertValue(users.getData(), List.class);
-        assertThat(data.size()).isEqualTo(3);
-        assertThat(data.get(0)).isInstanceOf(Map.class);
-        val user1 = (Map<String, String>) data.get(0);
-        assertThat(user1.get("nameText")).isEqualTo("U1");
-        assertThat(user1.get("rolesText")).isEqualTo("r1");
-        assertThat(user1.get("typeText")).isEqualTo("Test1");
-        val user2 = (Map<String, String>) data.get(1);
-        assertThat(user2.get("nameText")).isEqualTo("U2");
-        assertThat(user2.get("rolesText")).isEqualTo("r2");
-        assertThat(user2.get("typeText")).isEqualTo("test3");
+        // given
+        val upper = spy(Upper.class);
+        try (val mocked = Mockito.mockStatic(TransformUtils.class)) {
+            mocked.when(() -> {
+                TransformUtils.getTransformer(Upper.class);
+            }).thenReturn(upper);
 
-        verify(dictItemMapper, times(2)).getDictLabel(any(), any(), any(), any());
-        verify(dictItemMapper, times(1)).getDictLabel(any(), any(), any(), any(), any());
+            // when
+            val users = testController.getUserList();
+            // then
+            val data = objectMapper.convertValue(users.getData(), List.class);
+            assertThat(data.size()).isEqualTo(3);
+            assertThat(data.get(0)).isInstanceOf(Map.class);
+            val user1 = (Map<String, String>) data.get(0);
+            assertThat(user1.get("nameText")).isEqualTo("U1");
+            assertThat(user1.get("name1Text")).isEqualTo("U1");
+            assertThat(user1.get("rolesText")).isEqualTo("r1");
+            assertThat(user1.get("typeText")).isEqualTo("Test1");
+            val user2 = (Map<String, String>) data.get(1);
+            assertThat(user2.get("nameText")).isEqualTo("U2");
+            assertThat(user2.get("name1Text")).isEqualTo("U1");
+            assertThat(user2.get("rolesText")).isEqualTo("r2");
+            assertThat(user2.get("typeText")).isEqualTo("test3");
+
+            verify(dictItemMapper, times(2)).getDictLabel(any(), any(), any(), any());
+            verify(dictItemMapper, times(1)).getDictLabel(any(), any(), any(), any(), any());
+            verify(upper, times(3)).transform(any());
+        }
     }
 
     @Test

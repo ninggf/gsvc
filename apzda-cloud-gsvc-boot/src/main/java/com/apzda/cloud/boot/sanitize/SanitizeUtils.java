@@ -25,6 +25,8 @@ import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.util.CollectionUtils;
 
 import java.beans.PropertyDescriptor;
@@ -42,12 +44,22 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 public abstract class SanitizeUtils {
 
+    private static ApplicationContext applicationContext;
+
+    public static void setApplicationContext(@Nonnull ApplicationContext applicationContext) {
+        SanitizeUtils.applicationContext = applicationContext;
+    }
+
     private static final LoadingCache<Class<? extends Sanitizer>, Sanitizer> cache = CacheBuilder.newBuilder()
         .build(new CacheLoader<>() {
             @Override
             @Nonnull
             public Sanitizer<?> load(@Nonnull Class<? extends Sanitizer> key) throws Exception {
-                return BeanUtils.instantiateClass(key);
+                val sanitizer = BeanUtils.instantiateClass(key);
+                if (applicationContext != null && sanitizer instanceof ApplicationContextAware aware) {
+                    aware.setApplicationContext(applicationContext);
+                }
+                return sanitizer;
             }
         });
 

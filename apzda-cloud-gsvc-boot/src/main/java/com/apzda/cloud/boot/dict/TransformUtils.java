@@ -22,7 +22,10 @@ import com.google.common.cache.LoadingCache;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -33,12 +36,22 @@ import org.springframework.beans.BeanUtils;
 @SuppressWarnings("rawtypes")
 public abstract class TransformUtils {
 
+    private static ApplicationContext applicationContext;
+
+    public static void setApplicationContext(@Nonnull ApplicationContext applicationContext) {
+        TransformUtils.applicationContext = applicationContext;
+    }
+
     private static final LoadingCache<Class<? extends Transformer>, Transformer> cache = CacheBuilder.newBuilder()
         .build(new CacheLoader<>() {
             @Override
             @Nonnull
             public Transformer load(@Nonnull Class<? extends Transformer> key) throws Exception {
-                return BeanUtils.instantiateClass(key);
+                val transformer = BeanUtils.instantiateClass(key);
+                if (applicationContext != null && transformer instanceof ApplicationContextAware aware) {
+                    aware.setApplicationContext(applicationContext);
+                }
+                return transformer;
             }
         });
 

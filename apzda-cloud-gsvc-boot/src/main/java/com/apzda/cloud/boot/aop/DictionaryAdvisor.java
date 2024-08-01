@@ -18,8 +18,12 @@ package com.apzda.cloud.boot.aop;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.EnumUtil;
-import com.apzda.cloud.boot.dict.*;
+import com.apzda.cloud.boot.dict.Dict;
+import com.apzda.cloud.boot.dict.DictItem;
+import com.apzda.cloud.boot.dict.DictText;
+import com.apzda.cloud.boot.dict.TransformUtils;
 import com.apzda.cloud.boot.mapper.DictItemMapper;
+import com.apzda.cloud.boot.sanitize.SanitizeUtils;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -36,6 +40,9 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -60,13 +67,19 @@ import static com.apzda.cloud.boot.sanitize.SanitizeUtils.sanitize;
 @Slf4j
 @Order
 @RequiredArgsConstructor
-public class DictionaryAdvisor {
+public class DictionaryAdvisor implements ApplicationContextAware {
+
+    private final static ThreadLocal<Map<String, Map<String, Object>>> caches = new ThreadLocal<>();
 
     private final ServiceConfigProperties properties;
 
     private final DictItemMapper dictItemMapper;
 
-    private final static ThreadLocal<Map<String, Map<String, String>>> caches = new ThreadLocal<>();
+    @Override
+    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
+        TransformUtils.setApplicationContext(applicationContext);
+        SanitizeUtils.setApplicationContext(applicationContext);
+    }
 
     @Pointcut("execution(@com.apzda.cloud.boot.dict.Dictionary public com.apzda.cloud.gsvc.dto.Response *(..))")
     public void dictionaryPointcut() {
@@ -78,7 +91,7 @@ public class DictionaryAdvisor {
 
         if (returnObj instanceof Response<?> response) {
             try {
-                val cache = new HashMap<String, Map<String, String>>();
+                val cache = new HashMap<String, Map<String, Object>>();
                 caches.set(cache);
 
                 val data = response.getData();
@@ -161,11 +174,16 @@ public class DictionaryAdvisor {
         val dictFieldName = name + StringUtils.defaultIfBlank(this.properties.getConfig().getDictLabelSuffix(), "Text");
 
         val transformerClz = annotation.transformer();
-        if (!Transformer.class.equals(transformerClz)) {
-            val transformer = TransformUtils.getTransformer(transformerClz);
-            if (transformer != null) {
-                map.put(dictFieldName, transformer.transform(value));
-            }
+        if (!transformerClz.isInterface()) {
+            val cache = caches.get().computeIfAbsent("transformer." + transformerClz, (key) -> new HashMap<>());
+            val dictVal = cache.computeIfAbsent(value.toString(), (key) -> {
+                val transformer = TransformUtils.getTransformer(transformerClz);
+                if (transformer != null) {
+                    return transformer.transform(value);
+                }
+                return null;
+            });
+            map.put(dictFieldName, dictVal);
             return;
         }
 
@@ -185,21 +203,21 @@ public class DictionaryAdvisor {
             map.put(dictFieldName, getTextFromEnum((Enum<?>) value, label));
         }
         else if (StringUtils.isNotBlank(table)) {
-            val dict = caches.get().computeIfAbsent(table + "." + code, (key) -> new HashMap<>());
-            val dictText = dict.computeIfAbsent(value.toString(),
+            val cache = caches.get().computeIfAbsent(table + "." + code, (key) -> new HashMap<>());
+            val dictText = cache.computeIfAbsent(value.toString(),
                     (key) -> getTextFromTable(realTable, code, key, label));
             map.put(dictFieldName, dictText);
         }
         else if (StringUtils.isNotBlank(code)) {
-            val dict = caches.get().computeIfAbsent("." + code, (key) -> {
-                val kv = new HashMap<String, String>();
+            val cache = caches.get().computeIfAbsent("." + code, (key) -> {
+                val kv = new HashMap<String, Object>();
                 val items = getTextFromDictItemTable(code);
                 for (DictItem item : items) {
                     kv.put(item.getVal(), item.getLabel());
                 }
                 return kv;
             });
-            map.put(dictFieldName, dict.get(value.toString()));
+            map.put(dictFieldName, cache.get(value.toString()));
         }
         else if (StringUtils.isNotBlank(label)) {
             map.put(dictFieldName, label);

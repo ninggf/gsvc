@@ -45,6 +45,10 @@ public class User implements IEntity<String> {
     @Dict(transformer = Upper.class)
     private String name;
 
+    @Dict(transformer = Upper.class)
+    @TableField(exist = false)
+    private String name1 = "u1";
+
     @Version
     private Long ver;
 
