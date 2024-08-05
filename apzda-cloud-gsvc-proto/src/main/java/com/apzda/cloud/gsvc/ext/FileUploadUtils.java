@@ -17,8 +17,11 @@
 package com.apzda.cloud.gsvc.ext;
 
 import com.google.common.io.Files;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Nonnull;
 import java.io.File;
+import java.io.IOException;
 import java.net.URLConnection;
 
 /**
@@ -28,11 +31,13 @@ import java.net.URLConnection;
  **/
 public abstract class FileUploadUtils {
 
-    public static GsvcExt.UploadFile create(String file) {
+    @Nonnull
+    public static GsvcExt.UploadFile create(@Nonnull String file) {
         return create(new File(file));
     }
 
-    public static GsvcExt.UploadFile create(File file) {
+    @Nonnull
+    public static GsvcExt.UploadFile create(@Nonnull File file) {
         final GsvcExt.UploadFile.Builder builder = GsvcExt.UploadFile.newBuilder();
         final String fileName = file.getName();
         builder.setName(Files.getNameWithoutExtension(fileName));
@@ -56,6 +61,27 @@ public abstract class FileUploadUtils {
         else {
             builder.setError(String.format("'%s' is not exist!", file));
         }
+        return builder.build();
+    }
+
+    @Nonnull
+    public static GsvcExt.UploadFile create(@Nonnull MultipartFile file) throws IOException {
+        GsvcExt.UploadFile.Builder builder = GsvcExt.UploadFile.newBuilder();
+        String fileName = file.getName();
+        File tmpFile = File.createTempFile("G_UP_", ".dat");
+        file.transferTo(tmpFile);
+        builder.setName(Files.getNameWithoutExtension(fileName));
+        builder.setFile(tmpFile.getAbsolutePath());
+        builder.setContentType(file.getContentType());
+        builder.setFilename(file.getOriginalFilename());
+        builder.setExt(Files.getFileExtension(fileName));
+        try {
+            builder.setSize(file.getSize());
+        }
+        catch (Exception e) {
+            builder.setError(e.getMessage());
+        }
+
         return builder.build();
     }
 

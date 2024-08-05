@@ -3,6 +3,7 @@
  */
 package com.apzda.cloud.demo.demo.controller;
 
+import cn.hutool.core.io.FileUtil;
 import com.apzda.cloud.demo.bar.proto.*;
 import com.apzda.cloud.demo.demo.proto.DemoReq;
 import com.apzda.cloud.demo.demo.proto.DemoRes;
@@ -147,6 +148,10 @@ public class DemoController {
 
     @PostMapping("/upload")
     public Response<String> uploadLocal(MultipartFile file) throws IOException {
+        val uploadFile = FileUploadUtils.create(file);
+        if (!FileUtil.exist(uploadFile.getFile())) {
+            Response.error(404);
+        }
         return Response.ok(file.getOriginalFilename());
     }
 
