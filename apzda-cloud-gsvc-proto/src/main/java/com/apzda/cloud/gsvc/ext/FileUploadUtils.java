@@ -17,6 +17,9 @@
 package com.apzda.cloud.gsvc.ext;
 
 import com.google.common.io.Files;
+import lombok.val;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Nonnull;
@@ -67,13 +70,24 @@ public abstract class FileUploadUtils {
     @Nonnull
     public static GsvcExt.UploadFile create(@Nonnull MultipartFile file) throws IOException {
         GsvcExt.UploadFile.Builder builder = GsvcExt.UploadFile.newBuilder();
-        String fileName = file.getName();
+        String fileName = file.getOriginalFilename();
+        val contentType = file.getContentType();
+
+        if (StringUtils.isBlank(fileName) && StringUtils.isNotBlank(contentType)) {
+            val ext = MimeTypeUtils.parseMimeType(contentType).getSubtype();
+            fileName = file.getName() + "." + ext;
+        }
+
+        if (fileName == null) {
+            throw new NullPointerException("originalFilename is null");
+        }
+
         File tmpFile = File.createTempFile("G_UP_", ".dat");
         file.transferTo(tmpFile);
         builder.setName(Files.getNameWithoutExtension(fileName));
         builder.setFile(tmpFile.getAbsolutePath());
-        builder.setContentType(file.getContentType());
-        builder.setFilename(file.getOriginalFilename());
+        builder.setContentType(contentType);
+        builder.setFilename(fileName);
         builder.setExt(Files.getFileExtension(fileName));
         try {
             builder.setSize(file.getSize());
