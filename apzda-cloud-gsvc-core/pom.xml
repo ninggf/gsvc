@@ -41,10 +41,6 @@
             <artifactId>grpc-netty</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.hubspot.jackson</groupId>
             <artifactId>jackson-datatype-protobuf</artifactId>
         </dependency>
