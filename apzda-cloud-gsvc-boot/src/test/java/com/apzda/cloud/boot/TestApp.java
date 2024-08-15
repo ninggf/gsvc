@@ -25,7 +25,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  * @version 1.0.0
  * @since 1.0.0
  **/
-@SpringBootApplication
+@SpringBootApplication(proxyBeanMethods = false)
 @EnableConfigurationProperties(ServiceConfigProperties.class)
 public class TestApp {
 

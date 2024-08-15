@@ -29,6 +29,7 @@
         <module>apzda-cloud-xxl-job-adapter</module>
         <module>apzda-cloud-gsvc-test</module>
         <module>apzda-cloud-gsvc-boot</module>
+        <module>apzda-cloud-gsvc-seata</module>
     </modules>
 
     <properties>
@@ -49,25 +50,27 @@
         <spring-boot.version>3.3.2</spring-boot.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
         <mybatis-plus.version>3.5.7</mybatis-plus.version>
-        <hutool.version>5.8.27</hutool.version>
+        <hutool.version>5.8.30</hutool.version>
         <guava.version>33.2.1-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <protoc.version>3.25.3</protoc.version>
         <protobuf.java.version>3.25.3</protobuf.java.version>
-        <grpc-java.version>1.64.0</grpc-java.version>
+        <grpc-java.version>1.66.0</grpc-java.version>
         <jprotoc.version>1.2.2</jprotoc.version>
         <jackson-protobuf.version>0.9.14</jackson-protobuf.version>
         <net-devh-grpc.version>2.15.0.RELEASE</net-devh-grpc.version>
         <sentinel.version>1.8.8</sentinel.version>
         <protovalidate.version>0.2.1</protovalidate.version>
         <druid.version>1.2.23</druid.version>
-        <easyexcel.version>4.0.1</easyexcel.version>
+        <seata.version>2.0.0</seata.version>
+        <seata.cloud.version>2023.0.1.2</seata.cloud.version>
+        <easyexcel.version>4.0.2</easyexcel.version>
         <commons-io.version>2.16.1</commons-io.version>
         <jasypt.version>3.0.5</jasypt.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <micrometer-propagation.version>1.1.1</micrometer-propagation.version>
         <brave.version>5.17.0</brave.version>
-        <springdoc.version>2.5.0</springdoc.version>
+        <springdoc.version>2.6.0</springdoc.version>
         <swagger-annotations.version>2.2.22</swagger-annotations.version>
         <!-- plugins versions -->
         <maven-gpg-plugin.version>3.2.4</maven-gpg-plugin.version>
@@ -172,6 +175,11 @@
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>domain</artifactId>
                 <version>3.3.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
+                <artifactId>apzda-cloud-gsvc-seata</artifactId>
+                <version>1.2.20-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
@@ -317,6 +325,22 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>easyexcel</artifactId>
                 <version>${easyexcel.version}</version>
+            </dependency>
+            <!-- seata -->
+            <dependency>
+                <groupId>io.seata</groupId>
+                <artifactId>seata-spring-boot-starter</artifactId>
+                <version>${seata.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+                <version>${seata.cloud.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.seata</groupId>
+                <artifactId>seata-grpc</artifactId>
+                <version>${seata.version}</version>
             </dependency>
             <!-- sentinel -->
             <dependency>

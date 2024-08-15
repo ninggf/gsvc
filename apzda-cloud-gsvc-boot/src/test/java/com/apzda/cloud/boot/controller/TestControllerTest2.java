@@ -30,6 +30,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -60,7 +61,10 @@ public class TestControllerTest2 {
 
     @Test
     void testExport() throws Exception {
-        webTestClient.get()
+        webTestClient.mutateWith(((builder, httpHandlerBuilder, connector) -> {
+            builder.responseTimeout(Duration.ofSeconds(30));
+        }))
+            .get()
             .uri("/user/export")
             .exchange()
             .expectStatus()

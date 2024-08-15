@@ -32,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -48,6 +49,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "apzda.cloud.reference.MathService.grpc", name = "enabled", havingValue = "false",
+        matchIfMissing = true)
 public class MathServiceImpl implements MathService {
 
     private final FooService fooService;

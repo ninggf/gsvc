@@ -4,6 +4,7 @@
 package com.apzda.cloud.boot.entity;
 
 import com.apzda.cloud.boot.dict.Dict;
+import com.apzda.cloud.boot.transformer.Upper;
 import com.apzda.cloud.gsvc.acl.Resource;
 import com.apzda.cloud.gsvc.model.IEntity;
 import com.baomidou.mybatisplus.annotation.*;
@@ -41,7 +42,12 @@ public class User implements IEntity<String> {
     @TableField(fill = FieldFill.INSERT)
     private String merchantId;
 
+    @Dict(transformer = Upper.class)
     private String name;
+
+    @Dict(transformer = Upper.class)
+    @TableField(exist = false)
+    private String name1 = "u1";
 
     @Version
     private Long ver;

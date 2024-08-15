@@ -185,8 +185,7 @@ public class MyBatisPlusAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean
-    MetaObjectHandler metaObjectHandler(ObjectProvider<TenantManager<?>> tenantManagers,
+    MetaObjectHandler gsvcMetaObjectHandler(ObjectProvider<TenantManager<?>> tenantManagers,
             ServiceConfigProperties properties, Clock clock) {
         val stringBuffer = new StringBuffer();
         tenantManagers.ifAvailable(tenantManager -> {
@@ -207,12 +206,18 @@ public class MyBatisPlusAutoConfiguration {
             public void insertFill(MetaObject metaObject) {
                 val fills = new ArrayList<StrictFill<?, ?>>();
                 for (String column : createdAtColumns) {
+                    if (!metaObject.hasGetter(column) || !metaObject.hasSetter(column)) {
+                        continue;
+                    }
                     val timeType = metaObject.getGetterType(column);
                     if (timeType != null) {
                         fills.add(getTime(column, timeType));
                     }
                 }
                 for (String column : updatedAtColumns) {
+                    if (!metaObject.hasGetter(column) || !metaObject.hasSetter(column)) {
+                        continue;
+                    }
                     val timeType = metaObject.getGetterType(column);
                     if (timeType != null) {
                         fills.add(getTime(column, timeType));
@@ -224,12 +229,18 @@ public class MyBatisPlusAutoConfiguration {
                         && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
                     val auditor = currentAuditor.get();
                     for (String column : createdByColumns) {
+                        if (!metaObject.hasGetter(column) || !metaObject.hasSetter(column)) {
+                            continue;
+                        }
                         val uidType = metaObject.getGetterType(column);
                         if (uidType != null) {
                             fills.add(getUid(column, uidType, auditor));
                         }
                     }
                     for (String column : updatedByColumns) {
+                        if (!metaObject.hasGetter(column) || !metaObject.hasSetter(column)) {
+                            continue;
+                        }
                         val uidType = metaObject.getGetterType(column);
                         if (uidType != null) {
                             fills.add(getUid(column, uidType, auditor));
@@ -257,6 +268,9 @@ public class MyBatisPlusAutoConfiguration {
             public void updateFill(MetaObject metaObject) {
                 val fills = new ArrayList<StrictFill<?, ?>>();
                 for (String column : updatedAtColumns) {
+                    if (!metaObject.hasGetter(column) || !metaObject.hasSetter(column)) {
+                        continue;
+                    }
                     val timeType = metaObject.getGetterType(column);
                     if (timeType != null) {
                         fills.add(getTime(column, timeType));
@@ -268,6 +282,9 @@ public class MyBatisPlusAutoConfiguration {
                         && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
                     val auditor = currentAuditor.get();
                     for (String column : updatedByColumns) {
+                        if (!metaObject.hasGetter(column) || !metaObject.hasSetter(column)) {
+                            continue;
+                        }
                         val uidType = metaObject.getGetterType(column);
                         if (uidType != null) {
                             fills.add(getUid(column, uidType, auditor));

@@ -114,3 +114,20 @@ message UploadRes {
 service FileService {
   rpc upload(FileReq) returns(UploadRes);
 }
+
+message DeductDto {
+  string commodity_code = 1;
+  uint32 count = 2;
+}
+
+message StorageResp {
+  int32 err_code = 1;
+  optional string err_msg = 2;
+  repeated DeductDto storage = 3;
+}
+
+service StorageService {
+  rpc deduct(DeductDto) returns(gsvc.CommonRes);
+  rpc reset(google.protobuf.Empty) returns(gsvc.CommonRes);
+  rpc query(google.protobuf.Empty) returns(StorageResp);
+}

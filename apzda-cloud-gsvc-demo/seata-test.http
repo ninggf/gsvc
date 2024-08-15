@@ -1,0 +1,86 @@
+### Route - Reset All - 1
+GET http://{{barService}}/order/reset
+Accept: application/json
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.message === "ok", "出错啦: " + response.body.message + " != 'ok'");
+    });
+%}
+
+### Route -  query - 1
+GET http://{{barService}}/order/query
+Accept: application/json
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data.order === null, "order not null");
+        client.assert(response.body.data.account.money === 100, "money of account does not equals 100");
+        client.assert(response.body.data.storage.count === 10, "count of storage does not equals 100");
+    });
+%}
+
+### Route - Create Order Successfully
+POST http://{{barService}}/order/create
+Content-Type: application/json
+Accept: application/json
+
+{
+    "userId": "654321",
+    "commodityCode": "123456",
+    "count": 2,
+    "money": 40
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.message === "成功啦", "出错啦: " + response.body.message + " != '成功啦'");
+    });
+%}
+
+### Route -  query - 2
+GET http://{{barService}}/order/query
+Accept: application/json
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data.order.orderCount == 2, "count of order does not equals 2");
+        client.assert(response.body.data.account.money == 60, "money of account does not equals 100");
+        client.assert(response.body.data.storage.count == 8, "count of storage does not equals 100");
+    });
+%}
+
+### Route - Create Order Fail
+POST http://{{barService}}/order/create
+Content-Type: application/json
+Accept: application/json
+
+{
+    "userId": "654321",
+    "commodityCode": "123456",
+    "count": 1,
+    "money": 100
+}
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 500, "Response status is not 500");
+    });
+%}
+
+### Route -  query - 3
+GET http://{{barService}}/order/query
+Accept: application/json
+
+> {%
+    client.test("Request executed successfully", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data.order.orderCount == 2, "count of order does not equals 2");
+        client.assert(response.body.data.account.money == 60, "money of account does not equals 100");
+        client.assert(response.body.data.storage.count == 8, "count of storage does not equals 100");
+    });
+%}

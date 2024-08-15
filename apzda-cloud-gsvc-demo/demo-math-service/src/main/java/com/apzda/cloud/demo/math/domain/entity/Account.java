@@ -14,26 +14,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.boot.dict;
+package com.apzda.cloud.demo.math.domain.entity;
 
-import java.lang.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 
 /**
  * @author fengz (windywany@gmail.com)
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Documented
-public @interface Dict {
+@Data
+@TableName("account_tbl")
+public class Account {
 
-    String value() default "";
+    @TableId(type = IdType.AUTO)
+    private Integer id;
 
-    String code() default "";
+    private String userId;
 
-    String table() default "";
-
-    Class<?> entity() default Void.class;
+    private Integer money;
 
 }

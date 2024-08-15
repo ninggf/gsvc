@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.exception;
 
 import com.apzda.cloud.gsvc.IServiceError;
+import com.apzda.cloud.gsvc.error.InternalServiceError;
 import lombok.Getter;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +15,10 @@ public class GsvcException extends RuntimeException {
     protected final IServiceError error;
 
     private final HttpHeaders headers;
+
+    public GsvcException(String message) {
+        this(new InternalServiceError(message), null, null);
+    }
 
     public GsvcException(IServiceError error, HttpHeaders headers, Throwable e) {
         super(error.localMessage(), e);

@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnClass(GrpcGlobalClientInterceptor.class)
 @Slf4j
-public class SentinelGrpClientConfiguration {
+class SentinelGrpClientConfiguration {
 
     @GrpcGlobalClientInterceptor
     SentinelGrpcClientInterceptor sentinelGrpcClientInterceptor() {
