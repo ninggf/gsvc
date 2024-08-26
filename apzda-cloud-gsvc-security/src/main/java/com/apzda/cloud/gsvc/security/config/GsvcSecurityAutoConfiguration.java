@@ -83,6 +83,7 @@ import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.ErrorResponseException;
+import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -169,6 +170,8 @@ public class GsvcSecurityAutoConfiguration {
     @EnableWebSecurity
     @RequiredArgsConstructor
     static class SecurityConfig {
+
+        private final static ThreadLocal<JWTSigner> jwtSigners = new ThreadLocal<>();
 
         private final SecurityConfigProperties properties;
 
@@ -439,11 +442,19 @@ public class GsvcSecurityAutoConfiguration {
         }
 
         @Bean
+        @RequestScope
         @ConditionalOnMissingBean
         JWTSigner gsvcJwtSigner() {
-            val jwtKey = properties.getJwtKey();
-            Assert.hasText(jwtKey, "apzda.cloud.security.jwt-key is not set");
-            return JWTSignerUtil.hs256(jwtKey.getBytes());
+            var signer = jwtSigners.get();
+
+            if (signer == null) {
+                val jwtKey = properties.getJwtKey();
+                Assert.hasText(jwtKey, "apzda.cloud.security.jwt-key is not set");
+                signer = JWTSignerUtil.hs256(jwtKey.getBytes());
+                jwtSigners.set(signer);
+            }
+
+            return signer;
         }
 
         @Bean
