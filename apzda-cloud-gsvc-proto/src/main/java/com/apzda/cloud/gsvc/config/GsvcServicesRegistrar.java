@@ -47,7 +47,7 @@ class GsvcServicesRegistrar implements ImportSelector {
         }
 
         final Set<String> imports = new LinkedHashSet<>();
-        val annotation = (EnableGsvcServices) metadata.getAnnotations().get(EnableGsvcServices.class).synthesize();
+        val annotation = metadata.getAnnotations().get(EnableGsvcServices.class).synthesize();
         val service = annotation.value();
 
         if (service != null) {
