@@ -25,6 +25,11 @@ public interface IServiceError {
         if (StringUtils.isBlank(message)) {
             return I18nUtils.t("error." + Math.abs(code()), args());
         }
+        else if (StringUtils.startsWith(message, "{") && StringUtils.endsWith(message, "}")) {
+            val msg = message.substring(1, message.length() - 1);
+            return I18nUtils.t(msg, args(), msg);
+        }
+
         return message;
     }
 
