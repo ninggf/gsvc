@@ -22,8 +22,9 @@ public interface IServiceError {
 
     default String localMessage() {
         val message = message();
-        if (StringUtils.isBlank(message)) {
-            return I18nUtils.t("error." + Math.abs(code()), args());
+        val code = code();
+        if (code != 0 && StringUtils.isBlank(message)) {
+            return I18nUtils.t("error." + Math.abs(code), args());
         }
         else if (StringUtils.startsWith(message, "{") && StringUtils.endsWith(message, "}")) {
             val msg = message.substring(1, message.length() - 1);
