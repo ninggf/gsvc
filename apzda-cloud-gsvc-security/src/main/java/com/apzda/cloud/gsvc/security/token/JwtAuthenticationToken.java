@@ -107,7 +107,10 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             super.setAuthenticated(true);
             if (principal instanceof UserDetailsMeta meta) {
                 meta.setUid(jwtToken.getUid());
-                meta.setProvider(jwtToken.getProvider());
+                val provider = jwtToken.getProvider();
+                if (StringUtils.isNotBlank(provider)) {
+                    meta.setProvider(provider);
+                }
             }
         }
     }

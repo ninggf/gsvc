@@ -1,7 +1,6 @@
 package com.apzda.cloud.gsvc.security.config;
 
 import cn.hutool.jwt.signers.JWTSigner;
-import cn.hutool.jwt.signers.JWTSignerUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.exception.ExceptionTransformer;
@@ -18,6 +17,7 @@ import com.apzda.cloud.gsvc.security.mfa.MfaTokenCustomizer;
 import com.apzda.cloud.gsvc.security.plugin.InjectCurrentUserPlugin;
 import com.apzda.cloud.gsvc.security.repository.JwtContextRepository;
 import com.apzda.cloud.gsvc.security.resolver.CurrentUserParamResolver;
+import com.apzda.cloud.gsvc.security.token.JWTSignerAdapter;
 import com.apzda.cloud.gsvc.security.token.JwtTokenCustomizer;
 import com.apzda.cloud.gsvc.security.token.JwtTokenManager;
 import com.apzda.cloud.gsvc.security.token.TokenManager;
@@ -80,7 +80,6 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
 import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.session.SessionManagementFilter;
-import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -441,9 +440,7 @@ public class GsvcSecurityAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         JWTSigner gsvcJwtSigner() {
-            val jwtKey = properties.getJwtKey();
-            Assert.hasText(jwtKey, "apzda.cloud.security.jwt-key is not set");
-            return JWTSignerUtil.hs256(jwtKey.getBytes());
+            return new JWTSignerAdapter(properties);
         }
 
         @Bean

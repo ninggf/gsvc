@@ -50,8 +50,8 @@
         <spring-boot.version>3.3.2</spring-boot.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
         <mybatis-plus.version>3.5.7</mybatis-plus.version>
-        <hutool.version>5.8.30</hutool.version>
-        <guava.version>33.2.1-jre</guava.version>
+        <hutool.version>5.8.31</hutool.version>
+        <guava.version>33.3.0-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <protoc.version>3.25.3</protoc.version>
         <protobuf.java.version>3.25.3</protobuf.java.version>
@@ -67,14 +67,14 @@
         <easyexcel.version>4.0.2</easyexcel.version>
         <commons-io.version>2.16.1</commons-io.version>
         <jasypt.version>3.0.5</jasypt.version>
-        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <mapstruct.version>1.6.0</mapstruct.version>
         <micrometer-propagation.version>1.1.1</micrometer-propagation.version>
         <brave.version>5.17.0</brave.version>
         <springdoc.version>2.6.0</springdoc.version>
         <swagger-annotations.version>2.2.22</swagger-annotations.version>
         <!-- plugins versions -->
         <maven-gpg-plugin.version>3.2.4</maven-gpg-plugin.version>
-        <spring-javaformat.version>0.0.42</spring-javaformat.version>
+        <spring-javaformat.version>0.0.43</spring-javaformat.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <maven-assembly-plugin.version>3.7.1</maven-assembly-plugin.version>
         <protobuf-maven-plugin.version>0.6.1</protobuf-maven-plugin.version>
@@ -461,13 +461,13 @@
                     <artifactId>maven-release-plugin</artifactId>
                     <version>3.0.0</version>
                     <configuration>
-                        <preparationGoals>clean verify</preparationGoals>
+                        <preparationGoals>clean</preparationGoals>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                         <tagNameFormat>v@{project.version}</tagNameFormat>
                         <generateReleasePoms>false</generateReleasePoms>
                         <arguments>-Dmaven.site.skip=true</arguments>
                         <releaseProfiles>release</releaseProfiles>
-                        <goals>install</goals>
+                        <goals>clean verify</goals>
                     </configuration>
                 </plugin>
                 <!-- maven-javadoc-plugin -->
@@ -567,7 +567,7 @@
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>10.15.0</version>
+                            <version>10.18.0</version>
                         </dependency>
                         <dependency>
                             <groupId>io.spring.javaformat</groupId>

@@ -105,7 +105,7 @@ public class JwtTokenManager implements TokenManager {
         }
         catch (Exception e) {
             if (log.isTraceEnabled()) {
-                log.trace("accessToken is invalid: {} - {}", accessToken, e.getMessage());
+                log.trace("accessToken is invalid: {}", accessToken, e);
             }
             throw TokenException.INVALID_TOKEN;
         }

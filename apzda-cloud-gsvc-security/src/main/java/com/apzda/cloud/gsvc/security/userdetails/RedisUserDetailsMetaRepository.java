@@ -4,14 +4,17 @@ import com.apzda.cloud.gsvc.security.jackson.SimpleGrantedAuthorityDeserializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.net.SocketException;
 import java.util.Optional;
 
 /**
@@ -51,19 +54,29 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     @Override
     public void removeMetaData(UserDetails userDetails, String key) {
-        redisTemplate.opsForHash().delete(thenMetaKey(userDetails), key);
+        try {
+            redisTemplate.opsForHash().delete(thenMetaKey(userDetails), key);
+        }
+        catch (Exception e) {
+            log.error("Cannot remove user meta: {}.{}", thenMetaKey(userDetails), key, e);
+        }
     }
 
     @Override
     public void removeMetaData(UserDetails userDetails) {
-        redisTemplate.delete(thenMetaKey(userDetails));
+        try {
+            redisTemplate.delete(thenMetaKey(userDetails));
+        }
+        catch (Exception e) {
+            log.error("Cannot remove user meta: {}", thenMetaKey(userDetails), e);
+        }
     }
 
     @Override
     @NonNull
     public <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey, Class<R> rClass) {
         try {
-            val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
+            val value = get(userDetails, key);
             if (value != null) {
                 if (log.isTraceEnabled()) {
                     log.trace("User meta '{}' of '{}' loaded from Redis", key, userDetails.getUsername());
@@ -82,7 +95,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
     public <R> Optional<R> getCachedMetaData(UserDetails userDetails, String key, String metaKey,
             TypeReference<R> typeReference) {
         try {
-            val value = redisTemplate.<String, String>opsForHash().get(thenMetaKey(userDetails), key);
+            val value = get(userDetails, key);
             if (value != null) {
                 if (log.isTraceEnabled()) {
                     log.trace("User metas '{}' of '{}' loaded from cache", key, userDetails.getUsername());
@@ -98,6 +111,23 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
 
     protected String thenMetaKey(UserDetails userDetails) {
         return META_KEY_PREFIX + userDetails.getUsername();
+    }
+
+    @Nullable
+    private String get(UserDetails userDetails, String key) {
+        val metaKey = thenMetaKey(userDetails);
+        try {
+            return redisTemplate.<String, String>opsForHash().get(metaKey, key);
+        }
+        catch (RedisSystemException e) {
+            val rc = e.getRootCause();
+            if (rc instanceof SocketException) {
+                // try again
+                return redisTemplate.<String, String>opsForHash().get(metaKey, key);
+            }
+        }
+
+        return null;
     }
 
 }

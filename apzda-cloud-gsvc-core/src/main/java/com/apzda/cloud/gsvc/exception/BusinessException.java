@@ -1,6 +1,7 @@
 package com.apzda.cloud.gsvc.exception;
 
 import com.apzda.cloud.gsvc.IServiceError;
+import jakarta.annotation.Nonnull;
 import org.springframework.http.HttpHeaders;
 
 /**
@@ -10,15 +11,19 @@ import org.springframework.http.HttpHeaders;
  */
 public class BusinessException extends GsvcException {
 
-    public BusinessException(IServiceError error, HttpHeaders headers, Throwable e) {
+    public BusinessException(String message) {
+        super(message);
+    }
+
+    public BusinessException(@Nonnull IServiceError error, HttpHeaders headers, Throwable e) {
         super(error, headers, e);
     }
 
-    public BusinessException(IServiceError error, Throwable e) {
+    public BusinessException(@Nonnull IServiceError error, Throwable e) {
         this(error, null, e);
     }
 
-    public BusinessException(IServiceError error) {
+    public BusinessException(@Nonnull IServiceError error) {
         this(error, null);
     }
 
