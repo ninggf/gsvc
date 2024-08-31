@@ -16,6 +16,7 @@ updates:
       - dependency-name: "com.google.protobuf:protobuf-java"
       - dependency-name: "com.google.protobuf:protobuf-java-util"
       - dependency-name: "org.apache.maven.plugins:*"
+      - dependency-name: "build.buf:protovalidate"
   - package-ecosystem: "npm"
     directory: "/"
     target-branch: main
