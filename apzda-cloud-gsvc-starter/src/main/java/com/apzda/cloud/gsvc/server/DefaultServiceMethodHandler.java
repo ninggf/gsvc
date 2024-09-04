@@ -480,7 +480,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
                         wrappedResp.setErrMsg(errMsg);
                     }
                 }
-                else {
+                else if (errCode != 0) {
                     val errMsg = I18nUtils.t("error." + Math.abs(errCode), "");
                     if (StringUtils.hasText(errMsg)) {
                         wrappedResp.setErrMsg(errMsg);
