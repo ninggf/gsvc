@@ -20,7 +20,6 @@ package com.apzda.cloud.gsvc.gtw.filter;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServerHttpRequest;
@@ -32,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 
 @Setter
-@ConfigurationProperties("spring.cloud.gateway.x-forwarded")
 public class XForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
 
     /** Default http port. */
