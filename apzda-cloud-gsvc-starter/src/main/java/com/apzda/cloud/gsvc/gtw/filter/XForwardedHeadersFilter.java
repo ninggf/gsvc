@@ -28,10 +28,8 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Setter
 @ConfigurationProperties("spring.cloud.gateway.x-forwarded")
@@ -87,10 +85,6 @@ public class XForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
     @Getter
     private boolean protoEnabled = true;
 
-    /** If X-Forwarded-Prefix is enabled. */
-    @Getter
-    private boolean prefixEnabled = true;
-
     /** If appending X-Forwarded-For as a list is enabled. */
     @Getter
     private boolean forAppend = true;
@@ -136,36 +130,6 @@ public class XForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
             write(updated, X_FORWARDED_PROTO_HEADER, proto, isProtoAppend());
         }
 
-        if (isPrefixEnabled()) {
-            // If the path of the url that the gw is routing to is a subset
-            // (and ending part) of the url that it is routing from then the difference
-            // is the prefix e.g. if request original.com/prefix/get/ is routed
-            // to routedservice:8090/get then /prefix is the prefix
-            // - see XForwardedHeadersFilterTests, so first get uris, then extract paths
-            // and remove one from another if it's the ending part.
-
-            Set<URI> originalUris = Collections.EMPTY_SET;
-            URI requestUri = uri;
-
-            if (originalUris != null && requestUri != null) {
-
-                originalUris.forEach(originalUri -> {
-
-                    if (originalUri != null && originalUri.getPath() != null) {
-                        String prefix = originalUri.getPath();
-
-                        // strip trailing slashes before checking if request path is end
-                        // of original path
-                        String originalUriPath = stripTrailingSlash(originalUri);
-                        String requestUriPath = stripTrailingSlash(requestUri);
-
-                        updateRequest(updated, originalUri, originalUriPath, requestUriPath);
-
-                    }
-                });
-            }
-        }
-
         if (isPortEnabled()) {
             String port = String.valueOf(uri.getPort());
             if (uri.getPort() < 0) {
@@ -186,7 +150,7 @@ public class XForwardedHeadersFilter implements HttpHeadersFilter, Ordered {
         String prefix;
         if (requestUriPath != null && (originalUriPath.endsWith(requestUriPath))) {
             prefix = substringBeforeLast(originalUriPath, requestUriPath);
-            if (prefix != null && prefix.length() > 0 && prefix.length() <= originalUri.getPath().length()) {
+            if (prefix != null && !prefix.isEmpty() && prefix.length() <= originalUri.getPath().length()) {
                 write(updated, X_FORWARDED_PREFIX_HEADER, prefix, isPrefixAppend());
             }
         }
