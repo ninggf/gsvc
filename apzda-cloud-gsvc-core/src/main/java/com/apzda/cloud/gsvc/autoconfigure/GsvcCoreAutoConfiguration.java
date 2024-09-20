@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.gsvc.autoconfigure;
 
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.i18n.LocaleResolverImpl;
 import com.apzda.cloud.gsvc.i18n.MessageSourceNameResolver;
 import com.apzda.cloud.gsvc.utils.I18nUtils;
@@ -125,6 +126,12 @@ public class GsvcCoreAutoConfiguration {
                 log.trace("I18n Utils initialized: messageSource({}), localeResolver({})", messageSource,
                         localeResolver);
             }
+        };
+    }
+
+    @Bean
+    static GsvcContextHolder gsvcContextHolder() {
+        return new GsvcContextHolder() {
         };
     }
 

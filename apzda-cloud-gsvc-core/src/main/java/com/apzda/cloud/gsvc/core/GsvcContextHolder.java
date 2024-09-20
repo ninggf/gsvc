@@ -7,6 +7,7 @@ import com.google.common.base.Splitter;
 import io.grpc.Attributes;
 import io.grpc.Metadata;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
 import lombok.val;
 import org.slf4j.MDC;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.lang.NonNull;
@@ -30,7 +34,7 @@ import java.util.*;
 /**
  * @author ninggf
  */
-public abstract class GsvcContextHolder {
+public abstract class GsvcContextHolder implements ApplicationContextAware {
 
     private static final String FILTERED_HTTP_HEADERS = "FILTERED_HTTP_HEADERS";
 
@@ -39,6 +43,14 @@ public abstract class GsvcContextHolder {
     private static final ThreadLocal<GsvcContext> CONTEXT_BOX = new ThreadLocal<>();
 
     private static String appName;
+
+    private static ApplicationContext applicationContext;
+
+    @Override
+    public void setApplicationContext(@Nonnull ApplicationContext applicationContext) throws BeansException {
+        GsvcContextHolder.appName = applicationContext.getEnvironment().getProperty("spring.application.name");
+        GsvcContextHolder.applicationContext = applicationContext;
+    }
 
     public static Optional<HttpServletRequest> getRequest() {
         val requestAttributes = RequestContextHolder.getRequestAttributes();
@@ -194,6 +206,20 @@ public abstract class GsvcContextHolder {
                 System.getProperty("spring.application.name", System.getenv("SPRING_APPLICATION_NAME")));
     }
 
+    @Nullable
+    public static ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    @Nonnull
+    public static <T> T getBean(Class<T> beanClass) {
+        if (applicationContext != null) {
+            return applicationContext.getBean(beanClass);
+        }
+
+        throw new NullPointerException("applicationContext is null");
+    }
+
     @Deprecated
     @NonNull
     public static GsvcContext current() {
@@ -268,10 +294,6 @@ public abstract class GsvcContextHolder {
 
         context.remoteIp = remoteAddr;
         return context.remoteIp;
-    }
-
-    static void setAppName(String appName) {
-        GsvcContextHolder.appName = appName;
     }
 
     @Data
