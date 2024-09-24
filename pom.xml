@@ -54,7 +54,7 @@
         <commons-collections4.version>4.4</commons-collections4.version>
         <protoc.version>3.25.3</protoc.version>
         <protobuf.java.version>3.25.3</protobuf.java.version>
-        <grpc-java.version>1.66.0</grpc-java.version>
+        <grpc-java.version>1.68.0</grpc-java.version>
         <jprotoc.version>1.2.2</jprotoc.version>
         <jackson-protobuf.version>0.9.14</jackson-protobuf.version>
         <net-devh-grpc.version>2.15.0.RELEASE</net-devh-grpc.version>
