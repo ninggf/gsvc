@@ -67,7 +67,7 @@
         <commons-io.version>2.17.0</commons-io.version>
         <jasypt.version>3.0.5</jasypt.version>
         <mapstruct.version>1.6.2</mapstruct.version>
-        <micrometer-propagation.version>1.1.1</micrometer-propagation.version>
+        <micrometer-propagation.version>1.1.2</micrometer-propagation.version>
         <brave.version>5.17.0</brave.version>
         <springdoc.version>2.6.0</springdoc.version>
         <swagger-annotations.version>2.2.23</swagger-annotations.version>
