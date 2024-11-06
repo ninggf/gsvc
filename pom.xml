@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -54,9 +55,9 @@
         <commons-collections4.version>4.4</commons-collections4.version>
         <protoc.version>3.25.3</protoc.version>
         <protobuf.java.version>3.25.3</protobuf.java.version>
-        <grpc-java.version>1.68.0</grpc-java.version>
+        <grpc-java.version>1.68.1</grpc-java.version>
         <jprotoc.version>1.2.2</jprotoc.version>
-        <jackson-protobuf.version>0.9.14</jackson-protobuf.version>
+        <jackson-protobuf.version>0.9.16</jackson-protobuf.version>
         <net-devh-grpc.version>2.15.0.RELEASE</net-devh-grpc.version>
         <sentinel.version>1.8.8</sentinel.version>
         <protovalidate.version>0.2.1</protovalidate.version>
