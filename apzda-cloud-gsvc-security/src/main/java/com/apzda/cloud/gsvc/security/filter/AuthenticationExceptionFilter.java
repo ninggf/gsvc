@@ -22,11 +22,14 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.val;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+
+import static com.apzda.cloud.gsvc.security.repository.JwtContextRepository.CONTEXT_ATTR_EXCEPTION;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -39,6 +42,10 @@ public class AuthenticationExceptionFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
+            val exception = request.getAttribute(CONTEXT_ATTR_EXCEPTION);
+            if (exception instanceof AuthenticationException exp) {
+                throw exp;
+            }
             filterChain.doFilter(request, response);
         }
         catch (AuthenticationException | GsvcException ae) {
