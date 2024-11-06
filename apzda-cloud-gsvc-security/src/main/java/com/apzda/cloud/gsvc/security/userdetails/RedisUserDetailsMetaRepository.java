@@ -4,6 +4,7 @@ import com.apzda.cloud.gsvc.security.jackson.SimpleGrantedAuthorityDeserializer;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -98,7 +99,7 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
             val value = get(userDetails, key);
             if (value != null) {
                 if (log.isTraceEnabled()) {
-                    log.trace("User metas '{}' of '{}' loaded from cache", key, userDetails.getUsername());
+                    log.trace("User metas '{}' of '{}' loaded from Redis", key, userDetails.getUsername());
                 }
                 return Optional.of(objectMapper.readValue(value, typeReference));
             }
@@ -109,7 +110,8 @@ public class RedisUserDetailsMetaRepository extends AbstractUserDetailsMetaRepos
         return Optional.empty();
     }
 
-    protected String thenMetaKey(UserDetails userDetails) {
+    @Nonnull
+    protected String thenMetaKey(@Nonnull UserDetails userDetails) {
         return META_KEY_PREFIX + userDetails.getUsername();
     }
 
