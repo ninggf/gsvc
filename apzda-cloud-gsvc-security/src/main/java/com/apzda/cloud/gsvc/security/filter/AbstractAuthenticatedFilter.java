@@ -29,6 +29,7 @@ import lombok.val;
 import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,6 +39,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Set;
+
+import static com.apzda.cloud.gsvc.security.repository.JwtContextRepository.CONTEXT_ATTR_EXCEPTION;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -74,6 +77,12 @@ public abstract class AbstractAuthenticatedFilter extends OncePerRequestFilter i
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
+
+        val exception = request.getAttribute(CONTEXT_ATTR_EXCEPTION);
+        if (exception instanceof AuthenticationException exp) {
+            throw exp;
+        }
+
         if (excludes.stream().anyMatch((m) -> m.matches(request))) {
             filterChain.doFilter(request, response);
             return;
