@@ -26,6 +26,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.access.expression.SecurityExpressionRoot;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationTrustResolver;
 import org.springframework.security.authentication.AuthenticationTrustResolverImpl;
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
@@ -111,7 +112,12 @@ public abstract class SecurityUtils {
 
         SecurityExpressionRoot create() {
             val authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated()) {
+            if (authentication == null) {
+                throw new AuthenticationCredentialsNotFoundException(
+                        "An Authentication object was not found in the SecurityContext");
+            }
+
+            if (!authentication.isAuthenticated()) {
                 throw new AuthenticationError(ServiceError.UNAUTHORIZED);
             }
 

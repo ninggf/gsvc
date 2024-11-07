@@ -15,7 +15,7 @@ public enum ServiceError implements IServiceError {
 
     //@formatter:off
     BAD_REQUEST(-400, HttpStatus.BAD_REQUEST.getReasonPhrase()),
-    UNAUTHORIZED(-401, HttpStatus.UNAUTHORIZED.getReasonPhrase()),
+    UNAUTHORIZED(-401, HttpStatus.UNAUTHORIZED.getReasonPhrase(),401),
     FORBIDDEN(-403, HttpStatus.FORBIDDEN.getReasonPhrase()),
     NOT_FOUND(-404, HttpStatus.NOT_FOUND.getReasonPhrase()),
     METHOD_NOT_ALLOWED(-405, HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase()),
