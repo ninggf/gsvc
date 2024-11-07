@@ -28,7 +28,7 @@ public enum ServiceError implements IServiceError {
     INVALID_PRINCIPAL_TYPE(-800, "Unknown Principal type"),
     MFA_NOT_SETUP(-801,"Mfa not setup"),
     MFA_NOT_VERIFIED(-802,"Mfa not verified"),
-    TOKEN_EXPIRED(-810,"Access Token expired"),
+    TOKEN_EXPIRED(-810,"Access Token expired",401),
     TOKEN_INVALID(-811,"Token is invalid"),
     USER_PWD_INCORRECT(-812,"Username or Password is incorrect"),
     CREDENTIALS_EXPIRED(-813,"Credentials is expired"),
@@ -50,12 +50,23 @@ public enum ServiceError implements IServiceError {
 
     public final String fallbackString;
 
-    ServiceError(int code, String message) {
+    private final int httpCode;
+
+    ServiceError(int code, String message, int httpCode) {
         this.code = code;
         this.message = message;
         this.fallbackString = """
                 {"errCode":%d,"errMsg":"%s"}
                 """.formatted(code, message());
+        this.httpCode = httpCode;
+    }
+
+    ServiceError(int code, String message) {
+        this(code, message, 0);
+    }
+
+    public int httpCode() {
+        return this.httpCode;
     }
 
     public String fallbackString(String service) {

@@ -25,6 +25,8 @@ import com.apzda.cloud.gsvc.security.userdetails.InMemoryUserDetailsMetaReposito
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaService;
 import com.apzda.cloud.gsvc.security.utils.SecurityUtils;
+import jakarta.annotation.Nonnull;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -42,8 +44,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.PermissionEvaluator;
@@ -82,6 +86,8 @@ import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.ErrorResponseException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -92,6 +98,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.apzda.cloud.gsvc.security.filter.AbstractAuthenticatedFilter.*;
+import static com.apzda.cloud.gsvc.security.repository.JwtContextRepository.CONTEXT_ATTR_EXCEPTION;
 import static com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta.MFA_STATUS_KEY;
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
@@ -594,6 +601,25 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnMissingBean
         CurrentUserProvider springSecurityCurrentUserProvider() {
             return new SpringSecurityUserProvider();
+        }
+
+    }
+
+    @ControllerAdvice
+    @RequiredArgsConstructor
+    @Order(Ordered.LOWEST_PRECEDENCE - 10000)
+    static class ExceptionAdvisor {
+
+        @ExceptionHandler(value = AuthenticationException.class)
+        public ResponseEntity<?> handleException(@Nonnull Exception error, @Nonnull HttpServletRequest request) {
+            val exp = request.getAttribute(CONTEXT_ATTR_EXCEPTION);
+            if (exp instanceof AuthenticationException ae) {
+                val response = AuthenticationHandler.getAuthenticationError(ae);
+                return ResponseEntity.status(response.getHttpCode()).body(response);
+            }
+
+            val response = AuthenticationHandler.getAuthenticationError(error);
+            return ResponseEntity.status(response.getHttpCode()).body(response);
         }
 
     }

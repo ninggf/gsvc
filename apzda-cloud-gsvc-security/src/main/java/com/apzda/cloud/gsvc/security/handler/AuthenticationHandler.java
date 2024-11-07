@@ -6,16 +6,15 @@ import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcException;
 import com.apzda.cloud.gsvc.security.exception.AuthenticationError;
 import com.apzda.cloud.gsvc.security.exception.InvalidSessionException;
-import com.apzda.cloud.gsvc.security.exception.TokenException;
 import com.apzda.cloud.gsvc.security.exception.UnRealAuthenticatedException;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.AccountStatusException;
@@ -86,47 +85,49 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
             Authentication authentication) throws IOException, ServletException {
     }
 
-    static void handleAuthenticationException(HttpServletRequest request, HttpServletResponse response,
-            @NonNull Exception exception) throws IOException {
+    static void handleAuthenticationException(@Nonnull HttpServletRequest request,
+            @Nonnull HttpServletResponse response, @Nonnull Exception exception) throws IOException {
         if (!response.isCommitted()) {
             logger.trace("Authentication Exception caught and handled: {}", exception.getMessage());
-            if (exception instanceof UsernameNotFoundException) {
-                val error = Response.error(ServiceError.USER_PWD_INCORRECT);
-                error.setHttpCode(403);
-                ResponseUtils.respond(request, response, error);
-            }
-            else if (exception instanceof TokenException tokenException) {
-                val err = tokenException.getError();
-                val error = Response.error(err);
-                error.setHttpCode(err == ServiceError.TOKEN_EXPIRED ? 401 : 403);
-                ResponseUtils.respond(request, response, error);
-            }
-            else if (exception instanceof AuthenticationError authenticationError) {
-                val error = Response.error(authenticationError.getError());
-                error.setHttpCode(403);
-                ResponseUtils.respond(request, response, error);
-            }
-            else if (exception instanceof AccountStatusException statusException) {
-                handleAccountStatusException(request, response, statusException);
-            }
-            else if (exception instanceof GsvcException gsvcException) {
-                val error = Response.error(gsvcException.getError());
-                error.setHttpCode(403);
-                ResponseUtils.respond(request, response, error);
-            }
-            else {
-                val error = Response.error(ServiceError.UNAUTHORIZED);
-                error.setHttpCode(401);
-                ResponseUtils.respond(request, response, error);
-            }
+            val error = getAuthenticationError(exception);
+            ResponseUtils.respond(request, response, error);
         }
         else {
             logger.error("Authentication Exception cannot be handled for response which was commited", exception);
         }
     }
 
-    static void handleAccountStatusException(HttpServletRequest request, HttpServletResponse response,
-            @NonNull AccountStatusException exception) throws IOException {
+    @Nonnull
+    static Response<?> getAuthenticationError(@Nonnull Exception exception) {
+        if (exception instanceof UsernameNotFoundException) {
+            val error = Response.error(ServiceError.USER_PWD_INCORRECT);
+            error.setHttpCode(403);
+            return error;
+        }
+        else if (exception instanceof AuthenticationError authenticationError) {
+            val err = authenticationError.getError();
+            val error = Response.error(err);
+            val httpCode = err.httpCode();
+            error.setHttpCode(httpCode > 0 ? httpCode : 403);
+            return error;
+        }
+        else if (exception instanceof AccountStatusException statusException) {
+            return handleAccountStatusException(statusException);
+        }
+        else if (exception instanceof GsvcException gsvcException) {
+            val error = Response.error(gsvcException.getError());
+            error.setHttpCode(403);
+            return error;
+        }
+        else {
+            val error = Response.error(ServiceError.UNAUTHORIZED);
+            error.setHttpCode(401);
+            return error;
+        }
+    }
+
+    @Nonnull
+    static Response<?> handleAccountStatusException(@Nonnull AccountStatusException exception) {
         IServiceError error;
         if (exception instanceof CredentialsExpiredException) {
             error = ServiceError.CREDENTIALS_EXPIRED;
@@ -145,7 +146,7 @@ public interface AuthenticationHandler extends AuthenticationFailureHandler, Aut
         }
         val resp = Response.error(error);
         resp.setHttpCode(403);
-        ResponseUtils.respond(request, response, resp);
+        return resp;
     }
 
 }

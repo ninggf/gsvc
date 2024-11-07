@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionOperations;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Arrays;
@@ -42,27 +43,21 @@ public class AuthorizationLogicCustomizer {
     private final PermissionEvaluator evaluator;
 
     public boolean isSa(MethodSecurityExpressionOperations operations) {
-        return operations.hasRole("sa");
+        return isAuthed() && operations.hasRole("sa");
     }
 
     public boolean iCan(String authority) {
         val authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return evaluator.hasPermission(authentication, null, authority);
-        }
-        return false;
+        return isAuthed() && evaluator.hasPermission(authentication, null, authority);
     }
 
     public boolean iCan(String authority, Object object) {
         val authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return evaluator.hasPermission(authentication, object, authority);
-        }
-        return false;
+        return isAuthed() && evaluator.hasPermission(authentication, object, authority);
     }
 
     public boolean isMine(@Nullable OwnerAware<?> object) {
-        if (object == null || object.getCreatedBy() == null) {
+        if (!isAuthed() || object == null || object.getCreatedBy() == null) {
             return false;
         }
         val me = CurrentUserProvider.getCurrentUser();
@@ -73,7 +68,7 @@ public class AuthorizationLogicCustomizer {
     }
 
     public boolean isMine(@Nullable String owner) {
-        if (StringUtils.isBlank(owner)) {
+        if (!isAuthed() || StringUtils.isBlank(owner)) {
             return false;
         }
         val me = CurrentUserProvider.getCurrentUser();
@@ -82,7 +77,7 @@ public class AuthorizationLogicCustomizer {
     }
 
     public boolean isTenanted(@Nullable Tenantable<?> object) {
-        if (object == null || object.getTenantId() == null) {
+        if (!isAuthed() || object == null || object.getTenantId() == null) {
             return false;
         }
 
@@ -94,7 +89,7 @@ public class AuthorizationLogicCustomizer {
     }
 
     public boolean isTenanted(@Nullable String tenantId) {
-        if (StringUtils.isBlank(tenantId)) {
+        if (!isAuthed() || StringUtils.isBlank(tenantId)) {
             return false;
         }
 
@@ -102,6 +97,15 @@ public class AuthorizationLogicCustomizer {
             .filter(Objects::nonNull)
             .map(Object::toString)
             .anyMatch((id) -> id.equals(tenantId));
+    }
+
+    public boolean isAuthed() {
+        val authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new AuthenticationCredentialsNotFoundException(
+                    "An Authentication object was not found in the SecurityContext");
+        }
+        return authentication.isAuthenticated();
     }
 
 }

@@ -19,6 +19,7 @@ package com.apzda.cloud.gsvc.security.exception;
 import com.apzda.cloud.gsvc.IServiceError;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.NoStackLogError;
+import jakarta.annotation.Nonnull;
 import lombok.Getter;
 import org.springframework.security.core.AuthenticationException;
 
@@ -29,9 +30,10 @@ import org.springframework.security.core.AuthenticationException;
  **/
 @Getter
 public class AuthenticationError extends AuthenticationException implements NoStackLogError {
+
     protected final IServiceError error;
 
-    public AuthenticationError(IServiceError error) {
+    public AuthenticationError(@Nonnull IServiceError error) {
         super(error.message());
         this.error = error;
     }
@@ -40,4 +42,5 @@ public class AuthenticationError extends AuthenticationException implements NoSt
         super(ServiceError.UNAUTHORIZED.message());
         this.error = ServiceError.UNAUTHORIZED;
     }
+
 }

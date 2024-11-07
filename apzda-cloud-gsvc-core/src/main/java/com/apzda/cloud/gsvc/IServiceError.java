@@ -16,6 +16,10 @@ public interface IServiceError {
 
     int code();
 
+    default int httpCode() {
+        return 0;
+    }
+
     default String message() {
         return "";
     }
