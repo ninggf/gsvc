@@ -19,7 +19,7 @@ package com.apzda.cloud.seata.plugin;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
-import io.seata.core.context.RootContext;
+import org.apache.seata.core.context.RootContext;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;

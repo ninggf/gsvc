@@ -17,7 +17,7 @@
 package com.apzda.cloud.seata.context;
 
 import io.micrometer.context.ThreadLocalAccessor;
-import io.seata.core.context.RootContext;
+import org.apache.seata.core.context.RootContext;
 import jakarta.annotation.Nonnull;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;

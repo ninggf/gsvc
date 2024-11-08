@@ -16,7 +16,7 @@
  */
 package com.apzda.cloud.gsvc.autoconfigure;
 
-import io.seata.integration.grpc.interceptor.server.ServerTransactionInterceptor;
+import org.apache.seata.integration.grpc.interceptor.server.ServerTransactionInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.server.interceptor.GrpcGlobalServerInterceptor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;

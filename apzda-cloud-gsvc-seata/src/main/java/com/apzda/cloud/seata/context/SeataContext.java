@@ -16,7 +16,7 @@
  */
 package com.apzda.cloud.seata.context;
 
-import io.seata.core.model.BranchType;
+import org.apache.seata.core.model.BranchType;
 import lombok.Data;
 
 /**

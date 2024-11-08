@@ -26,9 +26,9 @@ import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcException;
 import com.google.protobuf.Empty;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.seata.spring.annotation.GlobalTransactional;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
