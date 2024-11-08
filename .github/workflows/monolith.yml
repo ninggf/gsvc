@@ -64,15 +64,24 @@ jobs:
           wait-for: 5m
           tail: true
           run: |-
+            java -jar demo-allinone-app/target/demo-allinone-app-fat.jar &
+          wait-on: |-
+            http-get://localhost:${{ env.SERVER_PORT_NO }}/actuator/health
+      - name: Run Micro Service
+        uses: JarvusInnovations/background-action@v1
+        with:
+          working-directory: apzda-cloud-gsvc-demo
+          wait-for: 5m
+          tail: true
+          run: |-
             java -jar demo-math-service/target/demo-math-service-fat.jar &
             java -jar demo-bar-service/target/demo-bar-service-fat.jar &
             java -jar demo-foo-service/target/demo-foo-service-fat.jar &
-            java -jar demo-allinone-app/target/demo-allinone-app-fat.jar &
           wait-on: |-
             http-get://localhost:12561/actuator/health
             http-get://localhost:12562/actuator/health
-            http-get://localhost:${{ env.SERVER_PORT_NO }}/actuator/health
             tcp:localhost:9090
+            http-get://localhost:12564/actuator/health
       - name: Download ijhttp tools
         run: |-
           # curl -f -L -o ijhttp.zip "https://jb.gg/ijhttp/latest"

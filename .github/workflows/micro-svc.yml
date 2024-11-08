@@ -56,7 +56,7 @@ jobs:
         run: mvn install -pl apzda-cloud-gsvc-compiler
       - name: Build with Maven
         run: mvn -B package -Djava.version=${{ matrix.java }} --file pom.xml
-      - name: Run All Services
+      - name: Run Math Service
         uses: JarvusInnovations/background-action@v1
         with:
           working-directory: apzda-cloud-gsvc-demo
@@ -64,6 +64,16 @@ jobs:
           tail: true
           run: |-
             java -jar demo-math-service/target/demo-math-service-fat.jar &
+          wait-on: |-
+            tcp:localhost:9090
+            http-get://localhost:12564/actuator/health
+      - name: Run All Services
+        uses: JarvusInnovations/background-action@v1
+        with:
+          working-directory: apzda-cloud-gsvc-demo
+          wait-for: 5m
+          tail: true
+          run: |-
             java -jar demo-bar-service/target/demo-bar-service-fat.jar &
             java -jar demo-foo-service/target/demo-foo-service-fat.jar &
             java -jar demo-demo-service/target/demo-demo-service-fat.jar &
@@ -71,7 +81,6 @@ jobs:
             http-get://localhost:12561/actuator/health
             http-get://localhost:12562/actuator/health
             http-get://localhost:12563/demo/actuator/health
-            tcp:localhost:9090
       - name: Download ijhttp tools
         run: |-
           # curl -f -L -o ijhttp.zip "https://jb.gg/ijhttp/latest"
