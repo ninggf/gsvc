@@ -5,7 +5,7 @@ CREATE TABLE `storage_tbl`
     `cnt`            int(11)      DEFAULT 0,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`commodity_code`)
-) DEFAULT CHARSET = utf8;
+) DEFAULT CHARSET = UTF8MB4;
 
 INSERT INTO `storage_tbl` (id, commodity_code, cnt)
 VALUES (1, '123456', 10);
