@@ -20,10 +20,10 @@ import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.exception.MfaException;
 import com.apzda.cloud.gsvc.security.mfa.MfaStatus;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
+import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.core.Ordered;
-import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -48,7 +48,7 @@ public class MfaAuthenticationFilter extends AbstractAuthenticatedFilter {
     }
 
     @Override
-    protected boolean doFilter(@NonNull Authentication authentication, @NonNull UserDetails userDetails) {
+    protected boolean doFilter(@Nonnull Authentication authentication, @Nonnull UserDetails userDetails) {
         if (properties.isAccountLockedEnabled() && !userDetails.isAccountNonLocked()) {
             return true;
         }

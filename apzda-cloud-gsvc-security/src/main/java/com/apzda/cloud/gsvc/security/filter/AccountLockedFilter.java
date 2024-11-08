@@ -16,9 +16,9 @@
  */
 package com.apzda.cloud.gsvc.security.filter;
 
+import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -41,7 +41,7 @@ public class AccountLockedFilter extends AbstractAuthenticatedFilter {
     }
 
     @Override
-    protected boolean doFilter(@NonNull Authentication authentication, @NonNull UserDetails userDetails) {
+    protected boolean doFilter(@Nonnull Authentication authentication, @Nonnull UserDetails userDetails) {
         if (!userDetails.isAccountNonLocked()) {
             throw new LockedException(String.format("%s is locked", userDetails.getUsername()));
         }

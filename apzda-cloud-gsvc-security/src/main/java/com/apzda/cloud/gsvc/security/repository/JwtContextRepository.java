@@ -35,6 +35,7 @@ public class JwtContextRepository implements SecurityContextRepository {
     }
 
     @Override
+    @SuppressWarnings("all")
     public SecurityContext loadContext(HttpRequestResponseHolder requestResponseHolder) {
         val request = requestResponseHolder.getRequest();
         val gsvcContext = request.getAttribute("GSVC.CONTEXT");

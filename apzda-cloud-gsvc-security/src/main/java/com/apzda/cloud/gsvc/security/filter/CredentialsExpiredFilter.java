@@ -16,9 +16,9 @@
  */
 package com.apzda.cloud.gsvc.security.filter;
 
+import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
-import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -39,7 +39,7 @@ public class CredentialsExpiredFilter extends AbstractAuthenticatedFilter {
     }
 
     @Override
-    protected boolean doFilter(@NonNull Authentication authentication, @NonNull UserDetails userDetails) {
+    protected boolean doFilter(@Nonnull Authentication authentication, @Nonnull UserDetails userDetails) {
         if (!userDetails.isCredentialsNonExpired()) {
             throw new CredentialsExpiredException(String.format("%s's password is expired", userDetails.getUsername()));
         }

@@ -18,6 +18,8 @@ package com.apzda.cloud.gsvc.security.filter;
 
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcException;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +29,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.core.Ordered;
-import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
@@ -67,14 +68,15 @@ public abstract class AbstractAuthenticatedFilter extends OncePerRequestFilter i
         securityContextHolderStrategy = strategy;
     }
 
+    @Nullable
     protected Authentication getAuthentication() {
         return securityContextHolderStrategy.getContext().getAuthentication();
     }
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain) throws ServletException, IOException {
-        
+    protected void doFilterInternal(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response,
+            @Nonnull FilterChain filterChain) throws ServletException, IOException {
+
         if (excludes.stream().anyMatch((m) -> m.matches(request))) {
             filterChain.doFilter(request, response);
             return;
@@ -95,7 +97,7 @@ public abstract class AbstractAuthenticatedFilter extends OncePerRequestFilter i
         }
     }
 
-    protected abstract boolean doFilter(@NonNull Authentication authentication, @NonNull UserDetails userDetails);
+    protected abstract boolean doFilter(@Nonnull Authentication authentication, @Nonnull UserDetails userDetails);
 
     @Override
     public int getOrder() {
