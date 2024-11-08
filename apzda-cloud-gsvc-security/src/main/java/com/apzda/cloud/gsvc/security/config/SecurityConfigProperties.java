@@ -5,8 +5,7 @@ package com.apzda.cloud.gsvc.security.config;
 
 import com.apzda.cloud.gsvc.security.token.JwtToken;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
-import lombok.val;
+import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.convert.DurationUnit;
@@ -83,24 +82,35 @@ public class SecurityConfigProperties {
     @DurationUnit(ChronoUnit.DAYS)
     private Duration refreshTokenTimeout = Duration.ofDays(365);
 
+    @Setter(AccessLevel.PRIVATE)
+    @Getter(AccessLevel.PRIVATE)
+    private Set<RequestMatcher> excludeSet;
+
     public String getTokenName() {
         return StringUtils.defaultIfBlank(tokenName, "Authorization");
     }
 
+    public Set<RequestMatcher> excludes() {
+        if (excludeSet == null) {
+            excludeSet = antMatchers(exclude);
+        }
+        return excludeSet;
+    }
+
     public Set<RequestMatcher> mfaExcludes() {
-        return antMatchers(mfaExclude, exclude);
+        return antMatchers(mfaExclude);
     }
 
     public Set<RequestMatcher> activeExcludes() {
-        return antMatchers(activePath, exclude);
+        return antMatchers(activePath);
     }
 
     public Set<RequestMatcher> resetCredentialsExcludes() {
-        return antMatchers(resetCredentialsPath, exclude);
+        return antMatchers(resetCredentialsPath);
     }
 
     public Set<RequestMatcher> bindExcludes() {
-        return antMatchers(bindPath, exclude);
+        return antMatchers(bindPath);
     }
 
     public boolean deviceIsAllowed(String device) {
@@ -115,12 +125,10 @@ public class SecurityConfigProperties {
         return allowedDevices.contains(device);
     }
 
-    static Set<RequestMatcher> antMatchers(List<String> paths, List<String> exclude) {
+    static Set<RequestMatcher> antMatchers(List<String> paths) {
         val excludePaths = paths.stream().map(AntPathRequestMatcher::antMatcher).collect(Collectors.toSet());
-        val excludeSet = exclude.stream().map(AntPathRequestMatcher::antMatcher).collect(Collectors.toSet());
-        val excludes = new HashSet<RequestMatcher>(excludePaths.size() + excludeSet.size());
+        val excludes = new HashSet<RequestMatcher>(excludePaths.size());
         excludes.addAll(excludePaths);
-        excludes.addAll(excludeSet);
         return excludes;
     }
 

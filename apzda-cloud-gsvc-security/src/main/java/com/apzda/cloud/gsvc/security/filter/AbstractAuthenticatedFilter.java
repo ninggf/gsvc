@@ -18,6 +18,7 @@ package com.apzda.cloud.gsvc.security.filter;
 
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.exception.GsvcException;
+import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
@@ -58,10 +59,22 @@ public abstract class AbstractAuthenticatedFilter extends OncePerRequestFilter i
 
     public static final String CREDENTIALS_FILTER = "credentialsExpiredFilter";
 
-    private final Set<RequestMatcher> excludes;
+    public static final String IGNORED = "GSVC.FILTER.IGNORED";
+
+    protected final Set<RequestMatcher> excludes;
+
+    protected final Set<RequestMatcher> globalExcludes;
+
+    protected final SecurityConfigProperties properties;
 
     private SecurityContextHolderStrategy securityContextHolderStrategy = SecurityContextHolder
         .getContextHolderStrategy();
+
+    public AbstractAuthenticatedFilter(Set<RequestMatcher> excludes, SecurityConfigProperties properties) {
+        this.properties = properties;
+        this.excludes = excludes;
+        this.globalExcludes = properties.excludes();
+    }
 
     public void setSecurityContextHolderStrategy(SecurityContextHolderStrategy strategy) {
         Assert.notNull(strategy, "securityContextHolderStrategy cannot be null");
@@ -77,14 +90,30 @@ public abstract class AbstractAuthenticatedFilter extends OncePerRequestFilter i
     protected void doFilterInternal(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response,
             @Nonnull FilterChain filterChain) throws ServletException, IOException {
 
-        if (excludes.stream().anyMatch((m) -> m.matches(request))) {
+        if (request.getAttribute(IGNORED) != null) {
             filterChain.doFilter(request, response);
             return;
+        }
+
+        for (RequestMatcher exclude : globalExcludes) {
+            if (exclude.matches(request)) {
+                request.setAttribute(IGNORED, Boolean.TRUE);
+                filterChain.doFilter(request, response);
+                return;
+            }
+        }
+
+        for (RequestMatcher exclude : excludes) {
+            if (exclude.matches(request)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
         }
 
         val authentication = getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()
                 || !(authentication.getPrincipal() instanceof UserDetails)) {
+            request.setAttribute(IGNORED, Boolean.TRUE);
             filterChain.doFilter(request, response);
             return;
         }

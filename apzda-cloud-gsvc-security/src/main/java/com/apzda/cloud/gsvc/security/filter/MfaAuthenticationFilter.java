@@ -40,11 +40,8 @@ import java.util.Set;
 @Slf4j
 public class MfaAuthenticationFilter extends AbstractAuthenticatedFilter {
 
-    protected final SecurityConfigProperties properties;
-
     public MfaAuthenticationFilter(Set<RequestMatcher> excludes, SecurityConfigProperties properties) {
-        super(excludes);
-        this.properties = properties;
+        super(excludes, properties);
     }
 
     @Override

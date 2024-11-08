@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.gsvc.security.filter;
 
+import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
@@ -36,8 +37,8 @@ import java.util.Set;
 @Slf4j
 public class AccountLockedFilter extends AbstractAuthenticatedFilter {
 
-    public AccountLockedFilter(Set<RequestMatcher> excludes) {
-        super(excludes);
+    public AccountLockedFilter(Set<RequestMatcher> excludes, SecurityConfigProperties properties) {
+        super(excludes, properties);
     }
 
     @Override

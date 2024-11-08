@@ -16,6 +16,7 @@
  */
 package com.apzda.cloud.gsvc.security.filter;
 
+import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.exception.ExternalUnbindException;
 import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import jakarta.annotation.Nonnull;
@@ -35,8 +36,8 @@ import java.util.Set;
  **/
 public class ExternalUnbindFilter extends AbstractAuthenticatedFilter {
 
-    public ExternalUnbindFilter(Set<RequestMatcher> excludes) {
-        super(excludes);
+    public ExternalUnbindFilter(Set<RequestMatcher> excludes, SecurityConfigProperties properties) {
+        super(excludes, properties);
     }
 
     @Override

@@ -351,21 +351,23 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnProperty(name = "apzda.cloud.security.credentials-expired-enabled", havingValue = "true")
         SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> credentialsExpiredFilter() {
             return new SecurityFilterRegistrationBean<>(
-                    new CredentialsExpiredFilter(properties.resetCredentialsExcludes()));
+                    new CredentialsExpiredFilter(properties.resetCredentialsExcludes(), properties));
         }
 
         @Bean
         @ConditionalOnMissingBean(name = ACCOUNT_LOCKED_FILTER)
         @ConditionalOnProperty(name = "apzda.cloud.security.account-locked-enabled", havingValue = "true")
         SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> accountLockedFilter() {
-            return new SecurityFilterRegistrationBean<>(new AccountLockedFilter(properties.activeExcludes()));
+            return new SecurityFilterRegistrationBean<>(
+                    new AccountLockedFilter(properties.activeExcludes(), properties));
         }
 
         @Bean
         @ConditionalOnMissingBean(name = UNBIND_CHECK_FILTER)
         @ConditionalOnProperty(name = "apzda.cloud.security.bind-enabled", havingValue = "true", matchIfMissing = true)
         SecurityFilterRegistrationBean<AbstractAuthenticatedFilter> externalUnbindFilter() {
-            return new SecurityFilterRegistrationBean<>(new ExternalUnbindFilter(properties.bindExcludes()));
+            return new SecurityFilterRegistrationBean<>(
+                    new ExternalUnbindFilter(properties.bindExcludes(), properties));
         }
 
         @Bean
