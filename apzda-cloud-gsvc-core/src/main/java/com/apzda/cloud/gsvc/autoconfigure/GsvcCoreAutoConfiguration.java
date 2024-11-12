@@ -47,7 +47,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.LocaleResolver;
 
 import java.time.Clock;
-import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
 
@@ -76,25 +76,26 @@ public class GsvcCoreAutoConfiguration {
 
         val names = new HashSet<String>();
 
-        if (StringUtils.hasText(properties.getBasename())) {
-            names.add(properties.getBasename());
-        }
-
         for (MessageSourceNameResolver resolver : provider.orderedStream().toList()) {
             names.addAll(StringUtils.commaDelimitedListToSet(StringUtils.trimAllWhitespace(resolver.baseNames())));
         }
 
-        properties.setBasename(String.join(",", names.stream().toList()));
+        val baseNames = new ArrayList<>(names.stream().toList());
+        if (StringUtils.hasText(properties.getBasename())) {
+            baseNames.add(properties.getBasename());
+        }
 
-        if (!names.isEmpty()) {
-            messageSource.setBasenames(names.toArray(names.toArray(new String[0])));
+        properties.setBasename(String.join(",", baseNames));
+
+        if (!baseNames.isEmpty()) {
+            messageSource.setBasenames(baseNames.toArray(new String[0]));
         }
 
         if (properties.getEncoding() != null) {
             messageSource.setDefaultEncoding(properties.getEncoding().name());
         }
         messageSource.setFallbackToSystemLocale(properties.isFallbackToSystemLocale());
-        Duration cacheDuration = properties.getCacheDuration();
+        val cacheDuration = properties.getCacheDuration();
         if (cacheDuration != null) {
             messageSource.setCacheMillis(cacheDuration.toMillis());
         }
