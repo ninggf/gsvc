@@ -613,7 +613,8 @@ public class GsvcSecurityAutoConfiguration {
     static class ExceptionAdvisor {
 
         @ExceptionHandler(value = AuthenticationException.class)
-        public ResponseEntity<?> handleException(@Nonnull Exception error, @Nonnull HttpServletRequest request) {
+        public ResponseEntity<?> handleException(@Nonnull AuthenticationException error,
+                @Nonnull HttpServletRequest request) {
             val exp = request.getAttribute(CONTEXT_ATTR_EXCEPTION);
             if (exp instanceof AuthenticationException ae) {
                 val response = AuthenticationHandler.getAuthenticationError(ae);

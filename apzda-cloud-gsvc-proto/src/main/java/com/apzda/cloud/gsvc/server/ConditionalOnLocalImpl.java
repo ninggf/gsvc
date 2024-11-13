@@ -17,6 +17,7 @@
 package com.apzda.cloud.gsvc.server;
 
 import com.apzda.cloud.gsvc.core.GatewayServiceRegistry;
+import com.apzda.cloud.gsvc.core.Mode;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionOutcome;
@@ -55,7 +56,9 @@ public @interface ConditionalOnLocalImpl {
             }
             val ann = metadata.getAnnotations().get(ConditionalOnLocalImpl.class);
             val beanFactory = context.getBeanFactory();
-            if (beanFactory == null) {
+            val env = context.getEnvironment();
+            if (beanFactory == null
+                    || Mode.MONO == env.getProperty("apzda.cloud.config.mode", Mode.class, Mode.MIRCO)) {
                 return ConditionOutcome.noMatch("ignore");
             }
             val svc = ann.synthesize().value();

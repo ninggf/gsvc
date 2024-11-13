@@ -18,6 +18,7 @@ package com.apzda.cloud.gsvc.autoconfigure;
 
 import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.Assert;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,7 @@ public abstract class ConfigureHelper {
     private static List<String> REAL_IP_FROM = Collections.emptyList();
 
     static void setRealIpHeader(String header) {
+        Assert.hasText(header, "real ip header must not be empty");
         REAL_IP_HEADER = header;
     }
 

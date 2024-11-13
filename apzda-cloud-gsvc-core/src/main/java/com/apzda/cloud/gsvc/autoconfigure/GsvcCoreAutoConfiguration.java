@@ -64,13 +64,13 @@ public class GsvcCoreAutoConfiguration {
 
     @Bean
     @ConfigurationProperties(prefix = "spring.messages")
-    MessageSourceProperties messageSourceProperties() {
+    static MessageSourceProperties messageSourceProperties() {
         return new MessageSourceProperties();
     }
 
     @Bean
     @ConditionalOnMissingBean
-    MessageSource messageSource(MessageSourceProperties properties,
+    static MessageSource messageSource(MessageSourceProperties properties,
             ObjectProvider<MessageSourceNameResolver> provider) {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
 
@@ -111,9 +111,9 @@ public class GsvcCoreAutoConfiguration {
 
     @Bean
     @ConditionalOnBean({ MessageSource.class })
-    I18nUtils i18nUtils() {
+    static I18nUtils i18nUtils() {
         return new I18nUtils() {
-            private static final Logger log = LoggerFactory.getLogger(I18nUtils.class);
+            private static final Logger log = LoggerFactory.getLogger("com.apzda.cloud.gsvc.utils.I18nUtils");
 
             @Override
             public void afterPropertiesSet() throws Exception {

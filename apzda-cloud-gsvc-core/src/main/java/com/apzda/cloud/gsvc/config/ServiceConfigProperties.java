@@ -1,5 +1,6 @@
 package com.apzda.cloud.gsvc.config;
 
+import com.apzda.cloud.gsvc.core.Mode;
 import com.apzda.cloud.gsvc.utils.StringUtils;
 import lombok.Data;
 import lombok.ToString;
@@ -88,6 +89,8 @@ public final class ServiceConfigProperties {
      */
     @Data
     public static class Config {
+
+        private Mode mode = Mode.MIRCO;
 
         private String loginPage;
 

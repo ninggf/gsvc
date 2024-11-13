@@ -13,6 +13,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.slf4j.MDC;
 import org.springframework.beans.BeansException;
@@ -34,6 +35,7 @@ import java.util.*;
 /**
  * @author ninggf
  */
+@Slf4j
 public abstract class GsvcContextHolder implements ApplicationContextAware {
 
     private static final String FILTERED_HTTP_HEADERS = "FILTERED_HTTP_HEADERS";
@@ -256,30 +258,35 @@ public abstract class GsvcContextHolder implements ApplicationContextAware {
         }
 
         val request = getRequest();
-        var ip = "0.0.0.0"; // 未获取到IP
+        var ip = org.apache.commons.lang3.StringUtils.defaultIfBlank(context.remoteAddr, "0.0.0.0"); // 未获取到IP
 
         var headers = context.headers;
-
         if (headers == null && request.isPresent()) {
             headers = headers();
         }
+
         if (headers == null) {
-            context.setRemoteIp(ip);
+            log.warn("Headers are null, use default ip: {}", ip);
+            context.remoteIp = ip;
             return ip;
         }
 
-        var remoteAddr = context.remoteAddr;
-
+        val remoteAddr = context.remoteAddr;
         val froms = ConfigureHelper.getRealIpFrom();
-        val realIpHeader = ConfigureHelper.getRealIpHeader();
 
-        if (StringUtils.hasText(realIpHeader) && froms.stream()
-            .anyMatch((from -> (from.contains("/") && NetUtil.isInRange(remoteAddr, from))
-                    || Ipv4Util.matches(from, remoteAddr)))) {
-            val remoteIp = headers.get(realIpHeader);
+        if (!CollectionUtils.isEmpty(froms)) {
+            val remoteIp = headers.get(ConfigureHelper.getRealIpHeader());
             if (StringUtils.hasText(remoteIp)) {
-                context.remoteIp = remoteIp;
-                return remoteIp;
+                if (remoteAddr.contains(":") && froms.stream().anyMatch(from -> from.equals(remoteAddr))) {
+                    context.remoteIp = remoteIp;
+                    return remoteIp;
+                }
+                else if (froms.stream()
+                    .anyMatch(from -> (from.contains("/") && NetUtil.isInRange(remoteAddr, from))
+                            || Ipv4Util.matches(from, remoteAddr))) {
+                    context.remoteIp = remoteIp;
+                    return remoteIp;
+                }
             }
         }
 
