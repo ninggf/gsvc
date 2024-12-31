@@ -15,6 +15,8 @@ import com.apzda.cloud.gsvc.security.exception.TokenException;
 import com.apzda.cloud.gsvc.security.userdetails.CachedUserDetails;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +29,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 
 import java.util.Objects;
 
@@ -44,6 +45,8 @@ public class JwtTokenManager implements TokenManager {
 
     private final static String PAYLOAD_RUNAS = "rs";
 
+    private final static String PAYLOAD_DETAIL = "data";
+
     protected final UserDetailsService userDetailsService;
 
     protected final UserDetailsMetaRepository userDetailsMetaRepository;
@@ -53,6 +56,8 @@ public class JwtTokenManager implements TokenManager {
     protected final JWTSigner jwtSigner;
 
     private final ObjectProvider<JwtTokenCustomizer> customizers;
+
+    private final ObjectMapper objectMapper;
 
     @Override
     public Authentication restoreAuthentication(HttpServletRequest request) {
@@ -134,23 +139,49 @@ public class JwtTokenManager implements TokenManager {
                 jwtToken.setRunAs((String) jwt.getPayload(PAYLOAD_RUNAS));
             }
 
-            val username = jwtToken.getName();
-            val tmpUser = User.withUsername(username).password("").build();
-            val userDetails = userDetailsMetaRepository
-                .getCachedMetaData(tmpUser, UserDetailsMeta.CACHED_USER_DETAILS_KEY,
-                        UserDetailsMeta.CACHED_USER_DETAILS_KEY, CachedUserDetails.class)
-                .orElse(null);
+            val detail = jwt.getPayload(PAYLOAD_DETAIL);
+
+            CachedUserDetails userDetails = null;
+
+            if (detail != null) {
+                try {
+                    userDetails = objectMapper.readValue((String) detail, CachedUserDetails.class);
+                    if (log.isTraceEnabled()) {
+                        log.trace("Deserialized user details: {}", userDetails);
+                    }
+                }
+                catch (JsonProcessingException e) {
+                    log.warn("Failed to parse user details: {} - {}", detail, e.getMessage());
+                    throw TokenException.INVALID_TOKEN;
+                }
+            }
+
+            if (userDetails == null) {
+                val username = jwtToken.getName();
+                val tmpUser = User.withUsername(username).password("").build();
+                userDetails = userDetailsMetaRepository.loadCachedUser(tmpUser);
+            }
 
             if (userDetails == null) {
                 log.trace("UserDetails of accessToken not found: {}", accessToken);
-                throw new InvalidSessionException("UserDetails of session is gone");
+                throw new InvalidSessionException("Session is expired");
             }
 
-            // 使用空的authorities.
-            val authentication = JwtAuthenticationToken.authenticated(userDetailsMetaRepository.create(userDetails),
-                    userDetails.getPassword());
+            jwtToken.setMfa(userDetails.getMfaStatus());
 
+            // 使用空的authorities.
+            val userDetailsMeta = userDetailsMetaRepository.create(userDetails);
+            val authentication = JwtAuthenticationToken.authenticated(userDetailsMeta, "");
+
+            if (detail == null && !Objects.equals(accessToken,
+                    userDetailsMeta.cached(UserDetailsMeta.ACCESS_TOKEN_META_KEY, authentication))) {
+                // refresh or login
+                throw TokenException.INVALID_TOKEN;
+            }
+            // 创建一个微服务内部使用的TOKEN
+            jwtToken.setAccessToken(createAccessToken(userDetails, jwtToken));
             authentication.setJwtToken(jwtToken);
+
             log.trace("Authentication is restored from accessToken: {}", accessToken);
             return authentication;
         }
@@ -161,7 +192,7 @@ public class JwtTokenManager implements TokenManager {
     }
 
     @Override
-    public JwtToken createJwtToken(Authentication authentication) {
+    public JwtToken createJwtToken(@NonNull Authentication authentication) {
         if (authentication.getDetails() instanceof AuthenticationDetails device
                 && !properties.deviceIsAllowed(device.getDevice())) {
             throw TokenException.DEVICE_NOT_ALLOWED;
@@ -185,26 +216,8 @@ public class JwtTokenManager implements TokenManager {
             jwtToken = c.customize(authentication, jwtToken);
         }
 
-        val token = JWT.create();
-        if (StringUtils.isNotBlank(jwtToken.getUid())) {
-            token.setPayload(PAYLOAD_UID, jwtToken.getUid());
-        }
-        if (StringUtils.isNotBlank(jwtToken.getProvider())) {
-            token.setPayload(PAYLOAD_PD, jwtToken.getProvider());
-        }
-        if (StringUtils.isNotBlank(jwtToken.getRunAs())) {
-            token.setPayload(PAYLOAD_RUNAS, jwtToken.getRunAs());
-        }
-        token.setSubject(name);
-        token.setSigner(jwtSigner);
-        val accessExpireAt = DateUtil.date()
-            .offset(DateField.MINUTE, (int) properties.getAccessTokenTimeout().toMinutes());
-        token.setExpiresAt(accessExpireAt);
-
-        val accessToken = token.sign();
-        jwtToken.setAccessToken(accessToken);
-        var refreshToken = createRefreshToken(jwtToken, authentication);
-        jwtToken.setRefreshToken(refreshToken);
+        jwtToken.setAccessToken(createAccessToken(null, jwtToken));
+        jwtToken.setRefreshToken(createRefreshToken(jwtToken, authentication));
 
         return jwtToken;
     }
@@ -283,6 +296,7 @@ public class JwtTokenManager implements TokenManager {
                 }
 
                 val newJwtToken = createJwtToken(authentication);
+
                 authentication.login(newJwtToken);
                 save(authentication, GsvcContextHolder.getRequest().orElse(null));
                 return authentication;
@@ -326,24 +340,35 @@ public class JwtTokenManager implements TokenManager {
         return "";
     }
 
-    @Override
-    public void verify(@NonNull Authentication authentication) throws SessionAuthenticationException {
-        if (authentication instanceof JwtAuthenticationToken auth) {
-            if (auth.getJwtToken() == null || auth.isLogin()) {
-                return;
-            }
-            if (log.isTraceEnabled()) {
-                log.trace("Current Session is not login");
-            }
-            authentication.setAuthenticated(false);
-            return;
+    private String createAccessToken(UserDetails userDetails, @NonNull JwtToken jwtToken) {
+        val token = JWT.create();
+        if (StringUtils.isNotBlank(jwtToken.getUid())) {
+            token.setPayload(PAYLOAD_UID, jwtToken.getUid());
         }
-
-        if (log.isTraceEnabled()) {
-            log.trace("Current Token is not supported: {}", authentication);
+        if (StringUtils.isNotBlank(jwtToken.getProvider())) {
+            token.setPayload(PAYLOAD_PD, jwtToken.getProvider());
         }
+        if (StringUtils.isNotBlank(jwtToken.getRunAs())) {
+            token.setPayload(PAYLOAD_RUNAS, jwtToken.getRunAs());
+        }
+        if (userDetails != null) {
+            try {
+                if (userDetails instanceof CachedUserDetails cachedUserDetails) {
+                    cachedUserDetails.setMfaStatus(jwtToken.getMfa());
+                }
+                token.setPayload(PAYLOAD_DETAIL, objectMapper.writeValueAsString(userDetails));
+            }
+            catch (JsonProcessingException e) {
+                log.warn("Cannot serialize user details: {}", userDetails);
+            }
+        }
+        token.setSubject(jwtToken.getName());
+        token.setSigner(jwtSigner);
+        val accessExpireAt = DateUtil.date()
+            .offset(DateField.MINUTE, (int) properties.getAccessTokenTimeout().toMinutes());
+        token.setExpiresAt(accessExpireAt);
 
-        throw new InvalidSessionException("Not Support");
+        return token.sign();
     }
 
 }

@@ -4,6 +4,7 @@
 package com.apzda.cloud.gsvc.plugin;
 
 import com.apzda.cloud.gsvc.core.ServiceMethod;
+import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,7 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 /**
  * @author fengz
  */
-public interface IPreCall extends IPlugin {
+public interface IPreCall extends IPlugin, Ordered {
 
     @NonNull
     WebClient.RequestBodySpec preCall(@NonNull WebClient.RequestBodySpec request, @Nullable Object data,

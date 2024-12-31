@@ -41,6 +41,13 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
     }
 
     @Override
+    public CachedUserDetails loadCachedUser(@NonNull UserDetails userDetails) {
+        return getCachedMetaData(userDetails, UserDetailsMeta.CACHED_USER_DETAILS_KEY,
+                UserDetailsMeta.CACHED_USER_DETAILS_KEY, CachedUserDetails.class)
+            .orElse(null);
+    }
+
+    @Override
     @NonNull
     public UserDetailsMeta create(@NonNull UserDetails userDetails) {
         return new DefaultUserDetailsMeta(userDetails, this);

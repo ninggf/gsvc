@@ -16,6 +16,8 @@ import java.util.Optional;
  */
 public interface UserDetailsMetaRepository {
 
+    CachedUserDetails loadCachedUser(@NonNull UserDetails userDetails);
+
     @NonNull
     UserDetailsMeta create(@NonNull UserDetails userDetails);
 

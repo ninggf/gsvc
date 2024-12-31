@@ -20,7 +20,6 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -167,6 +166,8 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             userDetailsMeta.remove(UserDetailsMeta.AUTHORITY_META_KEY);
 
             val cachedUser = CachedUserDetails.from(userDetailsMeta);
+            cachedUser.setMfaStatus(jwtToken.getMfa());
+
             userDetailsMeta.set(UserDetailsMeta.CACHED_USER_DETAILS_KEY, cachedUser);
 
             val loginKey = UserDetailsMeta.LOGIN_TIME_META_KEY;
@@ -177,17 +178,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     public boolean isLogin() {
-        if (!super.isAuthenticated() || jwtToken == null || StringUtils.isBlank(jwtToken.getAccessToken())) {
-            return false;
-        }
-
-        if (principal instanceof UserDetailsMeta userDetailsMeta) {
-            val accessToken = jwtToken.getAccessToken();
-            val key = UserDetailsMeta.ACCESS_TOKEN_META_KEY;
-            val cached = userDetailsMeta.cached(key, this);
-            return Objects.equals(accessToken, cached);
-        }
-        return false;
+        return super.isAuthenticated() && jwtToken != null && !StringUtils.isBlank(jwtToken.getAccessToken());
     }
 
     public Optional<UserDetailsMeta> getUserDetails() {

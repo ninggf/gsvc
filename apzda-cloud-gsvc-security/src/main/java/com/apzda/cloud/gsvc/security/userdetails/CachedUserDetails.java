@@ -37,6 +37,7 @@ public class CachedUserDetails implements UserDetails {
     @JsonIgnore
     Collection<? extends GrantedAuthority> authorities;
 
+    @JsonIgnore
     private String password;
 
     private String username;
@@ -48,6 +49,8 @@ public class CachedUserDetails implements UserDetails {
     boolean credentialsNonExpired;
 
     boolean enabled;
+
+    String mfaStatus;
 
     public static CachedUserDetails from(UserDetails userDetails) {
         val ud = new CachedUserDetails();

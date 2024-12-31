@@ -60,6 +60,7 @@ public class TransHeadersPlugin implements IGlobalPlugin, IPreCall {
         headers.add(IServiceMethodHandler.CALLER_HEADER, appName);
         headers.remove(HttpHeaders.HOST);
 
+
         val requestId = GsvcContextHolder.getRequestId();
         headers.add("X-Request-ID", requestId);
 

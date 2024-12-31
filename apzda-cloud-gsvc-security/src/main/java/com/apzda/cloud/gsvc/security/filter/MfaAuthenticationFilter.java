@@ -19,7 +19,7 @@ package com.apzda.cloud.gsvc.security.filter;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
 import com.apzda.cloud.gsvc.security.exception.MfaException;
 import com.apzda.cloud.gsvc.security.mfa.MfaStatus;
-import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMeta;
+import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -54,11 +54,10 @@ public class MfaAuthenticationFilter extends AbstractAuthenticatedFilter {
             return true;
         }
 
-        if (userDetails instanceof UserDetailsMeta userDetailsMeta) {
-            val mfaStatus = userDetailsMeta.get(UserDetailsMeta.MFA_STATUS_KEY, authentication, MfaStatus.DISABLED);
-
-            log.trace("Mfa Status of '{}' is: {}", userDetailsMeta.getUsername(), mfaStatus);
-
+        if (authentication instanceof JwtAuthenticationToken jwtAuthenticationToken) {
+            val jwtToken = jwtAuthenticationToken.getJwtToken();
+            val mfaStatus = jwtToken.getMfa();
+            log.trace("Mfa Status of '{}' is: {}", authentication.getName(), mfaStatus);
             switch (mfaStatus) {
                 case MfaStatus.UNSET -> throw MfaException.UNSET;
                 case MfaStatus.PENDING -> throw MfaException.NOT_VERIFIED;

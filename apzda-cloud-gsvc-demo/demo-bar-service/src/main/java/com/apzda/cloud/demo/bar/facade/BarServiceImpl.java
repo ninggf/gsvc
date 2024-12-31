@@ -118,6 +118,7 @@ public class BarServiceImpl implements BarService {
                 .build());
             val result = mathService.square(Flux.just(1, 2).map(n -> OpNum.newBuilder().setNum1(n).build()))
                 .publishOn(Schedulers.boundedElastic())
+                .contextCapture()
                 .blockLast();
             log.info("[{}] 处理请求: {}, 最后一个数的平方: {}", GsvcContextHolder.getRequestId(), barReq, result.getResult());
             return BarRes.newBuilder()

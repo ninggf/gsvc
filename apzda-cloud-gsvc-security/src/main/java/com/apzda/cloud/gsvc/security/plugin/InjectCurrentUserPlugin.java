@@ -3,7 +3,7 @@
  */
 package com.apzda.cloud.gsvc.security.plugin;
 
-import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import cn.hutool.core.util.StrUtil;
 import com.apzda.cloud.gsvc.core.ServiceMethod;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPreCall;
@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -37,22 +38,38 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
     private final SecurityConfigProperties properties;
 
     @Override
+    public int getOrder() {
+        return Ordered.LOWEST_PRECEDENCE;
+    }
+
+    @Override
     @NonNull
     public WebClient.RequestBodySpec preCall(@NonNull WebClient.RequestBodySpec request, @Nullable Object data,
             @Nullable ServiceMethod method) {
+        val context = SecurityContextHolder.getContext();
+        if (context == null) {
+            return request;
+        }
+        val authentication = context.getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return request;
+        }
+        if (!(authentication instanceof JwtAuthenticationToken)) {
+            return request;
+        }
+        val jwtToken = ((JwtAuthenticationToken) authentication).getJwtToken();
+        val bearer = StringUtils.defaultIfBlank(properties.getBearer(), "");
+        val accessToken = jwtToken.getAccessToken();
         val tokenName = properties.getTokenName();
-        val cookieName = properties.getCookie().getCookieName();
-        if (StringUtils.isNotBlank(tokenName)) {
-            val tokenValue = StringUtils.defaultIfBlank(GsvcContextHolder.header(tokenName),
-                    GsvcContextHolder.cookie(cookieName));
-            if (StringUtils.isNotBlank(tokenValue)) {
-                request = request.headers(httpHeaders -> {
-                    if (log.isTraceEnabled()) {
-                        log.trace("Transit Header: {}: {}", tokenName, tokenValue);
-                    }
-                    httpHeaders.put(tokenName, Collections.singletonList(tokenValue));
-                });
-            }
+
+        if (StringUtils.isNotBlank(tokenName) && StringUtils.isNotBlank(accessToken)) {
+            request = request.headers(httpHeaders -> {
+                if (log.isTraceEnabled()) {
+                    log.trace("Transit Header: {}: {}", tokenName, accessToken);
+                }
+                httpHeaders.put(tokenName, Collections
+                    .singletonList(StringUtils.strip(StrUtil.format("{} {}", bearer, jwtToken.getAccessToken()))));
+            });
         }
 
         return request;
@@ -64,14 +81,13 @@ public class InjectCurrentUserPlugin implements IGlobalPlugin, IPreInvoke, IPreC
         if (context == null) {
             return data;
         }
+
         val authentication = context.getAuthentication();
 
         if (authentication instanceof JwtAuthenticationToken && authentication.isAuthenticated()) {
-
             data = data.map(d -> {
-                val currentUser = CurrentUserParamResolver.getCurrentUserBuilder(authentication).build();
-
                 if (d instanceof ObjectNode objectNode) {
+                    val currentUser = CurrentUserParamResolver.getCurrentUserBuilder(authentication).build();
                     if (log.isTraceEnabled()) {
                         log.trace("Inject CurrentUser: {}", currentUser);
                     }

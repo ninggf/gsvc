@@ -25,6 +25,7 @@ import com.apzda.cloud.gsvc.security.userdetails.InMemoryUserDetailsMetaReposito
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaRepository;
 import com.apzda.cloud.gsvc.security.userdetails.UserDetailsMetaService;
 import com.apzda.cloud.gsvc.security.utils.SecurityUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -544,9 +545,9 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnMissingBean
         TokenManager tokenManager(UserDetailsService userDetailsService,
                 UserDetailsMetaRepository userDetailsMetaRepository, JWTSigner jwtSigner,
-                ObjectProvider<JwtTokenCustomizer> customizers) {
+                ObjectProvider<JwtTokenCustomizer> customizers, ObjectMapper objectMapper) {
             return new JwtTokenManager(userDetailsService, userDetailsMetaRepository, properties, jwtSigner,
-                    customizers);
+                    customizers, objectMapper);
         }
 
         @Bean
