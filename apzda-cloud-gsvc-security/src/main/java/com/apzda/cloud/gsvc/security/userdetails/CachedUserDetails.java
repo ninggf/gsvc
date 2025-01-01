@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.val;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -59,7 +60,8 @@ public class CachedUserDetails implements UserDetails {
     @JsonProperty("m")
     String mfaStatus;
 
-    public static CachedUserDetails from(UserDetails userDetails) {
+    @NonNull
+    public static CachedUserDetails from(@NonNull UserDetails userDetails) {
         val ud = new CachedUserDetails();
 
         ud.authorities = userDetails.getAuthorities();

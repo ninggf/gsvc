@@ -166,7 +166,6 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
             userDetailsMeta.remove(UserDetailsMeta.AUTHORITY_META_KEY);
 
             val cachedUser = CachedUserDetails.from(userDetailsMeta);
-            cachedUser.setMfaStatus(jwtToken.getMfa());
 
             userDetailsMeta.set(UserDetailsMeta.CACHED_USER_DETAILS_KEY, cachedUser);
 

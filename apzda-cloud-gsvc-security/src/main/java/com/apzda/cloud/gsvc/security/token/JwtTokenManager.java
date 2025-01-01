@@ -168,7 +168,6 @@ public class JwtTokenManager implements TokenManager {
             }
 
             userDetails.setUsername(jwtToken.getName());
-            jwtToken.setMfa(userDetails.getMfaStatus());
 
             // 使用空的authorities.
             val userDetailsMeta = userDetailsMetaRepository.create(userDetails);
@@ -181,11 +180,16 @@ public class JwtTokenManager implements TokenManager {
             }
             if (detail == null) {
                 // 创建一个微服务内部使用的TOKEN
+                if (properties.isMfaEnabled()) {
+                    userDetails.setMfaStatus(userDetailsMeta.cached(UserDetailsMeta.MFA_STATUS_KEY, authentication));
+                }
                 jwtToken.setAccessToken(createAccessToken(userDetails, jwtToken));
             }
             else {
                 jwtToken.setAccessToken(accessToken);
             }
+
+            jwtToken.setMfa(userDetails.getMfaStatus());
             authentication.setJwtToken(jwtToken);
 
             log.trace("Authentication is restored from accessToken: {}", accessToken);
@@ -359,9 +363,6 @@ public class JwtTokenManager implements TokenManager {
         }
         if (userDetails != null) {
             try {
-                if (userDetails instanceof CachedUserDetails cachedUserDetails) {
-                    cachedUserDetails.setMfaStatus(jwtToken.getMfa());
-                }
                 token.setPayload(PAYLOAD_DETAIL, objectMapper.writeValueAsString(userDetails));
             }
             catch (JsonProcessingException e) {
