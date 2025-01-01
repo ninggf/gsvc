@@ -31,6 +31,8 @@ import java.util.Optional;
  **/
 public interface UserDetailsMetaService {
 
+    String getTenantId(@NonNull UserDetails userDetails);
+
     Collection<? extends GrantedAuthority> getAuthorities(@NonNull UserDetails userDetails);
 
     @NonNull

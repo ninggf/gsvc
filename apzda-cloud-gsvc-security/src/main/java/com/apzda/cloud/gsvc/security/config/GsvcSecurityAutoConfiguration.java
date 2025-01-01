@@ -513,6 +513,11 @@ public class GsvcSecurityAutoConfiguration {
 
             return new UserDetailsMetaService() {
                 @Override
+                public String getTenantId(@NonNull UserDetails userDetails) {
+                    return null;
+                }
+
+                @Override
                 public Collection<? extends GrantedAuthority> getAuthorities(@NonNull UserDetails userDetails) {
                     if (!CollectionUtils.isEmpty(userDetails.getAuthorities())) {
                         return userDetails.getAuthorities();

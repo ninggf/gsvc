@@ -1,11 +1,14 @@
 package com.apzda.cloud.gsvc.security.userdetails;
 
+import com.apzda.cloud.gsvc.security.token.JwtAuthenticationToken;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.lang.NonNull;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -35,6 +38,10 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
 
     protected String provider;
 
+    protected String tenantId;
+
+    protected Authentication authentication;
+
     public DefaultUserDetailsMeta(@NonNull UserDetails userDetails,
             @NonNull UserDetailsMetaRepository userDetailsMetaRepository) {
         if (userDetails instanceof UserDetailsMeta userDetailsMeta) {
@@ -55,6 +62,16 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
     @NonNull
     public UserDetails getUserDetails() {
         return this.userDetails;
+    }
+
+    @Override
+    public Authentication getAuthentication() {
+        return this.authentication;
+    }
+
+    @Override
+    public void setAuthentication(Authentication authentication) {
+        this.authentication = authentication;
     }
 
     @Override
@@ -150,6 +167,21 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
     @Override
     public String getOpenId() {
         return this.openId;
+    }
+
+    @Override
+    public String getTenantId() {
+        if (!StringUtils.hasText(tenantId)) {
+            if (this.authentication instanceof JwtAuthenticationToken jwtAuthenticationToken) {
+                tenantId = this.userDetailsMetaRepository.getTenantId(this.userDetails,
+                        jwtAuthenticationToken.deviceAwareMetaKey(UserDetailsMeta.CURRENT_TENANT_ID));
+            }
+            else {
+                tenantId = this.userDetailsMetaRepository.getTenantId(this.userDetails,
+                        UserDetailsMeta.CURRENT_TENANT_ID);
+            }
+        }
+        return tenantId;
     }
 
     @Override

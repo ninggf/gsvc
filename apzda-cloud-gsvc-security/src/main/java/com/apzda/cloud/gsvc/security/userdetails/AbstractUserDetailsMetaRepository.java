@@ -79,6 +79,25 @@ public abstract class AbstractUserDetailsMetaRepository implements UserDetailsMe
     }
 
     @Override
+    public String getTenantId(UserDetails userDetails, String key) {
+        val cached = getCachedMetaData(userDetails, key, "", String.class);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+        try {
+            var tenantId = userDetailsMetaService.getTenantId(userDetails);
+            if (tenantId != null) {
+                setMetaData(userDetails, key, tenantId);
+            }
+            return tenantId;
+        }
+        catch (Exception e) {
+            log.warn("Cannot get the Tenant Id of {}: {}", userDetails.getUsername(), e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
     public Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails) {
         val authorityMeta = getCachedMetaData(userDetails, UserDetailsMeta.AUTHORITY_META_KEY,
                 UserDetailsMeta.AUTHORITY_META_KEY, typeReference);

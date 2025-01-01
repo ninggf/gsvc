@@ -192,6 +192,9 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         if (principal instanceof UserDetails userDetails) {
             UserDetailsMeta.checkUserDetails(userDetails);
         }
+        if (principal instanceof UserDetailsMeta userDetailsMeta) {
+            userDetailsMeta.setAuthentication(this);
+        }
         return principal;
     }
 

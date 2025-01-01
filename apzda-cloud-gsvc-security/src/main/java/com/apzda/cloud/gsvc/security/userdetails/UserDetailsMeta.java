@@ -28,7 +28,11 @@ public interface UserDetailsMeta extends UserDetails {
 
     String MFA_STATUS_KEY = "MfaStatus";
 
-    String LANGUAGE_KEY = "Language";
+    String CURRENT_TENANT_ID = "TenantId";
+
+    void setAuthentication(Authentication authentication);
+
+    Authentication getAuthentication();
 
     @NonNull
     UserDetails getUserDetails();
@@ -40,6 +44,8 @@ public interface UserDetailsMeta extends UserDetails {
     void setOpenId(String openId);
 
     String getOpenId();
+
+    String getTenantId();
 
     void setProvider(String provider);
 

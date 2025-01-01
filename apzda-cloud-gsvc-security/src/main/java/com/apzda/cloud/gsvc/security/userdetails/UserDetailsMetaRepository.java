@@ -66,6 +66,8 @@ public interface UserDetailsMetaRepository {
 
     void removeMetaData(UserDetails userDetails);
 
+    String getTenantId(UserDetails userDetails, String key);
+
     Collection<? extends GrantedAuthority> getAuthorities(UserDetails userDetails);
 
     @NonNull
