@@ -167,6 +167,7 @@ public class JwtTokenManager implements TokenManager {
                 throw new InvalidSessionException("Session is expired");
             }
 
+            userDetails.setUsername(jwtToken.getName());
             jwtToken.setMfa(userDetails.getMfaStatus());
 
             // 使用空的authorities.
@@ -178,8 +179,13 @@ public class JwtTokenManager implements TokenManager {
                 // refresh or login
                 throw TokenException.INVALID_TOKEN;
             }
-            // 创建一个微服务内部使用的TOKEN
-            jwtToken.setAccessToken(createAccessToken(userDetails, jwtToken));
+            if (detail == null) {
+                // 创建一个微服务内部使用的TOKEN
+                jwtToken.setAccessToken(createAccessToken(userDetails, jwtToken));
+            }
+            else {
+                jwtToken.setAccessToken(accessToken);
+            }
             authentication.setJwtToken(jwtToken);
 
             log.trace("Authentication is restored from accessToken: {}", accessToken);

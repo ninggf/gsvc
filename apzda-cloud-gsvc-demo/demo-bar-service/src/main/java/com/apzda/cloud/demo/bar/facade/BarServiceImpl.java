@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.ErrorResponseException;
 import reactor.core.publisher.Flux;
@@ -96,7 +97,11 @@ public class BarServiceImpl implements BarService {
     public Flux<BarRes> hi(BarReq request) {
         val atomicInteger = new AtomicInteger();
         val context = GsvcContextHolder.getContext();
+        val ctx = SecurityContextHolder.getContext();
+
         return Flux.fromIterable(List.of(request, request)).publishOn(Schedulers.boundedElastic()).map(barReq -> {
+            SecurityContextHolder.setContext(ctx);
+            val ctx2 = SecurityContextHolder.getContext();
             context.restore();
             try {
                 for (GsvcExt.UploadFile uploadFile : barReq.getFilesList()) {
@@ -117,8 +122,6 @@ public class BarServiceImpl implements BarService {
                 .setNum2(atomicInteger.incrementAndGet())
                 .build());
             val result = mathService.square(Flux.just(1, 2).map(n -> OpNum.newBuilder().setNum1(n).build()))
-                .publishOn(Schedulers.boundedElastic())
-                .contextCapture()
                 .blockLast();
             log.info("[{}] 处理请求: {}, 最后一个数的平方: {}", GsvcContextHolder.getRequestId(), barReq, result.getResult());
             return BarRes.newBuilder()

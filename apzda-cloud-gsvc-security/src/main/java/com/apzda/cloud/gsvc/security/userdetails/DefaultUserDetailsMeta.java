@@ -5,6 +5,7 @@ import lombok.val;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.Assert;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +43,7 @@ public class DefaultUserDetailsMeta implements UserDetailsMeta {
         else {
             this.userDetails = userDetails;
         }
+        Assert.notNull(this.userDetails, "userDetails must not be null");
 
         this.userDetailsMetaRepository = userDetailsMetaRepository;
         this.openId = this.userDetails.getUsername();

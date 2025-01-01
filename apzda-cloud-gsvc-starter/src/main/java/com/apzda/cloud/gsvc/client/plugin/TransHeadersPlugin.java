@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -41,7 +42,7 @@ public class TransHeadersPlugin implements IGlobalPlugin, IPreCall {
 
     @Override
     public int getOrder() {
-        return -1;
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 
     @Override
@@ -57,9 +58,9 @@ public class TransHeadersPlugin implements IGlobalPlugin, IPreCall {
         headers.remove("Content-Type");
         headers.remove("Content-Length");
         headers.remove(IServiceMethodHandler.CALLER_HEADER);
-        headers.add(IServiceMethodHandler.CALLER_HEADER, appName);
         headers.remove(HttpHeaders.HOST);
-
+        headers.remove(HttpHeaders.AUTHORIZATION);
+        headers.add(IServiceMethodHandler.CALLER_HEADER, appName);
 
         val requestId = GsvcContextHolder.getRequestId();
         headers.add("X-Request-ID", requestId);

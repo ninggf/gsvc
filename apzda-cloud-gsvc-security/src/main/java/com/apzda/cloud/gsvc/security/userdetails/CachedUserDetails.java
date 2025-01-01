@@ -18,6 +18,7 @@ package com.apzda.cloud.gsvc.security.userdetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.val;
 import org.springframework.security.core.GrantedAuthority;
@@ -40,16 +41,22 @@ public class CachedUserDetails implements UserDetails {
     @JsonIgnore
     private String password;
 
+    @JsonIgnore
     private String username;
 
+    @JsonProperty("e")
     boolean accountNonExpired;
 
+    @JsonProperty("l")
     boolean accountNonLocked;
 
+    @JsonProperty("c")
     boolean credentialsNonExpired;
 
+    @JsonProperty("n")
     boolean enabled;
 
+    @JsonProperty("m")
     String mfaStatus;
 
     public static CachedUserDetails from(UserDetails userDetails) {

@@ -74,8 +74,7 @@ public class GrpcServerSecurityInterceptor implements ServerInterceptor {
                     }
                     context.setAuthentication(authentication);
                     SecurityContextHolder.setContext(context);
-                    log.trace("Authentication successful: {} ({})", authentication.getName(),
-                            authentication.getAuthorities());
+                    log.trace("Authentication successful: {}", authentication.getName());
                     @SuppressWarnings("deprecation")
                     val grpcContext = Context.current()
                         .withValues(SECURITY_CONTEXT_KEY, context, AUTHENTICATION_CONTEXT_KEY, authentication);
