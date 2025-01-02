@@ -28,8 +28,6 @@ class DefaultAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        log.warn("You are using a demo AuthenticationProvider, please use a real one!!!");
-
         val credentials = authentication.getCredentials();
         val username = authentication.getPrincipal();
         val userDetails = userDetailsService.loadUserByUsername((String) username);

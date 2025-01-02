@@ -172,6 +172,9 @@ Accept: text/event-stream
         if (line && line.indexOf("gsvc.foo3.bar@hi") > 0) {
             cnt++;
         }
+        if (cnt == 2) {
+            unsubscribe()
+        }
     }, () => {
         client.test("Get Two Datas", function () {
             client.assert(cnt === 2, cnt + " != 2")
@@ -199,6 +202,9 @@ age = 18
     response.body.onEachLine((line, unsubscribe) => {
         if (line && line.indexOf("gsvc.foo3.bar@hi") > 0) {
             cnt++;
+        }
+        if (cnt == 2) {
+            unsubscribe()
         }
     }, () => {
         client.test("Get Two Datas", function () {
@@ -268,6 +274,9 @@ Accept: text/event-stream
         if (line && line.indexOf("gsvc.foo2.bar@hello") > 0) {
             cnt++;
         }
+        if (cnt > 0) {
+            unsubscribe()
+        }
     }, () => {
         client.test("Get One Data", function () {
             client.assert(cnt === 1, cnt + " != 1")
@@ -290,6 +299,9 @@ Accept: text/event-stream
     response.body.onEachLine((line, unsubscribe) => {
         if (line && line.indexOf("gsvc.foo3.bar@hi") > 0) {
             cnt++;
+        }
+        if (cnt == 2) {
+            unsubscribe()
         }
     }, () => {
         client.test("Get Two Datas", function () {

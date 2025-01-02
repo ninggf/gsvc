@@ -80,6 +80,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
@@ -110,7 +111,7 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
  **/
 @Slf4j
 @AutoConfiguration(before = { SecurityAutoConfiguration.class })
-@ConditionalOnClass(DefaultAuthenticationEventPublisher.class)
+@ConditionalOnClass({ HttpSecurity.class, AuthenticationSuccessHandler.class })
 @Import({ RedisMetaRepoConfiguration.class, AuditorAutoConfiguration.class })
 public class GsvcSecurityAutoConfiguration {
 
@@ -415,6 +416,7 @@ public class GsvcSecurityAutoConfiguration {
         @ConditionalOnMissingBean(name = "defaultAuthenticationProvider")
         AuthenticationProvider defaultAuthenticationProvider(UserDetailsService userDetailsService,
                 UserDetailsMetaRepository userDetailsMetaRepository, PasswordEncoder passwordEncoder) {
+            log.warn("You are using a demo AuthenticationProvider, please use a real one!!!");
             return new DefaultAuthenticationProvider(userDetailsService, userDetailsMetaRepository, passwordEncoder);
         }
 

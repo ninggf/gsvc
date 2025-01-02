@@ -248,6 +248,9 @@ POST http://{{demoService}}/demo/bar-service/bar/hi?name=demo&age=18
         } else if (line && line.indexOf("\"fileCount\":7") > 0) {
             sevenCnt = sevenCnt + 1;
         }
+        if (threeCnt > 0 && sevenCnt > 0) {
+            unsubscribe()
+        }
     }, () => {
         client.test("fileCount is 3", function () {
             client.assert(threeCnt === 1, threeCnt + " != 1");

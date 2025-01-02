@@ -32,7 +32,8 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @PropertySource({ "classpath:BarService.gateway.properties", "classpath:SaService.gateway.properties" })
 @Import(BarConfiguration.class)
-@ComponentScan(basePackages = { "com.apzda.cloud.demo.bar.controller", "com.apzda.cloud.demo.bar.facade" })
+@ComponentScan(basePackages = { "com.apzda.cloud.demo.bar.controller", "com.apzda.cloud.demo.bar.facade",
+        "com.apzda.cloud.demo.bar.listener" })
 @Documented
 public @interface EnableBarServer {
 

@@ -101,7 +101,6 @@ public class BarServiceImpl implements BarService {
 
         return Flux.fromIterable(List.of(request, request)).publishOn(Schedulers.boundedElastic()).map(barReq -> {
             SecurityContextHolder.setContext(ctx);
-            val ctx2 = SecurityContextHolder.getContext();
             context.restore();
             try {
                 for (GsvcExt.UploadFile uploadFile : barReq.getFilesList()) {
