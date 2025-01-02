@@ -122,6 +122,11 @@ public final class ServiceConfigProperties {
 
         private String pageSorts = "pageSorts";
 
+        private boolean logSlow = false;
+
+        @DurationUnit(ChronoUnit.SECONDS)
+        private Duration slowThrottle = Duration.of(5, ChronoUnit.SECONDS);
+
         @DurationUnit(ChronoUnit.HOURS)
         private Duration tempExpireTime = Duration.ofHours(168);
 

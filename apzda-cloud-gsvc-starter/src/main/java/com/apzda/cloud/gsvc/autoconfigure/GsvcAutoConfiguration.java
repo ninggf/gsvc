@@ -22,6 +22,7 @@ import com.apzda.cloud.gsvc.gtw.filter.TransferEncodingNormalizationHeadersFilte
 import com.apzda.cloud.gsvc.gtw.filter.XForwardedHeadersFilter;
 import com.apzda.cloud.gsvc.infra.Counter;
 import com.apzda.cloud.gsvc.infra.LocalInfraImpl;
+import com.apzda.cloud.gsvc.listener.ServletRequestHandledEventListener;
 import com.apzda.cloud.gsvc.modem.Modem;
 import com.apzda.cloud.gsvc.plugin.IGlobalPlugin;
 import com.apzda.cloud.gsvc.plugin.IPlugin;
@@ -164,6 +165,7 @@ public class GsvcAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @RequiredArgsConstructor
+    @Import(ServletRequestHandledEventListener.class)
     static class GsvcServer implements SmartLifecycle {
 
         private final ApplicationContext applicationContext;
