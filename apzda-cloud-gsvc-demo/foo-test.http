@@ -142,6 +142,9 @@ Accept: text/event-stream
         if (line && line.indexOf("gsvc.foo2.bar@hello") > 0) {
             cnt++;
         }
+        if (cnt > 0) {
+            unsubscribe()
+        }
     }, () => {
         client.test("Get One Data", function () {
             client.assert(cnt === 1, cnt + " != 1");

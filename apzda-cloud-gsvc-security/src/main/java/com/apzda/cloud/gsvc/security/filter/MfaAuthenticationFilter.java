@@ -58,6 +58,11 @@ public class MfaAuthenticationFilter extends AbstractAuthenticatedFilter {
             val jwtToken = jwtAuthenticationToken.getJwtToken();
             val mfaStatus = jwtToken.getMfa();
             log.trace("Mfa Status of '{}' is: {}", authentication.getName(), mfaStatus);
+
+            if (mfaStatus == null) {
+                return true;
+            }
+
             switch (mfaStatus) {
                 case MfaStatus.UNSET -> throw MfaException.UNSET;
                 case MfaStatus.PENDING -> throw MfaException.NOT_VERIFIED;

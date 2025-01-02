@@ -181,7 +181,7 @@ public class JwtTokenManager implements TokenManager {
             if (detail == null) {
                 // 创建一个微服务内部使用的TOKEN
                 if (properties.isMfaEnabled()) {
-                    userDetails.setMfaStatus(userDetailsMeta.cached(UserDetailsMeta.MFA_STATUS_KEY, authentication));
+                    userDetails.setMfaStatus(userDetailsMeta.get(UserDetailsMeta.MFA_STATUS_KEY, authentication));
                 }
                 jwtToken.setAccessToken(createAccessToken(userDetails, jwtToken));
             }
