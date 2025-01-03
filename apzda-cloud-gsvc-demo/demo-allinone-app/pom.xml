@@ -22,6 +22,12 @@
         <dependency>
             <groupId>com.apzda.cloud</groupId>
             <artifactId>demo-foo-service</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>apzda-cloud-gsvc-seata</artifactId>
+                    <groupId>com.apzda.cloud</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.apzda.cloud</groupId>
@@ -30,6 +36,10 @@
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter-undertow</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>apzda-cloud-gsvc-seata</artifactId>
+                    <groupId>com.apzda.cloud</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -40,6 +50,10 @@
                 <exclusion>
                     <groupId>net.devh</groupId>
                     <artifactId>grpc-server-spring-boot-starter</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>apzda-cloud-gsvc-seata</artifactId>
+                    <groupId>com.apzda.cloud</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
