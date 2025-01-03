@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>apzda-cloud-gsvc-demo</artifactId>
         <groupId>com.apzda.cloud</groupId>
@@ -29,12 +30,6 @@
         <dependency>
             <groupId>com.apzda.cloud</groupId>
             <artifactId>demo-math-service</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>grpc-server-spring-boot-starter</artifactId>
-                    <groupId>net.devh</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
@@ -56,12 +51,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- seata -->
-        <dependency>
-            <groupId>com.apzda.cloud</groupId>
-            <artifactId>apzda-cloud-gsvc-seata</artifactId>
-            <optional>true</optional>
-        </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>

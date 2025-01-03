@@ -62,7 +62,7 @@
         <sentinel.version>1.8.8</sentinel.version>
         <protovalidate.version>0.2.1</protovalidate.version>
         <druid.version>1.2.24</druid.version>
-        <seata.version>2.1.0</seata.version>
+        <seata.version>2.2.0</seata.version>
         <seata.cloud.version>2023.0.3.2</seata.cloud.version>
         <easyexcel.version>4.0.3</easyexcel.version>
         <commons-io.version>2.18.0</commons-io.version>
