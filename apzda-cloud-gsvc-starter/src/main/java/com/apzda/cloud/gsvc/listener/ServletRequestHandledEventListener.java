@@ -1,7 +1,8 @@
 package com.apzda.cloud.gsvc.listener;
 
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.lang.NonNull;
@@ -9,9 +10,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.support.ServletRequestHandledEvent;
 
 @Component("LongResponseTimeListener")
-@Slf4j
 @ConditionalOnProperty(name = "apzda.cloud.config.log-slow", havingValue = "true")
 public class ServletRequestHandledEventListener implements ApplicationListener<ServletRequestHandledEvent> {
+
+    private static final Logger log = LoggerFactory.getLogger("slow");
 
     private final long duration;
 
