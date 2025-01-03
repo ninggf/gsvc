@@ -180,7 +180,7 @@ public class GsvcCoreAutoConfiguration {
 
         @Override
         public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
-            hints.resources().registerPattern("messages.properties").registerPattern("messages_*.properties");
+            hints.resources().registerPattern("messages.properties").registerPattern("messages-*.properties");
         }
 
     }
