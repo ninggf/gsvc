@@ -23,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.context.EnvironmentAware;
+import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -37,7 +39,7 @@ import java.util.Objects;
  */
 @RequiredArgsConstructor
 @Slf4j
-public class JwtTokenManager implements TokenManager {
+public class JwtTokenManager implements TokenManager, EnvironmentAware {
 
     private final static String PAYLOAD_UID = "uid";
 
@@ -58,6 +60,13 @@ public class JwtTokenManager implements TokenManager {
     private final ObjectProvider<JwtTokenCustomizer> customizers;
 
     private final ObjectMapper objectMapper;
+
+    private boolean gatewayEnabled;
+
+    @Override
+    public void setEnvironment(@NonNull Environment environment) {
+        this.gatewayEnabled = environment.getProperty("apzda.cloud.gateway.default.enabled", Boolean.class, false);
+    }
 
     @Override
     public Authentication restoreAuthentication(HttpServletRequest request) {
@@ -139,13 +148,19 @@ public class JwtTokenManager implements TokenManager {
                 jwtToken.setRunAs((String) jwt.getPayload(PAYLOAD_RUNAS));
             }
 
-            val detail = jwt.getPayload(PAYLOAD_DETAIL);
+            final String detail;
+            if (gatewayEnabled || jwt.getPayload(PAYLOAD_DETAIL) == null) {
+                detail = null;
+            }
+            else {
+                detail = (String) jwt.getPayload(PAYLOAD_DETAIL);
+            }
 
             CachedUserDetails userDetails = null;
 
             if (detail != null) {
                 try {
-                    userDetails = objectMapper.readValue((String) detail, CachedUserDetails.class);
+                    userDetails = objectMapper.readValue(detail, CachedUserDetails.class);
                     if (log.isTraceEnabled()) {
                         log.trace("Deserialized user details: {}", userDetails);
                     }
