@@ -59,8 +59,8 @@ jobs:
         run: mvn -B package -Djava.version=${{ matrix.java }} --file pom.xml
       - name: Init Database
         run: |-
-          docker run --rm --network host -v ./docs/seata_undo_log.sql:/tmp/undo_log.sql mysql:8.0.35 \
-           mysql -uroot -h127.0.0.1 -pAbc12332! -P3307 demo_db < /tmp/undo_log.sql
+          docker run --rm --network host -v ./.github/seata_undo_log.sql:/tmp/undo_log.sql mysql:8.0.35 \
+           sh -c 'mysql -uroot -h127.0.0.1 -pAbc12332! -P3307 demo_db < /tmp/undo_log.sql'
       - name: Run All Services
         uses: JarvusInnovations/background-action@v1
         with:
