@@ -12,6 +12,8 @@ spring:
     password: Abc12332!
   flyway:
     validate-on-migrate: false
+    baseline-on-migrate: true
+    out-of-order: true
 
 grpc:
   server:
