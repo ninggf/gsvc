@@ -155,6 +155,10 @@ public class Route {
                 this.actions = List.of(HttpMethod.GET, HttpMethod.POST);
             }
         }
+        else if (StringUtils.startsWith(this.method, "/")) {
+            // 转发时接受一切
+            this.actions = Collections.emptyList();
+        }
         else if (this.parent != null) {
             this.actions = this.parent.actions;
         }
