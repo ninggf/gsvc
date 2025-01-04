@@ -32,7 +32,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: Abc12332!
           MYSQL_DATABASE: demo_db
       seata:
-        image: apache/seata-server:2.1.0-slim
+        image: apache/seata-server:2.2.0-slim
         ports:
           - 8091:8091
           - 7091:7091
@@ -57,16 +57,10 @@ jobs:
         run: mvn install -pl apzda-cloud-gsvc-compiler
       - name: Build with Maven
         run: mvn -B package -Djava.version=${{ matrix.java }} --file pom.xml
-      - name: Run AllInOne Application
-        uses: JarvusInnovations/background-action@v1
-        with:
-          working-directory: apzda-cloud-gsvc-demo
-          wait-for: 5m
-          tail: true
-          run: |-
-            java -jar demo-allinone-app/target/demo-allinone-app-fat.jar &
-          wait-on: |-
-            http-get://localhost:${{ env.SERVER_PORT_NO }}/actuator/health
+      - name: Init Database
+        run: |-
+          docker run --rm --network host -v ./.github/seata_undo_log.sql:/tmp/undo_log.sql mysql:8.0.35 \
+           mysql -uroot -h127.0.0.1 -pAbc12332! -P3307 demo_db < /tmp/undo_log.sql
       - name: Run All Services
         uses: JarvusInnovations/background-action@v1
         with:

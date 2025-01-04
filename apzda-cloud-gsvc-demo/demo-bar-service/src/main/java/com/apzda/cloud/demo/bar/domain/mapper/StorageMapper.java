@@ -18,7 +18,6 @@ package com.apzda.cloud.demo.bar.domain.mapper;
 
 import com.apzda.cloud.demo.bar.domain.entity.Storage;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Update;
 
 /**
@@ -26,7 +25,6 @@ import org.apache.ibatis.annotations.Update;
  * @version 1.0.0
  * @since 1.0.0
  **/
-@Mapper
 public interface StorageMapper extends BaseMapper<Storage> {
 
     @Update("UPDATE storage_tbl SET cnt = cnt - #{count} WHERE commodity_code = #{commodityCode}")
