@@ -7,6 +7,7 @@ import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.JWTUtil;
 import cn.hutool.jwt.signers.JWTSigner;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import com.apzda.cloud.gsvc.core.Mode;
 import com.apzda.cloud.gsvc.security.authentication.AuthenticationDetails;
 import com.apzda.cloud.gsvc.security.authentication.DeviceAuthenticationDetails;
 import com.apzda.cloud.gsvc.security.config.SecurityConfigProperties;
@@ -61,11 +62,12 @@ public class JwtTokenManager implements TokenManager, EnvironmentAware {
 
     private final ObjectMapper objectMapper;
 
-    private boolean gatewayEnabled;
+    private boolean validateAccessToken;
 
     @Override
     public void setEnvironment(@NonNull Environment environment) {
-        this.gatewayEnabled = environment.getProperty("apzda.cloud.gateway.default.enabled", Boolean.class, false);
+        this.validateAccessToken = environment.getProperty("apzda.cloud.gateway.default.enabled", Boolean.class, false)
+                || environment.getProperty("apzda.cloud.config.mode", Mode.class, Mode.MONO) == Mode.MONO;
     }
 
     @Override
@@ -149,7 +151,7 @@ public class JwtTokenManager implements TokenManager, EnvironmentAware {
             }
 
             final String detail;
-            if (gatewayEnabled || jwt.getPayload(PAYLOAD_DETAIL) == null) {
+            if (validateAccessToken || jwt.getPayload(PAYLOAD_DETAIL) == null) {
                 detail = null;
             }
             else {
