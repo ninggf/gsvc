@@ -67,7 +67,7 @@ public class JwtTokenManager implements TokenManager, EnvironmentAware {
     @Override
     public void setEnvironment(@NonNull Environment environment) {
         this.validateAccessToken = environment.getProperty("apzda.cloud.gateway.default.enabled", Boolean.class, false)
-                || environment.getProperty("apzda.cloud.config.mode", Mode.class, Mode.MONO) == Mode.MONO;
+                || environment.getProperty("apzda.cloud.config.mode", Mode.class, Mode.MIRCO) == Mode.MONO;
     }
 
     @Override
