@@ -43,6 +43,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.Ordered;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.LocaleResolver;
 
@@ -81,11 +82,11 @@ public class GsvcCoreAutoConfiguration {
         }
 
         val baseNames = new ArrayList<>(names.stream().toList());
-        if (StringUtils.hasText(properties.getBasename())) {
-            baseNames.add(properties.getBasename());
+        if (!CollectionUtils.isEmpty(properties.getBasename())) {
+            baseNames.addAll(properties.getBasename());
         }
 
-        properties.setBasename(String.join(",", baseNames));
+        properties.setBasename(baseNames);
 
         if (!baseNames.isEmpty()) {
             messageSource.setBasenames(baseNames.toArray(new String[0]));

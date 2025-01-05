@@ -7,9 +7,11 @@ import com.apzda.cloud.adapter.spring.callback.RequestOriginParser;
 import com.apzda.cloud.adapter.spring.callback.UrlCleaner;
 import com.apzda.cloud.adapter.spring.config.SentinelWebMvcConfig;
 import com.apzda.cloud.gsvc.gtw.GatewayUrlCleaner;
+import com.apzda.cloud.seata.plugin.SeataPlugin;
 import com.apzda.cloud.sentinel.callback.StandardRequestOriginParser;
 import com.apzda.cloud.sentinel.callback.StandardUrlBlockHandler;
 import com.apzda.cloud.sentinel.plugin.SentinelPlugin;
+import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -27,7 +29,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author fengz
  */
 @AutoConfiguration(before = GsvcAutoConfiguration.class)
-@ConditionalOnClass(SimpleHttpClient.class)
+@ConditionalOnClass({ SeataPlugin.class, SimpleHttpClient.class })
 @ConditionalOnProperty("csp.sentinel.dashboard.server")
 @Import({ SentinelGrpClientConfiguration.class, SentinelGrpcServerConfiguration.class })
 @Slf4j
@@ -68,7 +70,7 @@ public class SentinelAutoConfiguration {
         private final UrlCleaner urlCleaner;
 
         @Override
-        public void addInterceptors(InterceptorRegistry registry) {
+        public void addInterceptors(@Nonnull InterceptorRegistry registry) {
             val config = new SentinelWebMvcConfig();
             // Enable the HTTP method prefix.
             config.setHttpMethodSpecify(true);
