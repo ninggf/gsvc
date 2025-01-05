@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.autoconfigure;
+package com.apzda.cloud.mybatis.autoconfigure;
 
 import cn.hutool.core.date.DateUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
@@ -23,6 +23,7 @@ import com.apzda.cloud.gsvc.context.TenantManager;
 import com.apzda.cloud.gsvc.mybatis.MybatisCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
+import com.baomidou.mybatisplus.autoconfigure.MybatisPlusProperties;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusPropertiesCustomizer;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.core.handlers.StrictFill;
@@ -42,6 +43,7 @@ import net.sf.jsqlparser.expression.StringValue;
 import org.apache.ibatis.reflection.MetaObject;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -185,6 +187,7 @@ public class MyBatisPlusAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnBean(MybatisPlusProperties.class)
     MetaObjectHandler gsvcMetaObjectHandler(ObjectProvider<TenantManager<?>> tenantManagers,
             ServiceConfigProperties properties, Clock clock) {
         val stringBuffer = new StringBuffer();

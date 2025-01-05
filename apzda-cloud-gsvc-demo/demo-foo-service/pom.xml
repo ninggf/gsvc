@@ -72,8 +72,9 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <groupId>com.apzda.cloud</groupId>
+            <artifactId>apzda-cloud-mybatis-plus</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.apzda.cloud</groupId>

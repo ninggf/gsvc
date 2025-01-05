@@ -30,6 +30,7 @@
         <module>apzda-cloud-gsvc-test</module>
         <module>apzda-cloud-gsvc-boot</module>
         <module>apzda-cloud-gsvc-seata</module>
+        <module>apzda-cloud-mybatis-plus</module>
     </modules>
 
     <properties>
@@ -48,8 +49,8 @@
         <!-- dependencies versions -->
         <javax.annotation.version>1.3.2</javax.annotation.version>
         <spring-boot.version>3.2.12</spring-boot.version>
-        <spring-cloud.version>2023.0.3</spring-cloud.version>
-        <mybatis-plus.version>3.5.8</mybatis-plus.version>
+        <spring-cloud.version>2023.0.4</spring-cloud.version>
+        <mybatis-plus.version>3.5.9</mybatis-plus.version>
         <hutool.version>5.8.35</hutool.version>
         <guava.version>33.3.1-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
@@ -69,7 +70,7 @@
         <jasypt.version>3.0.5</jasypt.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <micrometer-propagation.version>1.1.2</micrometer-propagation.version>
-        <brave.version>5.17.0</brave.version>
+        <brave.version>5.18.1</brave.version>
         <springdoc.version>2.6.0</springdoc.version>
         <swagger-annotations.version>2.2.27</swagger-annotations.version>
         <!-- plugins versions -->
@@ -183,7 +184,12 @@
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
-                <artifactId>xxl-job-adapter</artifactId>
+                <artifactId>apzda-cloud-mybatis-plus</artifactId>
+                <version>1.2.22-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
+                <artifactId>apzda-cloud-xxl-job-adapter</artifactId>
                 <version>1.2.22-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -257,6 +263,11 @@
             <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
                 <version>${mybatis-plus.version}</version>
             </dependency>
             <dependency>
