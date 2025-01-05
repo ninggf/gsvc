@@ -23,7 +23,6 @@ import com.apzda.cloud.gsvc.context.TenantManager;
 import com.apzda.cloud.gsvc.mybatis.MybatisCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
-import com.baomidou.mybatisplus.autoconfigure.MybatisPlusProperties;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusPropertiesCustomizer;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.baomidou.mybatisplus.core.handlers.StrictFill;
@@ -187,7 +186,7 @@ public class MyBatisPlusAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnBean(MybatisPlusProperties.class)
+    @ConditionalOnBean(ServiceConfigProperties.class)
     MetaObjectHandler gsvcMetaObjectHandler(ObjectProvider<TenantManager<?>> tenantManagers,
             ServiceConfigProperties properties, Clock clock) {
         val stringBuffer = new StringBuffer();
