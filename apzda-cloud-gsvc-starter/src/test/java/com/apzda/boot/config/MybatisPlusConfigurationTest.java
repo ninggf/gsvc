@@ -5,9 +5,9 @@ import com.apzda.boot.MyBatisPlusConfig;
 import com.apzda.boot.entity.Role;
 import com.apzda.boot.entity.User;
 import com.apzda.boot.mybatis.service.UserService;
-import com.apzda.cloud.gsvc.autoconfigure.MyBatisPlusAutoConfiguration;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.TenantManager;
+import com.apzda.cloud.mybatis.autoconfigure.MyBatisPlusAutoConfiguration;
 import com.apzda.module.test.abc.def.a.mapper.UserMapper;
 import com.apzda.neti.test.mapper.RoleMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -81,7 +81,8 @@ class MybatisPlusConfigurationTest {
     void create() {
         when(clock.millis()).thenReturn(System.currentTimeMillis());
         val p = new ServiceConfigProperties();
-        //when(serviceConfigProperties.getMybatisPlus()).thenAnswer(invocation -> p.getMybatisPlus());
+        // when(serviceConfigProperties.getMybatisPlus()).thenAnswer(invocation ->
+        // p.getMybatisPlus());
 
         {
             var user = new User();
