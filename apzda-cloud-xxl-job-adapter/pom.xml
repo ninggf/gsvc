@@ -7,8 +7,7 @@
         <version>1.2.22-SNAPSHOT</version>
     </parent>
 
-    <artifactId>xxl-job-adapter</artifactId>
-    <name>apzda-cloud-xxl-job-adapter</name>
+    <artifactId>apzda-cloud-xxl-job-adapter</artifactId>
     <properties>
         <xxl-job.version>2.4.2</xxl-job.version>
     </properties>

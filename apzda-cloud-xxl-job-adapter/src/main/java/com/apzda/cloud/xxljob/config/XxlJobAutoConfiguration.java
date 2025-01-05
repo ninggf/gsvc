@@ -19,6 +19,7 @@ package com.apzda.cloud.xxljob.config;
 import com.xxl.job.core.executor.impl.XxlJobSpringExecutor;
 import lombok.val;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
@@ -34,6 +35,7 @@ import org.springframework.util.StringUtils;
 public class XxlJobAutoConfiguration {
 
     @Bean
+    @ConditionalOnMissingBean
     public XxlJobSpringExecutor xxlJobExecutor(ConfigProperties properties, Environment environment) {
         val admin = properties.getAdmin();
         val executor = properties.getExecutor();
