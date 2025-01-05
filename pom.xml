@@ -8,7 +8,7 @@
     </parent>
     <groupId>com.apzda.cloud</groupId>
     <artifactId>gsvc</artifactId>
-    <version>1.2.22</version>
+    <version>1.2.23-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Gsvc</name>
     <description>A Toy Based on Spring Boot and Grpc-Java</description>
@@ -133,67 +133,67 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-core</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-boot</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-parent</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-proto</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-security</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-starter</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-tracing</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>domain</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-seata</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-mybatis-plus</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-xxl-job-adapter</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-test</artifactId>
-                <version>1.2.22</version>
+                <version>1.2.23-SNAPSHOT</version>
             </dependency>
             <!-- javax -->
             <dependency>
