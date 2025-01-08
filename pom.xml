@@ -31,6 +31,7 @@
         <module>apzda-cloud-gsvc-boot</module>
         <module>apzda-cloud-gsvc-seata</module>
         <module>apzda-cloud-mybatis-plus</module>
+        <module>apzda-cloud-rocketmq</module>
     </modules>
 
     <properties>
@@ -65,6 +66,7 @@
         <druid.version>1.2.24</druid.version>
         <seata.version>2.2.0</seata.version>
         <seata.cloud.version>2023.0.3.2</seata.cloud.version>
+        <rocketmq-client.version>5.0.7</rocketmq-client.version>
         <easyexcel.version>4.0.3</easyexcel.version>
         <commons-io.version>2.18.0</commons-io.version>
         <jasypt.version>3.0.5</jasypt.version>
@@ -189,6 +191,11 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-xxl-job-adapter</artifactId>
+                <version>3.4.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
+                <artifactId>apzda-cloud-rocketmq</artifactId>
                 <version>3.4.0-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -374,6 +381,12 @@
                 <groupId>com.alibaba.csp</groupId>
                 <artifactId>sentinel-transport-simple-http</artifactId>
                 <version>${sentinel.version}</version>
+            </dependency>
+            <!-- rocketmq -->
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client-java</artifactId>
+                <version>${rocketmq-client.version}</version>
             </dependency>
             <!-- springdoc -->
             <dependency>

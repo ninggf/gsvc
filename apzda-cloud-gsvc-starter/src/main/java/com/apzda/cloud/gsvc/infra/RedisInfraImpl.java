@@ -18,6 +18,9 @@ package com.apzda.cloud.gsvc.infra;
 
 import cn.hutool.core.date.DateUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -26,9 +29,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 
+import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -39,9 +44,32 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RedisInfraImpl implements Counter, TempStorage {
 
+    private final static Pattern ID_PATTERN = Pattern.compile("^(.+?)@(.+)$");
+
     private final StringRedisTemplate stringRedisTemplate;
 
     private final ObjectMapper objectMapper;
+
+    private final LoadingCache<String, Boolean> idCache = CacheBuilder.newBuilder()
+        .expireAfterAccess(Duration.ofSeconds(10))
+        .build(new CacheLoader<>() {
+            @Override
+            @NonNull
+            public Boolean load(@NonNull String key) throws Exception {
+                try {
+                    val matcher = ID_PATTERN.matcher(key);
+                    if (matcher.matches()) {
+                        val id = matcher.group(1);
+                        val interval = Long.parseLong(matcher.group(2));
+                        stringRedisTemplate.expire(id, interval + 1, TimeUnit.SECONDS);
+                    }
+                }
+                catch (Exception e) {
+                    log.warn("Cannot set expired time of the key of count {} - {}", key, e.getMessage());
+                }
+                return true;
+            }
+        });
 
     @Override
     public int count(@NonNull String key, long interval) {
@@ -61,7 +89,7 @@ public class RedisInfraImpl implements Counter, TempStorage {
         }
         finally {
             try {
-                stringRedisTemplate.expire(id, interval + 1, TimeUnit.SECONDS);
+                idCache.getUnchecked(id + "@" + interval);
             }
             catch (Exception e) {
                 log.warn("Cannot set expired time of the key of count {} - {}", id, e.getMessage());

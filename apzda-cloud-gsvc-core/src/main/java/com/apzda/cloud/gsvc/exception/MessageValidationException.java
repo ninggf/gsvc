@@ -33,7 +33,12 @@ public class MessageValidationException extends RuntimeException implements NoSt
 
     private final List<Violation> violations;
 
-    private final Descriptors.Descriptor descriptor;
+    private transient final Descriptors.Descriptor descriptor;
+
+    public MessageValidationException() {
+        this.violations = null;
+        this.descriptor = null;
+    }
 
     public MessageValidationException(List<Violation> violations, Descriptors.Descriptor descriptorForType) {
         super(ServiceError.BIND_ERROR.message);

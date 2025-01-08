@@ -56,7 +56,7 @@ jobs:
       - name: Install Gsvc Compiler
         run: mvn install -pl apzda-cloud-gsvc-compiler
       - name: Build with Maven
-        run: mvn -B package -Djava.version=${{ matrix.java }} --file pom.xml
+        run: mvn -B package -Dskip.container=yes -Djava.version=${{ matrix.java }} --file pom.xml
       - name: Init Database
         run: |-
           docker run --rm --network host -v ./.github/seata_undo_log.sql:/tmp/undo_log.sql mysql:8.0.35 \

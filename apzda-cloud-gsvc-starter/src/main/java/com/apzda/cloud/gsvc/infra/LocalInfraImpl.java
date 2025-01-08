@@ -67,14 +67,18 @@ public class LocalInfraImpl implements Counter, TempStorage {
         cleaner = Executors.newScheduledThreadPool(1);
 
         cleaner.scheduleWithFixedDelay(() -> {
-            val current = DateUtil.currentSeconds();
-            var key = keys.firstKey();
-            while (key != null && key < current) {
-                val ids = keys.remove(key);
-                counterCache.invalidateAll(ids);
-                storageCache.invalidateAll(ids);
-                log.debug("Removed: {}", ids);
-                key = keys.firstKey();
+            try {
+                val current = DateUtil.currentSeconds();
+                var key = keys.firstKey();
+                while (key != null && key < current) {
+                    val ids = keys.remove(key);
+                    counterCache.invalidateAll(ids);
+                    storageCache.invalidateAll(ids);
+                    log.trace("Removed: {}", ids);
+                    key = keys.firstKey();
+                }
+            }
+            catch (Exception ignored) {
             }
         }, 1, 1, TimeUnit.SECONDS);
     }
@@ -129,7 +133,7 @@ public class LocalInfraImpl implements Counter, TempStorage {
         cleaner.shutdown();
     }
 
-    private void setExpired(String id, Duration expired) {
+    private void setExpired(String id, @NonNull Duration expired) {
         val expiredTime = DateUtil.currentSeconds() + expired.toSeconds();
         synchronized (keys) {
             keys.compute(expiredTime, (key, v) -> {

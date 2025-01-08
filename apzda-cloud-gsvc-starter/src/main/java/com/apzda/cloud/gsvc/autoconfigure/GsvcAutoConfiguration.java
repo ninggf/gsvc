@@ -212,6 +212,7 @@ public class GsvcAutoConfiguration {
 
         @Override
         public void stop() {
+            running = false;
             counter.shutdown();
         }
 
