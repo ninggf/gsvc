@@ -1,6 +1,6 @@
 package com.apzda.cloud.sentinel.callback;
 
-import com.apzda.cloud.adapter.spring.callback.RequestOriginParser;
+import com.alibaba.csp.sentinel.adapter.spring.webmvc_v6x.callback.RequestOriginParser;
 import com.apzda.cloud.gsvc.server.IServiceMethodHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;

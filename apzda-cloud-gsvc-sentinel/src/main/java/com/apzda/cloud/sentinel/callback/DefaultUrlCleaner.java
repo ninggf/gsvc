@@ -1,6 +1,7 @@
 package com.apzda.cloud.sentinel.callback;
 
-import com.apzda.cloud.adapter.spring.callback.UrlCleaner;
+
+import com.alibaba.csp.sentinel.adapter.web.common.UrlCleaner;
 
 /**
  * @author fengz

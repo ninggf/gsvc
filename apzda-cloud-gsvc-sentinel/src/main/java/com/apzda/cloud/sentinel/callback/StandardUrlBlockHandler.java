@@ -1,8 +1,8 @@
 package com.apzda.cloud.sentinel.callback;
 
 import cn.hutool.core.lang.UUID;
+import com.alibaba.csp.sentinel.adapter.spring.webmvc_v6x.callback.BlockExceptionHandler;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
-import com.apzda.cloud.adapter.spring.callback.BlockExceptionHandler;
 import com.apzda.cloud.gsvc.core.GsvcContextHolder;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
@@ -25,7 +25,8 @@ import java.nio.charset.StandardCharsets;
 public class StandardUrlBlockHandler implements BlockExceptionHandler {
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response, BlockException ex) throws IOException {
+    public void handle(HttpServletRequest request, HttpServletResponse response, String resourceName, BlockException ex)
+            throws IOException {
         val context = GsvcContextHolder.getContext();
         val requestId = StringUtils.defaultIfBlank(context.getRequestId(), UUID.randomUUID().toString(true));
         context.setRequestId(requestId);

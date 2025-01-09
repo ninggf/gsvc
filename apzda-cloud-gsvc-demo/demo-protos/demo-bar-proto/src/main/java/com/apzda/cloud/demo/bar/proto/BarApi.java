@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2025 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,24 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.gtw;
+package com.apzda.cloud.demo.bar.proto;
 
-import com.alibaba.csp.sentinel.adapter.web.common.UrlCleaner;
+import com.apzda.cloud.demo.bar.proto.vo.GreetingVo;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * @author fengz (windywany@gmail.com)
- * @version 1.0.0
- * @since 1.0.0
+ * @version 3.4.0
+ * @since 3.4.0
  **/
-public class GatewayUrlCleaner implements UrlCleaner {
+@FeignClient(name = "BARSERVICE")
+public interface BarApi {
 
-    @Override
-    public String clean(String originUrl) {
-        if (RouteRegistry.ignore(originUrl)) {
-            return "";
-        }
-
-        return originUrl;
-    }
+    @GetMapping("/bar-feign/greeting")
+    GreetingVo greet(@RequestParam("name") String name);
 
 }

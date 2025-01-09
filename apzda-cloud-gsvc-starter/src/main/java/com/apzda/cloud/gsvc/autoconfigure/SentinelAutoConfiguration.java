@@ -1,11 +1,11 @@
 package com.apzda.cloud.gsvc.autoconfigure;
 
+import com.alibaba.csp.sentinel.adapter.spring.webmvc_v6x.SentinelWebInterceptor;
+import com.alibaba.csp.sentinel.adapter.spring.webmvc_v6x.callback.BlockExceptionHandler;
+import com.alibaba.csp.sentinel.adapter.spring.webmvc_v6x.callback.RequestOriginParser;
+import com.alibaba.csp.sentinel.adapter.spring.webmvc_v6x.config.SentinelWebMvcConfig;
+import com.alibaba.csp.sentinel.adapter.web.common.UrlCleaner;
 import com.alibaba.csp.sentinel.transport.heartbeat.client.SimpleHttpClient;
-import com.apzda.cloud.adapter.spring.SentinelWebInterceptor;
-import com.apzda.cloud.adapter.spring.callback.BlockExceptionHandler;
-import com.apzda.cloud.adapter.spring.callback.RequestOriginParser;
-import com.apzda.cloud.adapter.spring.callback.UrlCleaner;
-import com.apzda.cloud.adapter.spring.config.SentinelWebMvcConfig;
 import com.apzda.cloud.gsvc.gtw.GatewayUrlCleaner;
 import com.apzda.cloud.seata.plugin.SeataPlugin;
 import com.apzda.cloud.sentinel.callback.StandardRequestOriginParser;

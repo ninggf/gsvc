@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>gsvc</artifactId>
         <groupId>com.apzda.cloud</groupId>
@@ -8,10 +9,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
-    <description>
-        Adapt to Sentinel 1.8.7.
-    </description>
-
     <dependencies>
         <dependency>
             <groupId>jakarta.servlet</groupId>
@@ -25,7 +22,7 @@
         <!-- sentinel -->
         <dependency>
             <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-parameter-flow-control </artifactId>
+            <artifactId>sentinel-parameter-flow-control</artifactId>
             <version>${sentinel.version}</version>
         </dependency>
         <dependency>
@@ -49,6 +46,11 @@
         <dependency>
             <groupId>com.alibaba.csp</groupId>
             <artifactId>sentinel-transport-simple-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-spring-webmvc-v6x-adapter</artifactId>
+            <version>${sentinel.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

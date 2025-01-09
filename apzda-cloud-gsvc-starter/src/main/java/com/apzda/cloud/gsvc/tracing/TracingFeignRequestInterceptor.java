@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2025 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,24 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.gtw;
+package com.apzda.cloud.gsvc.tracing;
 
-import com.alibaba.csp.sentinel.adapter.web.common.UrlCleaner;
+import com.apzda.cloud.gsvc.core.GsvcContextHolder;
+import feign.RequestInterceptor;
+import feign.RequestTemplate;
+import org.springframework.util.StringUtils;
 
 /**
  * @author fengz (windywany@gmail.com)
- * @version 1.0.0
- * @since 1.0.0
+ * @version 3.4.0
+ * @since 3.4.0
  **/
-public class GatewayUrlCleaner implements UrlCleaner {
+public class TracingFeignRequestInterceptor implements RequestInterceptor {
 
     @Override
-    public String clean(String originUrl) {
-        if (RouteRegistry.ignore(originUrl)) {
-            return "";
+    public void apply(RequestTemplate template) {
+        String rid = GsvcContextHolder.getRequestId();
+        if (StringUtils.hasLength(rid)) {
+            template.header("X-Request-ID", rid);
         }
-
-        return originUrl;
     }
 
 }
