@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>com.apzda.cloud</groupId>
         <artifactId>gsvc</artifactId>
@@ -18,7 +19,7 @@
         <!-- libraries version -->
         <groovy.version>4.0.24</groovy.version>
         <!-- plugins version -->
-        <gmavenplus-plugin.version>4.0.1</gmavenplus-plugin.version>
+        <gmavenplus-plugin.version>4.1.1</gmavenplus-plugin.version>
         <!-- spring-boot-maven-plugin -->
         <spring-boot-maven-plugin.layer>false</spring-boot-maven-plugin.layer>
         <spring-boot-maven-plugin.classifier>fat</spring-boot-maven-plugin.classifier>
@@ -141,7 +142,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
                     <configuration>
-                        <propertiesEncoding>${project.build.sourceEncoding}</propertiesEncoding>
+                        <encoding>${project.build.sourceEncoding}</encoding>
                         <delimiters>
                             <delimiter>${resource.delimiter}</delimiter>
                         </delimiters>
