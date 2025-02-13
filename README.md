@@ -13,12 +13,6 @@ A Toy Based on `Spring Boot` and `Grpc-Java`.
 3. 观测、流控与安全: 微调Spring Security提供安全保证、基于Spring Actuator提供可观性、整合Sentinel实现流控。
 4. 分布式事务：基于Seata实现。
 
-## 版本
-
-| Version | Spring Boot | Spring Cloud | protobuf-Java | grpc-java |
-|:--------|:------------|:-------------|:--------------|:----------|
-| 1.2.x   | 3.2.x       | 2023.0.3     | 3.25.x        | 1.68.0    |
-| 3.3.x   | 3.3.x       | 2023.0.3     | 3.25.x        | 1.68.0    |
 
 ## 使用
 
