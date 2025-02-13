@@ -98,9 +98,11 @@ public final class ServiceConfigProperties {
 
         private String homePage;
 
-        private String realIpHeader = "X-Real-IP";
+        private String realIpHeader = "X-Real-Ip";
 
         private String realIpFrom;
+
+        private String protocolHeader;
 
         private String dictItemTable = "sys_dict_item";
 

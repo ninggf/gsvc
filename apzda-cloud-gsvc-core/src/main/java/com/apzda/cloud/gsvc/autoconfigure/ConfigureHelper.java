@@ -30,7 +30,9 @@ import java.util.List;
  **/
 public abstract class ConfigureHelper {
 
-    private static String REAL_IP_HEADER = "X-Real-IP";
+    private static String REAL_IP_HEADER = "X-Real-Ip";
+
+    private static String PROTOCOL_HEADER;
 
     private static List<String> REAL_IP_FROM = Collections.emptyList();
 
@@ -45,12 +47,20 @@ public abstract class ConfigureHelper {
         }
     }
 
+    static void setProtocolHeader(String header) {
+        PROTOCOL_HEADER = header;
+    }
+
     public static String getRealIpHeader() {
         return REAL_IP_HEADER;
     }
 
     public static List<String> getRealIpFrom() {
         return REAL_IP_FROM;
+    }
+
+    public static String getProtocolHeader() {
+        return PROTOCOL_HEADER;
     }
 
 }

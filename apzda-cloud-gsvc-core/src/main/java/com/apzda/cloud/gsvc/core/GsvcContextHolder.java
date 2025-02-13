@@ -9,6 +9,7 @@ import io.grpc.Metadata;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -303,6 +304,30 @@ public abstract class GsvcContextHolder implements ApplicationContextAware {
         return context.remoteIp;
     }
 
+    public static String getSchema() {
+        val context = getContext();
+        if (StringUtils.hasText(context.schema)) {
+            return context.schema;
+        }
+        val request = getRequest();
+        var schema = request.map(ServletRequest::getScheme).orElse("http");
+
+        var headers = context.headers;
+        if (headers == null && request.isPresent()) {
+            headers = headers();
+        }
+
+        if (headers == null || !StringUtils.hasText(ConfigureHelper.getProtocolHeader())) {
+            context.schema = schema;
+            return schema;
+        }
+
+        val protocolHeader = ConfigureHelper.getProtocolHeader();
+        schema = headers.get(protocolHeader, "http");
+        context.schema = schema;
+        return schema;
+    }
+
     @Data
     public final static class GsvcContext {
 
@@ -323,6 +348,8 @@ public abstract class GsvcContextHolder implements ApplicationContextAware {
         private String remoteIp;
 
         private String remoteAddr;
+
+        private String schema;
 
         private Attributes grpcAttributes;
 
@@ -347,9 +374,12 @@ public abstract class GsvcContextHolder implements ApplicationContextAware {
             return GsvcContextHolder.getRemoteIp();
         }
 
+        public String getSchema() {
+            return GsvcContextHolder.getSchema();
+        }
+
         @NonNull
         public static GsvcContext current() {
-
             return GsvcContextHolder.getContext();
         }
 

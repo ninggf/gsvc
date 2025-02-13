@@ -159,11 +159,14 @@ public class GsvcCoreAutoConfiguration {
     @Configuration(proxyBeanMethods = false)
     static class StaticConfigureConfiguration implements InitializingBean {
 
-        @Value("${apzda.cloud.config.real-ip-header:X-Real-IP}")
+        @Value("${apzda.cloud.config.real-ip-header:X-Real-Ip}")
         private String realIpHeader;
 
         @Value("${apzda.cloud.config.real-ip-from:}")
         private String realIpFrom;
+
+        @Value("${apzda.cloud.config.protocol-header:}")
+        private String protocolHeader;
 
         @Override
         public void afterPropertiesSet() throws Exception {
@@ -173,6 +176,7 @@ public class GsvcCoreAutoConfiguration {
                 log.trace("Will try getting remote ip from header {} which sent by {}", realIpHeader,
                         ConfigureHelper.getRealIpFrom());
             }
+            ConfigureHelper.setProtocolHeader(protocolHeader);
         }
 
     }
