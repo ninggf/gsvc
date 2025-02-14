@@ -323,7 +323,13 @@ public abstract class GsvcContextHolder implements ApplicationContextAware {
         }
 
         val protocolHeader = ConfigureHelper.getProtocolHeader();
-        schema = headers.get(protocolHeader, "http");
+        val schemas = headers.get(protocolHeader, "http");
+        if (StringUtils.hasText(schemas)) {
+            val vars = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(schemas);
+            if (!vars.isEmpty()) {
+                schema = vars.get(0);
+            }
+        }
         context.schema = schema;
         return schema;
     }
