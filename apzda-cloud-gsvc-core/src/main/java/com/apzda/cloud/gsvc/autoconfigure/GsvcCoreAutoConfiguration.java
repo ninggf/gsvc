@@ -176,7 +176,9 @@ public class GsvcCoreAutoConfiguration {
                 log.trace("Will try getting remote ip from header {} which sent by {}", realIpHeader,
                         ConfigureHelper.getRealIpFrom());
             }
-            ConfigureHelper.setProtocolHeader(protocolHeader);
+            if (StringUtils.hasText(protocolHeader)) {
+                ConfigureHelper.setProtocolHeader(protocolHeader);
+            }
         }
 
     }

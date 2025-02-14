@@ -32,7 +32,7 @@ public abstract class ConfigureHelper {
 
     private static String REAL_IP_HEADER = "X-Real-Ip";
 
-    private static String PROTOCOL_HEADER;
+    private static String PROTOCOL_HEADER = "X-Forwarded-Proto";
 
     private static List<String> REAL_IP_FROM = Collections.emptyList();
 
