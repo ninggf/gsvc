@@ -28,14 +28,14 @@ import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -45,12 +45,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class LocalInfraImpl implements Counter, TempStorage {
 
+    private static final Map<String, Lock> locks = new ConcurrentHashMap<>();
+
     private final Cache<String, Object> storageCache;
 
     private final LoadingCache<String, AtomicInteger> counterCache;
 
     @Getter
     private final TreeMap<Long, Set<String>> keys = new TreeMap<>();
+
+    private final Map<String, Long> pointers = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService cleaner;
 
@@ -59,7 +63,7 @@ public class LocalInfraImpl implements Counter, TempStorage {
         counterCache = CacheBuilder.newBuilder().expireAfterAccess(tempMaxExpiredTime).build(new CacheLoader<>() {
             @Override
             @NonNull
-            public AtomicInteger load(@NonNull String key) throws Exception {
+            public AtomicInteger load(@NonNull String key) {
                 return new AtomicInteger(0);
             }
         });
@@ -74,6 +78,7 @@ public class LocalInfraImpl implements Counter, TempStorage {
                     val ids = keys.remove(key);
                     counterCache.invalidateAll(ids);
                     storageCache.invalidateAll(ids);
+                    ids.forEach(pointers::remove);
                     log.trace("Removed: {}", ids);
                     key = keys.firstKey();
                 }
@@ -125,6 +130,40 @@ public class LocalInfraImpl implements Counter, TempStorage {
         storageCache.invalidate(key);
     }
 
+    @Override
+    public void expire(@NonNull String id, Duration duration) {
+        val key = "storage." + id;
+        setExpired(key, duration);
+    }
+
+    @Override
+    @NonNull
+    public Duration getDuration(@NonNull String id) {
+        val key = "storage." + id;
+        val ep = pointers.get(key);
+        if (ep == null) {
+            return Duration.ZERO;
+        }
+        val expire = ep - DateUtil.currentSeconds();
+        if (expire <= 0) {
+            return Duration.ZERO;
+        }
+        return Duration.ofSeconds(expire);
+    }
+
+    @Override
+    @NonNull
+    public Lock getLock(@NonNull String id) {
+        val key = "lock." + id;
+        return locks.computeIfAbsent(key, k -> new ReentrantLock());
+    }
+
+    @Override
+    public void deleteLock(@NonNull String id) {
+        val key = "lock." + id;
+        locks.remove(key);
+    }
+
     public long getCounterSize() {
         return counterCache.size();
     }
@@ -136,6 +175,14 @@ public class LocalInfraImpl implements Counter, TempStorage {
     private void setExpired(String id, @NonNull Duration expired) {
         val expiredTime = DateUtil.currentSeconds() + expired.toSeconds();
         synchronized (keys) {
+            val ep = pointers.get(id);
+            if (ep != null) {
+                keys.computeIfPresent(ep, (k, v) -> {
+                    v.remove(id);
+                    return v;
+                });
+            }
+            pointers.put(id, expiredTime);
             keys.compute(expiredTime, (key, v) -> {
                 if (v == null) {
                     v = new HashSet<>();

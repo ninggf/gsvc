@@ -19,7 +19,9 @@ package com.apzda.cloud.gsvc.infra;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 
+import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
 
 /**
  * @author fengz (windywany@gmail.com)
@@ -41,5 +43,15 @@ public interface TempStorage {
     }
 
     void remove(@NonNull String id);
+
+    void expire(@NonNull String id, Duration duration);
+
+    @NonNull
+    Duration getDuration(@NonNull String id);
+
+    @NonNull
+    Lock getLock(@NonNull String id);
+
+    void deleteLock(@NonNull String id);
 
 }

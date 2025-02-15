@@ -30,9 +30,13 @@ import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 /**
@@ -46,6 +50,8 @@ public class RedisInfraImpl implements Counter, TempStorage {
 
     private final static Pattern ID_PATTERN = Pattern.compile("^(.+?)@(.+)$");
 
+    private static final Map<String, Lock> locks = new ConcurrentHashMap<>();
+
     private final StringRedisTemplate stringRedisTemplate;
 
     private final ObjectMapper objectMapper;
@@ -55,7 +61,7 @@ public class RedisInfraImpl implements Counter, TempStorage {
         .build(new CacheLoader<>() {
             @Override
             @NonNull
-            public Boolean load(@NonNull String key) throws Exception {
+            public Boolean load(@NonNull String key) {
                 try {
                     val matcher = ID_PATTERN.matcher(key);
                     if (matcher.matches()) {
@@ -101,7 +107,13 @@ public class RedisInfraImpl implements Counter, TempStorage {
     public <T extends ExpiredData> T save(@NonNull String id, @NonNull T data) throws Exception {
         val key = "storage." + id;
         val ca = objectMapper.writeValueAsString(data);
-        stringRedisTemplate.opsForValue().set(key, ca, data.getExpireTime().toSeconds(), TimeUnit.SECONDS);
+        val expired = data.getExpireTime();
+        if (expired.isZero() || expired.isNegative()) {
+            stringRedisTemplate.opsForValue().set(key, ca);
+        }
+        else {
+            stringRedisTemplate.opsForValue().set(key, ca, expired.toSeconds(), TimeUnit.SECONDS);
+        }
         return data;
     }
 
@@ -130,6 +142,158 @@ public class RedisInfraImpl implements Counter, TempStorage {
         catch (Exception e) {
             log.warn("Cannot delete TempData({}): {}", id, e.getMessage());
         }
+    }
+
+    @Override
+    public void expire(@NonNull String id, @NonNull Duration duration) {
+        val key = "storage." + id;
+        try {
+            stringRedisTemplate.expire(key, duration);
+        }
+        catch (Exception e) {
+            log.warn("Cannot expire TempData({}): {}", id, e.getMessage());
+        }
+    }
+
+    @Override
+    @NonNull
+    public Duration getDuration(@NonNull String id) {
+        val key = "storage." + id;
+        try {
+            val expire = stringRedisTemplate.getExpire(key, TimeUnit.SECONDS);
+            return Duration.ofSeconds(expire);
+        }
+        catch (Exception e) {
+            log.warn("Cannot get the Expire TempData({}): {}", id, e.getMessage());
+        }
+        return Duration.ZERO;
+    }
+
+    @Override
+    @NonNull
+    public Lock getLock(@NonNull String id) {
+        val key = "lock." + id;
+
+        return locks.computeIfAbsent(key, k -> new SimpleRedisLock(k, stringRedisTemplate));
+    }
+
+    @Override
+    public void deleteLock(@NonNull String id) {
+        val key = "lock." + id;
+        locks.remove(key);
+    }
+
+    @SuppressWarnings("all")
+    static class SimpleRedisLock extends ReentrantLock {
+
+        private final static Duration DEFAULT_TIMEOUT = Duration.ofSeconds(300);
+
+        private final StringRedisTemplate stringRedisTemplate;
+
+        private final String lockName;
+
+        private final ThreadLocal<String> holder = new ThreadLocal<>();
+
+        SimpleRedisLock(String lockName, StringRedisTemplate redisTemplate) {
+            super();
+            this.lockName = lockName;
+            this.stringRedisTemplate = redisTemplate;
+        }
+
+        @Override
+        public boolean isLocked() {
+            return Objects.equals(Thread.currentThread().getName(), holder.get()) && super.isLocked();
+        }
+
+        @Override
+        public void unlock() {
+            try {
+                if (isLocked() && isHeldByCurrentThread()) {
+                    super.unlock();
+                    try {
+                        stringRedisTemplate.delete(lockName);
+                    }
+                    catch (Exception e) {
+                        log.error("Cannot unlock {}. Please unlock it manually: DEL {} - {}", lockName, lockName,
+                                e.getMessage());
+                    }
+                }
+            }
+            catch (Exception ignored) {
+                log.error("Cannot unlock {}", lockName);
+            }
+            finally {
+                this.holder.remove();
+            }
+        }
+
+        @Override
+        public void lock() {
+            if (!tryLock()) {
+                throw new IllegalMonitorStateException(String.format("Cannot lock %s - %s", lockName));
+            }
+        }
+
+        @Override
+        public void lockInterruptibly() throws InterruptedException {
+            if (!tryLock()) {
+                throw new IllegalMonitorStateException(String.format("Cannot lock %s", lockName));
+            }
+        }
+
+        @Override
+        public boolean tryLock() {
+            try {
+                return tryLock(DEFAULT_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
+            }
+            catch (RuntimeException re) {
+                throw re;
+            }
+            catch (Exception e) {
+                throw new IllegalMonitorStateException(String.format("Cannot lock %s - %s", lockName, e.getMessage()));
+            }
+        }
+
+        @Override
+        public boolean tryLock(long timeout, @NonNull TimeUnit unit) throws InterruptedException {
+            val start = System.currentTimeMillis();
+            if (Objects.equals(Thread.currentThread().getName(), holder.get()) && isHeldByCurrentThread()) {
+                return true;
+            }
+            if (super.tryLock(timeout, unit)) {
+                val end = System.currentTimeMillis();
+                lock_(Duration.ofMillis(unit.toMillis(timeout) - (end - start)));
+                return true;
+            }
+
+            return false;
+        }
+
+        private void lock_(Duration duration) throws InterruptedException {
+            try {
+                long count = Optional.ofNullable(duration).orElse(DEFAULT_TIMEOUT).toMillis() / 100;
+                do {
+                    val increment = stringRedisTemplate.opsForValue().increment(lockName);
+                    if (increment != null && increment == 1) {
+                        holder.set(Thread.currentThread().getName());
+                        break;
+                    }
+                    count--;
+                    if (count < 0) {
+                        throw new InterruptedException(String.format("Timeout while waiting for lock %s", lockName));
+                    }
+                    TimeUnit.MILLISECONDS.sleep(100);
+                }
+                while (true);
+            }
+            catch (InterruptedException e) {
+                throw e;
+            }
+            catch (Exception e) {
+                throw new IllegalMonitorStateException(String.format("Cannot lock %s - %s", lockName, e.getMessage()));
+            }
+        }
+
     }
 
 }
