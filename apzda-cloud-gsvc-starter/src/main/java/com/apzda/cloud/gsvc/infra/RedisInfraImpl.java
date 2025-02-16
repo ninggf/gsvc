@@ -236,7 +236,7 @@ public class RedisInfraImpl implements Counter, TempStorage {
 
         @Override
         public void lockInterruptibly() throws InterruptedException {
-            if (!tryLock()) {
+            if (!tryLock(DEFAULT_TIMEOUT.toSeconds(), TimeUnit.SECONDS)) {
                 throw new IllegalMonitorStateException(String.format("Cannot lock %s", lockName));
             }
         }
@@ -246,11 +246,8 @@ public class RedisInfraImpl implements Counter, TempStorage {
             try {
                 return tryLock(DEFAULT_TIMEOUT.toSeconds(), TimeUnit.SECONDS);
             }
-            catch (RuntimeException re) {
-                throw re;
-            }
             catch (Exception e) {
-                throw new IllegalMonitorStateException(String.format("Cannot lock %s - %s", lockName, e.getMessage()));
+                return false;
             }
         }
 
@@ -262,7 +259,14 @@ public class RedisInfraImpl implements Counter, TempStorage {
             }
             if (super.tryLock(timeout, unit)) {
                 val end = System.currentTimeMillis();
-                lock_(Duration.ofMillis(unit.toMillis(timeout) - (end - start)));
+                try {
+                    lock_(Duration.ofMillis(unit.toMillis(timeout) - (end - start)));
+                }
+                catch (Exception e) {
+                    log.warn(e.getMessage());
+                    unlock();
+                    return false;
+                }
                 return true;
             }
 
