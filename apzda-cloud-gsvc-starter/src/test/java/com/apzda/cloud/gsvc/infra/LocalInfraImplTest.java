@@ -85,14 +85,14 @@ class LocalInfraImplTest {
         // then
         assertThat(tData).isPresent();
         assertThat(tData.get().getAge()).isEqualTo(18);
-
+        assertThat(LOCAL_INFRA_IMPL.exist("biz1.leo_ning")).isTrue();
         // when
         TimeUnit.SECONDS.sleep(10);
         val tData2 = LOCAL_INFRA_IMPL.load("biz1.leo_ning", TestData.class);
 
         // then
         assertThat(tData2).isNotPresent();
-
+        assertThat(LOCAL_INFRA_IMPL.exist("biz1.leo_ning")).isFalse();
         val duration = LOCAL_INFRA_IMPL.getDuration("biz1.leo_ning");
         assertThat(duration.toSeconds()).isLessThanOrEqualTo(0);
     }

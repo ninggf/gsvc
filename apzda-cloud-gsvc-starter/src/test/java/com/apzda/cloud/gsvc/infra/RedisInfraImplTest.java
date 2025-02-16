@@ -81,14 +81,14 @@ class RedisInfraImplTest {
         // then
         assertThat(tData).isPresent();
         assertThat(tData.get().getAge()).isEqualTo(18);
-
+        assertThat(storage.exist("biz1.leo_ning")).isTrue();
         // when
         TimeUnit.SECONDS.sleep(6);
         val tData2 = storage.load("biz1.leo_ning", TestData.class);
 
         // then
         assertThat(tData2).isNotPresent();
-
+        assertThat(storage.exist("biz1.leo_ning")).isFalse();
         val duration = storage.getDuration("biz1.leo_ning");
         assertThat(duration.toSeconds()).isLessThanOrEqualTo(0);
     }

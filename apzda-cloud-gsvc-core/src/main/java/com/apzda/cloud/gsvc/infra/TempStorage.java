@@ -42,6 +42,8 @@ public interface TempStorage {
         return load(id, defaultValue.getClass()).map(expiredData -> (T) expiredData).orElse(defaultValue);
     }
 
+    boolean exist(@NonNull String id);
+
     void remove(@NonNull String id);
 
     void expire(@NonNull String id, Duration duration);

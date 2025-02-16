@@ -125,6 +125,12 @@ public class LocalInfraImpl implements Counter, TempStorage {
     }
 
     @Override
+    public boolean exist(@NonNull String id) {
+        val key = "storage." + id;
+        return pointers.containsKey(key);
+    }
+
+    @Override
     public void remove(@NonNull String id) {
         val key = "storage." + id;
         storageCache.invalidate(key);
