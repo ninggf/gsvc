@@ -264,7 +264,8 @@ public class RedisInfraImpl implements Counter, TempStorage {
                 }
                 catch (Exception e) {
                     log.warn(e.getMessage());
-                    unlock();
+                    // 获取redis锁出错时仅释放本地锁
+                    super.unlock();
                     return false;
                 }
                 return true;
