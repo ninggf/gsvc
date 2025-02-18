@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -164,8 +165,12 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
             val httpHeaders = new HttpHeaders();
             httpHeaders.addAll(headers);
 
-            if (!httpHeaders.containsKey(HttpHeaders.TRANSFER_ENCODING)
+            if (httpHeaders.containsKey(HttpHeaders.TRANSFER_ENCODING)
                     && httpHeaders.containsKey(HttpHeaders.CONTENT_LENGTH)) {
+                // It is not valid to have both the transfer-encoding header and
+                // the content-length header.
+                // Remove the transfer-encoding header in the response if the
+                // content-length header is present.
                 httpHeaders.remove(HttpHeaders.TRANSFER_ENCODING);
             }
 
@@ -178,12 +183,13 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                     serverResponse = ServerResponse.status(HttpStatus.TEMPORARY_REDIRECT);
                     serverResponse.location(URI.create(loginURL));
                     serverResponse.contentType(MediaType.TEXT_HTML);
-                    httpHeaders.remove("Content-Type");
+                    return Flux.just(serverResponse);
                 }
             }
 
-            serverResponse.headers(httpHeaders1 -> httpHeaders1.addAll(httpHeaders));
+            serverResponse.headers(header -> header.addAll(httpHeaders));
             // 缓存响应流
+            @SuppressWarnings("all")
             val dataBuffers = response.body(BodyExtractors.toDataBuffers()).toStream();
             val resp = serverResponse.build((req, res) -> {
                 context.restore();
@@ -222,7 +228,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
 
         // the proxyResponse must have only one ServerResponse
         request.servletRequest().setAttribute("GSVC.CONTEXT", context);
-        return ServerResponse.async(proxyResponse.elementAt(0));
+        return ServerResponse.async(proxyResponse.elementAt(0), Duration.ofMillis(readTimeout.toMillis() * 2));
     }
 
     public List<HttpHeadersFilter> getHeadersFilters() {
