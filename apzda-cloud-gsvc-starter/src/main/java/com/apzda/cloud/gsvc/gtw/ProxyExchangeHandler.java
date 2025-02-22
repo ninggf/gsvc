@@ -159,6 +159,20 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
         }).body(body).exchangeToFlux(response -> {
             context.restore();
 
+            val responseStatus = response.statusCode();
+            ServerResponse.BodyBuilder serverResponse = ServerResponse.status(responseStatus);
+            if (responseStatus == HttpStatus.UNAUTHORIZED) {
+                val loginURL = ResponseUtils.getLoginUrl(request.headers().accept());
+                if (loginURL != null) {
+                    // renew a ServerResponse
+                    serverResponse = ServerResponse.status(HttpStatus.TEMPORARY_REDIRECT)
+                        .location(URI.create(loginURL))
+                        .contentType(MediaType.TEXT_HTML);
+                    log.error("Redirect to {}", loginURL);
+                    return Flux.just(serverResponse.build());
+                }
+            }
+
             val headers = HttpHeadersFilter.filter(getHeadersFilters(), response.headers().asHttpHeaders(),
                     servletServerHttpRequest, HttpHeadersFilter.Type.RESPONSE);
 
@@ -173,20 +187,6 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 // content-length header is present.
                 httpHeaders.remove(HttpHeaders.TRANSFER_ENCODING);
             }
-
-            val responseStatus = response.statusCode();
-            ServerResponse.BodyBuilder serverResponse = ServerResponse.status(responseStatus);
-            if (responseStatus == HttpStatus.UNAUTHORIZED) {
-                val loginURL = ResponseUtils.getLoginUrl(request.headers().accept());
-                if (loginURL != null) {
-                    // renew a ServerResponse
-                    serverResponse = ServerResponse.status(HttpStatus.TEMPORARY_REDIRECT);
-                    serverResponse.location(URI.create(loginURL));
-                    serverResponse.contentType(MediaType.TEXT_HTML);
-                    return Flux.just(serverResponse);
-                }
-            }
-
             serverResponse.headers(header -> header.addAll(httpHeaders));
             // 缓存响应流
             @SuppressWarnings("all")
@@ -195,8 +195,7 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
                 context.restore();
                 try (val writer = res.getOutputStream()) {
                     dataBuffers.forEach(dataBuffer -> {
-                        webLog.trace("Read data from downstream({}:{}): {}", cfgName, requestUri,
-                                dataBuffer.capacity());
+                        webLog.trace("Read data from upstream({}:{}): {}", cfgName, requestUri, dataBuffer.capacity());
                         try (val input = dataBuffer.asInputStream()) {
                             writer.write(input.readAllBytes());
                         }
@@ -228,7 +227,8 @@ public class ProxyExchangeHandler implements ApplicationContextAware {
 
         // the proxyResponse must have only one ServerResponse
         request.servletRequest().setAttribute("GSVC.CONTEXT", context);
-        return ServerResponse.async(proxyResponse.elementAt(0), Duration.ofMillis(readTimeout.toMillis() * 2));
+        return ServerResponse.async(proxyResponse.elementAt(0),
+                Duration.ofMillis((long) (readTimeout.toMillis() * 1.2)));
     }
 
     public List<HttpHeadersFilter> getHeadersFilters() {

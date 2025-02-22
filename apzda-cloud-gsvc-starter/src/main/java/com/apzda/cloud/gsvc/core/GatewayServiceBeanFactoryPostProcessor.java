@@ -247,7 +247,7 @@ public class GatewayServiceBeanFactoryPostProcessor implements BeanFactoryPostPr
         val tags = environment.getProperty(prefix + ".tags");
         val consumes = environment.getProperty(prefix + ".consumes");
         val excludes = environment.getProperty(prefix + ".excludes");
-        val readTimeout = environment.getProperty(prefix + ".read-timeout", Duration.class, Duration.ZERO);
+        val readTimeout = environment.getProperty(prefix + ".read-timeout", Duration.class, Duration.ofSeconds(300));
         var filters = environment.getProperty(prefix + ".filters");
 
         if (parent == null) {

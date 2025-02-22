@@ -40,7 +40,7 @@ public class Route {
     private String[] excludes;
 
     @DurationUnit(ChronoUnit.MILLIS)
-    private Duration readTimeout = Duration.ZERO;
+    private Duration readTimeout = Duration.ofSeconds(300);
 
     private List<HttpMethod> actions = Collections.emptyList();
 
