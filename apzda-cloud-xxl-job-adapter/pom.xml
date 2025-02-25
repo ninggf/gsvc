@@ -9,7 +9,7 @@
 
     <artifactId>apzda-cloud-xxl-job-adapter</artifactId>
     <properties>
-        <xxl-job.version>2.5.0</xxl-job.version>
+        <xxl-job.version>3.0.0</xxl-job.version>
     </properties>
     <dependencies>
         <!-- https://mvnrepository.com/artifact/com.xuxueli/xxl-job-core -->
