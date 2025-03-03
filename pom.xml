@@ -50,7 +50,7 @@
         <cs.check.skip>false</cs.check.skip>
         <!-- dependencies versions -->
         <javax.annotation.version>1.3.2</javax.annotation.version>
-        <spring-boot.version>3.4.2</spring-boot.version>
+        <spring-boot.version>3.4.3</spring-boot.version>
         <spring-cloud.version>2024.0.0</spring-cloud.version>
         <mybatis-plus.version>3.5.10.1</mybatis-plus.version>
         <shardingsphere.version>5.5.1</shardingsphere.version>
