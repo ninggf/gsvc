@@ -54,7 +54,7 @@
         <spring-cloud.version>2024.0.0</spring-cloud.version>
         <mybatis-plus.version>3.5.10.1</mybatis-plus.version>
         <shardingsphere.version>5.5.1</shardingsphere.version>
-        <hutool.version>5.8.35</hutool.version>
+        <hutool.version>5.8.36</hutool.version>
         <guava.version>33.4.0-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <protoc.version>3.25.3</protoc.version>
