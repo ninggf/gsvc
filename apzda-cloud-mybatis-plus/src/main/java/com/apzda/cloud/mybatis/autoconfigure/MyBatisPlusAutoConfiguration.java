@@ -21,6 +21,7 @@ import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.context.CurrentUserProvider;
 import com.apzda.cloud.gsvc.context.TenantManager;
 import com.apzda.cloud.gsvc.mybatis.MybatisCustomizer;
+import com.apzda.cloud.mybatis.plugin.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusPropertiesCustomizer;
@@ -29,7 +30,6 @@ import com.baomidou.mybatisplus.core.handlers.StrictFill;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
-import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.google.common.base.Joiner;
@@ -73,8 +73,8 @@ public class MyBatisPlusAutoConfiguration {
     // 增加的mybatis-plus配置
     @Bean
     ConfigurationCustomizer apzdaMybatisPlusConfigurationCustomizer(
-            final ObjectProvider<TenantManager<?>> tenantManager,
-            final ObjectProvider<List<MybatisCustomizer>> customizers) {
+        final ObjectProvider<TenantManager<?>> tenantManager,
+        final ObjectProvider<List<MybatisCustomizer>> customizers) {
         val ignoreTables = new HashSet<String>();
 
         customizers.ifAvailable((customizersLst) -> {
@@ -96,9 +96,9 @@ public class MyBatisPlusAutoConfiguration {
                             return;
                         }
                         val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(tm.getTenantIdColumn(),
-                                "tenant_id");
+                            "tenant_id");
                         mybatisPlusInterceptor.addInnerInterceptor(new TenantLineInnerInterceptor(
-                                new DefaultTenantLineHandler(tenantIdColumn, ignoreTables)));
+                            new DefaultTenantLineHandler(tenantIdColumn, ignoreTables)));
                     });
 
                     if (mybatisPlusInterceptor.getInterceptors()
@@ -112,7 +112,7 @@ public class MyBatisPlusAutoConfiguration {
 
                     if (mybatisPlusInterceptor.getInterceptors()
                         .stream()
-                        .filter(innerInterceptor -> innerInterceptor instanceof OptimisticLockerInnerInterceptor)
+                        .filter(innerInterceptor -> innerInterceptor instanceof com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor)
                         .findAny()
                         .isEmpty()) {
                         // log.debug("添加乐观锁插件");
@@ -126,9 +126,9 @@ public class MyBatisPlusAutoConfiguration {
                             return;
                         }
                         val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(tm.getTenantIdColumn(),
-                                "tenant_id");
+                            "tenant_id");
                         mybatisInterceptor.addInnerInterceptor(new TenantLineInnerInterceptor(
-                                new DefaultTenantLineHandler(tenantIdColumn, ignoreTables)));
+                            new DefaultTenantLineHandler(tenantIdColumn, ignoreTables)));
                     });
                     mybatisInterceptor.addInnerInterceptor(new PaginationInnerInterceptor());
                     mybatisInterceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
@@ -139,10 +139,10 @@ public class MyBatisPlusAutoConfiguration {
 
     @Bean
     MybatisPlusPropertiesCustomizer apzdaMybatisPlusPropertiesCustomizer(
-            final ObjectProvider<List<MybatisCustomizer>> customizers) {
+        final ObjectProvider<List<MybatisCustomizer>> customizers) {
         return properties -> {
             var mapperLocations = Optional.ofNullable(properties.getMapperLocations())
-                .orElse(new String[] { "classpath*:/mapper/**/*Mapper.xml" });
+                .orElse(new String[]{"classpath*:/mapper/**/*Mapper.xml"});
 
             final Set<String> locations = new HashSet<>(List.of(mapperLocations));
 
@@ -170,8 +170,7 @@ public class MyBatisPlusAutoConfiguration {
             if (!CollectionUtils.isEmpty(packages)) {
                 if (StringUtils.hasText(typeHandlersPackage)) {
                     properties.setTypeHandlersPackage(typeHandlersPackage + ";" + Joiner.on(";").join(packages));
-                }
-                else {
+                } else {
                     properties.setTypeHandlersPackage(Joiner.on(";").join(packages));
                 }
             }
@@ -188,11 +187,11 @@ public class MyBatisPlusAutoConfiguration {
     @Bean
     @ConditionalOnBean(ServiceConfigProperties.class)
     MetaObjectHandler gsvcMetaObjectHandler(ObjectProvider<TenantManager<?>> tenantManagers,
-            ServiceConfigProperties properties, Clock clock) {
+                                            ServiceConfigProperties properties, Clock clock) {
         val stringBuffer = new StringBuffer();
         tenantManagers.ifAvailable(tenantManager -> {
             val tenantIdColumn = org.apache.commons.lang3.StringUtils.defaultIfBlank(tenantManager.getTenantIdColumn(),
-                    "tenant_id");
+                "tenant_id");
             stringBuffer.append(PATTERN.matcher(tenantIdColumn).replaceAll(m -> m.group(1).toUpperCase()));
         });
 
@@ -228,7 +227,7 @@ public class MyBatisPlusAutoConfiguration {
 
                 val currentAuditor = Optional.ofNullable(CurrentUserProvider.getCurrentUser().getId());
                 if (currentAuditor.isPresent()
-                        && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
+                    && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
                     val auditor = currentAuditor.get();
                     for (String column : createdByColumns) {
                         if (!metaObject.hasGetter(column) || !metaObject.hasSetter(column)) {
@@ -259,8 +258,7 @@ public class MyBatisPlusAutoConfiguration {
                 if (idType != null && tenantId != null && StringUtils.hasText(tenantId.toString())) {
                     if (idType.isAssignableFrom(Long.class)) {
                         strictInsertFill(metaObject, tenantIdColumn, Long.class, (Long) tenantId);
-                    }
-                    else {
+                    } else {
                         strictInsertFill(metaObject, tenantIdColumn, String.class, tenantId.toString());
                     }
                 }
@@ -281,7 +279,7 @@ public class MyBatisPlusAutoConfiguration {
 
                 val currentAuditor = Optional.ofNullable(CurrentUserProvider.getCurrentUser().getId());
                 if (currentAuditor.isPresent()
-                        && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
+                    && org.apache.commons.lang3.StringUtils.isNotBlank(currentAuditor.get())) {
                     val auditor = currentAuditor.get();
                     for (String column : updatedByColumns) {
                         if (!metaObject.hasGetter(column) || !metaObject.hasSetter(column)) {
@@ -303,17 +301,13 @@ public class MyBatisPlusAutoConfiguration {
                 ClonableStrictFill<?, ?> uid;
                 if (userIdClz == null) {
                     uid = new ClonableStrictFill<>(name, String.class, () -> null);
-                }
-                else if (Long.class.isAssignableFrom(userIdClz)) {
+                } else if (Long.class.isAssignableFrom(userIdClz)) {
                     uid = new ClonableStrictFill<>(name, Long.class, () -> Long.parseLong(userId));
-                }
-                else if (Integer.class.isAssignableFrom(userIdClz)) {
+                } else if (Integer.class.isAssignableFrom(userIdClz)) {
                     uid = new ClonableStrictFill<>(name, Integer.class, () -> Integer.parseInt(userId));
-                }
-                else if (org.apache.commons.lang3.StringUtils.isNotBlank(userId)) {
+                } else if (org.apache.commons.lang3.StringUtils.isNotBlank(userId)) {
                     uid = new ClonableStrictFill<>(name, String.class, () -> userId);
-                }
-                else {
+                } else {
                     uid = new ClonableStrictFill<>(name, String.class, () -> null);
                 }
                 return uid;
@@ -323,19 +317,15 @@ public class MyBatisPlusAutoConfiguration {
                 ClonableStrictFill<?, ?> current;
                 if (timeType == null || Long.class.isAssignableFrom(timeType)) {
                     current = new ClonableStrictFill<>(name, Long.class, clock::millis);
-                }
-                else if (Date.class.isAssignableFrom(timeType)) {
+                } else if (Date.class.isAssignableFrom(timeType)) {
                     current = new ClonableStrictFill<>(name, Date.class, Date::new);
-                }
-                else if (LocalDate.class.isAssignableFrom(timeType)) {
+                } else if (LocalDate.class.isAssignableFrom(timeType)) {
                     current = new ClonableStrictFill<>(name, LocalDate.class, () -> LocalDate.now(clock));
-                }
-                else if (LocalDateTime.class.isAssignableFrom(timeType)) {
+                } else if (LocalDateTime.class.isAssignableFrom(timeType)) {
                     current = new ClonableStrictFill<>(name, LocalDateTime.class, () -> LocalDateTime.now(clock));
-                }
-                else {
+                } else {
                     current = new ClonableStrictFill<>(name, String.class,
-                            () -> DateUtil.formatLocalDateTime(LocalDateTime.now(clock)));
+                        () -> DateUtil.formatLocalDateTime(LocalDateTime.now(clock)));
                 }
                 return current;
             }
@@ -343,7 +333,7 @@ public class MyBatisPlusAutoConfiguration {
     }
 
     private record DefaultTenantLineHandler(String tenantIdColumn,
-            Set<String> ignoreTables) implements TenantLineHandler {
+                                            Set<String> ignoreTables) implements TenantLineHandler {
         @Override
         public Expression getTenantId() {
             val idType = TenantManager.getIdType();
