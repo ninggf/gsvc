@@ -4,7 +4,6 @@ A Toy Based on `Spring Boot` and `Grpc-Java`.
 
 ![Monolithic](https://github.com/ninggf/gsvc/actions/workflows/monolith.yml/badge.svg)
 ![MicroService](https://github.com/ninggf/gsvc/actions/workflows/micro-svc.yml/badge.svg)
-![doc](https://github.com/ninggf/gsvc/actions/workflows/docs.yml/badge.svg)
 
 ## Feature
 
