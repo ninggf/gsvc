@@ -54,7 +54,7 @@
         <mybatis-plus.version>3.5.11</mybatis-plus.version>
         <shardingsphere.version>5.5.1</shardingsphere.version>
         <hutool.version>5.8.36</hutool.version>
-        <guava.version>33.4.5-jre</guava.version>
+        <guava.version>33.4.7-jre</guava.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <protoc.version>3.25.3</protoc.version>
         <protobuf.java.version>3.25.3</protobuf.java.version>
