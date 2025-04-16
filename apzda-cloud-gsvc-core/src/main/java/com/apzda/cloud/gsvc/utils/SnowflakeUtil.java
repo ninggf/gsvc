@@ -35,7 +35,7 @@ public abstract class SnowflakeUtil {
 
     private static final String ipv4 = StringUtils.defaultIfBlank(localhostStr, NetUtil.LOCAL_IP);
 
-    private static final long workerId = NetUtil.ipv4ToLong(ipv4) % 32;
+    private static final long workerId = SystemPropsUtil.getLong("snowflake.worker.id", NetUtil.ipv4ToLong(ipv4)) % 32;
 
     private static final long dc = SystemPropsUtil.getInt("snowflake.dc.id", 1) % 32;
 

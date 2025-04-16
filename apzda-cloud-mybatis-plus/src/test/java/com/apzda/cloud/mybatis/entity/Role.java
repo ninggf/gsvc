@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2025 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,40 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.model;
+package com.apzda.cloud.mybatis.entity;
 
-import org.springframework.lang.Nullable;
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 /**
- * @author fengz (windywany@gmail.com)
+ * @author ninggf
  * @version 1.0.0
- * @since 1.0.0
- **/
-public interface Auditable<ID, U, T> extends OwnerAware<U> {
+ * @since 2025/04/16
+ */
+@TableName("t_roles")
+@Data
+public class Role {
 
-    @Nullable
-    ID getId();
+    @TableId(type = IdType.ASSIGN_UUID)
+    private String rid;
 
-    void setId(@Nullable ID id);
+    private String name;
 
-    @Nullable
-    U getCreatedBy();
+    @TableLogic
+    private Integer del;
 
-    void setCreatedBy(U createdBy);
+    private Double dd;
 
-    @Nullable
-    T getCreatedAt();
-
-    void setCreatedAt(T createdAt);
-
-    @Nullable
-    U getUpdatedBy();
-
-    void setUpdatedBy(U updatedBy);
-
-    @Nullable
-    T getUpdatedAt();
-
-    void setUpdatedAt(T updatedAt);
+    @Version
+    private Short ver;
 
 }

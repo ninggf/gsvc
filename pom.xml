@@ -25,7 +25,9 @@
         <module>apzda-cloud-gsvc-security</module>
         <module>apzda-cloud-gsvc-proto</module>
         <module>apzda-cloud-gsvc-tracing</module>
+        <!--
         <module>apzda-cloud-gsvc-domain</module>
+        -->
         <module>apzda-cloud-xxl-job-adapter</module>
         <module>apzda-cloud-gsvc-test</module>
         <module>apzda-cloud-gsvc-boot</module>
@@ -33,6 +35,7 @@
         <module>apzda-cloud-mybatis-plus</module>
         <module>apzda-cloud-rocketmq</module>
         <module>apzda-cloud-shardingsphere-jdbc</module>
+        <module>apzda-cloud-gsvc-jpa</module>
     </modules>
 
     <properties>
@@ -146,6 +149,11 @@
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
+                <artifactId>apzda-cloud-gsvc-jpa</artifactId>
+                <version>3.4.2-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-parent</artifactId>
                 <version>3.4.2-SNAPSHOT</version>
             </dependency>
@@ -174,11 +182,13 @@
                 <artifactId>apzda-cloud-gsvc-tracing</artifactId>
                 <version>3.4.2-SNAPSHOT</version>
             </dependency>
+            <!--
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>domain</artifactId>
                 <version>3.4.2-SNAPSHOT</version>
             </dependency>
+            -->
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-seata</artifactId>

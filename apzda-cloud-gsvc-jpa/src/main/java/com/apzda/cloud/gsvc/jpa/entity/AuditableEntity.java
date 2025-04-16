@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2024 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,40 +14,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.model;
+package com.apzda.cloud.gsvc.jpa.entity;
 
-import org.springframework.lang.Nullable;
+import com.apzda.cloud.gsvc.jpa.AuditingEntityListener;
+import com.apzda.cloud.gsvc.model.Auditable;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author fengz (windywany@gmail.com)
- * @version 1.0.0
- * @since 1.0.0
+ * @version 3.4.2
+ * @since 3.4.2
  **/
-public interface Auditable<ID, U, T> extends OwnerAware<U> {
 
-    @Nullable
-    ID getId();
+@Getter
+@Setter
+@MappedSuperclass
+@EntityListeners({ AuditingEntityListener.class })
+public abstract class AuditableEntity<ID, U, T> implements Auditable<ID, U, T> {
 
-    void setId(@Nullable ID id);
+    private U createdBy;
 
-    @Nullable
-    U getCreatedBy();
+    private T createdAt;
 
-    void setCreatedBy(U createdBy);
+    private U updatedBy;
 
-    @Nullable
-    T getCreatedAt();
-
-    void setCreatedAt(T createdAt);
-
-    @Nullable
-    U getUpdatedBy();
-
-    void setUpdatedBy(U updatedBy);
-
-    @Nullable
-    T getUpdatedAt();
-
-    void setUpdatedAt(T updatedAt);
+    private T updatedAt;
 
 }

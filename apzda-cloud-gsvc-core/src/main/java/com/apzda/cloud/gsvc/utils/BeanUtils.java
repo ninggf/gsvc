@@ -17,6 +17,7 @@
 package com.apzda.cloud.gsvc.utils;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.val;
 
 import java.lang.reflect.Field;
@@ -48,7 +49,7 @@ public abstract class BeanUtils {
     }
 
     @Nonnull
-    public static List<Field> getAllFields(Class<?> clazz) {
+    public static List<Field> getAllFields(@Nonnull Class<?> clazz) {
         List<Field> list = new ArrayList<>();
         Field[] fields;
         do {
@@ -65,6 +66,12 @@ public abstract class BeanUtils {
     public static List<Field> getAllFields(@Nonnull Object object) {
         Class<?> clazz = object.getClass();
         return getAllFields(clazz);
+    }
+
+    @Nullable
+    public static Field getField(Class<?> clazz, String fieldName) {
+        val fields = getAllFields(clazz).stream().filter(field -> field.getName().equals(fieldName)).findFirst();
+        return fields.orElse(null);
     }
 
 }

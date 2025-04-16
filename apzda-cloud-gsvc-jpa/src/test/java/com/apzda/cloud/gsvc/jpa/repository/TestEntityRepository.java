@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2023 Fengz Ning (windywany@gmail.com)
+ * Copyright (C) 2023-2025 Fengz Ning (windywany@gmail.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,40 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.model;
+package com.apzda.cloud.gsvc.jpa.repository;
 
-import org.springframework.lang.Nullable;
+import com.apzda.cloud.gsvc.jpa.entity.TestEntity;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
 /**
- * @author fengz (windywany@gmail.com)
+ * @author ninggf
  * @version 1.0.0
- * @since 1.0.0
- **/
-public interface Auditable<ID, U, T> extends OwnerAware<U> {
-
-    @Nullable
-    ID getId();
-
-    void setId(@Nullable ID id);
-
-    @Nullable
-    U getCreatedBy();
-
-    void setCreatedBy(U createdBy);
-
-    @Nullable
-    T getCreatedAt();
-
-    void setCreatedAt(T createdAt);
-
-    @Nullable
-    U getUpdatedBy();
-
-    void setUpdatedBy(U updatedBy);
-
-    @Nullable
-    T getUpdatedAt();
-
-    void setUpdatedAt(T updatedAt);
+ * @since 2025/04/16
+ */
+@Repository
+public interface TestEntityRepository extends CrudRepository<TestEntity, String> {
 
 }

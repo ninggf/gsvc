@@ -30,6 +30,7 @@
             <id>its</id>
             <properties>
                 <skipITs>false</skipITs>
+                <tomcat.http.port>0</tomcat.http.port>
             </properties>
             <build>
                 <plugins>

@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+
+mybatis-plus:
+  global-config:
+    banner: false
+  configuration:
+    cache-enabled: false
+    local-cache-scope: statement
+
+logging:
+  level:
+    com.apzda: debug
+    com.baomidou: debug
