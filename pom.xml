@@ -115,7 +115,7 @@
         <url>https://github.com/ninggf/gsvc</url>
         <connection>scm:git@github.com:ninggf/gsvc.git</connection>
         <developerConnection>scm:git:git@github.com:ninggf/gsvc.git</developerConnection>
-        <tag>v1.2.22</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
