@@ -4,7 +4,7 @@
     <parent>
         <artifactId>gsvc</artifactId>
         <groupId>com.apzda.cloud</groupId>
-        <version>3.4.2-SNAPSHOT</version>
+        <version>3.4.2</version>
     </parent>
     <artifactId>gsvc-compiler</artifactId>
     <name>apzda-cloud-gsvc-compiler</name>
