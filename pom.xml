@@ -72,7 +72,7 @@
         <commons-io.version>2.18.0</commons-io.version>
         <jasypt.version>3.0.5</jasypt.version>
         <mapstruct.version>1.6.3</mapstruct.version>
-        <micrometer-propagation.version>1.1.2</micrometer-propagation.version>
+        <micrometer-propagation.version>1.1.3</micrometer-propagation.version>
         <springdoc.version>2.8.3</springdoc.version>
         <swagger-annotations.version>2.2.29</swagger-annotations.version>
         <!-- plugins versions -->
