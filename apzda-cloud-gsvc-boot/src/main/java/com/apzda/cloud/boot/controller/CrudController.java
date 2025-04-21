@@ -22,6 +22,7 @@ import com.apzda.cloud.boot.query.QueryGenerator;
 import com.apzda.cloud.boot.security.AclChecker;
 import com.apzda.cloud.boot.validate.Group;
 import com.apzda.cloud.gsvc.dto.Audit;
+import com.apzda.cloud.gsvc.dto.PageResult;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.NotFoundError;
 import com.apzda.cloud.gsvc.event.AuditEvent;
@@ -121,15 +122,16 @@ public abstract class CrudController<D extends Serializable, T extends IEntity<D
     @ResponseBody
     @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Dictionary
-    public Response<IPage<T>> list(T entity, GsvcExt.Pager pager, HttpServletRequest req) {
+    public Response<PageResult<T>> list(T entity, GsvcExt.Pager pager, HttpServletRequest req) {
         if (StringUtils.isNotBlank(readPermission)) {
             aclChecker.check(entity, readPermission);
         }
 
         IPage<T> page = PagerUtils.iPage(pager);
         QueryWrapper<T> query = alter(QueryGenerator.initQueryWrapper(entity, req.getParameterMap()), entity, req);
+        val result = serviceImpl.read(page, query);
 
-        return Response.success(serviceImpl.read(page, query));
+        return Response.success(PagerUtils.toResult(result));
     }
 
     /**

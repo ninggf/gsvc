@@ -71,7 +71,7 @@ message PageInfo {
   uint32 page_size = 2;
   uint32 total_pages = 3;
   uint64 total_elements = 4;
-  uint32  number_of_elements = 5;
+  uint32 number_of_elements = 5;
   bool first = 6;
   bool last = 7;
   optional Sorter sort = 8;

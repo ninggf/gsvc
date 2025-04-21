@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.apzda.cloud.gsvc.mybatis;
+package com.apzda.cloud.mybatis;
 
 import org.springframework.lang.NonNull;
 

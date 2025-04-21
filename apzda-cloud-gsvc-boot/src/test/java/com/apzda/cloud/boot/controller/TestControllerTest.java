@@ -73,7 +73,7 @@ public class TestControllerTest {
             .perform(post("/user").contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .content("pageSize=10&pageNumber=0&pageSorts=uid|desc,createdAt|asc&id=gt 1"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.records[0].id").value("2"));
+            .andExpect(jsonPath("$.data.results[0].id").value("2"));
     }
 
     @Test

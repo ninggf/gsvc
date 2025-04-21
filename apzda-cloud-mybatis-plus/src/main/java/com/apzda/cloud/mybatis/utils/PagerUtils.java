@@ -16,6 +16,8 @@
  */
 package com.apzda.cloud.mybatis.utils;
 
+import cn.hutool.core.lang.func.Supplier1;
+import com.apzda.cloud.gsvc.dto.PageResult;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
@@ -230,6 +232,57 @@ public class PagerUtils extends PageRequest {
         }
 
         return builder;
+    }
+
+    @Nonnull
+    public static <T> PageResult<T> toResult(IPage<T> page) {
+        if (page == null) {
+            return new PageResult<>();
+        }
+        return toResult(page, page.getRecords());
+    }
+
+    @Nonnull
+    public static <T, E> PageResult<T> toResult(IPage<E> page, @Nonnull Supplier1<List<T>, List<E>> converter) {
+        if (page == null) {
+            return new PageResult<>(List.of(), 0);
+        }
+        return toResult(page, page.getRecords(), converter);
+    }
+
+    @Nonnull
+    public static <T> PageResult<T> toResult(@Nonnull PageRequest page) {
+        val result = new PageResult<T>();
+        result.setCurrent(page.getPageNumber());
+        result.setSize(page.getPageSize());
+
+        return result;
+    }
+
+    @Nonnull
+    public static <T> PageResult<T> toResult(@Nonnull IPage<?> page, @Nonnull List<T> records) {
+        val result = new PageResult<T>();
+        result.setCurrent(page.getCurrent());
+        result.setPages(page.getPages());
+        result.setTotal(page.getTotal());
+        result.setSize(page.getSize());
+
+        result.setResults(records);
+
+        return result;
+    }
+
+    @Nonnull
+    public static <T, E> PageResult<T> toResult(@Nonnull IPage<E> page, @Nonnull List<E> records,
+            @Nonnull Supplier1<List<T>, List<E>> converter) {
+        val result = new PageResult<T>();
+        result.setCurrent(page.getCurrent());
+        result.setPages(page.getPages());
+        result.setTotal(page.getTotal());
+        result.setSize(page.getSize());
+        result.setResults(converter.get(records));
+
+        return result;
     }
 
 }
