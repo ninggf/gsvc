@@ -69,7 +69,7 @@
         <seata.cloud.version>2023.0.3.2</seata.cloud.version>
         <rocketmq-client.version>5.0.7</rocketmq-client.version>
         <easyexcel.version>4.0.3</easyexcel.version>
-        <commons-io.version>2.18.0</commons-io.version>
+        <commons-io.version>2.19.0</commons-io.version>
         <jasypt.version>3.0.5</jasypt.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <micrometer-propagation.version>1.1.3</micrometer-propagation.version>
