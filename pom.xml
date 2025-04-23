@@ -8,7 +8,7 @@
     </parent>
     <groupId>com.apzda.cloud</groupId>
     <artifactId>gsvc</artifactId>
-    <version>3.4.3</version>
+    <version>3.4.4-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Gsvc</name>
     <description>A Toy Based on Spring Boot and Grpc-Java</description>
@@ -114,7 +114,7 @@
         <url>https://github.com/ninggf/gsvc</url>
         <connection>scm:git@github.com:ninggf/gsvc.git</connection>
         <developerConnection>scm:git:git@github.com:ninggf/gsvc.git</developerConnection>
-        <tag>v3.4.3</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
@@ -136,77 +136,77 @@
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-core</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-boot</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-jpa</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-parent</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-proto</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-security</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-sentinel</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-starter</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-tracing</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-seata</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-mybatis-plus</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-shardingsphere-jdbc</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-xxl-job-adapter</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-rocketmq</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.apzda.cloud</groupId>
                 <artifactId>apzda-cloud-gsvc-test</artifactId>
-                <version>3.4.3</version>
+                <version>3.4.4-SNAPSHOT</version>
             </dependency>
             <!-- javax -->
             <dependency>
