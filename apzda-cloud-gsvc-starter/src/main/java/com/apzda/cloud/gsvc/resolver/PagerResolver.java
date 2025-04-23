@@ -18,7 +18,6 @@ package com.apzda.cloud.gsvc.resolver;
 
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.ext.GsvcExt;
-import com.apzda.cloud.gsvc.utils.StringUtils;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -74,10 +73,8 @@ public class PagerResolver implements HandlerMethodArgumentResolver {
                 if (fs.length > 1) {
                     so = GsvcExt.Sorter.Direction.valueOf(fs[1].toUpperCase());
                 }
-                sorter.addOrder(GsvcExt.Sorter.Order.newBuilder()
-                    .setField(StringUtils.camelToUnderline(fs[0]))
-                    .setDirection(so)
-                    .build());
+
+                sorter.addOrder(GsvcExt.Sorter.Order.newBuilder().setField(fs[0]).setDirection(so).build());
             }
         }
 
