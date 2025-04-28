@@ -55,7 +55,7 @@
         <shardingsphere.version>5.5.1</shardingsphere.version>
         <hutool.version>5.8.37</hutool.version>
         <guava.version>33.4.8-jre</guava.version>
-        <commons-collections4.version>4.4</commons-collections4.version>
+        <commons-collections4.version>4.5.0</commons-collections4.version>
         <protoc.version>3.25.3</protoc.version>
         <protobuf.java.version>3.25.3</protobuf.java.version>
         <grpc-java.version>1.69.1</grpc-java.version>
