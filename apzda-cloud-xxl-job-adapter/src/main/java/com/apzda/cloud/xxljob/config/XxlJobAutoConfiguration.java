@@ -39,12 +39,14 @@ public class XxlJobAutoConfiguration {
     public XxlJobSpringExecutor xxlJobExecutor(ConfigProperties properties, Environment environment) {
         val admin = properties.getAdmin();
         val executor = properties.getExecutor();
-        val defaultAppName = environment.getProperty("spring.application.name", "defaultApp");
+        val defaultAppName = environment.getProperty("spring.application.name", "gsvc-job");
         val xxlJobSpringExecutor = new XxlJobSpringExecutor();
+
         xxlJobSpringExecutor.setAdminAddresses(admin.getAddresses());
         xxlJobSpringExecutor.setAccessToken(admin.getAccessToken());
 
         val appName = executor.getAppname();
+        xxlJobSpringExecutor.setTimeout(executor.getTimeout());
         xxlJobSpringExecutor.setAppname(StringUtils.hasText(appName) ? appName : defaultAppName);
         xxlJobSpringExecutor.setAddress(executor.getAddress());
         xxlJobSpringExecutor.setIp(executor.getIp());

@@ -52,6 +52,8 @@ public class ConfigProperties {
 
         private String ip;
 
+        private int timeout;
+
         private int port = 9000;
 
         private String logPath;
@@ -62,7 +64,8 @@ public class ConfigProperties {
             if (StringUtils.hasText(logPath)) {
                 return logPath;
             }
-            return "/var/logs/" + (StringUtils.hasText(appname) ? appname : "");
+
+            return "/var/logs/" + (StringUtils.hasText(appname) ? appname : "gsvc-job");
         }
 
     }
