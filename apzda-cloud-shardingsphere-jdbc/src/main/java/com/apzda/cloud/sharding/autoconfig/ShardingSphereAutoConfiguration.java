@@ -26,7 +26,6 @@ import org.apache.shardingsphere.driver.jdbc.core.connection.ShardingSphereConne
 import org.apache.shardingsphere.infra.datanode.DataNode;
 import org.apache.shardingsphere.infra.datasource.pool.CatalogSwitchableDataSource;
 import org.apache.shardingsphere.infra.metadata.database.ShardingSphereDatabase;
-import org.apache.shardingsphere.infra.metadata.database.schema.model.ShardingSphereSchema;
 import org.apache.shardingsphere.sharding.rule.ShardingRule;
 import org.apache.shardingsphere.sharding.rule.ShardingTable;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -85,8 +84,8 @@ public class ShardingSphereAutoConfiguration {
                     val contextManager = conn.getContextManager();
                     val metadata = contextManager.getMetaDataContexts();
                     val allTables = new ArrayList<>();
-                    for (val each : metadata.getMetaData().getDatabases().entrySet()) {
-                        val database = each.getValue();
+                    val allDatabases = metadata.getMetaData().getAllDatabases();
+                    for (val database : allDatabases) {
                         val newTables = new HashSet<String>();
                         for (val rule : database.getRuleMetaData().getRules()) {
                             if (rule instanceof ShardingRule shardingRule) {
@@ -97,10 +96,11 @@ public class ShardingSphereAutoConfiguration {
                             }
                         }
                         if (!newTables.isEmpty()) {
-                            for (Map.Entry<String, ShardingSphereSchema> entry : database.getSchemas().entrySet()) {
+                            val allSchemas = database.getAllSchemas();
+                            for (val schema : allSchemas) {
                                 for (String ds : database.getResourceMetaData().getDataSourceMap().keySet()) {
-                                    contextManager.reloadSchema(database, entry.getValue().getName(), ds);
-                                    log.info("Reload schema '{}' of '{}' done!", entry.getValue().getName(), ds);
+                                    contextManager.reloadSchema(database, schema.getName(), ds);
+                                    log.info("Reload schema '{}' of '{}' done!", schema.getName(), ds);
                                 }
                             }
                             allTables.addAll(newTables);
