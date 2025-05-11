@@ -16,9 +16,9 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.aop.AopAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
 @Sql("classpath:/schema.sql")
 class DictionaryAdvisorTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private DictItemMapper dictItemMapper;
 
     @Autowired
