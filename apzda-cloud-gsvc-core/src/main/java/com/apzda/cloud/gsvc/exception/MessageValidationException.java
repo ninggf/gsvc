@@ -16,7 +16,7 @@
  */
 package com.apzda.cloud.gsvc.exception;
 
-import build.buf.validate.Violation;
+import build.buf.protovalidate.Violation;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.google.protobuf.Descriptors;
 import lombok.Getter;
@@ -34,11 +34,6 @@ public class MessageValidationException extends RuntimeException implements NoSt
     private final List<Violation> violations;
 
     private transient final Descriptors.Descriptor descriptor;
-
-    public MessageValidationException() {
-        this.violations = null;
-        this.descriptor = null;
-    }
 
     public MessageValidationException(List<Violation> violations, Descriptors.Descriptor descriptorForType) {
         super(ServiceError.BIND_ERROR.message);

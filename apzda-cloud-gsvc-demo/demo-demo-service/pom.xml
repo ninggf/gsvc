@@ -16,7 +16,7 @@
         </dependency>
         <dependency>
             <groupId>net.devh</groupId>
-            <artifactId>grpc-client-spring-boot-autoconfigure</artifactId>
+            <artifactId>grpc-common-spring-boot</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>

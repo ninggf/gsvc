@@ -1,6 +1,5 @@
 package com.apzda.cloud.gsvc.exception;
 
-import build.buf.validate.Violation;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.apzda.cloud.gsvc.gtw.filter.HttpHeadersFilter;
@@ -92,14 +91,19 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         }
         else if (e instanceof MessageValidationException validationException) {
             val violations = new HashMap<String, String>();
-            val fullName = validationException.getDescriptor().getFullName();
-            for (Violation violation : validationException.getViolations()) {
-                val field = violation.getFieldPath();
-                val i8nKey = "valid." + fullName + "." + field;
+            for (val violation : validationException.getViolations()) {
+                val proto = violation.toProto();
+                val fieldValue = violation.getFieldValue();
+                if (fieldValue == null) {
+                    continue;
+                }
+                val descriptor = fieldValue.getDescriptor();
+                val field = descriptor.getName();
+                val i8nKey = "valid." + descriptor.getFullName();
                 if (log.isDebugEnabled()) {
                     log.debug("Add code: '{}' to message resource property file to support i18n", i8nKey);
                 }
-                val message = I18nUtils.t(i8nKey, violation.getMessage());
+                val message = I18nUtils.t(i8nKey, proto.getMessage());
                 violations.put(field, message);
             }
 
@@ -360,7 +364,7 @@ public class GsvcExceptionHandler implements IExceptionHandler, ApplicationConte
         @SuppressWarnings("unchecked")
         public <R> R unwrap(Class<R> rClazz, @Nullable Throwable error) {
             if (error != null) {
-                log.error("Exception Resolved[{}]: {}", error.getClass().getName(), error.getMessage());
+                log.debug("Exception Resolved[{}]: {}", error.getClass().getName(), error.getMessage());
             }
 
             if (rClazz.isAssignableFrom(ServerResponse.class)) {

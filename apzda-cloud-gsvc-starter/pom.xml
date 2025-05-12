@@ -99,12 +99,12 @@
         <!-- grpc server & client -->
         <dependency>
             <groupId>net.devh</groupId>
-            <artifactId>grpc-server-spring-boot-autoconfigure</artifactId>
+            <artifactId>grpc-server-spring-boot-starter</artifactId>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>net.devh</groupId>
-            <artifactId>grpc-client-spring-boot-autoconfigure</artifactId>
+            <artifactId>grpc-client-spring-boot-starter</artifactId>
             <optional>true</optional>
         </dependency>
         <!-- mybatis-plus starter -->
