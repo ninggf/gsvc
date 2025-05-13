@@ -138,10 +138,10 @@ public class GsvcAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    IServiceMethodHandler serviceMethodHandler(GatewayServiceConfigure serviceConfigure, ObjectMapper objectMapper,
+    IServiceMethodHandler serviceMethodHandler(ObjectMapper objectMapper, GatewayServiceConfigure serviceConfigure,
             GsvcExceptionHandler gsvcExceptionHandler, Validator validator, MultipartResolver multipartResolver,
             EncryptedMessageConverter encryptedMessageConverter) {
-        return new DefaultServiceMethodHandler(serviceConfigure, objectMapper, gsvcExceptionHandler, validator,
+        return new DefaultServiceMethodHandler(objectMapper, serviceConfigure, gsvcExceptionHandler, validator,
                 multipartResolver, encryptedMessageConverter);
     }
 

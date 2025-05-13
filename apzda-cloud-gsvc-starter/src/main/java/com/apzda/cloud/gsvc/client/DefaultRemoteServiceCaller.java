@@ -56,7 +56,7 @@ public class DefaultRemoteServiceCaller implements IServiceCaller {
     public static final ParameterizedTypeReference<ServerSentEvent<String>> SSE_RESPONSE_TYPE = new ParameterizedTypeReference<>() {
     };
 
-    protected final ObjectMapper objectMapper = ResponseUtils.OBJECT_MAPPER;
+    protected final ObjectMapper objectMapper;
 
     protected final ApplicationContext applicationContext;
 
@@ -68,6 +68,7 @@ public class DefaultRemoteServiceCaller implements IServiceCaller {
         this.applicationContext = applicationContext;
         this.svcConfigure = svcConfigure;
         this.validator = applicationContext.getBean(Validator.class);
+        this.objectMapper = applicationContext.getBean(ObjectMapper.class);
         // bookmark:
         // https://github.com/reactive-streams/reactive-streams-jvm/blob/master/README.md#1.7
         Hooks.onErrorDropped(error -> {

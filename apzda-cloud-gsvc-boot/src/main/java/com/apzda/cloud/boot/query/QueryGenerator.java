@@ -2,18 +2,23 @@ package com.apzda.cloud.boot.query;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.ServiceLoaderUtil;
 import cn.hutool.core.util.StrUtil;
 import com.apzda.cloud.boot.exception.ColumnNotFoundException;
 import com.apzda.cloud.boot.utils.DataSourceUtils;
 import com.apzda.cloud.gsvc.utils.BeanUtils;
-import com.apzda.cloud.gsvc.utils.ResponseUtils;
 import com.apzda.cloud.gsvc.utils.StringUtils;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.cfg.JsonNodeFeature;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
 import jakarta.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -40,7 +45,7 @@ import static com.apzda.cloud.gsvc.utils.StringUtils.isNotEmpty;
 @Slf4j
 public class QueryGenerator {
 
-    private static final ObjectMapper JSON = ResponseUtils.OBJECT_MAPPER;
+    private static final ObjectMapper JSON;
 
     private static final String BEGIN = "_begin";
 
@@ -94,6 +99,19 @@ public class QueryGenerator {
     /** 时间格式化 */
     private static final ThreadLocal<SimpleDateFormat> LOCAL = new ThreadLocal<>();
 
+    static {
+        JSON = new ObjectMapper();
+        JSON.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        JSON.setDateFormat(new StdDateFormat().withColonInTimeZone(true));
+        JSON.configure(JsonNodeFeature.WRITE_NULL_PROPERTIES, false);
+        JSON.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        val modules = ServiceLoaderUtil.loadList(Module.class);
+        if (modules != null && !modules.isEmpty()) {
+            JSON.registerModules(modules);
+        }
+    }
+
+    @Nonnull
     private static SimpleDateFormat getTime() {
         SimpleDateFormat time = LOCAL.get();
         if (time == null) {
@@ -312,9 +330,8 @@ public class QueryGenerator {
             MatchTypeEnum matchType = MatchTypeEnum.getByValue(superQueryMatchType);
             try {
                 superQueryParams = URLDecoder.decode(superQueryParams, StandardCharsets.UTF_8);
-                List<QueryCondition> conditions = JSON.readValue(superQueryParams,
-                        new TypeReference<List<QueryCondition>>() {
-                        });
+                List<QueryCondition> conditions = JSON.readValue(superQueryParams, new TypeReference<>() {
+                });
 
                 if (conditions == null || conditions.isEmpty()) {
                     return;

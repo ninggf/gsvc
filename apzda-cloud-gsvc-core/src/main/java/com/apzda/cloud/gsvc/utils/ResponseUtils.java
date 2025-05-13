@@ -1,16 +1,16 @@
 package com.apzda.cloud.gsvc.utils;
 
+import cn.hutool.core.util.ServiceLoaderUtil;
 import com.apzda.cloud.gsvc.config.ServiceConfigProperties;
 import com.apzda.cloud.gsvc.dto.Response;
 import com.apzda.cloud.gsvc.error.ServiceError;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.cfg.JsonNodeFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
-import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
-import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ public abstract class ResponseUtils {
 
     public static final MediaType TEXT_MASK = MediaType.parseMediaType("text/*");
 
-    public static final ObjectMapper OBJECT_MAPPER;
+    private static ObjectMapper OBJECT_MAPPER;
 
     private static ServiceConfigProperties.Config gsvcConfig;
 
@@ -44,15 +44,15 @@ public abstract class ResponseUtils {
         OBJECT_MAPPER.setDateFormat(new StdDateFormat().withColonInTimeZone(true));
         OBJECT_MAPPER.configure(JsonNodeFeature.WRITE_NULL_PROPERTIES, false);
         OBJECT_MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        val modules = ServiceLoaderUtil.loadList(Module.class);
+        if (modules != null && !modules.isEmpty()) {
+            OBJECT_MAPPER.registerModules(modules);
+        }
     }
 
-    public static void config(ProtobufJacksonConfig config, ServiceConfigProperties.Config globalConfig) {
-        OBJECT_MAPPER.registerModule(new ProtobufModule(config));
+    public static void config(ServiceConfigProperties.Config globalConfig) {
         gsvcConfig = globalConfig;
-    }
-
-    public static void config() {
-        OBJECT_MAPPER.registerModule(new ProtobufModule());
     }
 
     public static <T> T parseResponse(String responseBody, Class<T> tClass) {

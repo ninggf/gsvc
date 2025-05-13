@@ -61,9 +61,9 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class DefaultServiceMethodHandler implements IServiceMethodHandler {
 
-    private final GatewayServiceConfigure svcConfigure;
-
     private final ObjectMapper objectMapper;
+
+    private final GatewayServiceConfigure svcConfigure;
 
     private final GsvcExceptionHandler exceptionHandler;
 

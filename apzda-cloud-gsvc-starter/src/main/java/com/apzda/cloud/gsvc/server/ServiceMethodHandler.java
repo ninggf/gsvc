@@ -80,7 +80,7 @@ public class ServiceMethodHandler {
         this.serviceMethod = serviceMethod;
         this.svcConfigure = applicationContext.getBean(GatewayServiceConfigure.class);
         this.exceptionHandler = applicationContext.getBean(GsvcExceptionHandler.class);
-        this.objectMapper = ResponseUtils.OBJECT_MAPPER;
+        this.objectMapper = applicationContext.getBean(ObjectMapper.class);
         this.validator = applicationContext.getBean(Validator.class);
         this.multipartResolver = applicationContext.getBean(MultipartResolver.class);
     }

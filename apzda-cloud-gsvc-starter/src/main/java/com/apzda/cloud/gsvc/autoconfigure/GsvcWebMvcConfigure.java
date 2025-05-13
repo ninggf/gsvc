@@ -9,7 +9,7 @@ import com.apzda.cloud.gsvc.exception.GsvcExceptionHandler;
 import com.apzda.cloud.gsvc.filter.GsvcServletFilter;
 import com.apzda.cloud.gsvc.resolver.PagerResolver;
 import com.apzda.cloud.gsvc.utils.ResponseUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.Module;
 import com.hubspot.jackson.datatype.protobuf.ProtobufJacksonConfig;
 import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import jakarta.annotation.Nonnull;
@@ -52,38 +52,44 @@ class GsvcWebMvcConfigure implements WebMvcConfigurer, InitializingBean {
 
     private final ServiceConfigProperties serviceConfigProperties;
 
-    private final ObjectMapper objectMapper;
-
     private final EncryptedMessageConverter encryptedMessageConverter;
 
-    public GsvcWebMvcConfigure(ServiceConfigProperties serviceConfigProperties, ObjectMapper objectMapper,
+    public GsvcWebMvcConfigure(ServiceConfigProperties serviceConfigProperties,
             EncryptedMessageConverter encryptedMessageConverter) {
         this.serviceConfigProperties = serviceConfigProperties;
-        this.objectMapper = objectMapper;
         this.encryptedMessageConverter = encryptedMessageConverter;
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
         val config = serviceConfigProperties.getConfig();
-        val pbConfig = ProtobufJacksonConfig.builder()
-            .acceptLiteralFieldnames(config.isAcceptLiteralFieldNames())
-            .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
-            .serializeLongsAsString(config.isSerializeLongsAsString())
-            .build();
-        ResponseUtils.config(pbConfig, config);
-        objectMapper.registerModule(new ProtobufModule(pbConfig));
+        ResponseUtils.config(config);
 
         if (config.isContextCapture()) {
             Hooks.enableAutomaticContextPropagation();
         }
-
-        log.debug("ResponseUtils and ObjectMapper configured: {}", config);
     }
 
     @Override
     public void addArgumentResolvers(@NonNull List<HandlerMethodArgumentResolver> resolvers) {
         resolvers.add(new PagerResolver(this.serviceConfigProperties.getConfig()));
+    }
+
+    @Override
+    public void configureMessageConverters(@Nonnull List<HttpMessageConverter<?>> converters) {
+        converters.add(0, encryptedMessageConverter);
+    }
+
+    @Bean
+    static Module protobufModule(ServiceConfigProperties serviceConfigProperties) {
+        val config = serviceConfigProperties.getConfig();
+        val pbConfig = ProtobufJacksonConfig.builder()
+            .acceptLiteralFieldnames(config.isAcceptLiteralFieldNames())
+            .properUnsignedNumberSerialization(config.isProperUnsignedNumberSerialization())
+            .serializeLongsAsString(config.isSerializeLongsAsString())
+            .build();
+
+        return new ProtobufModule(pbConfig);
     }
 
     @Bean
@@ -126,11 +132,6 @@ class GsvcWebMvcConfigure implements WebMvcConfigurer, InitializingBean {
         resolver.setResolveLazily(true);
         log.trace("Use StandardServletMultipartResolver with ResolveLazily!");
         return resolver;
-    }
-
-    @Override
-    public void configureMessageConverters(@Nonnull List<HttpMessageConverter<?>> converters) {
-        converters.add(0, encryptedMessageConverter);
     }
 
 }
