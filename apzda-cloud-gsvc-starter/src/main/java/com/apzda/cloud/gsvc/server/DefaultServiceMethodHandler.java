@@ -234,8 +234,7 @@ public class DefaultServiceMethodHandler implements IServiceMethodHandler {
     }
 
     private ServerResponse doUnaryCall(ServerRequest request, Mono<JsonNode> requestObj, ServiceMethod serviceMethod,
-            Function<Object, Object> func)
-            throws JsonProcessingException, ValidationException, ReflectiveOperationException {
+            Function<Object, Object> func) throws ValidationException, ReflectiveOperationException {
         val plugins = serviceMethod.getPlugins();
         var size = plugins.size();
         for (IPlugin plugin : plugins) {
